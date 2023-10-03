@@ -1,0 +1,15 @@
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { CollectModule } from './collect/collect.module';
+import { PhonepeService } from './phonepe/phonepe.service';
+import { DatabaseModule } from './database/database.module';
+import { PhonepeModule } from './phonepe/phonepe.module';
+import { CheckStatusModule } from './check-status/check-status.module';
+
+@Module({
+  imports: [CollectModule, DatabaseModule, PhonepeModule, CheckStatusModule],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}
