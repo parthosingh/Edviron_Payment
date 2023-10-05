@@ -72,7 +72,7 @@ export class PhonepeService {
         }
     }
 
-    async checkStatus(transactionId: String): Promise<TransactionStatus>{
+    async checkStatus(transactionId: String): Promise<{status: TransactionStatus, amount: number}>{
         const apiEndpoint = "/pg/v1/pay";
         const xVerify = sha256("/pg/v1/status/EDVIRONONLINE/"+transactionId+process.env.PHONEPE_SALT)+"###"+process.env.PHONEPE_SALT_INDEX;
         console.log(xVerify);
@@ -90,6 +90,6 @@ export class PhonepeService {
           
           const res = await axios.request(config);
           console.log(res.data)
-          return res.data.data.state;
+          return {status: res.data.data.state, amount: res.data.data.amount};
     }
 }
