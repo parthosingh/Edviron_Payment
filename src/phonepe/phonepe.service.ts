@@ -48,6 +48,7 @@ export class PhonepeService {
               "type": "PAY_PAGE"
             }
         }
+        console.log("payAPIRequest: ", payAPIRequest);
         const encodedRequest = encodeBase64(JSON.stringify(payAPIRequest));
         const xVerify = generateXVerify(apiEndpoint, encodedRequest);
         let data = JSON.stringify({
