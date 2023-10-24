@@ -34,7 +34,7 @@ let CheckStatusController = class CheckStatusController {
             }
         }
         catch (e) {
-            throw new common_1.UnauthorizedException();
+            throw new common_1.UnauthorizedException(e.message);
         }
     }
 };

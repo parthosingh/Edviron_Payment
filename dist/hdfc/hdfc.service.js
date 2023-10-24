@@ -191,7 +191,7 @@ let HdfcService = class HdfcService {
         const config = {
             method: 'post',
             maxBodyLength: Infinity,
-            url: process.env.CCAVENUE_DOMAIN + '/apis/servlet/DoWebTrans',
+            url: 'https://api.ccavenue.com/apis/servlet/DoWebTrans',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },

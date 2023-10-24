@@ -19,7 +19,7 @@ export class CheckStatusController {
             }
         } catch(e){
             // console.log(e);
-            throw new UnauthorizedException();
+            throw new UnauthorizedException(e.message);
         }
         
     }
