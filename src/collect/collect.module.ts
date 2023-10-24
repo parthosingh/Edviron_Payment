@@ -3,10 +3,11 @@ import { CollectController } from './collect.controller';
 import { CollectService } from './collect.service';
 import { PhonepeModule } from 'src/phonepe/phonepe.module';
 import { DatabaseModule } from 'src/database/database.module';
+import { HdfcModule } from 'src/hdfc/hdfc.module';
 
 @Module({
   controllers: [CollectController],
   providers: [CollectService],
-  imports: [PhonepeModule, DatabaseModule],
+  imports: [PhonepeModule, DatabaseModule, HdfcModule],
 })
 export class CollectModule {}

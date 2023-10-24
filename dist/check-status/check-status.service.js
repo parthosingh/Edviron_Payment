@@ -12,19 +12,28 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CheckStatusService = void 0;
 const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
+const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
+const hdfc_service_1 = require("../hdfc/hdfc.service");
 const phonepe_service_1 = require("../phonepe/phonepe.service");
 let CheckStatusService = class CheckStatusService {
-    constructor(databaseService, phonePeService) {
+    constructor(databaseService, hdfcService, phonePeService) {
         this.databaseService = databaseService;
+        this.hdfcService = hdfcService;
         this.phonePeService = phonePeService;
     }
     async checkStatus(transactionId) {
-        return await this.phonePeService.checkStatus(transactionId);
+        const collectRequest = await this.databaseService.CollectRequestModel.findById(transactionId);
+        switch (collectRequest?.gateway) {
+            case collect_request_schema_1.Gateway.HDFC:
+                return await this.hdfcService.checkStatus(transactionId);
+            case collect_request_schema_1.Gateway.PHONEPE:
+                return await this.phonePeService.checkStatus(transactionId);
+        }
     }
 };
 exports.CheckStatusService = CheckStatusService;
 exports.CheckStatusService = CheckStatusService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [database_service_1.DatabaseService, phonepe_service_1.PhonepeService])
+    __metadata("design:paramtypes", [database_service_1.DatabaseService, hdfc_service_1.HdfcService, phonepe_service_1.PhonepeService])
 ], CheckStatusService);
 //# sourceMappingURL=check-status.service.js.map

@@ -23,7 +23,6 @@ let PhonepeController = class PhonepeController {
         res.redirect((await this.databaseService.CollectRequestModel.findById(body.transactionId))?.callbackUrl);
     }
     async handleCallback(body) {
-        console.log(body);
         return "OK";
     }
 };

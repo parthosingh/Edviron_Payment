@@ -12,25 +12,29 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CollectService = void 0;
 const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
+const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
+const hdfc_service_1 = require("../hdfc/hdfc.service");
 const phonepe_service_1 = require("../phonepe/phonepe.service");
 let CollectService = class CollectService {
-    constructor(phonepeService, databaseService) {
+    constructor(phonepeService, hdfcService, databaseService) {
         this.phonepeService = phonepeService;
+        this.hdfcService = hdfcService;
         this.databaseService = databaseService;
     }
     async collect(amount, callbackUrl) {
         console.log("collect request for amount: " + amount + " received.");
         const request = await new this.databaseService.CollectRequestModel({
             amount,
-            callbackUrl
+            callbackUrl,
+            gateway: collect_request_schema_1.Gateway.HDFC
         }).save();
-        const transaction = await this.phonepeService.collect(request);
+        const transaction = await this.hdfcService.collect(request);
         return { url: transaction.url, request };
     }
 };
 exports.CollectService = CollectService;
 exports.CollectService = CollectService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [phonepe_service_1.PhonepeService, database_service_1.DatabaseService])
+    __metadata("design:paramtypes", [phonepe_service_1.PhonepeService, hdfc_service_1.HdfcService, database_service_1.DatabaseService])
 ], CollectService);
 //# sourceMappingURL=collect.service.js.map

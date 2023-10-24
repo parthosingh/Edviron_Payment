@@ -8,6 +8,7 @@ import axios from 'axios';
 import * as crypto from 'crypto';
 import { generate } from 'rxjs';
 import { TransactionStatus } from 'src/types/transactionStatus';
+import { GatewayService } from 'src/types/gateway.type';
 
 function encodeBase64(str: string) {
     const string = String(str);
@@ -31,7 +32,7 @@ function generateXVerify(apiEndpoint: string, encodedRequest: string) {
 
 
 @Injectable()
-export class PhonepeService {
+export class PhonepeService implements GatewayService {
     
     async collect(request: CollectRequest): Promise<Transaction>{
         const apiEndpoint = "/pg/v1/pay";
@@ -48,7 +49,6 @@ export class PhonepeService {
               "type": "PAY_PAGE"
             }
         }
-        console.log("payAPIRequest: ", payAPIRequest);
         const encodedRequest = encodeBase64(JSON.stringify(payAPIRequest));
         const xVerify = generateXVerify(apiEndpoint, encodedRequest);
         let data = JSON.stringify({
@@ -76,7 +76,7 @@ export class PhonepeService {
     async checkStatus(transactionId: String): Promise<{status: TransactionStatus, amount: number}>{
         const apiEndpoint = "/pg/v1/pay";
         const xVerify = sha256("/pg/v1/status/EDVIRONONLINE/"+transactionId+process.env.PHONEPE_SALT)+"###"+process.env.PHONEPE_SALT_INDEX;
-        console.log(xVerify);
+        // (xVerify);
           let config = {
             method: 'get',
             maxBodyLength: Infinity,
@@ -90,7 +90,6 @@ export class PhonepeService {
           };
           
           const res = await axios.request(config);
-          console.log(res.data)
           return {status: res.data.data.state, amount: res.data.data.amount};
     }
 }

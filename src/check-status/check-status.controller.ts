@@ -18,7 +18,7 @@ export class CheckStatusController {
                 return sign(await this.checkStatusService.checkStatus(transactionId));
             }
         } catch(e){
-            console.log(e.message);
+            // console.log(e);
             throw new UnauthorizedException();
         }
         

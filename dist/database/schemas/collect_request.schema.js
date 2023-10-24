@@ -9,8 +9,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CollectRequestSchema = exports.CollectRequest = void 0;
+exports.CollectRequestSchema = exports.CollectRequest = exports.Gateway = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
+var Gateway;
+(function (Gateway) {
+    Gateway["PHONEPE"] = "PHONEPE";
+    Gateway["HDFC"] = "HDFC";
+})(Gateway || (exports.Gateway = Gateway = {}));
 let CollectRequest = class CollectRequest {
 };
 exports.CollectRequest = CollectRequest;
@@ -30,6 +35,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "callbackUrl", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, default: Gateway.PHONEPE }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "gateway", void 0);
 exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequest);

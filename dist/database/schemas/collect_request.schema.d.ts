@@ -23,11 +23,16 @@
 /// <reference types="mongoose/types/virtuals" />
 /// <reference types="mongoose/types/inferschematype" />
 import { ObjectId } from 'mongoose';
+export declare enum Gateway {
+    PHONEPE = "PHONEPE",
+    HDFC = "HDFC"
+}
 export declare class CollectRequest {
     amount: number;
     createdAt?: Date;
     updatedAt?: Date;
     callbackUrl: string;
+    gateway: Gateway;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;

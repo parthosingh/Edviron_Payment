@@ -6,9 +6,10 @@ import { PhonepeService } from './phonepe/phonepe.service';
 import { DatabaseModule } from './database/database.module';
 import { PhonepeModule } from './phonepe/phonepe.module';
 import { CheckStatusModule } from './check-status/check-status.module';
+import { HdfcModule } from './hdfc/hdfc.module';
 
 @Module({
-  imports: [CollectModule, DatabaseModule, PhonepeModule, CheckStatusModule],
+  imports: [CollectModule, DatabaseModule, PhonepeModule, CheckStatusModule, HdfcModule],
   controllers: [AppController],
   providers: [AppService],
 })

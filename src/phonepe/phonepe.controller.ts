@@ -11,7 +11,6 @@ export class PhonepeController {
     }
     @Post("/callback")
     async handleCallback(@Body() body: any){
-        console.log(body);
         return "OK";
     }
 }

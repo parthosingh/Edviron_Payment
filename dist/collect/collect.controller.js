@@ -37,14 +37,11 @@ let CollectController = class CollectController {
             })) {
                 throw new Error("Request forged");
             }
-            else {
-                return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl));
-            }
         }
         catch (e) {
-            console.log(e.message);
             throw new common_1.UnauthorizedException();
         }
+        return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl));
     }
 };
 exports.CollectController = CollectController;

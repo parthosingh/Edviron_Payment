@@ -21,12 +21,12 @@ export class CollectController {
                 callbackUrl
             })){
                 throw new Error("Request forged");
-            } else{
-                return sign(await this.collectService.collect(amount, callbackUrl));
             }
         } catch(e){
-            console.log(e.message);
+            // console.log(e.message);
             throw new UnauthorizedException();
         }
+        return sign(await this.collectService.collect(amount, callbackUrl));
+
     }    
 }

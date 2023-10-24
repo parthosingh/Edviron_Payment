@@ -1,6 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ObjectId } from 'mongoose';
 
+export enum Gateway {
+    PHONEPE = "PHONEPE",
+    HDFC = "HDFC"
+}
+
 @Schema({ timestamps: true })
 export class CollectRequest {
     @Prop({required: true})
@@ -14,6 +19,9 @@ export class CollectRequest {
 
     @Prop({required: true})
     callbackUrl: string;
+
+    @Prop({required: true, default: Gateway.PHONEPE})
+    gateway: Gateway
 
     _id: ObjectId;
 }

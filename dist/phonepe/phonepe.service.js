@@ -42,7 +42,6 @@ let PhonepeService = class PhonepeService {
                 "type": "PAY_PAGE"
             }
         };
-        console.log("payAPIRequest: ", payAPIRequest);
         const encodedRequest = encodeBase64(JSON.stringify(payAPIRequest));
         const xVerify = generateXVerify(apiEndpoint, encodedRequest);
         let data = JSON.stringify({
@@ -67,7 +66,6 @@ let PhonepeService = class PhonepeService {
     async checkStatus(transactionId) {
         const apiEndpoint = "/pg/v1/pay";
         const xVerify = sha256("/pg/v1/status/EDVIRONONLINE/" + transactionId + process.env.PHONEPE_SALT) + "###" + process.env.PHONEPE_SALT_INDEX;
-        console.log(xVerify);
         let config = {
             method: 'get',
             maxBodyLength: Infinity,
@@ -80,7 +78,6 @@ let PhonepeService = class PhonepeService {
             },
         };
         const res = await axios_1.default.request(config);
-        console.log(res.data);
         return { status: res.data.data.state, amount: res.data.data.amount };
     }
 };

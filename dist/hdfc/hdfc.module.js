@@ -6,21 +6,20 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CollectModule = void 0;
+exports.HdfcModule = void 0;
 const common_1 = require("@nestjs/common");
-const collect_controller_1 = require("./collect.controller");
-const collect_service_1 = require("./collect.service");
-const phonepe_module_1 = require("../phonepe/phonepe.module");
+const hdfc_service_1 = require("./hdfc.service");
 const database_module_1 = require("../database/database.module");
-const hdfc_module_1 = require("../hdfc/hdfc.module");
-let CollectModule = class CollectModule {
+const hdfc_controller_1 = require("./hdfc.controller");
+let HdfcModule = class HdfcModule {
 };
-exports.CollectModule = CollectModule;
-exports.CollectModule = CollectModule = __decorate([
+exports.HdfcModule = HdfcModule;
+exports.HdfcModule = HdfcModule = __decorate([
     (0, common_1.Module)({
-        controllers: [collect_controller_1.CollectController],
-        providers: [collect_service_1.CollectService],
-        imports: [phonepe_module_1.PhonepeModule, database_module_1.DatabaseModule, hdfc_module_1.HdfcModule],
+        imports: [database_module_1.DatabaseModule],
+        exports: [hdfc_service_1.HdfcService],
+        providers: [hdfc_service_1.HdfcService],
+        controllers: [hdfc_controller_1.HdfcController]
     })
-], CollectModule);
-//# sourceMappingURL=collect.module.js.map
+], HdfcModule);
+//# sourceMappingURL=hdfc.module.js.map
