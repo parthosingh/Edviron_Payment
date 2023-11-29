@@ -10,6 +10,7 @@ exports.PhonepeService = void 0;
 const common_1 = require("@nestjs/common");
 const axios_1 = require("axios");
 const crypto = require("crypto");
+const transactionStatus_1 = require("../types/transactionStatus");
 function encodeBase64(str) {
     const string = String(str);
     const buffer = Buffer.from(string);
@@ -78,7 +79,10 @@ let PhonepeService = class PhonepeService {
             },
         };
         const res = await axios_1.default.request(config);
-        return { status: res.data.data.state, amount: res.data.data.amount };
+        const is_completed = res.data.data.state === "COMPLETED";
+        const is_pending = res.data.data.state === "PENDING";
+        const txStatus = is_completed ? transactionStatus_1.TransactionStatus.SUCCESS : is_pending ? transactionStatus_1.TransactionStatus.PENDING : transactionStatus_1.TransactionStatus.FAILURE;
+        return { status: txStatus, amount: res.data.data.amount };
     }
 };
 exports.PhonepeService = PhonepeService;

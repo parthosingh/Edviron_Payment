@@ -88,8 +88,10 @@ export class PhonepeService implements GatewayService {
               'X-MERCHANT-ID': 'EDVIRONONLINE'
             },
           };
-          
           const res = await axios.request(config);
-          return {status: res.data.data.state, amount: res.data.data.amount};
+          const is_completed = res.data.data.state === "COMPLETED";
+          const is_pending = res.data.data.state === "PENDING";
+          const txStatus = is_completed?TransactionStatus.SUCCESS:is_pending?TransactionStatus.PENDING:TransactionStatus.FAILURE;
+          return {status: txStatus, amount: res.data.data.amount};
     }
 }
