@@ -82,7 +82,7 @@ let PhonepeService = class PhonepeService {
         const is_completed = res.data.data.state === "COMPLETED";
         const is_pending = res.data.data.state === "PENDING";
         const txStatus = is_completed ? transactionStatus_1.TransactionStatus.SUCCESS : is_pending ? transactionStatus_1.TransactionStatus.PENDING : transactionStatus_1.TransactionStatus.FAILURE;
-        return { status: txStatus, amount: res.data.data.amount };
+        return { status: txStatus, amount: res.data.data.amount / 100 };
     }
 };
 exports.PhonepeService = PhonepeService;

@@ -92,6 +92,6 @@ export class PhonepeService implements GatewayService {
           const is_completed = res.data.data.state === "COMPLETED";
           const is_pending = res.data.data.state === "PENDING";
           const txStatus = is_completed?TransactionStatus.SUCCESS:is_pending?TransactionStatus.PENDING:TransactionStatus.FAILURE;
-          return {status: txStatus, amount: res.data.data.amount};
+          return {status: txStatus, amount: res.data.data.amount/100};
     }
 }
