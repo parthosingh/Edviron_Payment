@@ -13,10 +13,10 @@ export class CollectService {
         const request = await new this.databaseService.CollectRequestModel({
             amount,
             callbackUrl,
-            gateway: Gateway.HDFC
+            gateway: Gateway.PHONEPE
         }).save();
         // const transaction:Transaction = await this.phonepeService.collect(request);
-        const transaction:Transaction = await this.hdfcService.collect(request);
+        const transaction:Transaction = await this.phonepeService.collect(request);
         return {url: transaction.url, request}
     }
 }
