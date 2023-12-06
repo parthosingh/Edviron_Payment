@@ -28,7 +28,7 @@ let CollectService = class CollectService {
             callbackUrl,
             gateway: collect_request_schema_1.Gateway.PHONEPE
         }).save();
-        const transaction = await this.hdfcService.collect(request);
+        const transaction = await this.phonepeService.collect(request);
         return { url: transaction.url, request };
     }
 };
