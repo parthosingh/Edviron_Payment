@@ -26,9 +26,9 @@ let CollectService = class CollectService {
         const request = await new this.databaseService.CollectRequestModel({
             amount,
             callbackUrl,
-            gateway: collect_request_schema_1.Gateway.HDFC
+            gateway: collect_request_schema_1.Gateway.PHONEPE
         }).save();
-        const transaction = await this.hdfcService.collect(request);
+        const transaction = await this.phonepeService.collect(request);
         return { url: transaction.url, request };
     }
 };
