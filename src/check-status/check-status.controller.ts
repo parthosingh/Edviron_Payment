@@ -9,7 +9,7 @@ export class CheckStatusController {
     @Get("/")
     async checkStatus(@Query("transactionId") transactionId: String, @Query("jwt") jwt: string){
         try{
-            const decrypted = await _jwt.verify(jwt, process.env.KEY!);
+            const decrypted = _jwt.verify(jwt, process.env.KEY!);
             if(JSON.stringify(decrypted)!==JSON.stringify({
                 transactionId
             })){

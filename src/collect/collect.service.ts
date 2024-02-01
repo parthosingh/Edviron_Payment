@@ -4,18 +4,26 @@ import { CollectRequest, Gateway } from 'src/database/schemas/collect_request.sc
 import { HdfcService } from 'src/hdfc/hdfc.service';
 import { PhonepeService } from 'src/phonepe/phonepe.service';
 import { Transaction } from 'src/types/transaction';
+import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
 
 @Injectable()
 export class CollectService {
-    constructor(private readonly phonepeService: PhonepeService, private readonly hdfcService: HdfcService, private readonly databaseService: DatabaseService) {}
-    async collect(amount: Number, callbackUrl: String): Promise<{url: string, request: CollectRequest}>{
+    constructor(
+        private readonly phonepeService: PhonepeService,
+        private readonly hdfcService: HdfcService,
+        private readonly edvironPgService: EdvironPgService, 
+        private readonly databaseService: DatabaseService
+    ) {}
+    async collect(amount: Number, callbackUrl: string, clientId: string, clientSecret: string): Promise<{url: string, request: CollectRequest}>{
         console.log("collect request for amount: "+ amount+" received.");
         const request = await new this.databaseService.CollectRequestModel({
             amount,
             callbackUrl,
-            gateway: Gateway.PHONEPE
+            gateway: Gateway.EDVIRON_PG,
+            clientId,
+            clientSecret
         }).save();
-        const transaction:Transaction = await this.phonepeService.collect(request);
+        const transaction = (await this.edvironPgService.collect(request))!;
         return {url: transaction.url, request}
     }
 }

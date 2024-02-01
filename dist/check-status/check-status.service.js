@@ -15,25 +15,32 @@ const database_service_1 = require("../database/database.service");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const hdfc_service_1 = require("../hdfc/hdfc.service");
 const phonepe_service_1 = require("../phonepe/phonepe.service");
+const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 let CheckStatusService = class CheckStatusService {
-    constructor(databaseService, hdfcService, phonePeService) {
+    constructor(databaseService, hdfcService, phonePeService, edvironPgService) {
         this.databaseService = databaseService;
         this.hdfcService = hdfcService;
         this.phonePeService = phonePeService;
+        this.edvironPgService = edvironPgService;
     }
-    async checkStatus(transactionId) {
-        const collectRequest = await this.databaseService.CollectRequestModel.findById(transactionId);
+    async checkStatus(collect_request_id) {
+        const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_request_id);
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:
-                return await this.hdfcService.checkStatus(transactionId);
+                return await this.hdfcService.checkStatus(collect_request_id);
             case collect_request_schema_1.Gateway.PHONEPE:
-                return await this.phonePeService.checkStatus(transactionId);
+                return await this.phonePeService.checkStatus(collect_request_id);
+            case collect_request_schema_1.Gateway.EDVIRON_PG:
+                return await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
         }
     }
 };
 exports.CheckStatusService = CheckStatusService;
 exports.CheckStatusService = CheckStatusService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [database_service_1.DatabaseService, hdfc_service_1.HdfcService, phonepe_service_1.PhonepeService])
+    __metadata("design:paramtypes", [database_service_1.DatabaseService,
+        hdfc_service_1.HdfcService,
+        phonepe_service_1.PhonepeService,
+        edviron_pg_service_1.EdvironPgService])
 ], CheckStatusService);
 //# sourceMappingURL=check-status.service.js.map

@@ -4,10 +4,11 @@ import { CollectService } from './collect.service';
 import { PhonepeModule } from 'src/phonepe/phonepe.module';
 import { DatabaseModule } from 'src/database/database.module';
 import { HdfcModule } from 'src/hdfc/hdfc.module';
+import { EdvironPgModule } from '../edviron-pg/edviron-pg.module';
 
 @Module({
   controllers: [CollectController],
   providers: [CollectService],
-  imports: [PhonepeModule, DatabaseModule, HdfcModule],
+  imports: [PhonepeModule, DatabaseModule, HdfcModule, EdvironPgModule],
 })
 export class CollectModule {}

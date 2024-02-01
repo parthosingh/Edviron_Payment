@@ -4,7 +4,9 @@ export declare class CollectController {
     constructor(collectService: CollectService);
     collect(body: {
         amount: Number;
-        callbackUrl: String;
+        callbackUrl: string;
         jwt: string;
+        clientId: string;
+        clientSecret: string;
     }): Promise<any>;
 }

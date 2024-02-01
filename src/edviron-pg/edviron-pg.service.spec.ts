@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CollectService } from './collect.service';
+import { EdvironPgService } from './edviron-pg.service';
 
-describe('CollectService', () => {
-  let service: CollectService;
+describe('EdvironPgService', () => {
+  let service: EdvironPgService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [CollectService],
+      providers: [EdvironPgService],
     }).compile();
 
-    service = module.get<CollectService>(CollectService);
+    service = module.get<EdvironPgService>(EdvironPgService);
   });
 
   it('should be defined', () => {

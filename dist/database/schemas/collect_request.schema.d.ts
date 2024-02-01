@@ -25,7 +25,8 @@
 import { ObjectId } from 'mongoose';
 export declare enum Gateway {
     PHONEPE = "PHONEPE",
-    HDFC = "HDFC"
+    HDFC = "HDFC",
+    EDVIRON_PG = "EDVIRON_PG"
 }
 export declare class CollectRequest {
     amount: number;
@@ -33,6 +34,8 @@ export declare class CollectRequest {
     updatedAt?: Date;
     callbackUrl: string;
     gateway: Gateway;
+    clientId: string;
+    clientSecret: string;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;

@@ -3,6 +3,6 @@ import { Transaction } from "./transaction"
 import { TransactionStatus } from "./transactionStatus"
 
 export type GatewayService = {
-    collect(request: CollectRequest): Promise<Transaction>
-    checkStatus(transactionId: String): Promise<{status: TransactionStatus, amount: number}>
+    collect(request: CollectRequest, ...args: any): Promise<Transaction | undefined>
+    checkStatus(transactionId: String, collect_request?: CollectRequest): Promise<{status: TransactionStatus, amount: number}>
 }

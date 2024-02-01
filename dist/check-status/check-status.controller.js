@@ -23,7 +23,7 @@ let CheckStatusController = class CheckStatusController {
     }
     async checkStatus(transactionId, jwt) {
         try {
-            const decrypted = await _jwt.verify(jwt, process.env.KEY);
+            const decrypted = _jwt.verify(jwt, process.env.KEY);
             if (JSON.stringify(decrypted) !== JSON.stringify({
                 transactionId
             })) {

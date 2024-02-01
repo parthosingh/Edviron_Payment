@@ -13,6 +13,7 @@ const collect_service_1 = require("./collect.service");
 const phonepe_module_1 = require("../phonepe/phonepe.module");
 const database_module_1 = require("../database/database.module");
 const hdfc_module_1 = require("../hdfc/hdfc.module");
+const edviron_pg_module_1 = require("../edviron-pg/edviron-pg.module");
 let CollectModule = class CollectModule {
 };
 exports.CollectModule = CollectModule;
@@ -20,7 +21,7 @@ exports.CollectModule = CollectModule = __decorate([
     (0, common_1.Module)({
         controllers: [collect_controller_1.CollectController],
         providers: [collect_service_1.CollectService],
-        imports: [phonepe_module_1.PhonepeModule, database_module_1.DatabaseModule, hdfc_module_1.HdfcModule],
+        imports: [phonepe_module_1.PhonepeModule, database_module_1.DatabaseModule, hdfc_module_1.HdfcModule, edviron_pg_module_1.EdvironPgModule],
     })
 ], CollectModule);
 //# sourceMappingURL=collect.module.js.map

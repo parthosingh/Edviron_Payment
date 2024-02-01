@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Body, Controller, ForbiddenException, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
 import { CollectService } from './collect.service';
 import * as _jwt from "jsonwebtoken";
 import {sign} from "../utils/sign";
@@ -6,27 +6,29 @@ import {sign} from "../utils/sign";
 export class CollectController {
     constructor(private readonly collectService: CollectService){}
     @Post("/")
-    async collect(@Body() body: {amount: Number, callbackUrl: String, jwt: string}){
-        const {amount, callbackUrl, jwt} = body;
-        if(!amount || !callbackUrl || !jwt) throw new BadRequestException("Invalid request");
+    async collect(@Body() body: {amount: Number, callbackUrl: string, jwt: string, clientId: string, clientSecret: string}){
+        const {amount, callbackUrl, jwt, clientId, clientSecret} = body;
+        if(!jwt) throw new BadRequestException("JWT not provided");
+        if(!amount) throw new BadRequestException("Amount not provided");
+        if(!callbackUrl) throw new BadRequestException("Callback url not provided");
         // console.log(body);
         try{
-            const decrypted = await _jwt.verify(jwt, process.env.KEY!);
-            console.log(JSON.stringify(decrypted), JSON.stringify({
-                amount,
-                callbackUrl
-            }));
+            if(!clientId) throw new BadRequestException("Client id not provided");
+            if(!clientSecret) throw new BadRequestException("Client secret not provided");
+            const decrypted = _jwt.verify(jwt, process.env.KEY!);
             if(JSON.stringify(decrypted)!==JSON.stringify({
                 amount,
-                callbackUrl
+                callbackUrl,
+                clientId,
+                clientSecret
             })){
-                throw new Error("Request forged");
+                throw new ForbiddenException("Request forged");
             }
         } catch(e){
-            // console.log(e.message);
-            throw new UnauthorizedException();
+            if(e.name==="JsonWebTokenError") throw new UnauthorizedException("JWT invalid");
+            throw e;
         }
-        return sign(await this.collectService.collect(amount, callbackUrl));
+        return sign(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret));
 
     }    
 }

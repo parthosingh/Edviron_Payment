@@ -22,26 +22,34 @@ let CollectController = class CollectController {
         this.collectService = collectService;
     }
     async collect(body) {
-        const { amount, callbackUrl, jwt } = body;
-        if (!amount || !callbackUrl || !jwt)
-            throw new common_1.BadRequestException("Invalid request");
+        const { amount, callbackUrl, jwt, clientId, clientSecret } = body;
+        if (!jwt)
+            throw new common_1.BadRequestException("JWT not provided");
+        if (!amount)
+            throw new common_1.BadRequestException("Amount not provided");
+        if (!callbackUrl)
+            throw new common_1.BadRequestException("Callback url not provided");
         try {
-            const decrypted = await _jwt.verify(jwt, process.env.KEY);
-            console.log(JSON.stringify(decrypted), JSON.stringify({
-                amount,
-                callbackUrl
-            }));
+            if (!clientId)
+                throw new common_1.BadRequestException("Client id not provided");
+            if (!clientSecret)
+                throw new common_1.BadRequestException("Client secret not provided");
+            const decrypted = _jwt.verify(jwt, process.env.KEY);
             if (JSON.stringify(decrypted) !== JSON.stringify({
                 amount,
-                callbackUrl
+                callbackUrl,
+                clientId,
+                clientSecret
             })) {
-                throw new Error("Request forged");
+                throw new common_1.ForbiddenException("Request forged");
             }
         }
         catch (e) {
-            throw new common_1.UnauthorizedException();
+            if (e.name === "JsonWebTokenError")
+                throw new common_1.UnauthorizedException("JWT invalid");
+            throw e;
         }
-        return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl));
+        return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret));
     }
 };
 exports.CollectController = CollectController;

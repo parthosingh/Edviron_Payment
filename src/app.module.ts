@@ -7,9 +7,10 @@ import { DatabaseModule } from './database/database.module';
 import { PhonepeModule } from './phonepe/phonepe.module';
 import { CheckStatusModule } from './check-status/check-status.module';
 import { HdfcModule } from './hdfc/hdfc.module';
+import { EdvironPgModule } from './edviron-pg/edviron-pg.module';
 
 @Module({
-  imports: [CollectModule, DatabaseModule, PhonepeModule, CheckStatusModule, HdfcModule],
+  imports: [CollectModule, DatabaseModule, PhonepeModule, CheckStatusModule, HdfcModule, EdvironPgModule],
   controllers: [AppController],
   providers: [AppService],
 })

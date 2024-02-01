@@ -13,6 +13,7 @@ const check_status_service_1 = require("./check-status.service");
 const database_module_1 = require("../database/database.module");
 const phonepe_module_1 = require("../phonepe/phonepe.module");
 const hdfc_module_1 = require("../hdfc/hdfc.module");
+const edviron_pg_module_1 = require("../edviron-pg/edviron-pg.module");
 let CheckStatusModule = class CheckStatusModule {
 };
 exports.CheckStatusModule = CheckStatusModule;
@@ -20,7 +21,7 @@ exports.CheckStatusModule = CheckStatusModule = __decorate([
     (0, common_1.Module)({
         controllers: [check_status_controller_1.CheckStatusController],
         providers: [check_status_service_1.CheckStatusService],
-        imports: [database_module_1.DatabaseModule, phonepe_module_1.PhonepeModule, hdfc_module_1.HdfcModule],
+        imports: [database_module_1.DatabaseModule, phonepe_module_1.PhonepeModule, hdfc_module_1.HdfcModule, edviron_pg_module_1.EdvironPgModule],
     })
 ], CheckStatusModule);
 //# sourceMappingURL=check-status.module.js.map

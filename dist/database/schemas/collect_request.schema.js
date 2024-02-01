@@ -15,6 +15,7 @@ var Gateway;
 (function (Gateway) {
     Gateway["PHONEPE"] = "PHONEPE";
     Gateway["HDFC"] = "HDFC";
+    Gateway["EDVIRON_PG"] = "EDVIRON_PG";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let CollectRequest = class CollectRequest {
 };
@@ -39,6 +40,14 @@ __decorate([
     (0, mongoose_1.Prop)({ required: true, default: Gateway.PHONEPE }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "gateway", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "clientId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "clientSecret", void 0);
 exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequest);

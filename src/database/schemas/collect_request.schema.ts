@@ -3,7 +3,8 @@ import { ObjectId } from 'mongoose';
 
 export enum Gateway {
     PHONEPE = "PHONEPE",
-    HDFC = "HDFC"
+    HDFC = "HDFC",
+    EDVIRON_PG = "EDVIRON_PG"
 }
 
 @Schema({ timestamps: true })
@@ -22,6 +23,12 @@ export class CollectRequest {
 
     @Prop({required: true, default: Gateway.PHONEPE})
     gateway: Gateway
+
+    @Prop({required: false})
+    clientId: string;
+
+    @Prop({required: false})
+    clientSecret: string;
 
     _id: ObjectId;
 }
