@@ -24,7 +24,7 @@ let EdvironPgController = class EdvironPgController {
     async handleRedirect(req, res) {
         res.send(`<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://pg.edviron.com/${req.query.session_id}";
+                    location.href = "https://dev.pg.edviron.com?session_id=${req.query.session_id}";
                 }
             </script>`);
     }
