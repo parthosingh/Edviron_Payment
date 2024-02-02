@@ -74,9 +74,13 @@ let EdvironPgService = class EdvironPgService {
             "TERMINATED": transactionStatus_1.TransactionStatus.FAILURE,
             "TERMINATION_REQUESTED": transactionStatus_1.TransactionStatus.FAILURE
         };
+        console.log({ cashfreeRes });
         return {
             status: order_status_to_transaction_status_map[cashfreeRes.order_status],
-            amount: cashfreeRes.order_amount
+            amount: cashfreeRes.order_amount,
+            details: {
+                payment_methods: cashfreeRes.order_meta.payment_methods
+            }
         };
     }
 };

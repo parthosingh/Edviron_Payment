@@ -29,13 +29,14 @@ let CollectController = class CollectController {
             throw new common_1.BadRequestException("Amount not provided");
         if (!callbackUrl)
             throw new common_1.BadRequestException("Callback url not provided");
+        console.log(body);
         try {
             if (!clientId)
                 throw new common_1.BadRequestException("Client id not provided");
             if (!clientSecret)
                 throw new common_1.BadRequestException("Client secret not provided");
             const decrypted = _jwt.verify(jwt, process.env.KEY);
-            if (JSON.stringify(decrypted) !== JSON.stringify({
+            if ((JSON.stringify({ ...JSON.parse(JSON.stringify(decrypted)), iat: undefined, exp: undefined })) !== JSON.stringify({
                 amount,
                 callbackUrl,
                 clientId,

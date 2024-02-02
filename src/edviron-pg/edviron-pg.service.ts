@@ -48,7 +48,7 @@ export class EdvironPgService implements GatewayService {
         }
         
     }
-    async checkStatus(collect_request_id: String, collect_request: CollectRequest): Promise<{ status: TransactionStatus; amount: number; }> {
+    async checkStatus(collect_request_id: String, collect_request: CollectRequest): Promise<{ status: TransactionStatus; amount: number; details?: any }> {
         const axios = require('axios');
         
         let config = {
@@ -63,6 +63,7 @@ export class EdvironPgService implements GatewayService {
             }
         };
 
+
         const { data: cashfreeRes } = await axios.request(config);
 
         const order_status_to_transaction_status_map = {
@@ -72,9 +73,14 @@ export class EdvironPgService implements GatewayService {
             "TERMINATED": TransactionStatus.FAILURE,
             "TERMINATION_REQUESTED": TransactionStatus.FAILURE
         }
+
+        console.log({cashfreeRes})
         return {
             status: order_status_to_transaction_status_map[cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map],
-            amount: cashfreeRes.order_amount
+            amount: cashfreeRes.order_amount,
+            details: {
+                payment_methods: cashfreeRes.order_meta.payment_methods
+            }
         }
     }
 }

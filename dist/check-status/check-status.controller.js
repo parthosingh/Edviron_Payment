@@ -22,27 +22,26 @@ let CheckStatusController = class CheckStatusController {
         this.checkStatusService = checkStatusService;
     }
     async checkStatus(transactionId, jwt) {
-        try {
-            const decrypted = _jwt.verify(jwt, process.env.KEY);
-            if (JSON.stringify(decrypted) !== JSON.stringify({
-                transactionId
+        const decrypted = _jwt.verify(jwt, process.env.KEY);
+        if (JSON.stringify({
+            transactionId: decrypted.transactionId,
+        }) !==
+            JSON.stringify({
+                transactionId,
             })) {
-                throw new Error("Request forged");
-            }
-            else {
-                return (0, sign_1.sign)(await this.checkStatusService.checkStatus(transactionId));
-            }
+            throw new Error('Request forged');
         }
-        catch (e) {
-            throw new common_1.UnauthorizedException(e.message);
+        else {
+            const status = await this.checkStatusService.checkStatus(transactionId);
+            return (0, sign_1.sign)(status);
         }
     }
 };
 exports.CheckStatusController = CheckStatusController;
 __decorate([
-    (0, common_1.Get)("/"),
-    __param(0, (0, common_1.Query)("transactionId")),
-    __param(1, (0, common_1.Query)("jwt")),
+    (0, common_1.Get)('/'),
+    __param(0, (0, common_1.Query)('transactionId')),
+    __param(1, (0, common_1.Query)('jwt')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)

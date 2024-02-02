@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { HdfcService } from 'src/hdfc/hdfc.service';
@@ -14,7 +14,12 @@ export class CheckStatusService {
         private readonly edvironPgService: EdvironPgService
     ) {}
     async checkStatus(collect_request_id: String){
+        console.log("checking status", collect_request_id);
         const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_request_id);
+        if(!collectRequest) {
+            console.log("Collect request not found", collect_request_id);
+            throw new NotFoundException("Collect request not found");
+        }
         switch(collectRequest?.gateway){
             case Gateway.HDFC:
                 return await this.hdfcService.checkStatus(collect_request_id);

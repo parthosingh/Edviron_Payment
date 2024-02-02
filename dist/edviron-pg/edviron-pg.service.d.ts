@@ -8,5 +8,6 @@ export declare class EdvironPgService implements GatewayService {
     checkStatus(collect_request_id: String, collect_request: CollectRequest): Promise<{
         status: TransactionStatus;
         amount: number;
+        details?: any;
     }>;
 }

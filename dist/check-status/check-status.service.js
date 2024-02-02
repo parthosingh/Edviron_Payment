@@ -24,7 +24,12 @@ let CheckStatusService = class CheckStatusService {
         this.edvironPgService = edvironPgService;
     }
     async checkStatus(collect_request_id) {
+        console.log("checking status", collect_request_id);
         const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_request_id);
+        if (!collectRequest) {
+            console.log("Collect request not found", collect_request_id);
+            throw new common_1.NotFoundException("Collect request not found");
+        }
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:
                 return await this.hdfcService.checkStatus(collect_request_id);

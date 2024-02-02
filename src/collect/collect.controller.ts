@@ -11,12 +11,13 @@ export class CollectController {
         if(!jwt) throw new BadRequestException("JWT not provided");
         if(!amount) throw new BadRequestException("Amount not provided");
         if(!callbackUrl) throw new BadRequestException("Callback url not provided");
-        // console.log(body);
+        console.log(body);
         try{
             if(!clientId) throw new BadRequestException("Client id not provided");
             if(!clientSecret) throw new BadRequestException("Client secret not provided");
             const decrypted = _jwt.verify(jwt, process.env.KEY!);
-            if(JSON.stringify(decrypted)!==JSON.stringify({
+            
+            if((JSON.stringify({...JSON.parse(JSON.stringify(decrypted)), iat: undefined, exp: undefined}))!==JSON.stringify({
                 amount,
                 callbackUrl,
                 clientId,

@@ -11,5 +11,5 @@ export declare class CheckStatusService {
     checkStatus(collect_request_id: String): Promise<{
         status: import("../types/transactionStatus").TransactionStatus;
         amount: number;
-    } | undefined>;
+    }>;
 }
