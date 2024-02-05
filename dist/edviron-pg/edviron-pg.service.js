@@ -44,7 +44,7 @@ let EdvironPgService = class EdvironPgService {
             };
             const { data: cashfreeRes } = await axios.request(config);
             return {
-                url: process.env.URL + "/edviron-pg/redirect?session_id=" + cashfreeRes.payment_session_id
+                url: process.env.URL + "/edviron-pg/redirect?session_id=" + cashfreeRes.payment_session_id + "&collect_request_id=" + request._id + "&amount=" + request.amount
             };
         }
         catch (err) {

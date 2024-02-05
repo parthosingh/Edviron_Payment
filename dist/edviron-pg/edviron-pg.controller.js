@@ -24,7 +24,7 @@ let EdvironPgController = class EdvironPgController {
     async handleRedirect(req, res) {
         res.send(`<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://dev.pg.edviron.com?session_id=${req.query.session_id}";
+                    location.href = "https://dev.pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}";
                 }
             </script>`);
     }
@@ -44,7 +44,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "handleRedirect", null);
 __decorate([
-    (0, common_1.Post)("/callback"),
+    (0, common_1.Get)("/callback"),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),

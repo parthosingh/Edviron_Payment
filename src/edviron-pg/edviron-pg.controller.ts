@@ -10,13 +10,13 @@ export class EdvironPgController {
         res.send(
             `<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://dev.pg.edviron.com?session_id=${req.query.session_id}";
+                    location.href = "https://dev.pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}";
                 }
             </script>`
         )
     }
 
-    @Post("/callback")
+    @Get("/callback")
     async handleCallback(@Req() req: any, @Res() res: any) {
         const { collect_request_id } = req.query;
         const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_request_id);
