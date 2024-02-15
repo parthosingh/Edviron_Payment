@@ -23,7 +23,7 @@ let EdvironPgService = class EdvironPgService {
                     "customer_phone": "9898989898"
                 },
                 "order_currency": "INR",
-                "order_amount": request.amount,
+                "order_amount": request.amount.toFixed(2),
                 "order_id": request._id,
                 "order_meta": {
                     "return_url": process.env.URL + "/edviron-pg/callback?collect_request_id=" + request._id
@@ -45,12 +45,12 @@ let EdvironPgService = class EdvironPgService {
             const { data: cashfreeRes } = await axios.request(config);
             console.log({ cashfreeRes });
             return {
-                url: process.env.URL + "/edviron-pg/redirect?session_id=" + cashfreeRes.payment_session_id + "&collect_request_id=" + request._id + "&amount=" + request.amount
+                url: process.env.URL + "/edviron-pg/redirect?session_id=" + cashfreeRes.payment_session_id + "&collect_request_id=" + request._id + "&amount=" + request.amount.toFixed(2)
             };
         }
         catch (err) {
             if (err.name === "AxiosError")
-                throw new common_1.BadRequestException("Invalid client id or client secret");
+                throw new common_1.BadRequestException("Invalid client id or client secret " + JSON.stringify(err.response.data));
             console.log(err);
         }
     }
