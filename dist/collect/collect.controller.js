@@ -22,7 +22,8 @@ let CollectController = class CollectController {
         this.collectService = collectService;
     }
     async collect(body) {
-        const { amount, callbackUrl, jwt, clientId, clientSecret } = body;
+        const { amount, callbackUrl, jwt } = body;
+        let { clientId, clientSecret } = body;
         if (!jwt)
             throw new common_1.BadRequestException("JWT not provided");
         if (!amount)
@@ -32,9 +33,9 @@ let CollectController = class CollectController {
         console.log(body);
         try {
             if (!clientId)
-                throw new common_1.BadRequestException("Client id not provided");
+                clientId = "TEST10119699dfc4ac6a77923cff313499691101";
             if (!clientSecret)
-                throw new common_1.BadRequestException("Client secret not provided");
+                clientSecret = "cfsk_ma_test_b4a126dc34e6bdbf9a0ba9f0d27215c5_16889ba5";
             const decrypted = _jwt.verify(jwt, process.env.KEY);
             if ((JSON.stringify({ ...JSON.parse(JSON.stringify(decrypted)), iat: undefined, exp: undefined })) !== JSON.stringify({
                 amount,
