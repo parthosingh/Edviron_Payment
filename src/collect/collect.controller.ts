@@ -15,14 +15,7 @@ export class CollectController {
         console.log(body);
         try{
 
-            if(!clientId) clientId = "TEST10119699dfc4ac6a77923cff313499691101";
-            if(!clientSecret) clientSecret = "cfsk_ma_test_b4a126dc34e6bdbf9a0ba9f0d27215c5_16889ba5";
             let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
-            decrypted = {
-                ...decrypted,
-                clientId: decrypted.clientId || clientId,
-                clientSecret: decrypted.clientSecret || clientSecret
-            };
             if((JSON.stringify({...JSON.parse(JSON.stringify(decrypted)), iat: undefined, exp: undefined}))!==JSON.stringify({
                 amount,
                 callbackUrl,
@@ -32,6 +25,7 @@ export class CollectController {
                 throw new ForbiddenException("Request forged");
             }
         } catch(e){
+            console.log(e)
             if(e.name==="JsonWebTokenError") throw new UnauthorizedException("JWT invalid");
             throw e;
         }

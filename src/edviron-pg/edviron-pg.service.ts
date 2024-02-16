@@ -32,8 +32,8 @@ export class EdvironPgService implements GatewayService {
                 'accept': 'application/json',
                 'content-type': 'application/json',
                 'x-api-version': '2023-08-01',
-                'x-client-id': request.clientId,
-                'x-client-secret': request.clientSecret
+                'x-partner-merchantid': request.clientId,
+                'x-partner-apikey': process.env.CASHFREE_API_KEY
             },
             data: data
         };
