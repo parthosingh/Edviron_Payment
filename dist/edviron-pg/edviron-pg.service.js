@@ -63,8 +63,8 @@ let EdvironPgService = class EdvironPgService {
             headers: {
                 'accept': 'application/json',
                 'x-api-version': '2023-08-01',
-                'x-client-id': collect_request.clientId,
-                'x-client-secret': collect_request.clientSecret
+                'x-partner-merchantid': collect_request.clientId,
+                'x-partner-apikey': process.env.CASHFREE_API_KEY
             }
         };
         const { data: cashfreeRes } = await axios.request(config);
