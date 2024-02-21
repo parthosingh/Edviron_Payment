@@ -25,7 +25,7 @@ export class EdvironPgController {
 
     @Post("/webhook")
     async handleWebhook(@Body() body: any, @Res() res: any) {
-        console.log("webhook called with", {body})
+        console.log("webhook called with", {body: JSON.stringify(body)})
         res.send("OK");
     }
 }

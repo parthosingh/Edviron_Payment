@@ -34,7 +34,7 @@ let EdvironPgController = class EdvironPgController {
         res.redirect(collectRequest?.callbackUrl);
     }
     async handleWebhook(body, res) {
-        console.log("webhook called with", { body });
+        console.log("webhook called with", { body: JSON.stringify(body) });
         res.send("OK");
     }
 };
