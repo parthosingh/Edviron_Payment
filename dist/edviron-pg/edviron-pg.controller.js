@@ -33,6 +33,10 @@ let EdvironPgController = class EdvironPgController {
         const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_request_id);
         res.redirect(collectRequest?.callbackUrl);
     }
+    async handleWebhook(body, res) {
+        console.log("webhook called with", { body });
+        res.send("OK");
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -51,6 +55,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "handleCallback", null);
+__decorate([
+    (0, common_1.Post)("/webhook"),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "handleWebhook", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService, database_service_1.DatabaseService])

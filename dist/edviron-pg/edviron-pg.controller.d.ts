@@ -6,4 +6,5 @@ export declare class EdvironPgController {
     constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService);
     handleRedirect(req: any, res: any): Promise<void>;
     handleCallback(req: any, res: any): Promise<void>;
+    handleWebhook(body: any, res: any): Promise<void>;
 }

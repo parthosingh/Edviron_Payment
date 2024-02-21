@@ -22,4 +22,10 @@ export class EdvironPgController {
         const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_request_id);
         res.redirect(collectRequest?.callbackUrl);
     }
+
+    @Post("/webhook")
+    async handleWebhook(@Body() body: any, @Res() res: any) {
+        console.log("webhook called with", {body})
+        res.send("OK");
+    }
 }
