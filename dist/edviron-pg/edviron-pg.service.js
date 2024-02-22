@@ -18,15 +18,17 @@ let EdvironPgService = class EdvironPgService {
         try {
             const axios = require('axios');
             let data = JSON.stringify({
-                "customer_details": {
-                    "customer_id": "7112AAA812234",
-                    "customer_phone": "9898989898"
+                customer_details: {
+                    customer_id: '7112AAA812234',
+                    customer_phone: '9898989898',
                 },
-                "order_currency": "INR",
-                "order_amount": request.amount.toFixed(2),
-                "order_id": request._id,
-                "order_meta": {
-                    "return_url": process.env.URL + "/edviron-pg/callback?collect_request_id=" + request._id
+                order_currency: 'INR',
+                order_amount: request.amount.toFixed(2),
+                order_id: request._id,
+                order_meta: {
+                    return_url: process.env.URL +
+                        '/edviron-pg/callback?collect_request_id=' +
+                        request._id,
                 },
             });
             let config = {
@@ -34,23 +36,30 @@ let EdvironPgService = class EdvironPgService {
                 maxBodyLength: Infinity,
                 url: `${process.env.CASHFREE_ENDPOINT}/pg/orders`,
                 headers: {
-                    'accept': 'application/json',
+                    accept: 'application/json',
                     'content-type': 'application/json',
                     'x-api-version': '2023-08-01',
                     'x-partner-merchantid': request.clientId,
-                    'x-partner-apikey': process.env.CASHFREE_API_KEY
+                    'x-partner-apikey': process.env.CASHFREE_API_KEY,
                 },
-                data: data
+                data: data,
             };
             const { data: cashfreeRes } = await axios.request(config);
-            console.log({ cashfreeRes });
             return {
-                url: process.env.URL + "/edviron-pg/redirect?session_id=" + cashfreeRes.payment_session_id + "&collect_request_id=" + request._id + "&amount=" + request.amount.toFixed(2)
+                url: process.env.URL +
+                    '/edviron-pg/redirect?session_id=' +
+                    cashfreeRes.payment_session_id +
+                    '&collect_request_id=' +
+                    request._id +
+                    '&amount=' +
+                    request.amount.toFixed(2),
             };
         }
         catch (err) {
-            if (err.name === "AxiosError")
-                throw new common_1.BadRequestException("Invalid client id or client secret " + JSON.stringify(err.response.data));
+            console.log(err);
+            if (err.name === 'AxiosError')
+                throw new common_1.BadRequestException('Invalid client id or client secret ' +
+                    JSON.stringify(err.response.data));
             console.log(err);
         }
     }
@@ -61,27 +70,28 @@ let EdvironPgService = class EdvironPgService {
             maxBodyLength: Infinity,
             url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/` + collect_request_id,
             headers: {
-                'accept': 'application/json',
+                accept: 'application/json',
                 'x-api-version': '2023-08-01',
                 'x-partner-merchantid': collect_request.clientId,
-                'x-partner-apikey': process.env.CASHFREE_API_KEY
-            }
+                'x-partner-apikey': process.env.CASHFREE_API_KEY,
+            },
         };
         const { data: cashfreeRes } = await axios.request(config);
+        console.log({ cashfreeRes });
         const order_status_to_transaction_status_map = {
-            "ACTIVE": transactionStatus_1.TransactionStatus.PENDING,
-            "PAID": transactionStatus_1.TransactionStatus.SUCCESS,
-            "EXPIRED": transactionStatus_1.TransactionStatus.FAILURE,
-            "TERMINATED": transactionStatus_1.TransactionStatus.FAILURE,
-            "TERMINATION_REQUESTED": transactionStatus_1.TransactionStatus.FAILURE
+            ACTIVE: transactionStatus_1.TransactionStatus.PENDING,
+            PAID: transactionStatus_1.TransactionStatus.SUCCESS,
+            EXPIRED: transactionStatus_1.TransactionStatus.FAILURE,
+            TERMINATED: transactionStatus_1.TransactionStatus.FAILURE,
+            TERMINATION_REQUESTED: transactionStatus_1.TransactionStatus.FAILURE,
         };
         console.log({ cashfreeRes });
         return {
             status: order_status_to_transaction_status_map[cashfreeRes.order_status],
             amount: cashfreeRes.order_amount,
             details: {
-                payment_methods: cashfreeRes.order_meta.payment_methods
-            }
+                payment_methods: cashfreeRes.order_meta.payment_methods,
+            },
         };
     }
 };

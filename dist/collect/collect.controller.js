@@ -22,38 +22,41 @@ let CollectController = class CollectController {
         this.collectService = collectService;
     }
     async collect(body) {
-        const { amount, callbackUrl, jwt } = body;
-        let { clientId, clientSecret } = body;
+        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret } = body;
         if (!jwt)
-            throw new common_1.BadRequestException("JWT not provided");
+            throw new common_1.BadRequestException('JWT not provided');
         if (!amount)
-            throw new common_1.BadRequestException("Amount not provided");
+            throw new common_1.BadRequestException('Amount not provided');
         if (!callbackUrl)
-            throw new common_1.BadRequestException("Callback url not provided");
-        console.log(body);
+            throw new common_1.BadRequestException('Callback url not provided');
         try {
             let decrypted = _jwt.verify(jwt, process.env.KEY);
-            if ((JSON.stringify({ ...JSON.parse(JSON.stringify(decrypted)), iat: undefined, exp: undefined })) !== JSON.stringify({
-                amount,
-                callbackUrl,
-                clientId,
-                clientSecret
-            })) {
-                throw new common_1.ForbiddenException("Request forged");
+            if (JSON.stringify({
+                ...JSON.parse(JSON.stringify(decrypted)),
+                iat: undefined,
+                exp: undefined,
+            }) !==
+                JSON.stringify({
+                    amount,
+                    callbackUrl,
+                    clientId,
+                    clientSecret,
+                })) {
+                throw new common_1.ForbiddenException('Request forged');
             }
         }
         catch (e) {
             console.log(e);
-            if (e.name === "JsonWebTokenError")
-                throw new common_1.UnauthorizedException("JWT invalid");
+            if (e.name === 'JsonWebTokenError')
+                throw new common_1.UnauthorizedException('JWT invalid');
             throw e;
         }
-        return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret));
+        return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, webHook));
     }
 };
 exports.CollectController = CollectController;
 __decorate([
-    (0, common_1.Post)("/"),
+    (0, common_1.Post)('/'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

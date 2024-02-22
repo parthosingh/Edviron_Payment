@@ -16,6 +16,7 @@ const collect_request_schema_1 = require("../database/schemas/collect_request.sc
 const hdfc_service_1 = require("../hdfc/hdfc.service");
 const phonepe_service_1 = require("../phonepe/phonepe.service");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
+const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 let CollectService = class CollectService {
     constructor(phonepeService, hdfcService, edvironPgService, databaseService) {
         this.phonepeService = phonepeService;
@@ -23,14 +24,19 @@ let CollectService = class CollectService {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
     }
-    async collect(amount, callbackUrl, clientId, clientSecret) {
-        console.log("collect request for amount: " + amount + " received.");
+    async collect(amount, callbackUrl, clientId, clientSecret, webHook) {
+        console.log('collect request for amount: ' + amount + ' received.');
         const request = await new this.databaseService.CollectRequestModel({
             amount,
             callbackUrl,
             gateway: collect_request_schema_1.Gateway.EDVIRON_PG,
             clientId,
-            clientSecret
+            clientSecret,
+            webHookUrl: webHook || null,
+        }).save();
+        await new this.databaseService.CollectRequestStatusModel({
+            collect_id: request._id,
+            status: collect_req_status_schema_1.PaymentStatus.PENDING,
         }).save();
         const transaction = (await this.edvironPgService.collect(request));
         return { url: transaction.url, request };

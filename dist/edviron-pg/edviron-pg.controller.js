@@ -16,6 +16,9 @@ exports.EdvironPgController = void 0;
 const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const edviron_pg_service_1 = require("./edviron-pg.service");
+const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
+const sign_1 = require("../utils/sign");
+const axios_1 = require("axios");
 let EdvironPgController = class EdvironPgController {
     constructor(edvironPgService, databaseService) {
         this.edvironPgService = edvironPgService;
@@ -34,13 +37,59 @@ let EdvironPgController = class EdvironPgController {
         res.redirect(collectRequest?.callbackUrl);
     }
     async handleWebhook(body, res) {
-        console.log("webhook called with", { body: JSON.stringify(body) });
-        res.send("OK");
+        const { data: webHookData } = JSON.parse(JSON.stringify(body));
+        if (!webHookData)
+            throw new Error('Invalid webhook data');
+        const collect_id = webHookData.order.order_id;
+        const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!collectReq)
+            throw new Error('Collect request not found');
+        const saveWebhook = await new this.databaseService.WebhooksModel({
+            collect_id,
+            body: JSON.stringify(webHookData),
+        }).save();
+        const pendingCollectReq = await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id,
+        });
+        if (pendingCollectReq &&
+            pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.PENDING) {
+            console.log('No pending request found for', collect_id);
+            res.status(200).send('OK');
+            return;
+        }
+        const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
+        const { status } = reqToCheck;
+        const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
+            collect_id: collect_id,
+        }, {
+            $set: { status },
+        }, {
+            upsert: true,
+            new: true,
+        });
+        const webHookUrl = collectReq?.webHookUrl;
+        if (webHookUrl !== null) {
+            const amount = reqToCheck?.amount;
+            const webHookData = await (0, sign_1.sign)({ collect_id, amount, status });
+            const config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${webHookUrl}`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                },
+                data: webHookData,
+            };
+            const webHookSent = await axios_1.default.request(config);
+            console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
+        }
+        res.status(200).send('OK');
     }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
-    (0, common_1.Get)("/redirect"),
+    (0, common_1.Get)('/redirect'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
@@ -48,7 +97,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "handleRedirect", null);
 __decorate([
-    (0, common_1.Get)("/callback"),
+    (0, common_1.Get)('/callback'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
@@ -56,7 +105,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "handleCallback", null);
 __decorate([
-    (0, common_1.Post)("/webhook"),
+    (0, common_1.Post)('/webhook'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
@@ -65,6 +114,7 @@ __decorate([
 ], EdvironPgController.prototype, "handleWebhook", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
-    __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService, database_service_1.DatabaseService])
+    __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
+        database_service_1.DatabaseService])
 ], EdvironPgController);
 //# sourceMappingURL=edviron-pg.controller.js.map

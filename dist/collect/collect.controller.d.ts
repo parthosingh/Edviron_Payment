@@ -8,5 +8,6 @@ export declare class CollectController {
         jwt: string;
         clientId: string;
         clientSecret: string;
+        webHook?: string;
     }): Promise<any>;
 }

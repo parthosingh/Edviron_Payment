@@ -23,25 +23,16 @@
 /// <reference types="mongoose/types/virtuals" />
 /// <reference types="mongoose/types/inferschematype" />
 import { ObjectId } from 'mongoose';
-export declare enum Gateway {
-    PHONEPE = "PHONEPE",
-    HDFC = "HDFC",
-    EDVIRON_PG = "EDVIRON_PG"
-}
-export declare class CollectRequest {
-    amount: number;
+export declare class Webhooks {
+    collect_id: string;
     createdAt?: Date;
     updatedAt?: Date;
-    callbackUrl: string;
-    gateway: Gateway;
-    clientId: string;
-    clientSecret: string;
-    webHookUrl: string;
+    body: string;
     _id: ObjectId;
 }
-export type CollectRequestDocument = CollectRequest & Document;
-export declare const CollectRequestSchema: import("mongoose").Schema<CollectRequest, import("mongoose").Model<CollectRequest, any, any, any, import("mongoose").Document<unknown, any, CollectRequest> & CollectRequest & Required<{
+export type WebhooksDocument = Webhooks & Document;
+export declare const WebhooksSchema: import("mongoose").Schema<Webhooks, import("mongoose").Model<Webhooks, any, any, any, import("mongoose").Document<unknown, any, Webhooks> & Webhooks & Required<{
     _id: import("mongoose").Schema.Types.ObjectId;
-}>, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, CollectRequest, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<CollectRequest>> & import("mongoose").FlatRecord<CollectRequest> & Required<{
+}>, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Webhooks, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<Webhooks>> & import("mongoose").FlatRecord<Webhooks> & Required<{
     _id: import("mongoose").Schema.Types.ObjectId;
 }>>;
