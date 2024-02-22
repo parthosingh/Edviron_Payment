@@ -38,6 +38,7 @@ let EdvironPgController = class EdvironPgController {
     }
     async handleWebhook(body, res) {
         const { data: webHookData } = JSON.parse(JSON.stringify(body));
+        console.log(`webhook received with data ${webHookData}`);
         if (!webHookData)
             throw new Error('Invalid webhook data');
         const collect_id = webHookData.order.order_id;
