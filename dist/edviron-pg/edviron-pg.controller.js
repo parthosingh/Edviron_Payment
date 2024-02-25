@@ -19,6 +19,7 @@ const edviron_pg_service_1 = require("./edviron-pg.service");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const sign_1 = require("../utils/sign");
 const axios_1 = require("axios");
+const mongoose_1 = require("mongoose");
 let EdvironPgController = class EdvironPgController {
     constructor(edvironPgService, databaseService) {
         this.edvironPgService = edvironPgService;
@@ -42,6 +43,9 @@ let EdvironPgController = class EdvironPgController {
         if (!webHookData)
             throw new Error('Invalid webhook data');
         const collect_id = webHookData.order.order_id;
+        if (!mongoose_1.Types.ObjectId.isValid(collect_id)) {
+            throw new Error('collect_id is not valid');
+        }
         const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
         if (!collectReq)
             throw new Error('Collect request not found');

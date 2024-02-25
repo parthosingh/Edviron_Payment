@@ -5,6 +5,7 @@ import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { sign } from '../utils/sign';
 import axios from 'axios';
 import { Webhooks } from 'src/database/schemas/webhooks.schema';
+import { Types } from 'mongoose';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -42,6 +43,10 @@ export class EdvironPgController {
     if (!webHookData) throw new Error('Invalid webhook data');
 
     const collect_id = webHookData.order.order_id;
+
+    if (!Types.ObjectId.isValid(collect_id)) {
+      throw new Error('collect_id is not valid');
+    }
     const collectReq =
       await this.databaseService.CollectRequestModel.findById(collect_id);
     if (!collectReq) throw new Error('Collect request not found');
