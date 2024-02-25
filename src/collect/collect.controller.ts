@@ -25,7 +25,6 @@ export class CollectController {
       throw new BadRequestException('Callback url not provided');
     try {
       let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
-      //TODO check for webHook Url in json if coming from jwt
       if (
         JSON.stringify({
           ...JSON.parse(JSON.stringify(decrypted)),

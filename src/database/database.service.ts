@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { CollectRequest, CollectRequestDocument } from './schemas/collect_request.schema';
 import { Model } from 'mongoose';
-import { Webhooks } from './schemas/webhooks.schema';
+import { Webhooks, WebhooksDocument } from './schemas/webhooks.schema';
 import {
   CollectRequestStatus,
   CollectRequestStatusDocument,
@@ -14,7 +14,7 @@ export class DatabaseService {
     @InjectModel(CollectRequest.name)
     public CollectRequestModel: Model<CollectRequestDocument>,
     @InjectModel(Webhooks.name)
-    public WebhooksModel: Model<CollectRequestDocument>,
+    public WebhooksModel: Model<WebhooksDocument>,
     @InjectModel(CollectRequestStatus.name)
     public CollectRequestStatusModel: Model<CollectRequestStatusDocument>,
   ) {}
