@@ -17,15 +17,23 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const collect_request_schema_1 = require("./schemas/collect_request.schema");
 const mongoose_2 = require("mongoose");
+const webhooks_schema_1 = require("./schemas/webhooks.schema");
+const collect_req_status_schema_1 = require("./schemas/collect_req_status.schema");
 let DatabaseService = class DatabaseService {
-    constructor(CollectRequestModel) {
+    constructor(CollectRequestModel, WebhooksModel, CollectRequestStatusModel) {
         this.CollectRequestModel = CollectRequestModel;
+        this.WebhooksModel = WebhooksModel;
+        this.CollectRequestStatusModel = CollectRequestStatusModel;
     }
 };
 exports.DatabaseService = DatabaseService;
 exports.DatabaseService = DatabaseService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(collect_request_schema_1.CollectRequest.name)),
-    __metadata("design:paramtypes", [mongoose_2.Model])
+    __param(1, (0, mongoose_1.InjectModel)(webhooks_schema_1.Webhooks.name)),
+    __param(2, (0, mongoose_1.InjectModel)(collect_req_status_schema_1.CollectRequestStatus.name)),
+    __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
+        mongoose_2.Model])
 ], DatabaseService);
 //# sourceMappingURL=database.service.js.map

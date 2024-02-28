@@ -23,25 +23,21 @@
 /// <reference types="mongoose/types/virtuals" />
 /// <reference types="mongoose/types/inferschematype" />
 import { ObjectId } from 'mongoose';
-export declare enum Gateway {
-    PHONEPE = "PHONEPE",
-    HDFC = "HDFC",
-    EDVIRON_PG = "EDVIRON_PG"
+export declare enum PaymentStatus {
+    SUCCESS = "SUCCESS",
+    FAIL = "FAIL",
+    PENDING = "PENDING"
 }
-export declare class CollectRequest {
-    amount: number;
+export declare class CollectRequestStatus {
     createdAt?: Date;
     updatedAt?: Date;
-    callbackUrl: string;
-    gateway: Gateway;
-    clientId: string;
-    clientSecret: string;
-    webHookUrl: string;
+    collect_id: string;
+    status: PaymentStatus;
     _id: ObjectId;
 }
-export type CollectRequestDocument = CollectRequest & Document;
-export declare const CollectRequestSchema: import("mongoose").Schema<CollectRequest, import("mongoose").Model<CollectRequest, any, any, any, import("mongoose").Document<unknown, any, CollectRequest> & CollectRequest & Required<{
+export type CollectRequestStatusDocument = CollectRequestStatus & Document;
+export declare const CollectRequestStatusSchema: import("mongoose").Schema<CollectRequestStatus, import("mongoose").Model<CollectRequestStatus, any, any, any, import("mongoose").Document<unknown, any, CollectRequestStatus> & CollectRequestStatus & Required<{
     _id: import("mongoose").Schema.Types.ObjectId;
-}>, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, CollectRequest, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<CollectRequest>> & import("mongoose").FlatRecord<CollectRequest> & Required<{
+}>, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, CollectRequestStatus, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<CollectRequestStatus>> & import("mongoose").FlatRecord<CollectRequestStatus> & Required<{
     _id: import("mongoose").Schema.Types.ObjectId;
 }>>;

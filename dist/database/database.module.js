@@ -12,6 +12,8 @@ const mongoose_1 = require("@nestjs/mongoose");
 const collect_request_schema_1 = require("./schemas/collect_request.schema");
 const database_service_1 = require("./database.service");
 const dotenv = require("dotenv");
+const collect_req_status_schema_1 = require("./schemas/collect_req_status.schema");
+const webhooks_schema_1 = require("./schemas/webhooks.schema");
 dotenv.config();
 let DatabaseModule = class DatabaseModule {
 };
@@ -20,14 +22,30 @@ exports.DatabaseModule = DatabaseModule = __decorate([
     (0, common_1.Module)({
         imports: [
             mongoose_1.MongooseModule.forRoot(process.env.MONGODB_URI),
-            mongoose_1.MongooseModule.forFeature([{ name: collect_request_schema_1.CollectRequest.name, schema: collect_request_schema_1.CollectRequestSchema }]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: collect_request_schema_1.CollectRequest.name, schema: collect_request_schema_1.CollectRequestSchema },
+            ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: collect_req_status_schema_1.CollectRequestStatus.name, schema: collect_req_status_schema_1.CollectRequestStatusSchema },
+            ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: webhooks_schema_1.Webhooks.name, schema: webhooks_schema_1.WebhooksSchema },
+            ]),
         ],
         providers: [database_service_1.DatabaseService],
         exports: [
             database_service_1.DatabaseService,
             mongoose_1.MongooseModule.forRoot(process.env.MONGODB_URI),
-            mongoose_1.MongooseModule.forFeature([{ name: collect_request_schema_1.CollectRequest.name, schema: collect_request_schema_1.CollectRequestSchema }]),
-        ]
+            mongoose_1.MongooseModule.forFeature([
+                { name: collect_request_schema_1.CollectRequest.name, schema: collect_request_schema_1.CollectRequestSchema },
+            ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: collect_req_status_schema_1.CollectRequestStatus.name, schema: collect_req_status_schema_1.CollectRequestStatusSchema },
+            ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: webhooks_schema_1.Webhooks.name, schema: webhooks_schema_1.WebhooksSchema },
+            ]),
+        ],
     })
 ], DatabaseModule);
 //# sourceMappingURL=database.module.js.map

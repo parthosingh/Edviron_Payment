@@ -9,28 +9,31 @@ export enum Gateway {
 
 @Schema({ timestamps: true })
 export class CollectRequest {
-    @Prop({required: true})
-    amount: number;
+  @Prop({ required: true })
+  amount: number;
 
-    @Prop()
-    createdAt?: Date;
+  @Prop()
+  createdAt?: Date;
 
-    @Prop()
-    updatedAt?: Date;
+  @Prop()
+  updatedAt?: Date;
 
-    @Prop({required: true})
-    callbackUrl: string;
+  @Prop({ required: true })
+  callbackUrl: string;
 
-    @Prop({required: true, default: Gateway.PHONEPE})
-    gateway: Gateway
+  @Prop({ required: true, default: Gateway.PHONEPE })
+  gateway: Gateway;
 
-    @Prop({required: false})
-    clientId: string;
+  @Prop({ required: false })
+  clientId: string;
 
-    @Prop({required: false})
-    clientSecret: string;
+  @Prop({ required: false })
+  clientSecret: string;
 
-    _id: ObjectId;
+  @Prop({ required: false })
+  webHookUrl: string;
+
+  _id: ObjectId;
 }
 
 export type CollectRequestDocument = CollectRequest & Document;
