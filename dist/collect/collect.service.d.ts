@@ -9,7 +9,7 @@ export declare class CollectService {
     private readonly edvironPgService;
     private readonly databaseService;
     constructor(phonepeService: PhonepeService, hdfcService: HdfcService, edvironPgService: EdvironPgService, databaseService: DatabaseService);
-    collect(amount: Number, callbackUrl: string, clientId: string, clientSecret: string, webHook?: string): Promise<{
+    collect(amount: Number, callbackUrl: string, clientId: string, clientSecret: string, webHook?: string, disabled_modes?: string[]): Promise<{
         url: string;
         request: CollectRequest;
     }>;

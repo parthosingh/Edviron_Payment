@@ -21,8 +21,9 @@ export class CollectService {
     clientId: string,
     clientSecret: string,
     webHook?: string,
+    disabled_modes: string[] = [],
   ): Promise<{ url: string; request: CollectRequest }> {
-    console.log('collect request for amount: ' + amount + ' received.');
+    console.log('collect request for amount: ' + amount + ' received.', {disabled_modes});
     const request = await new this.databaseService.CollectRequestModel({
       amount,
       callbackUrl,
@@ -30,6 +31,7 @@ export class CollectService {
       clientId,
       clientSecret,
       webHookUrl: webHook || null,
+      disabled_modes,
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({

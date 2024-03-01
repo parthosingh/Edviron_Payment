@@ -22,7 +22,7 @@ let CollectController = class CollectController {
         this.collectService = collectService;
     }
     async collect(body) {
-        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret } = body;
+        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes } = body;
         if (!jwt)
             throw new common_1.BadRequestException('JWT not provided');
         if (!amount)
@@ -30,6 +30,7 @@ let CollectController = class CollectController {
         if (!callbackUrl)
             throw new common_1.BadRequestException('Callback url not provided');
         try {
+            console.log(disabled_modes);
             let decrypted = _jwt.verify(jwt, process.env.KEY);
             if (JSON.stringify({
                 ...JSON.parse(JSON.stringify(decrypted)),
@@ -51,7 +52,7 @@ let CollectController = class CollectController {
                 throw new common_1.UnauthorizedException('JWT invalid');
             throw e;
         }
-        return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, webHook));
+        return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, webHook, disabled_modes));
     }
 };
 exports.CollectController = CollectController;

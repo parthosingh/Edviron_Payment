@@ -9,5 +9,6 @@ export declare class CollectController {
         clientId: string;
         clientSecret: string;
         webHook?: string;
+        disabled_modes?: string[];
     }): Promise<any>;
 }

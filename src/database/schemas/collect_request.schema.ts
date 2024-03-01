@@ -33,6 +33,9 @@ export class CollectRequest {
   @Prop({ required: false })
   webHookUrl: string;
 
+  @Prop({ required: true, default: [] })
+  disabled_modes: string[];
+
   _id: ObjectId;
 }
 

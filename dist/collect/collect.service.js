@@ -24,8 +24,8 @@ let CollectService = class CollectService {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
     }
-    async collect(amount, callbackUrl, clientId, clientSecret, webHook) {
-        console.log('collect request for amount: ' + amount + ' received.');
+    async collect(amount, callbackUrl, clientId, clientSecret, webHook, disabled_modes = []) {
+        console.log('collect request for amount: ' + amount + ' received.', { disabled_modes });
         const request = await new this.databaseService.CollectRequestModel({
             amount,
             callbackUrl,
@@ -33,6 +33,7 @@ let CollectService = class CollectService {
             clientId,
             clientSecret,
             webHookUrl: webHook || null,
+            disabled_modes,
         }).save();
         await new this.databaseService.CollectRequestStatusModel({
             collect_id: request._id,

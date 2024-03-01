@@ -37,6 +37,7 @@ export declare class CollectRequest {
     clientId: string;
     clientSecret: string;
     webHookUrl: string;
+    disabled_modes: string[];
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;
