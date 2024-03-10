@@ -47,13 +47,24 @@ let EdvironPgService = class EdvironPgService {
             const { data: cashfreeRes } = await axios.request(config);
             const disabled_modes_string = request.disabled_modes.map((mode) => `${mode}=false`).join("&");
             return {
+<<<<<<< HEAD
                 url: process.env.URL + "/edviron-pg/redirect?session_id=" + cashfreeRes.payment_session_id + "&collect_request_id=" + request._id + "&amount=" + request.amount.toFixed(2) + "&" + disabled_modes_string,
+=======
+                url: process.env.URL +
+                    '/edviron-pg/redirect?session_id=' +
+                    cashfreeRes.payment_session_id +
+                    '&collect_request_id=' +
+                    request._id +
+                    '&amount=' +
+                    request.amount.toFixed(2),
+>>>>>>> b73ba4c (transactions-report)
             };
         }
         catch (err) {
             console.log(err);
-            if (err.name === "AxiosError")
-                throw new common_1.BadRequestException("Invalid client id or client secret " + JSON.stringify(err.response.data));
+            if (err.name === 'AxiosError')
+                throw new common_1.BadRequestException('Invalid client id or client secret ' +
+                    JSON.stringify(err.response.data));
             console.log(err);
         }
     }
@@ -66,8 +77,13 @@ let EdvironPgService = class EdvironPgService {
             headers: {
                 accept: 'application/json',
                 'x-api-version': '2023-08-01',
+<<<<<<< HEAD
                 'x-partner-merchantid': collect_request.clientId,
                 'x-partner-apikey': process.env.CASHFREE_API_KEY,
+=======
+                'x-client-id': process.env.CASHFREE_CLIENT_ID,
+                'x-client-secret': process.env.CASHFREE_CLIENT_SECRET,
+>>>>>>> 6d5155b (transactions-report)
             },
         };
         const { data: cashfreeRes } = await axios.request(config);

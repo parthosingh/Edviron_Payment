@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { EdvironPgService } from './edviron-pg.service';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
@@ -6,6 +15,7 @@ import { sign } from '../utils/sign';
 import axios from 'axios';
 import { Webhooks } from 'src/database/schemas/webhooks.schema';
 import { Types } from 'mongoose';
+import * as jwt from 'jsonwebtoken';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -38,11 +48,14 @@ export class EdvironPgController {
   async handleWebhook(@Body() body: any, @Res() res: any) {
     const { data: webHookData } = JSON.parse(JSON.stringify(body));
 
-    console.log(`webhook received with data ${webHookData}`);
+    console.log(body);
+
+    //console.log(`webhook received with data ${webHookData}`);
 
     if (!webHookData) throw new Error('Invalid webhook data');
 
     const collect_id = webHookData.order.order_id;
+    console.log('collect_id', collect_id);
 
     if (!Types.ObjectId.isValid(collect_id)) {
       throw new Error('collect_id is not valid');
@@ -50,6 +63,10 @@ export class EdvironPgController {
     const collectReq =
       await this.databaseService.CollectRequestModel.findById(collect_id);
     if (!collectReq) throw new Error('Collect request not found');
+
+    const transaction_amount = webHookData.payment.payment_amount;
+    const payment_method = webHookData.payment.payment_group;
+    console.log(transaction_amount, payment_method);
 
     const saveWebhook = await new this.databaseService.WebhooksModel({
       collect_id,
@@ -74,12 +91,16 @@ export class EdvironPgController {
       collectReq,
     );
 
+    console.log('req', reqToCheck);
+
     const { status } = reqToCheck;
 
     const updateReq =
       await this.databaseService.CollectRequestStatusModel.updateOne(
         {
           collect_id: collect_id,
+          transaction_amount,
+          payment_method,
         },
         {
           $set: { status },
@@ -94,7 +115,7 @@ export class EdvironPgController {
 
     if (webHookUrl !== null) {
       const amount = reqToCheck?.amount;
-
+      //TODO:Sign using a different key
       const webHookData = await sign({ collect_id, amount, status });
       const config = {
         method: 'post',
@@ -110,5 +131,58 @@ export class EdvironPgController {
       console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
     }
     res.status(200).send('OK');
+  }
+
+  @Post('transactions-report')
+  async transactionsReport(
+    @Body()
+    body: {
+      client_id: string;
+      token: string;
+    },
+    @Res() res: any,
+  ) {
+    //console.log('hit');
+    const { client_id, token } = body;
+    if (!jwt) throw new Error('JWT not provided');
+
+    try {
+      let decrypted = jwt.verify(token, process.env.KEY!) as any;
+      if (
+        JSON.stringify({
+          ...JSON.parse(JSON.stringify(decrypted)),
+          iat: undefined,
+          exp: undefined,
+        }) !==
+        JSON.stringify({
+          client_id,
+        })
+      ) {
+        throw new ForbiddenException('Request forged');
+      }
+
+      const orders = await this.databaseService.CollectRequestModel.find({
+        clientId: client_id,
+      }).select('_id');
+
+      //console.log('orders', orders);
+      if (orders.length == 0) {
+        console.log('No orders found for client_id', client_id);
+        res.status(200).send('No orders found for clientId');
+        return;
+      }
+
+      const orderIds = orders.map((order: any) => order._id.toString());
+      const transactions =
+        await this.databaseService.CollectRequestStatusModel.find({
+          collect_id: { $in: orderIds },
+        }).select('-_id -__v -createdAt');
+      res.status(201).send(transactions);
+    } catch (error) {
+      console.log(error);
+      if (error.name === 'JsonWebTokenError')
+        throw new UnauthorizedException('JWT invalid');
+      throw error;
+    }
   }
 }

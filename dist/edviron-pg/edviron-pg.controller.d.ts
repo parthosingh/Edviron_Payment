@@ -7,4 +7,8 @@ export declare class EdvironPgController {
     handleRedirect(req: any, res: any): Promise<void>;
     handleCallback(req: any, res: any): Promise<void>;
     handleWebhook(body: any, res: any): Promise<void>;
+    transactionsReport(body: {
+        client_id: string;
+        token: string;
+    }, res: any): Promise<void>;
 }

@@ -37,6 +37,9 @@ export class CollectService {
     await new this.databaseService.CollectRequestStatusModel({
       collect_id: request._id,
       status: PaymentStatus.PENDING,
+      order_amount: request.amount,
+      transaction_amount: request.amount,
+      payment_method: null,
     }).save();
     const transaction = (await this.edvironPgService.collect(request))!;
     return { url: transaction.url, request };

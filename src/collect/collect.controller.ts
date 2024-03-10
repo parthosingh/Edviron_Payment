@@ -1,7 +1,16 @@
-import { BadRequestException, Body, Controller, ForbiddenException, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  ForbiddenException,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CollectService } from './collect.service';
-import * as _jwt from "jsonwebtoken";
-import {sign} from "../utils/sign";
+import * as _jwt from 'jsonwebtoken';
+import { sign } from '../utils/sign';
 @Controller('collect')
 export class CollectController {
   constructor(private readonly collectService: CollectService) {}
@@ -18,14 +27,22 @@ export class CollectController {
       disabled_modes?: string[];
     },
   ) {
-    const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes } = body;
+    const {
+      amount,
+      callbackUrl,
+      jwt,
+      webHook,
+      clientId,
+      clientSecret,
+      disabled_modes,
+    } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
     if (!callbackUrl)
       throw new BadRequestException('Callback url not provided');
     try {
-      console.log(disabled_modes)
+      console.log(disabled_modes);
       let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
       if (
         JSON.stringify({
@@ -42,21 +59,20 @@ export class CollectController {
       ) {
         throw new ForbiddenException('Request forged');
       }
+      return sign(
+        await this.collectService.collect(
+          amount,
+          callbackUrl,
+          clientId,
+          clientSecret,
+          webHook,
+        ),
+      );
     } catch (e) {
       console.log(e);
       if (e.name === 'JsonWebTokenError')
         throw new UnauthorizedException('JWT invalid');
       throw e;
     }
-    return sign(
-      await this.collectService.collect(
-        amount,
-        callbackUrl,
-        clientId,
-        clientSecret,
-        webHook,
-        disabled_modes
-      ),
-    );
   }
 }

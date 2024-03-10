@@ -33,6 +33,9 @@ export declare class CollectRequestStatus {
     updatedAt?: Date;
     collect_id: string;
     status: PaymentStatus;
+    order_amount: Number;
+    transaction_amount: Number;
+    payment_method: String;
     _id: ObjectId;
 }
 export type CollectRequestStatusDocument = CollectRequestStatus & Document;

@@ -20,6 +20,7 @@ const collect_req_status_schema_1 = require("../database/schemas/collect_req_sta
 const sign_1 = require("../utils/sign");
 const axios_1 = require("axios");
 const mongoose_1 = require("mongoose");
+const jwt = require("jsonwebtoken");
 let EdvironPgController = class EdvironPgController {
     constructor(edvironPgService, databaseService) {
         this.edvironPgService = edvironPgService;
@@ -39,16 +40,20 @@ let EdvironPgController = class EdvironPgController {
     }
     async handleWebhook(body, res) {
         const { data: webHookData } = JSON.parse(JSON.stringify(body));
-        console.log(`webhook received with data ${webHookData}`);
+        console.log(body);
         if (!webHookData)
             throw new Error('Invalid webhook data');
         const collect_id = webHookData.order.order_id;
+        console.log('collect_id', collect_id);
         if (!mongoose_1.Types.ObjectId.isValid(collect_id)) {
             throw new Error('collect_id is not valid');
         }
         const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
         if (!collectReq)
             throw new Error('Collect request not found');
+        const transaction_amount = webHookData.payment.payment_amount;
+        const payment_method = webHookData.payment.payment_group;
+        console.log(transaction_amount, payment_method);
         const saveWebhook = await new this.databaseService.WebhooksModel({
             collect_id,
             body: JSON.stringify(webHookData),
@@ -63,9 +68,12 @@ let EdvironPgController = class EdvironPgController {
             return;
         }
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
+        console.log('req', reqToCheck);
         const { status } = reqToCheck;
         const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
             collect_id: collect_id,
+            transaction_amount,
+            payment_method,
         }, {
             $set: { status },
         }, {
@@ -90,6 +98,43 @@ let EdvironPgController = class EdvironPgController {
             console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
         }
         res.status(200).send('OK');
+    }
+    async transactionsReport(body, res) {
+        const { client_id, token } = body;
+        if (!jwt)
+            throw new Error('JWT not provided');
+        try {
+            let decrypted = jwt.verify(token, process.env.KEY);
+            if (JSON.stringify({
+                ...JSON.parse(JSON.stringify(decrypted)),
+                iat: undefined,
+                exp: undefined,
+            }) !==
+                JSON.stringify({
+                    client_id,
+                })) {
+                throw new common_1.ForbiddenException('Request forged');
+            }
+            const orders = await this.databaseService.CollectRequestModel.find({
+                clientId: client_id,
+            }).select('_id');
+            if (orders.length == 0) {
+                console.log('No orders found for client_id', client_id);
+                res.status(200).send('No orders found for clientId');
+                return;
+            }
+            const orderIds = orders.map((order) => order._id.toString());
+            const transactions = await this.databaseService.CollectRequestStatusModel.find({
+                collect_id: { $in: orderIds },
+            }).select('-_id -__v -createdAt');
+            res.status(201).send(transactions);
+        }
+        catch (error) {
+            console.log(error);
+            if (error.name === 'JsonWebTokenError')
+                throw new common_1.UnauthorizedException('JWT invalid');
+            throw error;
+        }
     }
 };
 exports.EdvironPgController = EdvironPgController;
@@ -117,6 +162,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "handleWebhook", null);
+__decorate([
+    (0, common_1.Post)('transactions-report'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "transactionsReport", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

@@ -21,6 +21,15 @@ export class CollectRequestStatus {
   @Prop({ required: true })
   status: PaymentStatus;
 
+  @Prop({ required: true })
+  order_amount: Number;
+
+  @Prop({ required: true })
+  transaction_amount: Number;
+
+  @Prop({ required: false, default: '' })
+  payment_method: String;
+
   _id: ObjectId;
 }
 

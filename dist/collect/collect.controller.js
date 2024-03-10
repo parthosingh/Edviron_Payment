@@ -45,6 +45,7 @@ let CollectController = class CollectController {
                 })) {
                 throw new common_1.ForbiddenException('Request forged');
             }
+            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, webHook));
         }
         catch (e) {
             console.log(e);
@@ -52,7 +53,10 @@ let CollectController = class CollectController {
                 throw new common_1.UnauthorizedException('JWT invalid');
             throw e;
         }
+<<<<<<< HEAD
         return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, webHook, disabled_modes));
+=======
+>>>>>>> b73ba4c (transactions-report)
     }
 };
 exports.CollectController = CollectController;

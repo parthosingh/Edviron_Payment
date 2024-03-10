@@ -41,18 +41,31 @@ export class EdvironPgService implements GatewayService {
         data: data,
       };
 
-            const { data: cashfreeRes } = await axios.request(config);
-            const disabled_modes_string = request.disabled_modes.map((mode) => `${mode}=false`).join("&");
-        return {
-            url: process.env.URL + "/edviron-pg/redirect?session_id=" + cashfreeRes.payment_session_id + "&collect_request_id=" + request._id + "&amount=" + request.amount.toFixed(2) +"&" + disabled_modes_string,
-        }
-        } catch(err){
-            console.log(err);
-            if(err.name==="AxiosError") throw new BadRequestException("Invalid client id or client secret "+JSON.stringify(err.response.data));
-            console.log(err);
-        }
-        
-    
+      const { data: cashfreeRes } = await axios.request(config);
+      const disabled_modes_string = request.disabled_modes
+        .map((mode) => `${mode}=false`)
+        .join('&');
+      return {
+        url:
+          process.env.URL +
+          '/edviron-pg/redirect?session_id=' +
+          cashfreeRes.payment_session_id +
+          '&collect_request_id=' +
+          request._id +
+          '&amount=' +
+          request.amount.toFixed(2) +
+          '&' +
+          disabled_modes_string,
+      };
+    } catch (err) {
+      console.log(err);
+      if (err.name === 'AxiosError')
+        throw new BadRequestException(
+          'Invalid client id or client secret ' +
+            JSON.stringify(err.response.data),
+        );
+      console.log(err);
+    }
   }
   async checkStatus(
     collect_request_id: String,
