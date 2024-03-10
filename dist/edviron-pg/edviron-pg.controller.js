@@ -161,7 +161,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "handleWebhook", null);
 __decorate([
-    (0, common_1.Post)('transactions-report'),
+    (0, common_1.Get)('transactions-report'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),

@@ -131,7 +131,7 @@ export class EdvironPgController {
     res.status(200).send('OK');
   }
 
-  @Post('transactions-report')
+  @Get('transactions-report')
   async transactionsReport(
     @Body()
     body: {
