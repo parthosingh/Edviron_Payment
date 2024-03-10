@@ -45,19 +45,19 @@ let EdvironPgService = class EdvironPgService {
                 data: data,
             };
             const { data: cashfreeRes } = await axios.request(config);
-            const disabled_modes_string = request.disabled_modes.map((mode) => `${mode}=false`).join("&");
+            const disabled_modes_string = request.disabled_modes
+                .map((mode) => `${mode}=false`)
+                .join('&');
             return {
-<<<<<<< HEAD
-                url: process.env.URL + "/edviron-pg/redirect?session_id=" + cashfreeRes.payment_session_id + "&collect_request_id=" + request._id + "&amount=" + request.amount.toFixed(2) + "&" + disabled_modes_string,
-=======
                 url: process.env.URL +
                     '/edviron-pg/redirect?session_id=' +
                     cashfreeRes.payment_session_id +
                     '&collect_request_id=' +
                     request._id +
                     '&amount=' +
-                    request.amount.toFixed(2),
->>>>>>> b73ba4c (transactions-report)
+                    request.amount.toFixed(2) +
+                    '&' +
+                    disabled_modes_string,
             };
         }
         catch (err) {

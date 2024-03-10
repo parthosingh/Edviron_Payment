@@ -51,8 +51,8 @@ let EdvironPgController = class EdvironPgController {
         const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
         if (!collectReq)
             throw new Error('Collect request not found');
-        const transaction_amount = webHookData.payment.payment_amount;
-        const payment_method = webHookData.payment.payment_group;
+        const transaction_amount = webHookData?.payment?.payment_amount || null;
+        const payment_method = webHookData?.payment?.payment_group || null;
         console.log(transaction_amount, payment_method);
         const saveWebhook = await new this.databaseService.WebhooksModel({
             collect_id,
@@ -72,10 +72,8 @@ let EdvironPgController = class EdvironPgController {
         const { status } = reqToCheck;
         const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
             collect_id: collect_id,
-            transaction_amount,
-            payment_method,
         }, {
-            $set: { status },
+            $set: { status, transaction_amount, payment_method },
         }, {
             upsert: true,
             new: true,
