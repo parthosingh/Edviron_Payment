@@ -11,6 +11,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CollectRequestStatusSchema = exports.CollectRequestStatus = exports.PaymentStatus = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
+const mongoose_2 = require("mongoose");
+const collect_request_schema_1 = require("./collect_request.schema");
 var PaymentStatus;
 (function (PaymentStatus) {
     PaymentStatus["SUCCESS"] = "SUCCESS";
@@ -29,8 +31,12 @@ __decorate([
     __metadata("design:type", Date)
 ], CollectRequestStatus.prototype, "updatedAt", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
-    __metadata("design:type", String)
+    (0, mongoose_1.Prop)({
+        required: true,
+        ref: 'CollectRequest',
+        type: mongoose_2.default.Schema.Types.ObjectId,
+    }),
+    __metadata("design:type", collect_request_schema_1.CollectRequest)
 ], CollectRequestStatus.prototype, "collect_id", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),

@@ -1,28 +1,5 @@
-/// <reference types="mongoose/types/aggregate" />
-/// <reference types="mongoose/types/callback" />
-/// <reference types="mongoose/types/collection" />
-/// <reference types="mongoose/types/connection" />
-/// <reference types="mongoose/types/cursor" />
-/// <reference types="mongoose/types/document" />
-/// <reference types="mongoose/types/error" />
-/// <reference types="mongoose/types/expressions" />
-/// <reference types="mongoose/types/helpers" />
-/// <reference types="mongoose/types/middlewares" />
-/// <reference types="mongoose/types/indexes" />
-/// <reference types="mongoose/types/models" />
-/// <reference types="mongoose/types/mongooseoptions" />
-/// <reference types="mongoose/types/pipelinestage" />
-/// <reference types="mongoose/types/populate" />
-/// <reference types="mongoose/types/query" />
-/// <reference types="mongoose/types/schemaoptions" />
-/// <reference types="mongoose/types/schematypes" />
-/// <reference types="mongoose/types/session" />
-/// <reference types="mongoose/types/types" />
-/// <reference types="mongoose/types/utility" />
-/// <reference types="mongoose/types/validation" />
-/// <reference types="mongoose/types/virtuals" />
-/// <reference types="mongoose/types/inferschematype" />
-import { ObjectId } from 'mongoose';
+import mongoose, { ObjectId } from 'mongoose';
+import { CollectRequest } from './collect_request.schema';
 export declare enum PaymentStatus {
     SUCCESS = "SUCCESS",
     FAIL = "FAIL",
@@ -31,7 +8,7 @@ export declare enum PaymentStatus {
 export declare class CollectRequestStatus {
     createdAt?: Date;
     updatedAt?: Date;
-    collect_id: string;
+    collect_id: CollectRequest;
     status: PaymentStatus;
     order_amount: Number;
     transaction_amount: Number;
@@ -39,8 +16,8 @@ export declare class CollectRequestStatus {
     _id: ObjectId;
 }
 export type CollectRequestStatusDocument = CollectRequestStatus & Document;
-export declare const CollectRequestStatusSchema: import("mongoose").Schema<CollectRequestStatus, import("mongoose").Model<CollectRequestStatus, any, any, any, import("mongoose").Document<unknown, any, CollectRequestStatus> & CollectRequestStatus & Required<{
-    _id: import("mongoose").Schema.Types.ObjectId;
-}>, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, CollectRequestStatus, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<CollectRequestStatus>> & import("mongoose").FlatRecord<CollectRequestStatus> & Required<{
-    _id: import("mongoose").Schema.Types.ObjectId;
+export declare const CollectRequestStatusSchema: mongoose.Schema<CollectRequestStatus, mongoose.Model<CollectRequestStatus, any, any, any, mongoose.Document<unknown, any, CollectRequestStatus> & CollectRequestStatus & Required<{
+    _id: mongoose.Schema.Types.ObjectId;
+}>, any>, {}, {}, {}, {}, mongoose.DefaultSchemaOptions, CollectRequestStatus, mongoose.Document<unknown, {}, mongoose.FlatRecord<CollectRequestStatus>> & mongoose.FlatRecord<CollectRequestStatus> & Required<{
+    _id: mongoose.Schema.Types.ObjectId;
 }>>;

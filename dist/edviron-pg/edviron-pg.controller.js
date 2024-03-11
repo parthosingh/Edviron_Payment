@@ -40,26 +40,26 @@ let EdvironPgController = class EdvironPgController {
     }
     async handleWebhook(body, res) {
         const { data: webHookData } = JSON.parse(JSON.stringify(body));
-        console.log(body);
+        console.log(`webhook received with data ${body}`);
         if (!webHookData)
             throw new Error('Invalid webhook data');
         const collect_id = webHookData.order.order_id;
         console.log('collect_id', collect_id);
-        if (!mongoose_1.Types.ObjectId.isValid(collect_id)) {
+        const collectIdObject = new mongoose_1.Types.ObjectId(collect_id);
+        if (!mongoose_1.Types.ObjectId.isValid(collectIdObject)) {
             throw new Error('collect_id is not valid');
         }
-        const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
+        const collectReq = await this.databaseService.CollectRequestModel.findById(collectIdObject);
         if (!collectReq)
             throw new Error('Collect request not found');
         const transaction_amount = webHookData?.payment?.payment_amount || null;
         const payment_method = webHookData?.payment?.payment_group || null;
-        console.log(transaction_amount, payment_method);
         const saveWebhook = await new this.databaseService.WebhooksModel({
-            collect_id,
+            collect_id: collectIdObject,
             body: JSON.stringify(webHookData),
         }).save();
         const pendingCollectReq = await this.databaseService.CollectRequestStatusModel.findOne({
-            collect_id,
+            collect_id: collectIdObject,
         });
         if (pendingCollectReq &&
             pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.PENDING) {
@@ -71,7 +71,7 @@ let EdvironPgController = class EdvironPgController {
         console.log('req', reqToCheck);
         const { status } = reqToCheck;
         const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
-            collect_id: collect_id,
+            collect_id: collectIdObject,
         }, {
             $set: { status, transaction_amount, payment_method },
         }, {
@@ -121,7 +121,7 @@ let EdvironPgController = class EdvironPgController {
                 res.status(200).send('No orders found for clientId');
                 return;
             }
-            const orderIds = orders.map((order) => order._id.toString());
+            const orderIds = orders.map((order) => order._id);
             const transactions = await this.databaseService.CollectRequestStatusModel.find({
                 collect_id: { $in: orderIds },
             }).select('-_id -__v -createdAt');

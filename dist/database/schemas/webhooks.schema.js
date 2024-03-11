@@ -11,12 +11,18 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WebhooksSchema = exports.Webhooks = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
+const mongoose_2 = require("mongoose");
+const collect_request_schema_1 = require("./collect_request.schema");
 let Webhooks = class Webhooks {
 };
 exports.Webhooks = Webhooks;
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
-    __metadata("design:type", String)
+    (0, mongoose_1.Prop)({
+        required: true,
+        type: mongoose_2.default.Schema.Types.ObjectId,
+        ref: 'CollectRequest',
+    }),
+    __metadata("design:type", collect_request_schema_1.CollectRequest)
 ], Webhooks.prototype, "collect_id", void 0);
 __decorate([
     (0, mongoose_1.Prop)(),

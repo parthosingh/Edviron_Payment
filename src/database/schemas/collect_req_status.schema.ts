@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { ObjectId } from 'mongoose';
+import mongoose, { ObjectId } from 'mongoose';
+import { CollectRequest } from './collect_request.schema';
 
 export enum PaymentStatus {
   SUCCESS = 'SUCCESS',
@@ -15,8 +16,12 @@ export class CollectRequestStatus {
   @Prop()
   updatedAt?: Date;
 
-  @Prop({ required: true })
-  collect_id: string;
+  @Prop({
+    required: true,
+    ref: 'CollectRequest',
+    type: mongoose.Schema.Types.ObjectId,
+  })
+  collect_id: CollectRequest;
 
   @Prop({ required: true })
   status: PaymentStatus;
@@ -36,3 +41,4 @@ export class CollectRequestStatus {
 export type CollectRequestStatusDocument = CollectRequestStatus & Document;
 export const CollectRequestStatusSchema =
   SchemaFactory.createForClass(CollectRequestStatus);
+
