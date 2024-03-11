@@ -39,13 +39,12 @@ let EdvironPgController = class EdvironPgController {
         res.redirect(collectRequest?.callbackUrl);
     }
     async handleWebhook(body, res) {
-        console.log(body);
         const { data: webHookData } = JSON.parse(JSON.stringify(body));
-        console.log(`webhook received with data ${body}`);
+        console.log('webhook received with data', { body });
         if (!webHookData)
             throw new Error('Invalid webhook data');
         console.log('webHookData', webHookData);
-        const collect_id = webHookData.order.order_id;
+        const collect_id = webHookData.order.order_id || body.order.order_id;
         console.log('collect_id', collect_id);
         const collectIdObject = new mongoose_1.Types.ObjectId(collect_id);
         if (!mongoose_1.Types.ObjectId.isValid(collectIdObject)) {
