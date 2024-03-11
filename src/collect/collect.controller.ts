@@ -66,6 +66,7 @@ export class CollectController {
           clientId,
           clientSecret,
           webHook,
+          disabled_modes,
         ),
       );
     } catch (e) {

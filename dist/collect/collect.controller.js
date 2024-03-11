@@ -45,7 +45,7 @@ let CollectController = class CollectController {
                 })) {
                 throw new common_1.ForbiddenException('Request forged');
             }
-            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, webHook));
+            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, webHook, disabled_modes));
         }
         catch (e) {
             console.log(e);
