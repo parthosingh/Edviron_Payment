@@ -43,13 +43,11 @@ let EdvironPgController = class EdvironPgController {
         console.log('webhook received with data', { body });
         if (!webHookData)
             throw new Error('Invalid webhook data');
-        console.log('webHookData', webHookData);
         const collect_id = webHookData.order.order_id || body.order.order_id;
-        console.log('collect_id', collect_id);
-        const collectIdObject = new mongoose_1.Types.ObjectId(collect_id);
-        if (!mongoose_1.Types.ObjectId.isValid(collectIdObject)) {
+        if (!mongoose_1.Types.ObjectId.isValid(collect_id)) {
             throw new Error('collect_id is not valid');
         }
+        const collectIdObject = new mongoose_1.Types.ObjectId(collect_id);
         const collectReq = await this.databaseService.CollectRequestModel.findById(collectIdObject);
         if (!collectReq)
             throw new Error('Collect request not found');
@@ -69,7 +67,6 @@ let EdvironPgController = class EdvironPgController {
             return;
         }
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
-        console.log('req', reqToCheck);
         const { status } = reqToCheck;
         const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
             collect_id: collectIdObject,
@@ -100,8 +97,8 @@ let EdvironPgController = class EdvironPgController {
     }
     async transactionsReport(body, res) {
         const { client_id, token } = body;
-        if (!jwt)
-            throw new Error('JWT not provided');
+        if (!token)
+            throw new Error('Token not provided');
         try {
             let decrypted = jwt.verify(token, process.env.KEY);
             if (JSON.stringify({

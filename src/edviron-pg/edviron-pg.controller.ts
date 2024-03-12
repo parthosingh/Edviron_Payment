@@ -53,17 +53,14 @@ export class EdvironPgController {
 
     if (!webHookData) throw new Error('Invalid webhook data');
 
-    console.log('webHookData', webHookData);
+    // console.log('webHookData', webHookData);
     const collect_id = webHookData.order.order_id || body.order.order_id;
-    console.log('collect_id', collect_id);
+    // console.log('collect_id', collect_id);
 
     if (!Types.ObjectId.isValid(collect_id)) {
       throw new Error('collect_id is not valid');
     }
-
     const collectIdObject = new Types.ObjectId(collect_id);
-
-    
 
     const collectReq =
       await this.databaseService.CollectRequestModel.findById(collectIdObject);
@@ -95,7 +92,7 @@ export class EdvironPgController {
       collectReq,
     );
 
-    console.log('req', reqToCheck);
+    //console.log('req', reqToCheck);
 
     const { status } = reqToCheck;
 
