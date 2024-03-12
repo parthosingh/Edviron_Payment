@@ -28,6 +28,7 @@ export class CollectController {
       webHook?: string;
       disabled_modes?: string[];
       additional_data?: {};
+      platform_charges: any;
     },
   ) {
     const {
@@ -41,6 +42,7 @@ export class CollectController {
       additional_data,
       school_id,
       trustee_id,
+      platform_charges
     } = body;
 
     console.log('additional data', additional_data);
@@ -76,6 +78,7 @@ export class CollectController {
           school_id,
           trustee_id,
           disabled_modes,
+          platform_charges,
           webHook,
           additional_data || {},
         ),

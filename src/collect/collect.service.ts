@@ -26,6 +26,7 @@ export class CollectService {
     school_id: string,
     trustee_id: string,
     disabled_modes: string[] = [],
+    platform_charges: any,
     webHook?: string,
     additional_data?: {},
   ): Promise<{ url: string; request: CollectRequest }> {
@@ -55,10 +56,9 @@ export class CollectService {
       transaction_amount: request.amount,
       payment_method: null,
     }).save();
-
     const transaction = (
       gateway === Gateway.EDVIRON_PG
-        ? await this.edvironPgService.collect(request)
+        ? await this.edvironPgService.collect(request, platform_charges)
         : await this.hdfcService.collect(request)
     )!;
     await this.databaseService.CollectRequestModel.updateOne(

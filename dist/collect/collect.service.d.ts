@@ -9,7 +9,15 @@ export declare class CollectService {
     private readonly edvironPgService;
     private readonly databaseService;
     constructor(phonepeService: PhonepeService, hdfcService: HdfcService, edvironPgService: EdvironPgService, databaseService: DatabaseService);
+<<<<<<< HEAD
     collect(amount: Number, callbackUrl: string, clientId: string, clientSecret: string, school_id: string, trustee_id: string, disabled_modes?: string[], webHook?: string, additional_data?: {}): Promise<{
+=======
+<<<<<<< HEAD
+    collect(amount: Number, callbackUrl: string, clientId: string, clientSecret: string, school_id: string, trustee_id: string, disabled_modes?: string[], webHook?: string, additional_data?: {}, student_id?: string, student_email?: string, student_name?: string, student_phone?: string, student_receipt?: string): Promise<{
+=======
+    collect(amount: Number, callbackUrl: string, clientId: string, clientSecret: string, platform_charges: any, webHook?: string, disabled_modes?: string[]): Promise<{
+>>>>>>> 0081548 (adding MDR)
+>>>>>>> a1ec662 (adding MDR)
         url: string;
         request: CollectRequest;
     }>;

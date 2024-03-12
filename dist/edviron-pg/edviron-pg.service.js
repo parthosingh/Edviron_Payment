@@ -14,10 +14,15 @@ const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const transactionStatus_1 = require("../types/transactionStatus");
 let EdvironPgService = class EdvironPgService {
+<<<<<<< HEAD
     constructor(databaseService) {
         this.databaseService = databaseService;
     }
     async collect(request) {
+=======
+    constructor() { }
+    async collect(request, platform_charges) {
+>>>>>>> 633e538 (adding MDR)
         try {
             const axios = require('axios');
             let data = JSON.stringify({
@@ -48,6 +53,7 @@ let EdvironPgService = class EdvironPgService {
                 data: data,
             };
             const { data: cashfreeRes } = await axios.request(config);
+<<<<<<< HEAD
             const disabled_modes_string = request.disabled_modes
                 .map((mode) => `${mode}=false`)
                 .join('&');
@@ -61,6 +67,12 @@ let EdvironPgService = class EdvironPgService {
                     request.amount.toFixed(2) +
                     '&' +
                     disabled_modes_string,
+=======
+            const disabled_modes_string = request.disabled_modes.map((mode) => `${mode}=false`).join("&");
+            const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
+            return {
+                url: process.env.URL + "/edviron-pg/redirect?session_id=" + cashfreeRes.payment_session_id + "&collect_request_id=" + request._id + "&amount=" + request.amount.toFixed(2) + "&" + disabled_modes_string + "&platform_charges=" + encodedPlatformCharges,
+>>>>>>> d6115c5 (adding MDR)
             };
         }
         catch (err) {

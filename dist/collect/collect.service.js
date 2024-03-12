@@ -24,11 +24,31 @@ let CollectService = class CollectService {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
     }
+<<<<<<< HEAD
     async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], webHook, additional_data) {
+=======
+<<<<<<< HEAD
+    async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], webHook, additional_data, student_id, student_email, student_name, student_phone, student_receipt) {
+>>>>>>> a1ec662 (adding MDR)
+        console.log('collect request for amount: ' + amount + ' received.', {
+            disabled_modes,
+        });
+<<<<<<< HEAD
+        const gateway = clientId === 'edviron' ? collect_request_schema_1.Gateway.HDFC : collect_request_schema_1.Gateway.EDVIRON_PG;
+=======
+=======
+<<<<<<< HEAD
+    async collect(amount, callbackUrl, clientId, clientSecret, webHook, disabled_modes = []) {
         console.log('collect request for amount: ' + amount + ' received.', {
             disabled_modes,
         });
         const gateway = clientId === 'edviron' ? collect_request_schema_1.Gateway.HDFC : collect_request_schema_1.Gateway.EDVIRON_PG;
+=======
+    async collect(amount, callbackUrl, clientId, clientSecret, platform_charges, webHook, disabled_modes = []) {
+        console.log('collect request for amount: ' + amount + ' received.', { disabled_modes });
+>>>>>>> 119dcce (adding MDR)
+>>>>>>> 0081548 (adding MDR)
+>>>>>>> 266fd6c (adding MDR)
         const request = await new this.databaseService.CollectRequestModel({
             amount,
             callbackUrl,
@@ -48,14 +68,31 @@ let CollectService = class CollectService {
             transaction_amount: request.amount,
             payment_method: null,
         }).save();
+<<<<<<< HEAD
         const transaction = (gateway === collect_request_schema_1.Gateway.EDVIRON_PG
             ? await this.edvironPgService.collect(request)
             : await this.hdfcService.collect(request));
+<<<<<<< HEAD
         await this.databaseService.CollectRequestModel.updateOne({
             _id: request._id,
         }, {
             payment_data: JSON.stringify(transaction.url),
         }, { new: true });
+=======
+=======
+<<<<<<< HEAD
+        const transaction = (await this.edvironPgService.collect(request));
+=======
+<<<<<<< HEAD
+        const transaction = (gateway === collect_request_schema_1.Gateway.EDVIRON_PG
+            ? await this.edvironPgService.collect(request)
+            : await this.hdfcService.collect(request));
+=======
+        const transaction = (await this.edvironPgService.collect(request, platform_charges));
+>>>>>>> 119dcce (adding MDR)
+>>>>>>> 0081548 (adding MDR)
+>>>>>>> 266fd6c (adding MDR)
+>>>>>>> a1ec662 (adding MDR)
         return { url: transaction.url, request };
     }
 };
