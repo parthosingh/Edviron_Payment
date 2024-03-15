@@ -122,7 +122,7 @@ let EdvironPgController = class EdvironPgController {
             const orderIds = orders.map((order) => order._id);
             const transactions = await this.databaseService.CollectRequestStatusModel.find({
                 collect_id: { $in: orderIds },
-            }).select('-_id -__v -createdAt');
+            }).select('-_id -__v ');
             res.status(201).send(transactions);
         }
         catch (error) {
