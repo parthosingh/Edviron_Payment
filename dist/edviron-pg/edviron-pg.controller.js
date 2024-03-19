@@ -27,9 +27,28 @@ let EdvironPgController = class EdvironPgController {
         this.databaseService = databaseService;
     }
     async handleRedirect(req, res) {
+        const wallet = req.query.wallet;
+        const cardless = req.query.cardless;
+        const netbanking = req.query.netbanking;
+        const pay_later = req.query.pay_later;
+        const upi = req.query.upi;
+        const card = req.query.card;
+        let disable_modes = "";
+        if (wallet)
+            disable_modes += `&wallet=${wallet}`;
+        if (cardless)
+            disable_modes += `&cardless=${cardless}`;
+        if (netbanking)
+            disable_modes += `&netbanking=${netbanking}`;
+        if (pay_later)
+            disable_modes += `&pay_later=${pay_later}`;
+        if (upi)
+            disable_modes += `&upi=${upi}`;
+        if (card)
+            disable_modes += `&card=${card}`;
         res.send(`<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}";
+                    location.href = "https://dev.pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}${disable_modes}";
                 }
             </script>`);
     }
