@@ -7,7 +7,9 @@ import { TransactionStatus } from '../types/transactionStatus';
 
 @Injectable()
 export class EdvironPgService implements GatewayService {
-  constructor() {}
+  constructor(
+    private readonly databaseService: DatabaseService,
+  ) {}
   async collect(request: CollectRequest): Promise<Transaction | undefined> {
     try {
       const axios = require('axios');
@@ -97,6 +99,10 @@ export class EdvironPgService implements GatewayService {
     };
 
     console.log({ cashfreeRes });
+    const collect_status = await this.databaseService.CollectRequestStatusModel.findOne({
+      collect_id: collect_request_id,
+    });
+
     return {
       status:
         order_status_to_transaction_status_map[
@@ -104,7 +110,7 @@ export class EdvironPgService implements GatewayService {
         ],
       amount: cashfreeRes.order_amount,
       details: {
-        payment_methods: cashfreeRes.order_meta.payment_methods,
+        payment_methods: collect_status?.details && JSON.parse(collect_status.details as string),
       },
     };
   }

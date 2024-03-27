@@ -11,9 +11,12 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EdvironPgService = void 0;
 const common_1 = require("@nestjs/common");
+const database_service_1 = require("../database/database.service");
 const transactionStatus_1 = require("../types/transactionStatus");
 let EdvironPgService = class EdvironPgService {
-    constructor() { }
+    constructor(databaseService) {
+        this.databaseService = databaseService;
+    }
     async collect(request) {
         try {
             const axios = require('axios');
@@ -81,7 +84,6 @@ let EdvironPgService = class EdvironPgService {
                 'x-partner-apikey': process.env.CASHFREE_API_KEY,
             },
         };
-        console.log({ config });
         const { data: cashfreeRes } = await axios.request(config);
         console.log({ cashfreeRes });
         const order_status_to_transaction_status_map = {
@@ -92,11 +94,14 @@ let EdvironPgService = class EdvironPgService {
             TERMINATION_REQUESTED: transactionStatus_1.TransactionStatus.FAILURE,
         };
         console.log({ cashfreeRes });
+        const collect_status = await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: collect_request_id,
+        });
         return {
             status: order_status_to_transaction_status_map[cashfreeRes.order_status],
             amount: cashfreeRes.order_amount,
             details: {
-                payment_methods: cashfreeRes.order_meta.payment_methods,
+                payment_methods: collect_status?.details && JSON.parse(collect_status.details),
             },
         };
     }
@@ -104,6 +109,6 @@ let EdvironPgService = class EdvironPgService {
 exports.EdvironPgService = EdvironPgService;
 exports.EdvironPgService = EdvironPgService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [])
+    __metadata("design:paramtypes", [database_service_1.DatabaseService])
 ], EdvironPgService);
 //# sourceMappingURL=edviron-pg.service.js.map
