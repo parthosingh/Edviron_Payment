@@ -35,6 +35,9 @@ export class CollectRequestStatus {
   @Prop({ required: false, default: '' })
   payment_method: String;
 
+  @Prop({ required: false, default: '' })
+  details: String;
+
   _id: ObjectId;
 }
 

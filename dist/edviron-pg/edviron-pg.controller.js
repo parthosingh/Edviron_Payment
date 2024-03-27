@@ -90,7 +90,7 @@ let EdvironPgController = class EdvironPgController {
         const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
             collect_id: collectIdObject,
         }, {
-            $set: { status, transaction_amount, payment_method },
+            $set: { status, transaction_amount, payment_method, details: JSON.stringify(webHookData.payment.payment_method) },
         }, {
             upsert: true,
             new: true,

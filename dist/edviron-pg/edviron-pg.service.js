@@ -81,6 +81,7 @@ let EdvironPgService = class EdvironPgService {
                 'x-partner-apikey': process.env.CASHFREE_API_KEY,
             },
         };
+        console.log({ config });
         const { data: cashfreeRes } = await axios.request(config);
         console.log({ cashfreeRes });
         const order_status_to_transaction_status_map = {

@@ -22,6 +22,8 @@ let CheckStatusController = class CheckStatusController {
         this.checkStatusService = checkStatusService;
     }
     async checkStatus(transactionId, jwt) {
+        if (!jwt)
+            throw new common_1.BadRequestException('JWT is required');
         const decrypted = _jwt.verify(jwt, process.env.KEY);
         if (JSON.stringify({
             transactionId: decrypted.transactionId,

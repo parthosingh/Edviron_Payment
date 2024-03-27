@@ -19,6 +19,7 @@ export class CheckStatusController {
     @Query('transactionId') transactionId: String,
     @Query('jwt') jwt: string,
   ) {
+    if(!jwt) throw new BadRequestException('JWT is required');
     const decrypted = _jwt.verify(jwt, process.env.KEY!) as {
       transactionId: string;
     };

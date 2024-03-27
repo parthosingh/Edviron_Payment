@@ -13,6 +13,7 @@ export declare class CollectRequestStatus {
     order_amount: Number;
     transaction_amount: Number;
     payment_method: String;
+    details: String;
     _id: ObjectId;
 }
 export type CollectRequestStatusDocument = CollectRequestStatus & Document;
