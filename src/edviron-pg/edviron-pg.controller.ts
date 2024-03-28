@@ -115,7 +115,7 @@ export class EdvironPgController {
           collect_id: collectIdObject,
         },
         {
-          $set: { status, transaction_amount, payment_method, details: JSON.stringify(webHookData.payment.payment_method) },
+          $set: { status, transaction_amount, payment_method, details: JSON.stringify(webHookData.payment.payment_method), bank_reference: webHookData.payment.bank_reference},
         },
         {
           upsert: true,

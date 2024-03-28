@@ -38,6 +38,9 @@ export class CollectRequestStatus {
   @Prop({ required: false, default: '' })
   details: String;
 
+  @Prop({ required: false })
+  bank_reference: string;
+
   _id: ObjectId;
 }
 
