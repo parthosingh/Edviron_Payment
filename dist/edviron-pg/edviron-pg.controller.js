@@ -33,7 +33,7 @@ let EdvironPgController = class EdvironPgController {
         const pay_later = req.query.pay_later;
         const upi = req.query.upi;
         const card = req.query.card;
-        let disable_modes = "";
+        let disable_modes = '';
         if (wallet)
             disable_modes += `&wallet=${wallet}`;
         if (cardless)
@@ -90,7 +90,13 @@ let EdvironPgController = class EdvironPgController {
         const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
             collect_id: collectIdObject,
         }, {
-            $set: { status, transaction_amount, payment_method, details: JSON.stringify(webHookData.payment.payment_method), bank_reference: webHookData.payment.bank_reference },
+            $set: {
+                status,
+                transaction_amount,
+                payment_method,
+                details: JSON.stringify(webHookData.payment.payment_method),
+                bank_reference: webHookData.payment.bank_reference,
+            },
         }, {
             upsert: true,
             new: true,
@@ -114,11 +120,17 @@ let EdvironPgController = class EdvironPgController {
         }
         res.status(200).send('OK');
     }
-    async transactionsReport(body, res) {
+    async transactionsReport(body, res, req) {
+        console.log(body);
         const { client_id, token } = body;
         if (!token)
             throw new Error('Token not provided');
         try {
+            const page = req.query.page || 1;
+            const limit = req.query.limit || 10;
+            const startDate = req.query.startDate || null;
+            const endDate = req.query.endDate || null;
+            const status = req.query.status || null;
             let decrypted = jwt.verify(token, process.env.KEY);
             if (JSON.stringify({
                 ...JSON.parse(JSON.stringify(decrypted)),
@@ -139,9 +151,30 @@ let EdvironPgController = class EdvironPgController {
                 return;
             }
             const orderIds = orders.map((order) => order._id);
-            const transactions = await this.databaseService.CollectRequestStatusModel.find({
+            let query = {
                 collect_id: { $in: orderIds },
-            }).select('-_id -__v ');
+            };
+            if (startDate && endDate) {
+                query = {
+                    ...query,
+                    createdAt: {
+                        $gte: new Date(startDate),
+                        $lt: new Date(endDate),
+                    },
+                };
+            }
+            if (status === 'SUCCESS' || status === 'PENDING') {
+                query = {
+                    ...query,
+                    status,
+                };
+            }
+            const transactions = await this.databaseService.CollectRequestStatusModel.find(query, null, {
+                skip: (page - 1) * limit,
+                limit: limit,
+            })
+                .sort({ createdAt: -1 })
+                .select('-_id -__v ');
             res.status(201).send(transactions);
         }
         catch (error) {
@@ -181,8 +214,9 @@ __decorate([
     (0, common_1.Get)('transactions-report'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Res)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "transactionsReport", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
