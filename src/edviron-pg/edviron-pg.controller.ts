@@ -32,13 +32,13 @@ export class EdvironPgController {
     const pay_later = req.query.pay_later;
     const upi = req.query.upi;
     const card = req.query.card;
-    let disable_modes = "";
-    if(wallet) disable_modes += `&wallet=${wallet}`
-    if(cardless) disable_modes += `&cardless=${cardless}`
-    if(netbanking) disable_modes += `&netbanking=${netbanking}`
-    if(pay_later) disable_modes += `&pay_later=${pay_later}`
-    if(upi) disable_modes += `&upi=${upi}`
-    if(card) disable_modes += `&card=${card}`
+    let disable_modes = '';
+    if (wallet) disable_modes += `&wallet=${wallet}`;
+    if (cardless) disable_modes += `&cardless=${cardless}`;
+    if (netbanking) disable_modes += `&netbanking=${netbanking}`;
+    if (pay_later) disable_modes += `&pay_later=${pay_later}`;
+    if (upi) disable_modes += `&upi=${upi}`;
+    if (card) disable_modes += `&card=${card}`;
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
@@ -115,7 +115,13 @@ export class EdvironPgController {
           collect_id: collectIdObject,
         },
         {
-          $set: { status, transaction_amount, payment_method, details: JSON.stringify(webHookData.payment.payment_method), bank_reference: webHookData.payment.bank_reference},
+          $set: {
+            status,
+            transaction_amount,
+            payment_method,
+            details: JSON.stringify(webHookData.payment.payment_method),
+            bank_reference: webHookData.payment.bank_reference,
+          },
         },
         {
           upsert: true,
@@ -152,11 +158,19 @@ export class EdvironPgController {
       token: string;
     },
     @Res() res: any,
+    @Req() req: any,
   ) {
     const { client_id, token } = body;
     if (!token) throw new Error('Token not provided');
 
     try {
+      const page = req.query.page || 1;
+      const limit = req.query.limit || 10;
+
+      const startDate = req.query.startDate || null;
+      const endDate = req.query.endDate || null;
+      const status = req.query.status || null;
+
       let decrypted = jwt.verify(token, process.env.KEY!) as any;
       if (
         JSON.stringify({
@@ -182,12 +196,36 @@ export class EdvironPgController {
       }
 
       const orderIds = orders.map((order: any) => order._id);
-      const transactions =
-        await this.databaseService.CollectRequestStatusModel.find({
-          collect_id: { $in: orderIds },
-        }).select('-_id -__v ');
 
-    
+      let query: any = {
+        collect_id: { $in: orderIds },
+      };
+
+      if (startDate && endDate) {
+        query = {
+          ...query,
+          createdAt: {
+            $gte: new Date(startDate),
+            $lt: new Date(endDate),
+          },
+        };
+      }
+
+      if (status === 'SUCCESS' || status === 'PENDING') {
+        query = {
+          ...query,
+          status,
+        };
+      }
+
+      const transactions =
+        await this.databaseService.CollectRequestStatusModel.find(query, null, {
+          skip: (page - 1) * limit,
+          limit: limit,
+        })
+          .sort({ createdAt: -1 })
+          .select('-_id -__v ');
+
       res.status(201).send(transactions);
     } catch (error) {
       console.log(error);

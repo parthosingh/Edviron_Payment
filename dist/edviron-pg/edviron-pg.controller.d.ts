@@ -10,5 +10,5 @@ export declare class EdvironPgController {
     transactionsReport(body: {
         client_id: string;
         token: string;
-    }, res: any): Promise<void>;
+    }, res: any, req: any): Promise<void>;
 }
