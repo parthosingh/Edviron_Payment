@@ -160,7 +160,6 @@ export class EdvironPgController {
     @Res() res: any,
     @Req() req: any,
   ) {
-    console.log(body);
     const { client_id, token } = body;
     if (!token) throw new Error('Token not provided');
 

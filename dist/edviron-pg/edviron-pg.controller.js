@@ -121,7 +121,6 @@ let EdvironPgController = class EdvironPgController {
         res.status(200).send('OK');
     }
     async transactionsReport(body, res, req) {
-        console.log(body);
         const { client_id, token } = body;
         if (!token)
             throw new Error('Token not provided');
