@@ -281,7 +281,8 @@ export class HdfcService implements GatewayService {
             const paymentInstrumentBank = order_status_result['order_card_name'];
 
             if (
-                order_status_result['order_status'] === 'Shipped' &&
+                (order_status_result['order_status'] === 'Shipped' || 
+                 order_status_result['order_status'] === 'Successful') &&
                 Math.floor((collectRequest!['amount'] as any) - 0) ===
                 Math.floor(order_status_result['order_amt'])
             ) {

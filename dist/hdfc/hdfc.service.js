@@ -208,7 +208,8 @@ let HdfcService = class HdfcService {
             console.log({ order_status_result });
             const paymentInstrument = order_status_result['order_option_type'];
             const paymentInstrumentBank = order_status_result['order_card_name'];
-            if (order_status_result['order_status'] === 'Shipped' &&
+            if ((order_status_result['order_status'] === 'Shipped' ||
+                order_status_result['order_status'] === 'Successful') &&
                 Math.floor(collectRequest['amount'] - 0) ===
                     Math.floor(order_status_result['order_amt'])) {
                 return {
