@@ -35,7 +35,7 @@ export class CollectService {
     const request = await new this.databaseService.CollectRequestModel({
       amount,
       callbackUrl,
-      gateway: Gateway.EDVIRON_PG,
+      gateway: gateway,
       clientId,
       clientSecret,
       webHookUrl: webHook || null,

@@ -32,7 +32,7 @@ let CollectService = class CollectService {
         const request = await new this.databaseService.CollectRequestModel({
             amount,
             callbackUrl,
-            gateway: collect_request_schema_1.Gateway.EDVIRON_PG,
+            gateway: gateway,
             clientId,
             clientSecret,
             webHookUrl: webHook || null,
