@@ -205,6 +205,7 @@ let HdfcService = class HdfcService {
             const paramObject = Object.fromEntries(params.entries());
             const decrypt_res = this.decrypt(paramObject['enc_response'], process.env.CCAVENUE_WORKINGKEY);
             const order_status_result = JSON.parse(decrypt_res).Order_Status_Result;
+            console.log({ order_status_result });
             const paymentInstrument = order_status_result['order_option_type'];
             const paymentInstrumentBank = order_status_result['order_card_name'];
             if (order_status_result['order_status'] === 'Shipped' &&

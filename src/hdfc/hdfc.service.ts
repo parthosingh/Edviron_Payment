@@ -275,7 +275,7 @@ export class HdfcService implements GatewayService {
                 process.env.CCAVENUE_WORKINGKEY!,
             );
             const order_status_result = JSON.parse(decrypt_res).Order_Status_Result;
-            // console.log(order_status_result);
+            console.log({order_status_result});
 
             const paymentInstrument = order_status_result['order_option_type'];
             const paymentInstrumentBank = order_status_result['order_card_name'];
