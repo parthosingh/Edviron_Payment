@@ -30,7 +30,6 @@ let CollectController = class CollectController {
         if (!callbackUrl)
             throw new common_1.BadRequestException('Callback url not provided');
         try {
-            console.log(disabled_modes);
             let decrypted = _jwt.verify(jwt, process.env.KEY);
             if (JSON.stringify({
                 ...JSON.parse(JSON.stringify(decrypted)),

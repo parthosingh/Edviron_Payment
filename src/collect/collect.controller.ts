@@ -35,6 +35,7 @@ export class CollectController {
       clientId,
       clientSecret,
       disabled_modes,
+      
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -42,7 +43,6 @@ export class CollectController {
     if (!callbackUrl)
       throw new BadRequestException('Callback url not provided');
     try {
-      console.log(disabled_modes);
       let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
       if (
         JSON.stringify({
@@ -67,7 +67,7 @@ export class CollectController {
           clientSecret,
           webHook,
           disabled_modes,
-        ),
+        )
       );
     } catch (e) {
       console.log(e);

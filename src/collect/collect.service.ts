@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { CollectRequest, Gateway } from 'src/database/schemas/collect_request.schema';
+import {
+  CollectRequest,
+  Gateway,
+} from 'src/database/schemas/collect_request.schema';
 import { HdfcService } from 'src/hdfc/hdfc.service';
 import { PhonepeService } from 'src/phonepe/phonepe.service';
 import { Transaction } from 'src/types/transaction';
@@ -23,7 +26,12 @@ export class CollectService {
     webHook?: string,
     disabled_modes: string[] = [],
   ): Promise<{ url: string; request: CollectRequest }> {
-    console.log('collect request for amount: ' + amount + ' received.', {disabled_modes});
+    console.log('collect request for amount: ' + amount + ' received.', {
+      disabled_modes,
+    });
+
+    const gateway = clientId === 'edviron' ? Gateway.HDFC : Gateway.EDVIRON_PG;
+
     const request = await new this.databaseService.CollectRequestModel({
       amount,
       callbackUrl,
@@ -41,7 +49,10 @@ export class CollectService {
       transaction_amount: request.amount,
       payment_method: null,
     }).save();
-    const transaction = (await this.edvironPgService.collect(request))!;
+    const transaction =
+      (gateway === Gateway.EDVIRON_PG
+        ? await this.edvironPgService.collect(request)
+        : await this.hdfcService.collect(request))!;
     return { url: transaction.url, request };
   }
 }
