@@ -8,6 +8,9 @@ import * as qs from 'qs';
 import axios from 'axios';
 import { DatabaseService } from 'src/database/database.service';
 
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 @Injectable()
 export class HdfcService implements GatewayService {
 
@@ -262,7 +265,7 @@ export class HdfcService implements GatewayService {
             },
             data: data,
         };
-
+        await sleep(10000);
         try {
             const res = await axios.request(config);
             const params = new URLSearchParams(res.data);

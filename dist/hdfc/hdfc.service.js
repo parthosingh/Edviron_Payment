@@ -16,6 +16,7 @@ const crypto_1 = require("crypto");
 const qs = require("qs");
 const axios_1 = require("axios");
 const database_service_1 = require("../database/database.service");
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let HdfcService = class HdfcService {
     constructor(databaseService) {
         this.databaseService = databaseService;
@@ -197,6 +198,7 @@ let HdfcService = class HdfcService {
             },
             data: data,
         };
+        await sleep(10000);
         try {
             const res = await axios_1.default.request(config);
             const params = new URLSearchParams(res.data);
