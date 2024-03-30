@@ -8,6 +8,9 @@ import * as qs from 'qs';
 import axios from 'axios';
 import { DatabaseService } from 'src/database/database.service';
 
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 @Injectable()
 export class HdfcService implements GatewayService {
 
@@ -262,7 +265,7 @@ export class HdfcService implements GatewayService {
             },
             data: data,
         };
-
+        await sleep(10000);
         try {
             const res = await axios.request(config);
             const params = new URLSearchParams(res.data);
@@ -272,13 +275,14 @@ export class HdfcService implements GatewayService {
                 process.env.CCAVENUE_WORKINGKEY!,
             );
             const order_status_result = JSON.parse(decrypt_res).Order_Status_Result;
-            // console.log(order_status_result);
+            console.log({order_status_result});
 
             const paymentInstrument = order_status_result['order_option_type'];
             const paymentInstrumentBank = order_status_result['order_card_name'];
 
             if (
-                order_status_result['order_status'] === 'Shipped' &&
+                (order_status_result['order_status'] === 'Shipped' || 
+                 order_status_result['order_status'] === 'Successful') &&
                 Math.floor((collectRequest!['amount'] as any) - 0) ===
                 Math.floor(order_status_result['order_amt'])
             ) {

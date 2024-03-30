@@ -16,6 +16,7 @@ const crypto_1 = require("crypto");
 const qs = require("qs");
 const axios_1 = require("axios");
 const database_service_1 = require("../database/database.service");
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let HdfcService = class HdfcService {
     constructor(databaseService) {
         this.databaseService = databaseService;
@@ -197,15 +198,18 @@ let HdfcService = class HdfcService {
             },
             data: data,
         };
+        await sleep(10000);
         try {
             const res = await axios_1.default.request(config);
             const params = new URLSearchParams(res.data);
             const paramObject = Object.fromEntries(params.entries());
             const decrypt_res = this.decrypt(paramObject['enc_response'], process.env.CCAVENUE_WORKINGKEY);
             const order_status_result = JSON.parse(decrypt_res).Order_Status_Result;
+            console.log({ order_status_result });
             const paymentInstrument = order_status_result['order_option_type'];
             const paymentInstrumentBank = order_status_result['order_card_name'];
-            if (order_status_result['order_status'] === 'Shipped' &&
+            if ((order_status_result['order_status'] === 'Shipped' ||
+                order_status_result['order_status'] === 'Successful') &&
                 Math.floor(collectRequest['amount'] - 0) ===
                     Math.floor(order_status_result['order_amt'])) {
                 return {

@@ -25,11 +25,14 @@ let CollectService = class CollectService {
         this.databaseService = databaseService;
     }
     async collect(amount, callbackUrl, clientId, clientSecret, webHook, disabled_modes = []) {
-        console.log('collect request for amount: ' + amount + ' received.', { disabled_modes });
+        console.log('collect request for amount: ' + amount + ' received.', {
+            disabled_modes,
+        });
+        const gateway = clientId === 'edviron' ? collect_request_schema_1.Gateway.HDFC : collect_request_schema_1.Gateway.EDVIRON_PG;
         const request = await new this.databaseService.CollectRequestModel({
             amount,
             callbackUrl,
-            gateway: collect_request_schema_1.Gateway.EDVIRON_PG,
+            gateway: gateway,
             clientId,
             clientSecret,
             webHookUrl: webHook || null,
@@ -42,7 +45,9 @@ let CollectService = class CollectService {
             transaction_amount: request.amount,
             payment_method: null,
         }).save();
-        const transaction = (await this.edvironPgService.collect(request));
+        const transaction = (gateway === collect_request_schema_1.Gateway.EDVIRON_PG
+            ? await this.edvironPgService.collect(request)
+            : await this.hdfcService.collect(request));
         return { url: transaction.url, request };
     }
 };

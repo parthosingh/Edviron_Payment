@@ -20,6 +20,7 @@ export class CheckStatusService {
             console.log("Collect request not found", collect_request_id);
             throw new NotFoundException("Collect request not found");
         }
+        console.log("checking status", collect_request_id, collectRequest);
         switch(collectRequest?.gateway){
             case Gateway.HDFC:
                 return await this.hdfcService.checkStatus(collect_request_id);
@@ -28,7 +29,6 @@ export class CheckStatusService {
             case Gateway.EDVIRON_PG:
                 return await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
         }
-        // return await this.phonePeService.checkStatus(transactionId);
     }
 }
 
