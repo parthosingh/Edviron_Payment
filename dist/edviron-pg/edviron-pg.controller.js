@@ -174,7 +174,12 @@ let EdvironPgController = class EdvironPgController {
             })
                 .sort({ createdAt: -1 })
                 .select('-_id -__v ');
-            res.status(201).send({ transactions, totalTransactions: orders.length });
+            const transactionsCount = await this.databaseService.CollectRequestStatusModel.countDocuments({
+                collect_id: { $in: orderIds },
+            });
+            res
+                .status(201)
+                .send({ transactions, totalTransactions: transactionsCount });
         }
         catch (error) {
             console.log(error);
