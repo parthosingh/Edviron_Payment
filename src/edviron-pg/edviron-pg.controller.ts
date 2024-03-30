@@ -225,8 +225,8 @@ export class EdvironPgController {
         })
           .sort({ createdAt: -1 })
           .select('-_id -__v ');
-
-      res.status(201).send(transactions);
+  
+   res.status(201).send({ transactions, totalTransactions: orders.length });
     } catch (error) {
       console.log(error);
       if (error.name === 'JsonWebTokenError')
