@@ -14,15 +14,10 @@ const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const transactionStatus_1 = require("../types/transactionStatus");
 let EdvironPgService = class EdvironPgService {
-<<<<<<< HEAD
     constructor(databaseService) {
         this.databaseService = databaseService;
     }
-    async collect(request) {
-=======
-    constructor() { }
     async collect(request, platform_charges) {
->>>>>>> 633e538 (adding MDR)
         try {
             const axios = require('axios');
             let data = JSON.stringify({
