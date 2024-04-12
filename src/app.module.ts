@@ -10,7 +10,14 @@ import { HdfcModule } from './hdfc/hdfc.module';
 import { EdvironPgModule } from './edviron-pg/edviron-pg.module';
 
 @Module({
-  imports: [CollectModule, DatabaseModule, PhonepeModule, CheckStatusModule, HdfcModule, EdvironPgModule],
+  imports: [
+    CollectModule,
+    DatabaseModule,
+    PhonepeModule,
+    CheckStatusModule,
+    HdfcModule,
+    EdvironPgModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

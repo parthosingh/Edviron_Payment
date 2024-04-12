@@ -1,3 +1,3 @@
 export type Transaction = {
-    url: string;
-}
+  url: string;
+};

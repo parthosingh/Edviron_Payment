@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { CollectRequest, CollectRequestDocument } from './schemas/collect_request.schema';
+import {
+  CollectRequest,
+  CollectRequestDocument,
+} from './schemas/collect_request.schema';
 import { Model } from 'mongoose';
 import { Webhooks, WebhooksDocument } from './schemas/webhooks.schema';
 import {

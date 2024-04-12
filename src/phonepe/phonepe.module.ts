@@ -5,11 +5,9 @@ import { DatabaseModule } from 'src/database/database.module';
 import { PhonepeController } from './phonepe.controller';
 
 @Module({
-    imports: [DatabaseModule],
-    exports: [PhonepeService],
-    providers: [PhonepeService],
-    controllers: [PhonepeController]
+  imports: [DatabaseModule],
+  exports: [PhonepeService],
+  providers: [PhonepeService],
+  controllers: [PhonepeController],
 })
-export class PhonepeModule {
-    
-}
+export class PhonepeModule {}

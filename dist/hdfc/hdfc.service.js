@@ -31,7 +31,6 @@ let HdfcService = class HdfcService {
         encoded += cipher.final('hex');
         return encoded;
     }
-    ;
     decrypt(encText, workingKey) {
         const m = (0, crypto_1.createHash)('md5');
         m.update(workingKey);
@@ -42,7 +41,6 @@ let HdfcService = class HdfcService {
         decoded += decipher.final('utf8');
         return decoded;
     }
-    ;
     ccavRequestHandler(p_merchant_id, p_order_id, p_currency, p_amount, p_redirect_url, p_cancel_url, p_language, p_billing_name, p_billing_address, p_billing_city, p_billing_state, p_billing_zip, p_billing_country, p_billing_tel, p_billing_email, p_delivery_name, p_delivery_address, p_delivery_city, p_delivery_state, p_delivery_zip, p_delivery_country, p_delivery_tel, p_merchant_param1, p_merchant_param2, p_merchant_param3, p_merchant_param4, p_merchant_param5, p_promo_code, p_customer_identifier) {
         const merchant_data = 'merchant_id=' +
             p_merchant_id +
@@ -169,7 +167,11 @@ let HdfcService = class HdfcService {
         const p_customer_identifier = '';
         const { encRequest, access_code } = this.ccavRequestHandler(p_merchant_id, p_order_id, p_currency, p_amount, p_redirect_url, p_cancel_url, p_language, p_billing_name, p_billing_address, p_billing_city, p_billing_state, p_billing_zip, p_billing_country, p_billing_tel, p_billing_email, p_delivery_name, p_delivery_address, p_delivery_city, p_delivery_state, p_delivery_zip, p_delivery_country, p_delivery_tel, p_merchant_param1, p_merchant_param2, p_merchant_param3, p_merchant_param4, p_merchant_param5, p_promo_code, p_customer_identifier);
         return {
-            url: process.env.URL + "/hdfc/redirect?encRequest=" + encRequest + "&access_code=" + access_code
+            url: process.env.URL +
+                '/hdfc/redirect?encRequest=' +
+                encRequest +
+                '&access_code=' +
+                access_code,
         };
     }
     async ccavResponseToCollectRequestId(encResp) {
@@ -216,7 +218,7 @@ let HdfcService = class HdfcService {
                     status: transactionStatus_1.TransactionStatus.SUCCESS,
                     amount: order_status_result['order_amt'],
                     paymentInstrument,
-                    paymentInstrumentBank
+                    paymentInstrumentBank,
                 };
             }
             else if (order_status_result['order_status'] === 'Unsuccessful' ||

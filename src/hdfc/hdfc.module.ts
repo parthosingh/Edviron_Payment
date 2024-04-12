@@ -7,6 +7,6 @@ import { HdfcController } from './hdfc.controller';
   imports: [DatabaseModule],
   exports: [HdfcService],
   providers: [HdfcService],
-  controllers: [HdfcController]
+  controllers: [HdfcController],
 })
 export class HdfcModule {}

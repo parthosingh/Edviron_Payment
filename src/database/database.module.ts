@@ -1,7 +1,10 @@
-import { Module } from "@nestjs/common";
-import { MongooseModule } from "@nestjs/mongoose";
-import { CollectRequest, CollectRequestSchema } from "./schemas/collect_request.schema";
-import { DatabaseService } from "./database.service";
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import {
+  CollectRequest,
+  CollectRequestSchema,
+} from './schemas/collect_request.schema';
+import { DatabaseService } from './database.service';
 import * as dotenv from 'dotenv';
 import {
   CollectRequestStatus,

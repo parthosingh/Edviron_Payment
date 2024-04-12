@@ -35,7 +35,6 @@ export class CollectController {
       clientId,
       clientSecret,
       disabled_modes,
-      
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -67,7 +66,7 @@ export class CollectController {
           clientSecret,
           webHook,
           disabled_modes,
-        )
+        ),
       );
     } catch (e) {
       console.log(e);

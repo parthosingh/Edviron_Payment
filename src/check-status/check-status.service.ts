@@ -7,28 +7,33 @@ import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
 
 @Injectable()
 export class CheckStatusService {
-    constructor(
-        private readonly databaseService: DatabaseService, 
-        private readonly hdfcService: HdfcService, 
-        private readonly phonePeService: PhonepeService,
-        private readonly edvironPgService: EdvironPgService
-    ) {}
-    async checkStatus(collect_request_id: String){
-        console.log("checking status", collect_request_id);
-        const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_request_id);
-        if(!collectRequest) {
-            console.log("Collect request not found", collect_request_id);
-            throw new NotFoundException("Collect request not found");
-        }
-        console.log("checking status", collect_request_id, collectRequest);
-        switch(collectRequest?.gateway){
-            case Gateway.HDFC:
-                return await this.hdfcService.checkStatus(collect_request_id);
-            case Gateway.PHONEPE:
-                return await this.phonePeService.checkStatus(collect_request_id);
-            case Gateway.EDVIRON_PG:
-                return await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
-        }
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly hdfcService: HdfcService,
+    private readonly phonePeService: PhonepeService,
+    private readonly edvironPgService: EdvironPgService,
+  ) {}
+  async checkStatus(collect_request_id: String) {
+    console.log('checking status', collect_request_id);
+    const collectRequest =
+      await this.databaseService.CollectRequestModel.findById(
+        collect_request_id,
+      );
+    if (!collectRequest) {
+      console.log('Collect request not found', collect_request_id);
+      throw new NotFoundException('Collect request not found');
     }
+    console.log('checking status', collect_request_id, collectRequest);
+    switch (collectRequest?.gateway) {
+      case Gateway.HDFC:
+        return await this.hdfcService.checkStatus(collect_request_id);
+      case Gateway.PHONEPE:
+        return await this.phonePeService.checkStatus(collect_request_id);
+      case Gateway.EDVIRON_PG:
+        return await this.edvironPgService.checkStatus(
+          collect_request_id,
+          collectRequest,
+        );
+    }
+  }
 }
-

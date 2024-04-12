@@ -17,7 +17,6 @@ import { Webhooks } from 'src/database/schemas/webhooks.schema';
 import { Types } from 'mongoose';
 import * as jwt from 'jsonwebtoken';
 
-
 @Controller('edviron-pg')
 export class EdvironPgController {
   constructor(
@@ -160,7 +159,6 @@ export class EdvironPgController {
     @Res() res: any,
     @Req() req: any,
   ) {
-    
     const { client_id, token } = body;
     if (!token) throw new Error('Token not provided');
 
@@ -218,6 +216,10 @@ export class EdvironPgController {
           status,
         };
       }
+      const transactionsCount =
+        await this.databaseService.CollectRequestStatusModel.countDocuments(
+          query,
+        );
 
       const transactions =
         await this.databaseService.CollectRequestStatusModel.find(query, null, {
@@ -226,11 +228,6 @@ export class EdvironPgController {
         })
           .sort({ createdAt: -1 })
           .select('-_id -__v ');
-
-      const transactionsCount =
-        await this.databaseService.CollectRequestStatusModel.countDocuments({
-          collect_id: { $in: orderIds },
-        });
 
       res
         .status(201)

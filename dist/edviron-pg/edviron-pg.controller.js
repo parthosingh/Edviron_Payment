@@ -168,15 +168,13 @@ let EdvironPgController = class EdvironPgController {
                     status,
                 };
             }
+            const transactionsCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
             const transactions = await this.databaseService.CollectRequestStatusModel.find(query, null, {
                 skip: (page - 1) * limit,
                 limit: limit,
             })
                 .sort({ createdAt: -1 })
                 .select('-_id -__v ');
-            const transactionsCount = await this.databaseService.CollectRequestStatusModel.countDocuments({
-                collect_id: { $in: orderIds },
-            });
             res
                 .status(201)
                 .send({ transactions, totalTransactions: transactionsCount });

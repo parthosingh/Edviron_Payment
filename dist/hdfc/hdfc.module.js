@@ -19,7 +19,7 @@ exports.HdfcModule = HdfcModule = __decorate([
         imports: [database_module_1.DatabaseModule],
         exports: [hdfc_service_1.HdfcService],
         providers: [hdfc_service_1.HdfcService],
-        controllers: [hdfc_controller_1.HdfcController]
+        controllers: [hdfc_controller_1.HdfcController],
     })
 ], HdfcModule);
 //# sourceMappingURL=hdfc.module.js.map

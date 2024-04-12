@@ -2,9 +2,9 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ObjectId } from 'mongoose';
 
 export enum Gateway {
-    PHONEPE = "PHONEPE",
-    HDFC = "HDFC",
-    EDVIRON_PG = "EDVIRON_PG"
+  PHONEPE = 'PHONEPE',
+  HDFC = 'HDFC',
+  EDVIRON_PG = 'EDVIRON_PG',
 }
 
 @Schema({ timestamps: true })
@@ -40,4 +40,5 @@ export class CollectRequest {
 }
 
 export type CollectRequestDocument = CollectRequest & Document;
-export const CollectRequestSchema = SchemaFactory.createForClass(CollectRequest);
+export const CollectRequestSchema =
+  SchemaFactory.createForClass(CollectRequest);

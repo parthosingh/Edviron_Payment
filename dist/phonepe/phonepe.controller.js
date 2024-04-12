@@ -23,12 +23,12 @@ let PhonepeController = class PhonepeController {
         res.redirect((await this.databaseService.CollectRequestModel.findById(body.transactionId))?.callbackUrl);
     }
     async handleCallback(body) {
-        return "OK";
+        return 'OK';
     }
 };
 exports.PhonepeController = PhonepeController;
 __decorate([
-    (0, common_1.Post)("/redirect"),
+    (0, common_1.Post)('/redirect'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
@@ -36,7 +36,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PhonepeController.prototype, "handleRedirect", null);
 __decorate([
-    (0, common_1.Post)("/callback"),
+    (0, common_1.Post)('/callback'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

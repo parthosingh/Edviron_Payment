@@ -47,4 +47,3 @@ export class CollectRequestStatus {
 export type CollectRequestStatusDocument = CollectRequestStatus & Document;
 export const CollectRequestStatusSchema =
   SchemaFactory.createForClass(CollectRequestStatus);
-

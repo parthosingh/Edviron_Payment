@@ -43,7 +43,7 @@ let HdfcController = class HdfcController {
 };
 exports.HdfcController = HdfcController;
 __decorate([
-    (0, common_1.Get)("/redirect"),
+    (0, common_1.Get)('/redirect'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
@@ -51,7 +51,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], HdfcController.prototype, "handleRedirect", null);
 __decorate([
-    (0, common_1.Post)("/callback"),
+    (0, common_1.Post)('/callback'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
@@ -60,6 +60,7 @@ __decorate([
 ], HdfcController.prototype, "handleCallback", null);
 exports.HdfcController = HdfcController = __decorate([
     (0, common_1.Controller)('hdfc'),
-    __metadata("design:paramtypes", [hdfc_service_1.HdfcService, database_service_1.DatabaseService])
+    __metadata("design:paramtypes", [hdfc_service_1.HdfcService,
+        database_service_1.DatabaseService])
 ], HdfcController);
 //# sourceMappingURL=hdfc.controller.js.map

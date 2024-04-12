@@ -49,10 +49,11 @@ export class CollectService {
       transaction_amount: request.amount,
       payment_method: null,
     }).save();
-    const transaction =
-      (gateway === Gateway.EDVIRON_PG
+    const transaction = (
+      gateway === Gateway.EDVIRON_PG
         ? await this.edvironPgService.collect(request)
-        : await this.hdfcService.collect(request))!;
+        : await this.hdfcService.collect(request)
+    )!;
     return { url: transaction.url, request };
   }
 }

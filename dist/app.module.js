@@ -21,7 +21,14 @@ let AppModule = class AppModule {
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [collect_module_1.CollectModule, database_module_1.DatabaseModule, phonepe_module_1.PhonepeModule, check_status_module_1.CheckStatusModule, hdfc_module_1.HdfcModule, edviron_pg_module_1.EdvironPgModule],
+        imports: [
+            collect_module_1.CollectModule,
+            database_module_1.DatabaseModule,
+            phonepe_module_1.PhonepeModule,
+            check_status_module_1.CheckStatusModule,
+            hdfc_module_1.HdfcModule,
+            edviron_pg_module_1.EdvironPgModule,
+        ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
     })

@@ -102,7 +102,8 @@ let EdvironPgService = class EdvironPgService {
             amount: cashfreeRes.order_amount,
             details: {
                 bank_ref: collect_status?.bank_reference && collect_status?.bank_reference,
-                payment_methods: collect_status?.details && JSON.parse(collect_status.details),
+                payment_methods: collect_status?.details &&
+                    JSON.parse(collect_status.details),
             },
         };
     }

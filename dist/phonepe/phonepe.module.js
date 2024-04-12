@@ -19,7 +19,7 @@ exports.PhonepeModule = PhonepeModule = __decorate([
         imports: [database_module_1.DatabaseModule],
         exports: [phonepe_service_1.PhonepeService],
         providers: [phonepe_service_1.PhonepeService],
-        controllers: [phonepe_controller_1.PhonepeController]
+        controllers: [phonepe_controller_1.PhonepeController],
     })
 ], PhonepeModule);
 //# sourceMappingURL=phonepe.module.js.map
