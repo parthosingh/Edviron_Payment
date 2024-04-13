@@ -48,19 +48,7 @@ let EdvironPgController = class EdvironPgController {
             disable_modes += `&card=${card}`;
         res.send(`<script type="text/javascript">
                 window.onload = function(){
-<<<<<<< HEAD
-<<<<<<< HEAD
-                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}${disable_modes}";
-=======
-<<<<<<< HEAD
-                    location.href = "https://dev.pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}${disable_modes}";
-=======
-                    location.href = "https://dev.pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}&platform_charges=${encodeURIComponent(req.query.platform_charges)}";
->>>>>>> 633e538 (adding MDR)
->>>>>>> 119dcce (adding MDR)
-=======
-                    location.href = "https://dev.pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}&platform_charges=${encodeURIComponent(req.query.platform_charges)}";
->>>>>>> fb99ad5 (build)
+                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}${disable_modes}&platform_charges=${encodeURIComponent(req.query.platform_charges)}";
                 }
             </script>`);
     }

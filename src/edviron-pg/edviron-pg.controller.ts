@@ -41,7 +41,15 @@ export class EdvironPgController {
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}${disable_modes}&platform_charges=${encodeURIComponent(req.query.platform_charges)}";
+                    location.href = "https://pg.edviron.com?session_id=${
+                      req.query.session_id
+                    }&collect_request_id=${
+                      req.query.collect_request_id
+                    }&amount=${
+                      req.query.amount
+                    }${disable_modes}&platform_charges=${encodeURIComponent(
+                      req.query.platform_charges,
+                    )}";
                 }
             </script>`,
     );

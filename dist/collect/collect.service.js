@@ -25,8 +25,11 @@ let CollectService = class CollectService {
         this.databaseService = databaseService;
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
     async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], webHook, additional_data) {
 =======
+=======
+>>>>>>> 1069b61 (mdr cherry picked from mdr1)
 <<<<<<< HEAD
     async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], webHook, additional_data, student_id, student_email, student_name, student_phone, student_receipt) {
 >>>>>>> a1ec662 (adding MDR)
@@ -39,16 +42,25 @@ let CollectService = class CollectService {
 =======
 <<<<<<< HEAD
     async collect(amount, callbackUrl, clientId, clientSecret, webHook, disabled_modes = []) {
+=======
+    async collect(amount, callbackUrl, clientId, clientSecret, platform_charges, webHook, disabled_modes = []) {
+>>>>>>> b19d5d6 (mdr cherry picked from mdr1)
         console.log('collect request for amount: ' + amount + ' received.', {
             disabled_modes,
         });
         const gateway = clientId === 'edviron' ? collect_request_schema_1.Gateway.HDFC : collect_request_schema_1.Gateway.EDVIRON_PG;
+<<<<<<< HEAD
 =======
     async collect(amount, callbackUrl, clientId, clientSecret, platform_charges, webHook, disabled_modes = []) {
         console.log('collect request for amount: ' + amount + ' received.', { disabled_modes });
 >>>>>>> 119dcce (adding MDR)
 >>>>>>> 0081548 (adding MDR)
+<<<<<<< HEAD
 >>>>>>> 266fd6c (adding MDR)
+=======
+=======
+>>>>>>> b19d5d6 (mdr cherry picked from mdr1)
+>>>>>>> 1eea6d9 (mdr cherry picked from mdr1)
         const request = await new this.databaseService.CollectRequestModel({
             amount,
             callbackUrl,
@@ -69,6 +81,7 @@ let CollectService = class CollectService {
             payment_method: null,
         }).save();
 <<<<<<< HEAD
+<<<<<<< HEAD
         const transaction = (gateway === collect_request_schema_1.Gateway.EDVIRON_PG
             ? await this.edvironPgService.collect(request)
             : await this.hdfcService.collect(request));
@@ -80,19 +93,32 @@ let CollectService = class CollectService {
         }, { new: true });
 =======
 =======
+=======
+>>>>>>> 1eea6d9 (mdr cherry picked from mdr1)
 <<<<<<< HEAD
         const transaction = (await this.edvironPgService.collect(request));
 =======
 <<<<<<< HEAD
+=======
+>>>>>>> b19d5d6 (mdr cherry picked from mdr1)
         const transaction = (gateway === collect_request_schema_1.Gateway.EDVIRON_PG
-            ? await this.edvironPgService.collect(request)
+            ? await this.edvironPgService.collect(request, platform_charges)
             : await this.hdfcService.collect(request));
+<<<<<<< HEAD
 =======
         const transaction = (await this.edvironPgService.collect(request, platform_charges));
 >>>>>>> 119dcce (adding MDR)
 >>>>>>> 0081548 (adding MDR)
+<<<<<<< HEAD
 >>>>>>> 266fd6c (adding MDR)
+<<<<<<< HEAD
 >>>>>>> a1ec662 (adding MDR)
+=======
+=======
+=======
+>>>>>>> b19d5d6 (mdr cherry picked from mdr1)
+>>>>>>> 1eea6d9 (mdr cherry picked from mdr1)
+>>>>>>> 1069b61 (mdr cherry picked from mdr1)
         return { url: transaction.url, request };
     }
 };

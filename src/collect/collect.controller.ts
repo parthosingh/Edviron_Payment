@@ -25,10 +25,10 @@ export class CollectController {
       clientSecret: string;
       school_id: string;
       trustee_id: string;
-      webHook?: string;
       disabled_modes?: string[];
-      additional_data?: {};
       platform_charges: any;
+      webHook?: string;
+      additional_data?: {};
     },
   ) {
     const {
@@ -39,14 +39,12 @@ export class CollectController {
       clientId,
       clientSecret,
       disabled_modes,
+      platform_charges,
       additional_data,
       school_id,
       trustee_id,
-      platform_charges
     } = body;
-
-    console.log('additional data', additional_data);
-
+    
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
     if (!callbackUrl)
