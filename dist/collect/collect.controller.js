@@ -24,10 +24,13 @@ let CollectController = class CollectController {
     async collect(body) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, additional_data, school_id, trustee_id, } = body;
 =======
 =======
 >>>>>>> 67f724c (add dist)
+=======
+>>>>>>> 4635644 (add type)
 <<<<<<< HEAD
         const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, additional_data, student_id, student_email, student_name, student_phone, student_receipt, school_id, trustee_id, } = body;
 >>>>>>> a1ec662 (adding MDR)
@@ -42,6 +45,9 @@ let CollectController = class CollectController {
 =======
         const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, platform_charges } = body;
 >>>>>>> 324d8cb (add dist)
+=======
+        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, platform_charges, } = body;
+>>>>>>> 5d9361b (add type)
         if (!jwt)
             throw new common_1.BadRequestException('JWT not provided');
         if (!amount)

@@ -9,6 +9,7 @@ import { PhonepeService } from 'src/phonepe/phonepe.service';
 import { Transaction } from 'src/types/transaction';
 import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
+import { platformChange } from './collect.controller';
 
 @Injectable()
 export class CollectService {
@@ -26,7 +27,7 @@ export class CollectService {
     school_id: string,
     trustee_id: string,
     disabled_modes: string[] = [],
-    platform_charges: any,
+    platform_charges: platformChange[],
     webHook?: string,
     additional_data?: {},
   ): Promise<{ url: string; request: CollectRequest }> {

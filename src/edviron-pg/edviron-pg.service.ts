@@ -4,13 +4,14 @@ import { GatewayService } from '../types/gateway.type';
 import { Transaction } from '../types/transaction';
 import { DatabaseService } from '../database/database.service';
 import { TransactionStatus } from '../types/transactionStatus';
+import { platformChange } from 'src/collect/collect.controller';
 
 @Injectable()
 export class EdvironPgService implements GatewayService {
   constructor(private readonly databaseService: DatabaseService) {}
   async collect(
     request: CollectRequest,
-    platform_charges: any,
+    platform_charges: platformChange[],
   ): Promise<Transaction | undefined> {
     try {
       const axios = require('axios');

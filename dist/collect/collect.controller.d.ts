@@ -1,4 +1,14 @@
 import { CollectService } from './collect.service';
+type RangeCharge = {
+    upto: number;
+    charge_type: string;
+    charge: number;
+};
+export type platformChange = {
+    platform_type: string;
+    payment_mode: string;
+    rangeCharge: RangeCharge[];
+};
 export declare class CollectController {
     private readonly collectService;
     constructor(collectService: CollectService);
@@ -13,6 +23,7 @@ export declare class CollectController {
         webHook?: string;
         disabled_modes?: string[];
 <<<<<<< HEAD
+<<<<<<< HEAD
         additional_data?: {};
 <<<<<<< HEAD
 =======
@@ -24,6 +35,13 @@ export declare class CollectController {
 =======
         platform_charges: any;
 >>>>>>> 0081548 (adding MDR)
+<<<<<<< HEAD
 >>>>>>> a1ec662 (adding MDR)
+=======
+=======
+        platform_charges: platformChange[];
+>>>>>>> 5d9361b (add type)
+>>>>>>> 4635644 (add type)
     }): Promise<any>;
 }
+export {};

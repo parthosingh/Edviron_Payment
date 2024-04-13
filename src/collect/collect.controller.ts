@@ -11,6 +11,20 @@ import {
 import { CollectService } from './collect.service';
 import * as _jwt from 'jsonwebtoken';
 import { sign } from '../utils/sign';
+
+type RangeCharge = {
+  upto: number;
+  charge_type: string;
+  charge: number;
+};
+
+export type platformChange = {
+  platform_type: string;
+  payment_mode: string;
+  rangeCharge: RangeCharge[];
+};
+
+
 @Controller('collect')
 export class CollectController {
   constructor(private readonly collectService: CollectService) {}
@@ -26,7 +40,7 @@ export class CollectController {
       school_id: string;
       trustee_id: string;
       disabled_modes?: string[];
-      platform_charges: any;
+      platform_charges: platformChange[];
       webHook?: string;
       additional_data?: {};
     },
