@@ -255,15 +255,7 @@ export class EdvironPgController {
                 'collect_request.trustee_id': 0,
               },
             },
-            {
-              $skip: (page - 1) * limit,
-            },
-            {
-              $limit: Number(limit),
-            },
-            {
-              $sort: { createdAt: -1 },
-            },
+
             {
               $project: {
                 collect_id: 1,
@@ -278,6 +270,7 @@ export class EdvironPgController {
                 updatedAt: 1,
               },
             },
+
             {
               $addFields: {
                 collect_request: {
@@ -307,6 +300,15 @@ export class EdvironPgController {
               $project: {
                 school_id: 0,
               },
+            },
+            {
+              $sort: { createdAt: -1 },
+            },
+            {
+              $skip: (page - 1) * limit,
+            },
+            {
+              $limit: Number(limit),
             },
           ]);
       res
