@@ -23,8 +23,16 @@ export class CollectController {
       jwt: string;
       clientId: string;
       clientSecret: string;
+      school_id: string;
+      trustee_id: string;
       webHook?: string;
       disabled_modes?: string[];
+      additional_data?: {};
+      student_id?: string;
+      student_email?: string;
+      student_name?: string;
+      student_phone?: string;
+      student_receipt?: string;
     },
   ) {
     const {
@@ -35,13 +43,24 @@ export class CollectController {
       clientId,
       clientSecret,
       disabled_modes,
+      additional_data,
+      student_id,
+      student_email,
+      student_name,
+      student_phone,
+      student_receipt,
+      school_id,
+      trustee_id,
     } = body;
+
+    console.log('additional data', additional_data);
 
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
     if (!callbackUrl)
       throw new BadRequestException('Callback url not provided');
     try {
+      console.log(disabled_modes);
       let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
       if (
         JSON.stringify({
@@ -64,8 +83,16 @@ export class CollectController {
           callbackUrl,
           clientId,
           clientSecret,
-          webHook,
+          school_id,
+          trustee_id,
           disabled_modes,
+          webHook,
+          additional_data || {},
+          student_id,
+          student_email,
+          student_name,
+          student_phone,
+          student_receipt,
         ),
       );
     } catch (e) {

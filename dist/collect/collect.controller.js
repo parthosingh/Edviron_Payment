@@ -22,7 +22,8 @@ let CollectController = class CollectController {
         this.collectService = collectService;
     }
     async collect(body) {
-        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, } = body;
+        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, additional_data, student_id, student_email, student_name, student_phone, student_receipt, school_id, trustee_id, } = body;
+        console.log('additional data', additional_data);
         if (!jwt)
             throw new common_1.BadRequestException('JWT not provided');
         if (!amount)
@@ -30,6 +31,7 @@ let CollectController = class CollectController {
         if (!callbackUrl)
             throw new common_1.BadRequestException('Callback url not provided');
         try {
+            console.log(disabled_modes);
             let decrypted = _jwt.verify(jwt, process.env.KEY);
             if (JSON.stringify({
                 ...JSON.parse(JSON.stringify(decrypted)),
@@ -44,7 +46,7 @@ let CollectController = class CollectController {
                 })) {
                 throw new common_1.ForbiddenException('Request forged');
             }
-            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, webHook, disabled_modes));
+            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes, webHook, additional_data || {}, student_id, student_email, student_name, student_phone, student_receipt));
         }
         catch (e) {
             console.log(e);
