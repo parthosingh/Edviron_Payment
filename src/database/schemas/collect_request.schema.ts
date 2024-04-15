@@ -36,6 +36,30 @@ export class CollectRequest {
   @Prop({ required: true, default: [] })
   disabled_modes: string[];
 
+  @Prop({ required: false, default: '' })
+  student_name: string;
+
+  @Prop({ required: false, default: '' })
+  student_phone: string;
+
+  @Prop({ required: false, default: '' })
+  student_email: string;
+
+  @Prop({ required: false, default: '' })
+  student_id: string;
+
+  @Prop({ required: false, default: '' })
+  receipt: string;
+
+  @Prop({ required: false, default: '' })
+  additional_data: string;
+
+  @Prop({ required: true })
+  school_id: string;
+
+  @Prop({ required: true })
+  trustee_id: string;
+
   _id: ObjectId;
 }
 

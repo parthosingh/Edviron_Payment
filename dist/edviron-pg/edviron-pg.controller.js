@@ -169,12 +169,93 @@ let EdvironPgController = class EdvironPgController {
                 };
             }
             const transactionsCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
-            const transactions = await this.databaseService.CollectRequestStatusModel.find(query, null, {
-                skip: (page - 1) * limit,
-                limit: limit,
-            })
-                .sort({ createdAt: -1 })
-                .select('-_id -__v ');
+            const transactions = await this.databaseService.CollectRequestStatusModel.aggregate([
+                {
+                    $match: query,
+                },
+                {
+                    $lookup: {
+                        from: 'collectrequests',
+                        localField: 'collect_id',
+                        foreignField: '_id',
+                        as: 'collect_request',
+                    },
+                },
+                {
+                    $unwind: '$collect_request',
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        __v: 0,
+                        'collect_request._id': 0,
+                        'collect_request.__v': 0,
+                        'collect_request.createdAt': 0,
+                        'collect_request.updatedAt': 0,
+                        'collect_request.callbackUrl': 0,
+                        'collect_request.clientId': 0,
+                        'collect_request.clientSecret': 0,
+                        'collect_request.webHookUrl': 0,
+                        'collect_request.disabled_modes': 0,
+                        'collect_request.gateway': 0,
+                        'collect_request.amount': 0,
+                        'collect_request.trustee_id': 0,
+                    },
+                },
+                {
+                    $skip: (page - 1) * limit,
+                },
+                {
+                    $limit: Number(limit),
+                },
+                {
+                    $sort: { createdAt: -1 },
+                },
+                {
+                    $project: {
+                        collect_id: 1,
+                        collect_request: 1,
+                        status: 1,
+                        transaction_amount: 1,
+                        order_amount: 1,
+                        payment_method: 1,
+                        details: 1,
+                        bank_reference: 1,
+                        createdAt: 1,
+                        updatedAt: 1,
+                    },
+                },
+                {
+                    $addFields: {
+                        collect_request: {
+                            $mergeObjects: [
+                                '$collect_request',
+                                {
+                                    status: '$status',
+                                    transaction_amount: '$transaction_amount',
+                                    payment_method: '$payment_method',
+                                    details: '$details',
+                                    bank_reference: '$bank_reference',
+                                    collect_id: '$collect_id',
+                                    order_amount: '$order_amount',
+                                    merchant_id: '$collect_request.school_id',
+                                    currency: 'INR',
+                                    createdAt: '$createdAt',
+                                    updatedAt: '$updatedAt',
+                                },
+                            ],
+                        },
+                    },
+                },
+                {
+                    $replaceRoot: { newRoot: '$collect_request' },
+                },
+                {
+                    $project: {
+                        school_id: 0,
+                    },
+                },
+            ]);
             res
                 .status(201)
                 .send({ transactions, totalTransactions: transactionsCount });

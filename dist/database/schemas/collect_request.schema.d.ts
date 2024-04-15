@@ -38,6 +38,14 @@ export declare class CollectRequest {
     clientSecret: string;
     webHookUrl: string;
     disabled_modes: string[];
+    student_name: string;
+    student_phone: string;
+    student_email: string;
+    student_id: string;
+    receipt: string;
+    additional_data: string;
+    school_id: string;
+    trustee_id: string;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;
