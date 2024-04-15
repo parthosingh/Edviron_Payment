@@ -203,15 +203,6 @@ let EdvironPgController = class EdvironPgController {
                     },
                 },
                 {
-                    $skip: (page - 1) * limit,
-                },
-                {
-                    $limit: Number(limit),
-                },
-                {
-                    $sort: { createdAt: -1 },
-                },
-                {
                     $project: {
                         collect_id: 1,
                         collect_request: 1,
@@ -254,6 +245,15 @@ let EdvironPgController = class EdvironPgController {
                     $project: {
                         school_id: 0,
                     },
+                },
+                {
+                    $sort: { createdAt: -1 },
+                },
+                {
+                    $skip: (page - 1) * limit,
+                },
+                {
+                    $limit: Number(limit),
                 },
             ]);
             res
