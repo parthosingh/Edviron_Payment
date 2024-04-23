@@ -37,10 +37,13 @@ export class CollectService {
     console.log('collect request for amount: ' + amount + ' received.', {
       disabled_modes,
     });
+
+    const gateway = clientId === 'edviron' ? Gateway.HDFC : Gateway.EDVIRON_PG;
+
     const request = await new this.databaseService.CollectRequestModel({
       amount,
       callbackUrl,
-      gateway: Gateway.EDVIRON_PG,
+      gateway: gateway,
       clientId,
       clientSecret,
       webHookUrl: webHook || null,
@@ -62,7 +65,12 @@ export class CollectService {
       transaction_amount: request.amount,
       payment_method: null,
     }).save();
-    const transaction = (await this.edvironPgService.collect(request))!;
+
+    const transaction = (
+      gateway === Gateway.EDVIRON_PG
+        ? await this.edvironPgService.collect(request)
+        : await this.hdfcService.collect(request)
+    )!;
     return { url: transaction.url, request };
   }
 }
