@@ -24,7 +24,6 @@ export type platformChange = {
   rangeCharge: RangeCharge[];
 };
 
-
 @Controller('collect')
 export class CollectController {
   constructor(private readonly collectService: CollectService) {}
@@ -39,9 +38,9 @@ export class CollectController {
       clientSecret: string;
       school_id: string;
       trustee_id: string;
+      webHook?: string;
       disabled_modes?: string[];
       platform_charges: platformChange[];
-      webHook?: string;
       additional_data?: {};
     },
   ) {
@@ -58,7 +57,7 @@ export class CollectController {
       school_id,
       trustee_id,
     } = body;
-    
+
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
     if (!callbackUrl)

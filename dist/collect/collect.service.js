@@ -26,10 +26,13 @@ let CollectService = class CollectService {
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], webHook, additional_data) {
 =======
 =======
 >>>>>>> 1069b61 (mdr cherry picked from mdr1)
+=======
+>>>>>>> 821a0c6 (rebased with main)
 <<<<<<< HEAD
     async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], webHook, additional_data, student_id, student_email, student_name, student_phone, student_receipt) {
 >>>>>>> a1ec662 (adding MDR)
@@ -45,10 +48,14 @@ let CollectService = class CollectService {
 =======
     async collect(amount, callbackUrl, clientId, clientSecret, platform_charges, webHook, disabled_modes = []) {
 >>>>>>> b19d5d6 (mdr cherry picked from mdr1)
+=======
+    async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], platform_charges, webHook, additional_data, student_id, student_email, student_name, student_phone, student_receipt) {
+>>>>>>> 6ea77de (rebased with main)
         console.log('collect request for amount: ' + amount + ' received.', {
             disabled_modes,
         });
         const gateway = clientId === 'edviron' ? collect_request_schema_1.Gateway.HDFC : collect_request_schema_1.Gateway.EDVIRON_PG;
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
     async collect(amount, callbackUrl, clientId, clientSecret, platform_charges, webHook, disabled_modes = []) {
@@ -61,6 +68,8 @@ let CollectService = class CollectService {
 =======
 >>>>>>> b19d5d6 (mdr cherry picked from mdr1)
 >>>>>>> 1eea6d9 (mdr cherry picked from mdr1)
+=======
+>>>>>>> 6ea77de (rebased with main)
         const request = await new this.databaseService.CollectRequestModel({
             amount,
             callbackUrl,
@@ -80,6 +89,7 @@ let CollectService = class CollectService {
             transaction_amount: request.amount,
             payment_method: null,
         }).save();
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         const transaction = (gateway === collect_request_schema_1.Gateway.EDVIRON_PG
@@ -118,7 +128,15 @@ let CollectService = class CollectService {
 =======
 >>>>>>> b19d5d6 (mdr cherry picked from mdr1)
 >>>>>>> 1eea6d9 (mdr cherry picked from mdr1)
+<<<<<<< HEAD
 >>>>>>> 1069b61 (mdr cherry picked from mdr1)
+=======
+=======
+        const transaction = (gateway === collect_request_schema_1.Gateway.EDVIRON_PG
+            ? await this.edvironPgService.collect(request, platform_charges)
+            : await this.hdfcService.collect(request));
+>>>>>>> 6ea77de (rebased with main)
+>>>>>>> 821a0c6 (rebased with main)
         return { url: transaction.url, request };
     }
 };

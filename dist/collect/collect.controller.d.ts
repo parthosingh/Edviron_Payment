@@ -22,8 +22,7 @@ export declare class CollectController {
         trustee_id: string;
         webHook?: string;
         disabled_modes?: string[];
-<<<<<<< HEAD
-<<<<<<< HEAD
+        platform_charges: platformChange[];
         additional_data?: {};
 <<<<<<< HEAD
 =======
@@ -32,6 +31,7 @@ export declare class CollectController {
         student_name?: string;
         student_phone?: string;
         student_receipt?: string;
+<<<<<<< HEAD
 =======
         platform_charges: any;
 >>>>>>> 0081548 (adding MDR)
@@ -42,6 +42,8 @@ export declare class CollectController {
         platform_charges: platformChange[];
 >>>>>>> 5d9361b (add type)
 >>>>>>> 4635644 (add type)
+=======
+>>>>>>> 821a0c6 (rebased with main)
     }): Promise<any>;
 }
 export {};
