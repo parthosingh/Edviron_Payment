@@ -8,7 +8,11 @@ export declare class EdvironPgController {
     handleCallback(req: any, res: any): Promise<void>;
     handleWebhook(body: any, res: any): Promise<void>;
     transactionsReport(body: {
-        client_id: string;
+        school_id: string;
+        token: string;
+    }, res: any, req: any): Promise<void>;
+    bulkTransactions(body: {
+        trustee_id: string;
         token: string;
     }, res: any, req: any): Promise<void>;
 }

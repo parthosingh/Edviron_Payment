@@ -13,10 +13,5 @@ export declare class CollectController {
         webHook?: string;
         disabled_modes?: string[];
         additional_data?: {};
-        student_id?: string;
-        student_email?: string;
-        student_name?: string;
-        student_phone?: string;
-        student_receipt?: string;
     }): Promise<any>;
 }

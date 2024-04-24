@@ -104,7 +104,13 @@ let EdvironPgController = class EdvironPgController {
         const webHookUrl = collectReq?.webHookUrl;
         if (webHookUrl !== null) {
             const amount = reqToCheck?.amount;
-            const webHookData = await (0, sign_1.sign)({ collect_id, amount, status });
+            const webHookData = await (0, sign_1.sign)({
+                collect_id,
+                amount,
+                status,
+                trustee_id: collectReq.trustee_id,
+                school_id: collectReq.school_id,
+            });
             const config = {
                 method: 'post',
                 maxBodyLength: Infinity,
@@ -121,7 +127,7 @@ let EdvironPgController = class EdvironPgController {
         res.status(200).send('OK');
     }
     async transactionsReport(body, res, req) {
-        const { client_id, token } = body;
+        const { school_id, token } = body;
         if (!token)
             throw new Error('Token not provided');
         try {
@@ -137,16 +143,16 @@ let EdvironPgController = class EdvironPgController {
                 exp: undefined,
             }) !==
                 JSON.stringify({
-                    client_id,
+                    school_id,
                 })) {
                 throw new common_1.ForbiddenException('Request forged');
             }
             const orders = await this.databaseService.CollectRequestModel.find({
-                clientId: client_id,
+                school_id: school_id,
             }).select('_id');
             if (orders.length == 0) {
-                console.log('No orders found for client_id', client_id);
-                res.status(200).send('No orders found for clientId');
+                console.log('No orders found for client_id', school_id);
+                res.status(201).send({ transactions: [], totalTransactions: 0 });
                 return;
             }
             const orderIds = orders.map((order) => order._id);
@@ -267,6 +273,147 @@ let EdvironPgController = class EdvironPgController {
             throw error;
         }
     }
+    async bulkTransactions(body, res, req) {
+        const { trustee_id, token } = body;
+        if (!token)
+            throw new Error('Token not provided');
+        try {
+            const page = req.query.page || 1;
+            const limit = req.query.limit || 10;
+            const startDate = req.query.startDate || null;
+            const endDate = req.query.endDate || null;
+            const status = req.query.status || null;
+            let decrypted = jwt.verify(token, process.env.KEY);
+            if (JSON.stringify({
+                ...JSON.parse(JSON.stringify(decrypted)),
+                iat: undefined,
+                exp: undefined,
+            }) !==
+                JSON.stringify({
+                    trustee_id,
+                })) {
+                throw new common_1.ForbiddenException('Request forged');
+            }
+            const orders = await this.databaseService.CollectRequestModel.find({
+                trustee_id: trustee_id,
+            }).select('_id');
+            let transactions = [];
+            const orderIds = orders.map((order) => order._id);
+            let query = {
+                collect_id: { $in: orderIds },
+            };
+            if (startDate && endDate) {
+                query = {
+                    ...query,
+                    createdAt: {
+                        $gte: new Date(startDate),
+                        $lt: new Date(endDate),
+                    },
+                };
+            }
+            if (status === 'SUCCESS' || status === 'PENDING') {
+                query = {
+                    ...query,
+                    status,
+                };
+            }
+            const transactionsCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
+            transactions =
+                await this.databaseService.CollectRequestStatusModel.aggregate([
+                    {
+                        $match: query,
+                    },
+                    {
+                        $lookup: {
+                            from: 'collectrequests',
+                            localField: 'collect_id',
+                            foreignField: '_id',
+                            as: 'collect_request',
+                        },
+                    },
+                    {
+                        $unwind: '$collect_request',
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            __v: 0,
+                            'collect_request._id': 0,
+                            'collect_request.__v': 0,
+                            'collect_request.createdAt': 0,
+                            'collect_request.updatedAt': 0,
+                            'collect_request.callbackUrl': 0,
+                            'collect_request.clientId': 0,
+                            'collect_request.clientSecret': 0,
+                            'collect_request.webHookUrl': 0,
+                            'collect_request.disabled_modes': 0,
+                            'collect_request.gateway': 0,
+                            'collect_request.amount': 0,
+                            'collect_request.trustee_id': 0,
+                        },
+                    },
+                    {
+                        $project: {
+                            collect_id: 1,
+                            collect_request: 1,
+                            status: 1,
+                            transaction_amount: 1,
+                            order_amount: 1,
+                            payment_method: 1,
+                            details: 1,
+                            bank_reference: 1,
+                            createdAt: 1,
+                            updatedAt: 1,
+                        },
+                    },
+                    {
+                        $addFields: {
+                            collect_request: {
+                                $mergeObjects: [
+                                    '$collect_request',
+                                    {
+                                        status: '$status',
+                                        transaction_amount: '$transaction_amount',
+                                        payment_method: '$payment_method',
+                                        details: '$details',
+                                        bank_reference: '$bank_reference',
+                                        collect_id: '$collect_id',
+                                        order_amount: '$order_amount',
+                                        merchant_id: '$collect_request.school_id',
+                                        currency: 'INR',
+                                        createdAt: '$createdAt',
+                                        updatedAt: '$updatedAt',
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                    {
+                        $replaceRoot: { newRoot: '$collect_request' },
+                    },
+                    {
+                        $project: {
+                            school_id: 0,
+                        },
+                    },
+                    {
+                        $sort: { createdAt: -1 },
+                    },
+                    {
+                        $skip: (page - 1) * limit,
+                    },
+                    {
+                        $limit: Number(limit),
+                    },
+                ]);
+            res
+                .status(201)
+                .send({ transactions, totalTransactions: transactionsCount });
+        }
+        catch (error) {
+            throw new Error(error.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -302,6 +449,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "transactionsReport", null);
+__decorate([
+    (0, common_1.Get)('bulk-transactions-report'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "bulkTransactions", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
