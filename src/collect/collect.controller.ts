@@ -28,11 +28,6 @@ export class CollectController {
       webHook?: string;
       disabled_modes?: string[];
       additional_data?: {};
-      student_id?: string;
-      student_email?: string;
-      student_name?: string;
-      student_phone?: string;
-      student_receipt?: string;
     },
   ) {
     const {
@@ -44,11 +39,6 @@ export class CollectController {
       clientSecret,
       disabled_modes,
       additional_data,
-      student_id,
-      student_email,
-      student_name,
-      student_phone,
-      student_receipt,
       school_id,
       trustee_id,
     } = body;
@@ -88,11 +78,6 @@ export class CollectController {
           disabled_modes,
           webHook,
           additional_data || {},
-          student_id,
-          student_email,
-          student_name,
-          student_phone,
-          student_receipt,
         ),
       );
     } catch (e) {

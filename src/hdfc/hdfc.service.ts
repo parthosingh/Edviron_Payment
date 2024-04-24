@@ -249,9 +249,7 @@ export class HdfcService implements GatewayService {
     return paramObject.order_id;
   }
 
-  async checkStatus(
-    collectRequestId: String,
-  ): Promise<{
+  async checkStatus(collectRequestId: String): Promise<{
     status: TransactionStatus;
     amount: number;
     paymentInstrument?: string | null;

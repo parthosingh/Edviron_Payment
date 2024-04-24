@@ -28,11 +28,6 @@ export class CollectService {
     disabled_modes: string[] = [],
     webHook?: string,
     additional_data?: {},
-    student_id?: string,
-    student_email?: string,
-    student_name?: string,
-    student_phone?: string,
-    student_receipt?: string,
   ): Promise<{ url: string; request: CollectRequest }> {
     console.log('collect request for amount: ' + amount + ' received.', {
       disabled_modes,
@@ -48,11 +43,6 @@ export class CollectService {
       clientSecret,
       webHookUrl: webHook || null,
       disabled_modes,
-      student_id,
-      student_email,
-      student_name,
-      student_phone,
-      receipt: student_receipt,
       school_id,
       trustee_id,
       additional_data: JSON.stringify(additional_data),
