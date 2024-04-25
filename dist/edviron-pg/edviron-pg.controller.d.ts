@@ -5,7 +5,8 @@ export declare class EdvironPgController {
     private readonly databaseService;
     constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService);
     handleRedirect(req: any, res: any): Promise<void>;
-    handleCallback(req: any, res: any): Promise<void>;
+    handleSdkRedirect(req: any, res: any): Promise<any>;
+    handleCallback(req: any, res: any): Promise<any>;
     handleWebhook(body: any, res: any): Promise<void>;
     transactionsReport(body: {
         school_id: string;

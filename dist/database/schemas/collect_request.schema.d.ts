@@ -46,6 +46,8 @@ export declare class CollectRequest {
     additional_data: string;
     school_id: string;
     trustee_id: string;
+    payment_data: string;
+    sdkPayment: boolean;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;

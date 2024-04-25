@@ -47,14 +47,92 @@ export class EdvironPgController {
     );
   }
 
+  @Get('/sdk-redirect')
+  async handleSdkRedirect(@Req() req: any, @Res() res: any) {
+    const collect_id = req.query.collect_id;
+
+    if (!Types.ObjectId.isValid(collect_id)) {
+      return res.redirect(
+        `${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`,
+      );
+    }
+    const collectRequest =
+      (await this.databaseService.CollectRequestModel.findById(collect_id))!;
+    if (!collectRequest) {
+      res.redirect(
+        `${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`,
+      );
+    }
+
+    const paymentString = JSON.parse(collectRequest?.payment_data);
+    const parsedUrl = new URL(paymentString);
+    const sessionId = parsedUrl.searchParams.get('session_id');
+    const params = new URLSearchParams(paymentString);
+    const wallet = params.get('wallet');
+    const cardless = params.get('cardless');
+    const netbanking = params.get('netbanking');
+
+    const pay_later = params.get('pay_later');
+    const upi = params.get('upi');
+    const card = params.get('card');
+    const session_id = params.get('session_id');
+
+    const amount = params.get('amount');
+    let disable_modes = '';
+    if (wallet) disable_modes += `&wallet=${wallet}`;
+    if (cardless) disable_modes += `&cardless=${cardless}`;
+    if (netbanking) disable_modes += `&netbanking=${netbanking}`;
+    if (pay_later) disable_modes += `&pay_later=${pay_later}`;
+    if (upi) disable_modes += `&upi=${upi}`;
+    if (card) disable_modes += `&card=${card}`;
+    await this.databaseService.CollectRequestModel.updateOne(
+      {
+        _id: collect_id,
+      },
+      {
+        sdkPayment: true,
+      },
+      {
+        new: true,
+      },
+    );
+
+    res.send(
+      `<script type="text/javascript">
+                window.onload = function(){
+                    location.href = "${process.env.PG_FRONTEND}?session_id=${sessionId}&collect_request_id=${req.query.collect_id}&amount=${amount}${disable_modes}";
+                }
+            </script>`,
+    );
+  }
+
   @Get('/callback')
   async handleCallback(@Req() req: any, @Res() res: any) {
     const { collect_request_id } = req.query;
     const collectRequest =
-      await this.databaseService.CollectRequestModel.findById(
+      (await this.databaseService.CollectRequestModel.findById(
         collect_request_id,
+      ))!;
+
+    const { status } = await this.edvironPgService.checkStatus(
+      collect_request_id,
+      collectRequest,
+    );
+
+    if (collectRequest?.sdkPayment) {
+      if (status === `SUCCESS`) {
+        console.log(`SDK payment success for ${collect_request_id}`);
+        return res.redirect(
+          `${process.env.PG_FRONTEND}/payment-success?collect_id=${collect_request_id}`,
+        );
+      }
+      console.log(`SDK payment failed for ${collect_request_id}`);
+
+      return res.redirect(
+        `${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}`,
       );
-    res.redirect(collectRequest?.callbackUrl);
+    }
+    return res.redirect(collectRequest?.callbackUrl);
   }
 
   @Post('/webhook')
@@ -261,6 +339,8 @@ export class EdvironPgController {
               'collect_request.gateway': 0,
               'collect_request.amount': 0,
               'collect_request.trustee_id': 0,
+              'collect_request.sdkPayment': 0,
+              'collect_request.payment_data': 0,
             },
           },
 
@@ -431,6 +511,8 @@ export class EdvironPgController {
               'collect_request.gateway': 0,
               'collect_request.amount': 0,
               'collect_request.trustee_id': 0,
+              'collect_request.sdkPayment': 0,
+              'collect_request.payment_data': 0,
             },
           },
           {

@@ -61,6 +61,15 @@ export class CollectService {
         ? await this.edvironPgService.collect(request)
         : await this.hdfcService.collect(request)
     )!;
+    await this.databaseService.CollectRequestModel.updateOne(
+      {
+        _id: request._id,
+      },
+      {
+        payment_data: JSON.stringify(transaction.url),
+      },
+      { new: true },
+    );
     return { url: transaction.url, request };
   }
 }
