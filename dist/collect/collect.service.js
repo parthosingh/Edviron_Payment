@@ -51,6 +51,11 @@ let CollectService = class CollectService {
         const transaction = (gateway === collect_request_schema_1.Gateway.EDVIRON_PG
             ? await this.edvironPgService.collect(request)
             : await this.hdfcService.collect(request));
+        await this.databaseService.CollectRequestModel.updateOne({
+            _id: request._id,
+        }, {
+            payment_data: JSON.stringify(transaction.url),
+        }, { new: true });
         return { url: transaction.url, request };
     }
 };

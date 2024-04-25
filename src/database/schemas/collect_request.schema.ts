@@ -60,6 +60,12 @@ export class CollectRequest {
   @Prop({ required: true })
   trustee_id: string;
 
+  @Prop({ required: false })
+  payment_data: string;
+
+  @Prop({ required: false, default: false })
+  sdkPayment: boolean;
+
   _id: ObjectId;
 }
 
