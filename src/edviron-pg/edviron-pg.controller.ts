@@ -347,11 +347,8 @@ export class EdvironPgController {
               'collect_request.gateway': 0,
               'collect_request.amount': 0,
               'collect_request.trustee_id': 0,
-<<<<<<< HEAD
               'collect_request.sdkPayment': 0,
               'collect_request.payment_data': 0,
-=======
->>>>>>> 821a0c6 (rebased with main)
             },
           },
 
@@ -367,7 +364,6 @@ export class EdvironPgController {
               bank_reference: 1,
               createdAt: 1,
               updatedAt: 1,
-<<<<<<< HEAD
             },
           },
           {
@@ -411,51 +407,6 @@ export class EdvironPgController {
           },
         ]);
 
-=======
-            },
-          },
-
-          {
-            $addFields: {
-              collect_request: {
-                $mergeObjects: [
-                  '$collect_request',
-                  {
-                    status: '$status',
-                    transaction_amount: '$transaction_amount',
-                    payment_method: '$payment_method',
-                    details: '$details',
-                    bank_reference: '$bank_reference',
-                    collect_id: '$collect_id',
-                    order_amount: '$order_amount',
-                    merchant_id: '$collect_request.school_id',
-                    currency: 'INR',
-                    createdAt: '$createdAt',
-                    updatedAt: '$updatedAt',
-                  },
-                ],
-              },
-            },
-          },
-          {
-            $replaceRoot: { newRoot: '$collect_request' },
-          },
-          {
-            $project: {
-              school_id: 0,
-            },
-          },
-          {
-            $sort: { createdAt: -1 },
-          },
-          {
-            $skip: (page - 1) * limit,
-          },
-          {
-            $limit: Number(limit),
-          },
-        ]);
->>>>>>> 821a0c6 (rebased with main)
       res
         .status(201)
         .send({ transactions, totalTransactions: transactionsCount });

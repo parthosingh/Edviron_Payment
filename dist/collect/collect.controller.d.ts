@@ -24,26 +24,6 @@ export declare class CollectController {
         disabled_modes?: string[];
         platform_charges: platformChange[];
         additional_data?: {};
-<<<<<<< HEAD
-=======
-        student_id?: string;
-        student_email?: string;
-        student_name?: string;
-        student_phone?: string;
-        student_receipt?: string;
-<<<<<<< HEAD
-=======
-        platform_charges: any;
->>>>>>> 0081548 (adding MDR)
-<<<<<<< HEAD
->>>>>>> a1ec662 (adding MDR)
-=======
-=======
-        platform_charges: platformChange[];
->>>>>>> 5d9361b (add type)
->>>>>>> 4635644 (add type)
-=======
->>>>>>> 821a0c6 (rebased with main)
     }): Promise<any>;
 }
 export {};

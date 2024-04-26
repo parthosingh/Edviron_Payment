@@ -22,36 +22,7 @@ let CollectController = class CollectController {
         this.collectService = collectService;
     }
     async collect(body) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, additional_data, school_id, trustee_id, } = body;
-=======
-=======
->>>>>>> 67f724c (add dist)
-=======
->>>>>>> 4635644 (add type)
-<<<<<<< HEAD
-        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, additional_data, student_id, student_email, student_name, student_phone, student_receipt, school_id, trustee_id, } = body;
->>>>>>> a1ec662 (adding MDR)
-        console.log('additional data', additional_data);
-=======
-<<<<<<< HEAD
-        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, } = body;
-=======
-        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, platform_charges } = body;
->>>>>>> d6115c5 (adding MDR)
->>>>>>> 0081548 (adding MDR)
-=======
-        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, platform_charges } = body;
->>>>>>> 324d8cb (add dist)
-=======
-        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, platform_charges, } = body;
->>>>>>> 5d9361b (add type)
-=======
-        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, platform_charges, additional_data, student_id, student_email, student_name, student_phone, student_receipt, school_id, trustee_id, } = body;
->>>>>>> 821a0c6 (rebased with main)
+        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, platform_charges, additional_data, school_id, trustee_id, } = body;
         if (!jwt)
             throw new common_1.BadRequestException('JWT not provided');
         if (!amount)
@@ -74,19 +45,7 @@ let CollectController = class CollectController {
                 })) {
                 throw new common_1.ForbiddenException('Request forged');
             }
-<<<<<<< HEAD
-<<<<<<< HEAD
-            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes, webHook, additional_data || {}));
-=======
-<<<<<<< HEAD
-            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes, webHook, additional_data || {}, student_id, student_email, student_name, student_phone, student_receipt));
-=======
-            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, platform_charges, webHook, disabled_modes));
->>>>>>> 324d8cb (add dist)
->>>>>>> 67f724c (add dist)
-=======
-            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes, platform_charges, webHook, additional_data || {}, student_id, student_email, student_name, student_phone, student_receipt));
->>>>>>> 821a0c6 (rebased with main)
+            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes, platform_charges, webHook, additional_data || {}));
         }
         catch (e) {
             console.log(e);
