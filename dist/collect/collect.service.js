@@ -24,7 +24,7 @@ let CollectService = class CollectService {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
     }
-    async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], webHook, additional_data) {
+    async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], platform_charges, webHook, additional_data) {
         console.log('collect request for amount: ' + amount + ' received.', {
             disabled_modes,
         });
@@ -49,7 +49,7 @@ let CollectService = class CollectService {
             payment_method: null,
         }).save();
         const transaction = (gateway === collect_request_schema_1.Gateway.EDVIRON_PG
-            ? await this.edvironPgService.collect(request)
+            ? await this.edvironPgService.collect(request, platform_charges)
             : await this.hdfcService.collect(request));
         await this.databaseService.CollectRequestModel.updateOne({
             _id: request._id,

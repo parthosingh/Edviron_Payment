@@ -17,7 +17,7 @@ let EdvironPgService = class EdvironPgService {
     constructor(databaseService) {
         this.databaseService = databaseService;
     }
-    async collect(request) {
+    async collect(request, platform_charges) {
         try {
             const axios = require('axios');
             let data = JSON.stringify({
@@ -51,6 +51,7 @@ let EdvironPgService = class EdvironPgService {
             const disabled_modes_string = request.disabled_modes
                 .map((mode) => `${mode}=false`)
                 .join('&');
+            const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
             return {
                 url: process.env.URL +
                     '/edviron-pg/redirect?session_id=' +
@@ -60,7 +61,9 @@ let EdvironPgService = class EdvironPgService {
                     '&amount=' +
                     request.amount.toFixed(2) +
                     '&' +
-                    disabled_modes_string,
+                    disabled_modes_string +
+                    '&platform_charges=' +
+                    encodedPlatformCharges,
             };
         }
         catch (err) {

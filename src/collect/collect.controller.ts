@@ -11,6 +11,19 @@ import {
 import { CollectService } from './collect.service';
 import * as _jwt from 'jsonwebtoken';
 import { sign } from '../utils/sign';
+
+type RangeCharge = {
+  upto: number;
+  charge_type: string;
+  charge: number;
+};
+
+export type platformChange = {
+  platform_type: string;
+  payment_mode: string;
+  rangeCharge: RangeCharge[];
+};
+
 @Controller('collect')
 export class CollectController {
   constructor(private readonly collectService: CollectService) {}
@@ -27,6 +40,7 @@ export class CollectController {
       trustee_id: string;
       webHook?: string;
       disabled_modes?: string[];
+      platform_charges: platformChange[];
       additional_data?: {};
     },
   ) {
@@ -38,12 +52,11 @@ export class CollectController {
       clientId,
       clientSecret,
       disabled_modes,
+      platform_charges,
       additional_data,
       school_id,
       trustee_id,
     } = body;
-
-    console.log('additional data', additional_data);
 
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
@@ -76,6 +89,7 @@ export class CollectController {
           school_id,
           trustee_id,
           disabled_modes,
+          platform_charges,
           webHook,
           additional_data || {},
         ),
