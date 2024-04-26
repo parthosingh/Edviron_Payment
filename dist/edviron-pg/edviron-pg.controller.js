@@ -72,6 +72,7 @@ let EdvironPgController = class EdvironPgController {
         const upi = params.get('upi');
         const card = params.get('card');
         const session_id = params.get('session_id');
+        const platform_charges = (params.get("platform_charges"));
         const amount = params.get('amount');
         let disable_modes = '';
         if (wallet)
@@ -95,7 +96,7 @@ let EdvironPgController = class EdvironPgController {
         });
         res.send(`<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "${process.env.PG_FRONTEND}?session_id=${sessionId}&collect_request_id=${req.query.collect_id}&amount=${amount}${disable_modes}";
+                    location.href = "${process.env.PG_FRONTEND}?session_id=${sessionId}&collect_request_id=${req.query.collect_id}&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(platform_charges)}";
                 }
             </script>`);
     }
