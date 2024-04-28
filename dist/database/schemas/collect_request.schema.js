@@ -59,26 +59,6 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({ required: false, default: '' }),
     __metadata("design:type", String)
-], CollectRequest.prototype, "student_name", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ required: false, default: '' }),
-    __metadata("design:type", String)
-], CollectRequest.prototype, "student_phone", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ required: false, default: '' }),
-    __metadata("design:type", String)
-], CollectRequest.prototype, "student_email", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ required: false, default: '' }),
-    __metadata("design:type", String)
-], CollectRequest.prototype, "student_id", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ required: false, default: '' }),
-    __metadata("design:type", String)
-], CollectRequest.prototype, "receipt", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ required: false, default: '' }),
-    __metadata("design:type", String)
 ], CollectRequest.prototype, "additional_data", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
