@@ -42,7 +42,7 @@ export class CollectController {
       disabled_modes?: string[];
       platform_charges: platformChange[];
       additional_data?: {};
-      req_webhook_urls?:string[];
+      req_webhook_urls?: string[];
     },
   ) {
     const {
@@ -57,7 +57,7 @@ export class CollectController {
       additional_data,
       school_id,
       trustee_id,
-      req_webhook_urls
+      req_webhook_urls,
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -94,7 +94,7 @@ export class CollectController {
           platform_charges,
           webHook,
           additional_data || {},
-          req_webhook_urls
+          req_webhook_urls,
         ),
       );
     } catch (e) {
