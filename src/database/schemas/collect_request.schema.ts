@@ -51,6 +51,9 @@ export class CollectRequest {
   @Prop({ required: false, default: false })
   sdkPayment: boolean;
 
+  @Prop({ default: [] })
+  req_webhook_urls: string[];
+
   _id: ObjectId;
 }
 

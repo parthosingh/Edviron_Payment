@@ -227,6 +227,7 @@ export class EdvironPgController {
         status,
         trustee_id: collectReq.trustee_id,
         school_id: collectReq.school_id,
+        req_webhook_urls:collectReq?.req_webhook_urls
       });
 
       const config = {
