@@ -36,4 +36,32 @@ export class CheckStatusService {
         );
     }
   }
+
+  async checkStatusByOrderId(order_id: String) {
+    console.log('checking status for custom order id', order_id);
+    const collectRequest =
+      await this.databaseService.CollectRequestModel.findOne({
+        custom_order_id: order_id,
+      });
+    if (!collectRequest) {
+      console.log('Collect request not found', order_id);
+      throw new NotFoundException('Collect request not found');
+    }
+    console.log('checking status', order_id, collectRequest);
+    switch (collectRequest?.gateway) {
+      case Gateway.HDFC:
+        return await this.hdfcService.checkStatus(
+          collectRequest._id.toString(),
+        );
+      case Gateway.PHONEPE:
+        return await this.phonePeService.checkStatus(
+          collectRequest._id.toString(),
+        );
+      case Gateway.EDVIRON_PG:
+        return await this.edvironPgService.checkStatus(
+          order_id,
+          collectRequest,
+        );
+    }
+  }
 }

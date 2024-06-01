@@ -30,6 +30,7 @@ export class CollectService {
     platform_charges: platformChange[],
     webHook?: string,
     additional_data?: {},
+    custom_order_id?: string,
   ): Promise<{ url: string; request: CollectRequest }> {
     console.log('collect request for amount: ' + amount + ' received.', {
       disabled_modes,
@@ -48,6 +49,7 @@ export class CollectService {
       school_id,
       trustee_id,
       additional_data: JSON.stringify(additional_data),
+      custom_order_id
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({
