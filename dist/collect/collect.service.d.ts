@@ -10,7 +10,7 @@ export declare class CollectService {
     private readonly edvironPgService;
     private readonly databaseService;
     constructor(phonepeService: PhonepeService, hdfcService: HdfcService, edvironPgService: EdvironPgService, databaseService: DatabaseService);
-    collect(amount: Number, callbackUrl: string, clientId: string, clientSecret: string, school_id: string, trustee_id: string, disabled_modes: string[] | undefined, platform_charges: platformChange[], webHook?: string, additional_data?: {}): Promise<{
+    collect(amount: Number, callbackUrl: string, clientId: string, clientSecret: string, school_id: string, trustee_id: string, disabled_modes: string[] | undefined, platform_charges: platformChange[], webHook?: string, additional_data?: {}, custom_order_id?: string): Promise<{
         url: string;
         request: CollectRequest;
     }>;
