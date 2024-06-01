@@ -147,7 +147,9 @@ export class EdvironPgController {
         `${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}`,
       );
     }
-    return res.redirect(collectRequest?.callbackUrl);
+    const callbackUrl = new URL(collectRequest?.callbackUrl);
+    callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
+    return res.redirect(callbackUrl.toString());
   }
 
   @Post('/webhook')
