@@ -72,7 +72,7 @@ let EdvironPgController = class EdvironPgController {
         const upi = params.get('upi');
         const card = params.get('card');
         const session_id = params.get('session_id');
-        const platform_charges = (params.get("platform_charges"));
+        const platform_charges = params.get('platform_charges');
         const amount = params.get('amount');
         let disable_modes = '';
         if (wallet)
@@ -169,6 +169,7 @@ let EdvironPgController = class EdvironPgController {
                 status,
                 trustee_id: collectReq.trustee_id,
                 school_id: collectReq.school_id,
+                req_webhook_urls: collectReq?.req_webhook_urls,
             });
             const config = {
                 method: 'post',
