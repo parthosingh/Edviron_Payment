@@ -40,7 +40,7 @@ let CollectService = class CollectService {
             school_id,
             trustee_id,
             additional_data: JSON.stringify(additional_data),
-            req_webhook_urls
+            req_webhook_urls,
         }).save();
         await new this.databaseService.CollectRequestStatusModel({
             collect_id: request._id,
