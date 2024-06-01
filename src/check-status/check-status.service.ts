@@ -59,7 +59,7 @@ export class CheckStatusService {
         );
       case Gateway.EDVIRON_PG:
         return await this.edvironPgService.checkStatus(
-          order_id,
+          collectRequest._id.toString(),
           collectRequest,
         );
     }

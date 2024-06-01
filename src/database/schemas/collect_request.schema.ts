@@ -52,7 +52,7 @@ export class CollectRequest {
   sdkPayment: boolean;
 
   @Prop({ required: false, unique: true })
-  custom_order_id: boolean;
+  custom_order_id: string;
 
   _id: ObjectId;
 }
