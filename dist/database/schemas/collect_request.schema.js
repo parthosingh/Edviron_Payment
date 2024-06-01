@@ -78,7 +78,7 @@ __decorate([
 ], CollectRequest.prototype, "sdkPayment", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false, unique: true }),
-    __metadata("design:type", Boolean)
+    __metadata("design:type", String)
 ], CollectRequest.prototype, "custom_order_id", void 0);
 exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })

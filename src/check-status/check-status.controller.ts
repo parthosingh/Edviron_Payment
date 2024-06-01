@@ -57,7 +57,8 @@ export class CheckStatusController {
     ) {
       throw new Error('Request forged');
     } else {
-      const status = await this.checkStatusService.checkStatusByOrderId(transactionId);
+      const status =
+        await this.checkStatusService.checkStatusByOrderId(transactionId);
       return sign(status);
     }
   }

@@ -56,7 +56,7 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.PHONEPE:
                 return await this.phonePeService.checkStatus(collectRequest._id.toString());
             case collect_request_schema_1.Gateway.EDVIRON_PG:
-                return await this.edvironPgService.checkStatus(order_id, collectRequest);
+                return await this.edvironPgService.checkStatus(collectRequest._id.toString(), collectRequest);
         }
     }
 };
