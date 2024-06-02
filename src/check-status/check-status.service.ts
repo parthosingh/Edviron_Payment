@@ -4,6 +4,7 @@ import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { HdfcService } from 'src/hdfc/hdfc.service';
 import { PhonepeService } from 'src/phonepe/phonepe.service';
 import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
+import mongoose from 'mongoose';
 
 @Injectable()
 export class CheckStatusService {
@@ -37,11 +38,11 @@ export class CheckStatusService {
     }
   }
 
-  async checkStatusByOrderId(order_id: String) {
+  async checkStatusByOrderId(order_id: String, trusteeId:string) {
     console.log('checking status for custom order id', order_id);
     const collectRequest =
       await this.databaseService.CollectRequestModel.findOne({
-        custom_order_id: order_id,
+        custom_order_id: order_id,trustee_id:trusteeId
       });
     if (!collectRequest) {
       console.log('Collect request not found', order_id);
