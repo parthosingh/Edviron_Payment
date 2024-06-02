@@ -42,6 +42,7 @@ export class CollectController {
       disabled_modes?: string[];
       platform_charges: platformChange[];
       additional_data?: {};
+      custom_order_id?: string;
       req_webhook_urls?: string[];
     },
   ) {
@@ -57,6 +58,7 @@ export class CollectController {
       additional_data,
       school_id,
       trustee_id,
+      custom_order_id,
       req_webhook_urls,
     } = body;
 
@@ -94,6 +96,7 @@ export class CollectController {
           platform_charges,
           webHook,
           additional_data || {},
+          custom_order_id,
           req_webhook_urls,
         ),
       );

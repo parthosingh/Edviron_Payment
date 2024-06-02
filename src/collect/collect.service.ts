@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import {
   CollectRequest,
@@ -30,8 +30,20 @@ export class CollectService {
     platform_charges: platformChange[],
     webHook?: string,
     additional_data?: {},
+    custom_order_id?: string,
     req_webhook_urls?: string[],
   ): Promise<{ url: string; request: CollectRequest }> {
+    if (custom_order_id) {
+      const count =
+        await this.databaseService.CollectRequestModel.countDocuments({
+          trustee_id,
+          custom_order_id,
+        });
+
+      if (count > 0) {
+        throw new ConflictException('OrderId must be unique');
+      }
+    }
     console.log('collect request for amount: ' + amount + ' received.', {
       disabled_modes,
     });
@@ -49,6 +61,7 @@ export class CollectService {
       school_id,
       trustee_id,
       additional_data: JSON.stringify(additional_data),
+      custom_order_id,
       req_webhook_urls,
     }).save();
 

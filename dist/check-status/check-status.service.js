@@ -40,6 +40,25 @@ let CheckStatusService = class CheckStatusService {
                 return await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
         }
     }
+    async checkStatusByOrderId(order_id) {
+        console.log('checking status for custom order id', order_id);
+        const collectRequest = await this.databaseService.CollectRequestModel.findOne({
+            custom_order_id: order_id,
+        });
+        if (!collectRequest) {
+            console.log('Collect request not found', order_id);
+            throw new common_1.NotFoundException('Collect request not found');
+        }
+        console.log('checking status', order_id, collectRequest);
+        switch (collectRequest?.gateway) {
+            case collect_request_schema_1.Gateway.HDFC:
+                return await this.hdfcService.checkStatus(collectRequest._id.toString());
+            case collect_request_schema_1.Gateway.PHONEPE:
+                return await this.phonePeService.checkStatus(collectRequest._id.toString());
+            case collect_request_schema_1.Gateway.EDVIRON_PG:
+                return await this.edvironPgService.checkStatus(collectRequest._id.toString(), collectRequest);
+        }
+    }
 };
 exports.CheckStatusService = CheckStatusService;
 exports.CheckStatusService = CheckStatusService = __decorate([

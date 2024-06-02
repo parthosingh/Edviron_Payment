@@ -37,4 +37,29 @@ export class CheckStatusController {
       return sign(status);
     }
   }
+
+  @Get('/custom-order')
+  async checkCustomOrderStatus(
+    @Query('transactionId') transactionId: String,
+    @Query('jwt') jwt: string,
+  ) {
+    if (!jwt) throw new BadRequestException('JWT is required');
+    const decrypted = _jwt.verify(jwt, process.env.KEY!) as {
+      transactionId: string;
+    };
+    if (
+      JSON.stringify({
+        transactionId: decrypted.transactionId,
+      }) !==
+      JSON.stringify({
+        transactionId,
+      })
+    ) {
+      throw new Error('Request forged');
+    } else {
+      const status =
+        await this.checkStatusService.checkStatusByOrderId(transactionId);
+      return sign(status);
+    }
+  }
 }

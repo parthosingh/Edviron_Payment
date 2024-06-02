@@ -43,6 +43,7 @@ export declare class CollectRequest {
     trustee_id: string;
     payment_data: string;
     sdkPayment: boolean;
+    custom_order_id: string;
     req_webhook_urls: string[];
     _id: ObjectId;
 }
