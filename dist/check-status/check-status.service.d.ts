@@ -12,7 +12,7 @@ export declare class CheckStatusService {
         status: import("../types/transactionStatus").TransactionStatus;
         amount: number;
     }>;
-    checkStatusByOrderId(order_id: String): Promise<{
+    checkStatusByOrderId(order_id: String, trusteeId: string): Promise<{
         status: import("../types/transactionStatus").TransactionStatus;
         amount: number;
     }>;

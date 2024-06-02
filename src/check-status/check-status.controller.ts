@@ -46,9 +46,8 @@ export class CheckStatusController {
     if (!jwt) throw new BadRequestException('JWT is required');
     const decrypted = _jwt.verify(jwt, process.env.KEY!) as {
       transactionId: string;
-      trusteeId: string
+      trusteeId: string;
     };
-    console.log(decrypted.transactionId, transactionId);
 
     if (
       JSON.stringify({
@@ -60,8 +59,10 @@ export class CheckStatusController {
     ) {
       throw new Error('Request forged');
     } else {
-      const status =
-        await this.checkStatusService.checkStatusByOrderId(transactionId, decrypted.trusteeId);
+      const status = await this.checkStatusService.checkStatusByOrderId(
+        transactionId,
+        decrypted.trusteeId,
+      );
       return sign(status);
     }
   }

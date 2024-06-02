@@ -40,10 +40,11 @@ let CheckStatusService = class CheckStatusService {
                 return await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
         }
     }
-    async checkStatusByOrderId(order_id) {
+    async checkStatusByOrderId(order_id, trusteeId) {
         console.log('checking status for custom order id', order_id);
         const collectRequest = await this.databaseService.CollectRequestModel.findOne({
             custom_order_id: order_id,
+            trustee_id: trusteeId,
         });
         if (!collectRequest) {
             console.log('Collect request not found', order_id);
