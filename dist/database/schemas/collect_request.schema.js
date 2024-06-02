@@ -80,6 +80,7 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false, unique: true }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "custom_order_id", void 0);
+__decorate([
     (0, mongoose_1.Prop)({ default: [] }),
     __metadata("design:type", Array)
 ], CollectRequest.prototype, "req_webhook_urls", void 0);

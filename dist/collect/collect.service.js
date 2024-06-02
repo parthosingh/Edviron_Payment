@@ -24,15 +24,16 @@ let CollectService = class CollectService {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
     }
-    async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], platform_charges, webHook, additional_data, custom_order_id) {
-        const count = await this.databaseService.CollectRequestModel.countDocuments({
-            trustee_id,
-            custom_order_id,
-        });
-        if (count > 0) {
-            throw new common_1.ConflictException('OrderId must be unique');
+    async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], platform_charges, webHook, additional_data, custom_order_id, req_webhook_urls) {
+        if (custom_order_id) {
+            const count = await this.databaseService.CollectRequestModel.countDocuments({
+                trustee_id,
+                custom_order_id,
+            });
+            if (count > 0) {
+                throw new common_1.ConflictException('OrderId must be unique');
+            }
         }
-    async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], platform_charges, webHook, additional_data, req_webhook_urls) {
         console.log('collect request for amount: ' + amount + ' received.', {
             disabled_modes,
         });
