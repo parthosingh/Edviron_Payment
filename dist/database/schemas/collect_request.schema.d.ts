@@ -44,6 +44,7 @@ export declare class CollectRequest {
     payment_data: string;
     sdkPayment: boolean;
     custom_order_id: string;
+    req_webhook_urls: string[];
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;

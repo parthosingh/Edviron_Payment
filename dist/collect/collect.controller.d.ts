@@ -25,6 +25,7 @@ export declare class CollectController {
         platform_charges: platformChange[];
         additional_data?: {};
         custom_order_id?: string;
+        req_webhook_urls?: string[];
     }): Promise<any>;
 }
 export {};

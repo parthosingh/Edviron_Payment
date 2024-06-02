@@ -31,6 +31,7 @@ export class CollectService {
     webHook?: string,
     additional_data?: {},
     custom_order_id?: string,
+    req_webhook_urls?: string[],
   ): Promise<{ url: string; request: CollectRequest }> {
     if (custom_order_id) {
       const count =
@@ -61,6 +62,7 @@ export class CollectService {
       trustee_id,
       additional_data: JSON.stringify(additional_data),
       custom_order_id,
+      req_webhook_urls,
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({
