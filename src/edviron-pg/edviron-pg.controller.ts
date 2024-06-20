@@ -58,7 +58,7 @@ export class EdvironPgController {
   @Get('/sdk-redirect')
   async handleSdkRedirect(@Req() req: any, @Res() res: any) {
     const collect_id = req.query.collect_id;
-
+    const isBlank = req.query.isBlank || false;
     if (!Types.ObjectId.isValid(collect_id)) {
       return res.redirect(
         `${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`,
@@ -115,7 +115,7 @@ export class EdvironPgController {
                       req.query.collect_id
                     }&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(
                       platform_charges,
-                    )}";
+                    )}&is_blank=${isBlank}";
                 }
             </script>`,
     );
