@@ -54,6 +54,7 @@ let EdvironPgController = class EdvironPgController {
     }
     async handleSdkRedirect(req, res) {
         const collect_id = req.query.collect_id;
+        const isBlank = req.query.isBlank || false;
         if (!mongoose_1.Types.ObjectId.isValid(collect_id)) {
             return res.redirect(`${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`);
         }
@@ -96,7 +97,7 @@ let EdvironPgController = class EdvironPgController {
         });
         res.send(`<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "${process.env.PG_FRONTEND}?session_id=${sessionId}&collect_request_id=${req.query.collect_id}&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(platform_charges)}";
+                    location.href = "${process.env.PG_FRONTEND}?session_id=${sessionId}&collect_request_id=${req.query.collect_id}&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(platform_charges)}&is_blank=${isBlank}";
                 }
             </script>`);
     }
