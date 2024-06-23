@@ -22,21 +22,8 @@ let CheckStatusController = class CheckStatusController {
         this.checkStatusService = checkStatusService;
     }
     async checkStatus(transactionId, jwt) {
-        if (!jwt)
-            throw new common_1.BadRequestException('JWT is required');
-        const decrypted = _jwt.verify(jwt, process.env.KEY);
-        if (JSON.stringify({
-            transactionId: decrypted.transactionId,
-        }) !==
-            JSON.stringify({
-                transactionId,
-            })) {
-            throw new Error('Request forged');
-        }
-        else {
-            const status = await this.checkStatusService.checkStatus(transactionId);
-            return (0, sign_1.sign)(status);
-        }
+        const status = await this.checkStatusService.checkStatus(transactionId);
+        return (0, sign_1.sign)(status);
     }
     async checkCustomOrderStatus(transactionId, jwt) {
         if (!jwt)
