@@ -16,6 +16,7 @@ import axios from 'axios';
 import { Webhooks } from 'src/database/schemas/webhooks.schema';
 import { Types } from 'mongoose';
 import * as jwt from 'jsonwebtoken';
+import { TransactionStatus } from 'src/types/transactionStatus';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -202,6 +203,24 @@ export class EdvironPgController {
     //console.log('req', reqToCheck);
 
     const { status } = reqToCheck;
+
+    if (status == TransactionStatus.SUCCESS) {
+      let platform_type = null;
+      if (payment_method.lowercase() == 'net_banking') {
+        platform_type = webHookData.payment.payment_method.netbanking_bank_name;
+      } else if (payment_method.lowercase() == 'debit_card' || 'credit_card') {
+        platform_type = webHookData.payment.payment_method.card_network;
+      } else if (payment_method.lowercase() == 'upi') {
+        platform_type = 'Others';
+      } else if (payment_method.lowercase() == 'wallet') {
+        platform_type = webHookData.payment.payment_method.provider;
+      }
+      // extract payment mode and platform type
+
+      // call the api, send school_id ,trustee_id, payment mode, platform_type
+      // get vendorIds of trustee and school and cuts
+      // call cashfree  split payment api
+    }
 
     const updateReq =
       await this.databaseService.CollectRequestStatusModel.updateOne(
