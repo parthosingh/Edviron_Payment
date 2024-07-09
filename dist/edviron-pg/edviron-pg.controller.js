@@ -193,7 +193,7 @@ let EdvironPgController = class EdvironPgController {
                 transaction_id: collectReq._id,
             });
             let config = {
-                method: 'get',
+                method: 'post',
                 maxBodyLength: Infinity,
                 url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
                 headers: {

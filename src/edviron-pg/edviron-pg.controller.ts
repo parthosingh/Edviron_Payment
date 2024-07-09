@@ -267,7 +267,7 @@ export class EdvironPgController {
       // save commission data on trustee service
 
       let config = {
-        method: 'get',
+        method: 'post',
         maxBodyLength: Infinity,
         url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
         headers: {
