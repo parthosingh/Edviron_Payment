@@ -205,7 +205,6 @@ export class EdvironPgController {
     const { status } = reqToCheck;
 
      // split payment to vendors
-
      if (status == TransactionStatus.SUCCESS) {
       let platform_type: string | null = null;
       const method = payment_method.toLowerCase() as
@@ -249,6 +248,7 @@ export class EdvironPgController {
         transaction_amount,
         platform_type: mappedPaymentMethod,
         payment_mode: platform_type,
+        transaction_id: collectReq._id
       };
 
       const _jwt = jwt.sign(tokenData, process.env.KEY!, { noTimestamp: true });
@@ -261,9 +261,10 @@ export class EdvironPgController {
         transaction_amount,
         platform_type: mappedPaymentMethod,
         payment_mode: platform_type,
+        transaction_id: collectReq._id
       });
 
-      // get split calculations from vanilla service
+      // save commission data on trustee service
 
       let config = {
         method: 'get',
@@ -280,82 +281,83 @@ export class EdvironPgController {
       try {
         const { data: commissionRes } = await axios.request(config);
         console.log('Commission calculation response:', commissionRes);
-        // call cashfree split payment api
 
-        let easySplitData = JSON.stringify({
-          split: [
-            {
-              vendor_id: commissionRes.trustee_vendor_id,
-              amount: commissionRes.erpCommission,
-            },
-            {
-              vendor_id: commissionRes.school_vendor_id,
-              amount: commissionRes.school_fees,
-            },
-          ],
-        });
+        //   // call cashfree split payment api
 
-        let cashfreeConfig = {
-          method: 'post',
-          maxBodyLength: Infinity,
-          url: `${process.env.CASHFREE_ENDPOINT}/pg/easy-split/orders/${collectReq._id}/split`,
-          headers: {
-            accept: 'application/json',
-            'content-type': 'application/json',
-            'x-api-version': '2023-08-01',
-            'x-client-id': process.env.CASHFREE_CLIENT_ID,
-            'x-client-secret': process.env.CASHFREE_CLIENT_SECRET,
-          },
-          data: easySplitData,
-        };
-        try {
-          const { data: cashfreeRes } = await axios.request(cashfreeConfig);
-          console.log('Easy Split Response ', cashfreeRes);
+        //   let easySplitData = JSON.stringify({
+        //     split: [
+        //       {
+        //         vendor_id: commissionRes.trustee_vendor_id,
+        //         amount: commissionRes.erpCommission,
+        //       },
+        //       {
+        //         vendor_id: commissionRes.school_vendor_id,
+        //         amount: commissionRes.school_fees,
+        //       },
+        //     ],
+        // });
 
-          let tokenData = {
-            school_id: collectReq?.school_id,
-            trustee_id: collectReq?.trustee_id,
-            commission_amount: commissionRes.erpCommission,
-            payment_mode: platform_type,
-            earnings_amount: commissionRes.edvCommission,
-            transaction_id: collectReq._id,
-          };
+        // let cashfreeConfig = {
+        //   method: 'post',
+        //   maxBodyLength: Infinity,
+        //   url: `${process.env.CASHFREE_ENDPOINT}/pg/easy-split/orders/${collectReq._id}/split`,
+        //   headers: {
+        //     accept: 'application/json',
+        //     'content-type': 'application/json',
+        //     'x-api-version': '2023-08-01',
+        //     'x-client-id': process.env.CASHFREE_CLIENT_ID,
+        //     'x-client-secret': process.env.CASHFREE_CLIENT_SECRET,
+        //   },
+        //   data: easySplitData,
+        // };
+        // try {
+        //   const { data: cashfreeRes } = await axios.request(cashfreeConfig);
+        //   console.log('Easy Split Response ', cashfreeRes);
 
-          let _jwt = jwt.sign(tokenData, process.env.KEY!, {
-            noTimestamp: true,
-          });
+        //   let tokenData = {
+        //     school_id: collectReq?.school_id,
+        //     trustee_id: collectReq?.trustee_id,
+        //     commission_amount: commissionRes.erpCommission,
+        //     payment_mode: platform_type,
+        //     earnings_amount: commissionRes.edvCommission,
+        //     transaction_id: collectReq._id,
+        //   };
 
-          let data = JSON.stringify({
-            token: _jwt,
-            school_id: collectReq?.school_id,
-            trustee_id: collectReq?.trustee_id,
-            commission_amount: commissionRes.erpCommission,
-            payment_mode: platform_type,
-            earnings_amount: commissionRes.edvCommission,
-            transaction_id: collectReq._id,
-          });
+        //   let _jwt = jwt.sign(tokenData, process.env.KEY!, {
+        //     noTimestamp: true,
+        //   });
 
-          let config = {
-            method: 'get',
-            maxBodyLength: Infinity,
-            url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-split-calculation`,
-            headers: {
-              accept: 'application/json',
-              'content-type': 'application/json',
-              'x-api-version': '2023-08-01',
-            },
-            data: data,
-          };
+        //   let data = JSON.stringify({
+        //     token: _jwt,
+        //     school_id: collectReq?.school_id,
+        //     trustee_id: collectReq?.trustee_id,
+        //     commission_amount: commissionRes.erpCommission,
+        //     payment_mode: platform_type,
+        //     earnings_amount: commissionRes.edvCommission,
+        //     transaction_id: collectReq._id,
+        //   });
 
-          try {
-            const { data: addCommisionRes } = await axios.request(config);
-            console.log('Add Commision Response ', addCommisionRes);
-          } catch (error) {
-            console.error('Error adding commision:', error);
-          }
-        } catch (error) {
-          console.error('Error spliting payment:', error);
-        }
+        //   let config = {
+        //     method: 'get',
+        //     maxBodyLength: Infinity,
+        //     url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-split-calculation`,
+        //     headers: {
+        //       accept: 'application/json',
+        //       'content-type': 'application/json',
+        //       'x-api-version': '2023-08-01',
+        //     },
+        //     data: data,
+        //   };
+
+        //   try {
+        //     const { data: addCommisionRes } = await axios.request(config);
+        //     console.log('Add Commision Response ', addCommisionRes);
+        //   } catch (error) {
+        //     console.error('Error adding commision:', error);
+        //   }
+        // } catch (error) {
+        //   console.error('Error spliting payment:', error);
+        // }
       } catch (error) {
         console.error('Error calculating commission:', error);
       }
