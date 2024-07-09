@@ -204,8 +204,8 @@ export class EdvironPgController {
 
     const { status } = reqToCheck;
 
-     // split payment to vendors
-     if (status == TransactionStatus.SUCCESS) {
+    // split payment to vendors
+    if (status == TransactionStatus.SUCCESS) {
       let platform_type: string | null = null;
       const method = payment_method.toLowerCase() as
         | 'net_banking'
@@ -248,7 +248,7 @@ export class EdvironPgController {
         transaction_amount,
         platform_type: mappedPaymentMethod,
         payment_mode: platform_type,
-        transaction_id: collectReq._id
+        transaction_id: collectReq._id,
       };
 
       const _jwt = jwt.sign(tokenData, process.env.KEY!, { noTimestamp: true });
@@ -261,7 +261,7 @@ export class EdvironPgController {
         transaction_amount,
         platform_type: mappedPaymentMethod,
         payment_mode: platform_type,
-        transaction_id: collectReq._id
+        transaction_id: collectReq._id,
       });
 
       // save commission data on trustee service
@@ -269,7 +269,7 @@ export class EdvironPgController {
       let config = {
         method: 'get',
         maxBodyLength: Infinity,
-        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-split-calculation`,
+        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
         headers: {
           accept: 'application/json',
           'content-type': 'application/json',

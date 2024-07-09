@@ -21,6 +21,7 @@ const sign_1 = require("../utils/sign");
 const axios_1 = require("axios");
 const mongoose_1 = require("mongoose");
 const jwt = require("jsonwebtoken");
+const transactionStatus_1 = require("../types/transactionStatus");
 let EdvironPgController = class EdvironPgController {
     constructor(edvironPgService, databaseService) {
         this.edvironPgService = edvironPgService;
@@ -147,6 +148,69 @@ let EdvironPgController = class EdvironPgController {
         }
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
         const { status } = reqToCheck;
+        if (status == transactionStatus_1.TransactionStatus.SUCCESS) {
+            let platform_type = null;
+            const method = payment_method.toLowerCase();
+            const platformMap = {
+                net_banking: webHookData.payment.payment_method.netbanking_bank_name,
+                debit_card: webHookData.payment.payment_method.card_network,
+                credit_card: webHookData.payment.payment_method.card_network,
+                upi: 'Others',
+                wallet: webHookData.payment.payment_method.provider,
+                cardless_emi: webHookData.payment.payment_method.provider,
+                pay_later: webHookData.payment.payment_method.provider,
+            };
+            const methodMap = {
+                net_banking: 'NetBanking',
+                debit_card: 'DebitCard',
+                credit_card: 'CreditCard',
+                upi: 'UPI',
+                wallet: 'Wallet',
+                cardless_emi: 'CardLess EMI',
+                pay_later: 'PayLater',
+            };
+            platform_type = platformMap[method] || 'Others';
+            const mappedPaymentMethod = methodMap[method];
+            const axios = require('axios');
+            const tokenData = {
+                school_id: collectReq?.school_id,
+                trustee_id: collectReq?.trustee_id,
+                order_amount: pendingCollectReq?.order_amount,
+                transaction_amount,
+                platform_type: mappedPaymentMethod,
+                payment_mode: platform_type,
+                transaction_id: collectReq._id,
+            };
+            const _jwt = jwt.sign(tokenData, process.env.KEY, { noTimestamp: true });
+            let data = JSON.stringify({
+                token: _jwt,
+                school_id: collectReq?.school_id,
+                trustee_id: collectReq?.trustee_id,
+                order_amount: pendingCollectReq?.order_amount,
+                transaction_amount,
+                platform_type: mappedPaymentMethod,
+                payment_mode: platform_type,
+                transaction_id: collectReq._id,
+            });
+            let config = {
+                method: 'get',
+                maxBodyLength: Infinity,
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                },
+                data: data,
+            };
+            try {
+                const { data: commissionRes } = await axios.request(config);
+                console.log('Commission calculation response:', commissionRes);
+            }
+            catch (error) {
+                console.error('Error calculating commission:', error);
+            }
+        }
         const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
             collect_id: collectIdObject,
         }, {
