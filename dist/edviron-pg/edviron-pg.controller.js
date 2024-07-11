@@ -163,6 +163,11 @@ let EdvironPgController = class EdvironPgController {
             new: true,
         });
         const webHookUrl = collectReq?.webHookUrl;
+        const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+        const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: collectIdObject,
+        });
+        const custom_order_id = collectRequest?.custom_order_id || '';
         if (webHookUrl !== null) {
             const amount = reqToCheck?.amount;
             const webHookData = await (0, sign_1.sign)({
@@ -172,6 +177,9 @@ let EdvironPgController = class EdvironPgController {
                 trustee_id: collectReq.trustee_id,
                 school_id: collectReq.school_id,
                 req_webhook_urls: collectReq?.req_webhook_urls,
+                custom_order_id,
+                createdAt: collectRequestStatus?.createdAt,
+                transaction_time: collectRequestStatus?.updatedAt,
             });
             const config = {
                 method: 'post',
@@ -303,6 +311,8 @@ let EdvironPgController = class EdvironPgController {
                                     currency: 'INR',
                                     createdAt: '$createdAt',
                                     updatedAt: '$updatedAt',
+                                    transaction_time: '$updatedAt',
+                                    custom_order_id: '$collect_request.custom_order_id',
                                 },
                             ],
                         },
@@ -449,6 +459,8 @@ let EdvironPgController = class EdvironPgController {
                                         currency: 'INR',
                                         createdAt: '$createdAt',
                                         updatedAt: '$updatedAt',
+                                        transaction_time: '$updatedAt',
+                                        custom_order_id: '$collect_request.custom_order_id'
                                     },
                                 ],
                             },
