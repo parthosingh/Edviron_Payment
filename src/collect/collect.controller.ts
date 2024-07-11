@@ -44,6 +44,7 @@ export class CollectController {
       additional_data?: {};
       custom_order_id?: string;
       req_webhook_urls?: string[];
+      school_name?:string
     },
   ) {
     const {
@@ -60,7 +61,10 @@ export class CollectController {
       trustee_id,
       custom_order_id,
       req_webhook_urls,
+      school_name
     } = body;
+    
+    
 
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
@@ -98,6 +102,7 @@ export class CollectController {
           additional_data || {},
           custom_order_id,
           req_webhook_urls,
+          school_name
         ),
       );
     } catch (e) {

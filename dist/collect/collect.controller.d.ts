@@ -26,6 +26,7 @@ export declare class CollectController {
         additional_data?: {};
         custom_order_id?: string;
         req_webhook_urls?: string[];
+        school_name?: string;
     }): Promise<any>;
 }
 export {};

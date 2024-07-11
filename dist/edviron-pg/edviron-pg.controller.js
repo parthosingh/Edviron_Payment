@@ -33,6 +33,7 @@ let EdvironPgController = class EdvironPgController {
         const pay_later = req.query.pay_later;
         const upi = req.query.upi;
         const card = req.query.card;
+        const school_name = req.query.school_name;
         let disable_modes = '';
         if (wallet)
             disable_modes += `&wallet=${wallet}`;
@@ -48,7 +49,7 @@ let EdvironPgController = class EdvironPgController {
             disable_modes += `&card=${card}`;
         res.send(`<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}${disable_modes}&platform_charges=${encodeURIComponent(req.query.platform_charges)}";
+                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}${disable_modes}&platform_charges=${encodeURIComponent(req.query.platform_charges)}&school_name=${school_name}";
                 }
             </script>`);
     }
