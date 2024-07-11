@@ -22,7 +22,8 @@ let CollectController = class CollectController {
         this.collectService = collectService;
     }
     async collect(body) {
-        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, } = body;
+        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, school_name } = body;
+        console.log(school_name);
         if (!jwt)
             throw new common_1.BadRequestException('JWT not provided');
         if (!amount)

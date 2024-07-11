@@ -31,6 +31,7 @@ export class EdvironPgController {
     const pay_later = req.query.pay_later;
     const upi = req.query.upi;
     const card = req.query.card;
+    const school_name=req.query.school_name
     let disable_modes = '';
     if (wallet) disable_modes += `&wallet=${wallet}`;
     if (cardless) disable_modes += `&cardless=${cardless}`;
@@ -49,7 +50,7 @@ export class EdvironPgController {
                       req.query.amount
                     }${disable_modes}&platform_charges=${encodeURIComponent(
                       req.query.platform_charges,
-                    )}";
+                    )}&school_name=${school_name}";
                 }
             </script>`,
     );
