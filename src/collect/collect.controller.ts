@@ -63,8 +63,7 @@ export class CollectController {
       req_webhook_urls,
       school_name
     } = body;
-
-    console.log(school_name);
+    
     
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -103,6 +102,7 @@ export class CollectController {
           additional_data || {},
           custom_order_id,
           req_webhook_urls,
+          school_name
         ),
       );
     } catch (e) {

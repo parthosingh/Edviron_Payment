@@ -32,6 +32,7 @@ export class CollectService {
     additional_data?: {},
     custom_order_id?: string,
     req_webhook_urls?: string[],
+    school_name?:string
   ): Promise<{ url: string; request: CollectRequest }> {
     if (custom_order_id) {
       const count =
@@ -74,7 +75,7 @@ export class CollectService {
     }).save();
     const transaction = (
       gateway === Gateway.EDVIRON_PG
-        ? await this.edvironPgService.collect(request, platform_charges)
+        ? await this.edvironPgService.collect(request, platform_charges,school_name)
         : await this.hdfcService.collect(request)
     )!;
     await this.databaseService.CollectRequestModel.updateOne(
