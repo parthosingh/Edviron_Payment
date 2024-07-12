@@ -150,7 +150,7 @@ export class EdvironPgController {
     }
     const callbackUrl = new URL(collectRequest?.callbackUrl);
     if(status !== `SUCCESS`){
-      return res.redirect(`${callbackUrl.toString()}?status=cancelled&reason=payment-error`)
+      return res.redirect(`${callbackUrl.toString()}?status=cancelled&reason=payment-declined`)
     }
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
     return res.redirect(callbackUrl.toString());
