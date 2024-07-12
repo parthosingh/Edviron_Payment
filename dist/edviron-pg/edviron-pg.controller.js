@@ -152,13 +152,13 @@ let EdvironPgController = class EdvironPgController {
             let platform_type = null;
             const method = payment_method.toLowerCase();
             const platformMap = {
-                net_banking: webHookData.payment.payment_method.netbanking_bank_name,
-                debit_card: webHookData.payment.payment_method.card_network,
-                credit_card: webHookData.payment.payment_method.card_network,
+                net_banking: webHookData.payment.payment_method?.netbanking?.netbanking_bank_name,
+                debit_card: webHookData.payment.payment_method?.card?.card_network,
+                credit_card: webHookData.payment.payment_method?.card?.card_network,
                 upi: 'Others',
-                wallet: webHookData.payment.payment_method.provider,
-                cardless_emi: webHookData.payment.payment_method.provider,
-                pay_later: webHookData.payment.payment_method.provider,
+                wallet: webHookData.payment.payment_method?.app?.provider,
+                cardless_emi: webHookData.payment.payment_method?.cardless_emi?.provider,
+                pay_later: webHookData.payment?.payment_method?.pay_later?.provider,
             };
             const methodMap = {
                 net_banking: 'NetBanking',
@@ -170,7 +170,7 @@ let EdvironPgController = class EdvironPgController {
                 pay_later: 'PayLater',
                 corporate_card: 'CORPORATE CARDS',
             };
-            platform_type = platformMap[method] || 'Others';
+            platform_type = platformMap[method];
             const mappedPaymentMethod = methodMap[method];
             const axios = require('axios');
             const tokenData = {
