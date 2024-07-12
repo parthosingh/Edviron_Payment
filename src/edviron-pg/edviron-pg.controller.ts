@@ -214,7 +214,8 @@ export class EdvironPgController {
         | 'upi'
         | 'wallet'
         | 'cardless_emi'
-        | 'pay_later';
+        | 'pay_later'
+        | 'corporate_card';
 
       const platformMap: { [key: string]: any } = {
         net_banking: webHookData.payment.payment_method.netbanking_bank_name,
@@ -234,6 +235,7 @@ export class EdvironPgController {
         wallet: 'Wallet',
         cardless_emi: 'CardLess EMI',
         pay_later: 'PayLater',
+        corporate_card: 'CORPORATE CARDS',
       };
 
       platform_type = platformMap[method] || 'Others';

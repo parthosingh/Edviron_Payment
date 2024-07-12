@@ -168,6 +168,7 @@ let EdvironPgController = class EdvironPgController {
                 wallet: 'Wallet',
                 cardless_emi: 'CardLess EMI',
                 pay_later: 'PayLater',
+                corporate_card: 'CORPORATE CARDS',
             };
             platform_type = platformMap[method] || 'Others';
             const mappedPaymentMethod = methodMap[method];
