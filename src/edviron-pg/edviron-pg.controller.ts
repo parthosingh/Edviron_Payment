@@ -204,166 +204,170 @@ export class EdvironPgController {
 
     const { status } = reqToCheck;
 
-    // split payment to vendors
-    if (status == TransactionStatus.SUCCESS) {
-      let platform_type: string | null = null;
-      const method = payment_method.toLowerCase() as
-        | 'net_banking'
-        | 'debit_card'
-        | 'credit_card'
-        | 'upi'
-        | 'wallet'
-        | 'cardless_emi'
-        | 'pay_later'
-        | 'corporate_card';
+   // add commision and split payment to vendors
 
-      const platformMap: { [key: string]: any } = {
-        net_banking: webHookData.payment.payment_method.netbanking_bank_name,
-        debit_card: webHookData.payment.payment_method.card_network,
-        credit_card: webHookData.payment.payment_method.card_network,
-        upi: 'Others',
-        wallet: webHookData.payment.payment_method.provider,
-        cardless_emi: webHookData.payment.payment_method.provider,
-        pay_later: webHookData.payment.payment_method.provider,
-      };
+   if (status == TransactionStatus.SUCCESS) {
+    let platform_type: string | null = null;
+    const method = payment_method.toLowerCase() as
+      | 'net_banking'
+      | 'debit_card'
+      | 'credit_card'
+      | 'upi'
+      | 'wallet'
+      | 'cardless_emi'
+      | 'pay_later'
+      | 'corporate_card';
 
-      const methodMap: { [key: string]: string } = {
-        net_banking: 'NetBanking',
-        debit_card: 'DebitCard',
-        credit_card: 'CreditCard',
-        upi: 'UPI',
-        wallet: 'Wallet',
-        cardless_emi: 'CardLess EMI',
-        pay_later: 'PayLater',
-        corporate_card: 'CORPORATE CARDS',
-      };
 
-      platform_type = platformMap[method] || 'Others';
-      const mappedPaymentMethod = methodMap[method];
 
-      const axios = require('axios');
+    const platformMap: { [key: string]: any } = {
+      net_banking: webHookData.payment.payment_method?.netbanking?.netbanking_bank_name,
+      debit_card: webHookData.payment.payment_method?.card?.card_network,
+      credit_card: webHookData.payment.payment_method?.card?.card_network,
+      upi: 'Others',
+      wallet: webHookData.payment.payment_method?.app?.provider,
+      cardless_emi: webHookData.payment.payment_method?.cardless_emi?.provider,
+      pay_later: webHookData.payment?.payment_method?.pay_later?.provider,
+    };
 
-      const tokenData = {
-        school_id: collectReq?.school_id,
-        trustee_id: collectReq?.trustee_id,
-        order_amount: pendingCollectReq?.order_amount,
-        transaction_amount,
-        platform_type: mappedPaymentMethod,
-        payment_mode: platform_type,
-        transaction_id: collectReq._id,
-      };
+    const methodMap: { [key: string]: string } = {
+      net_banking: 'NetBanking',
+      debit_card: 'DebitCard',
+      credit_card: 'CreditCard',
+      upi: 'UPI',
+      wallet: 'Wallet',
+      cardless_emi: 'CardLess EMI',
+      pay_later: 'PayLater',
+      corporate_card: 'CORPORATE CARDS',
+    };
 
-      const _jwt = jwt.sign(tokenData, process.env.KEY!, { noTimestamp: true });
+    platform_type = platformMap[method];
 
-      let data = JSON.stringify({
-        token: _jwt,
-        school_id: collectReq?.school_id,
-        trustee_id: collectReq?.trustee_id,
-        order_amount: pendingCollectReq?.order_amount,
-        transaction_amount,
-        platform_type: mappedPaymentMethod,
-        payment_mode: platform_type,
-        transaction_id: collectReq._id,
-      });
+    const mappedPaymentMethod = methodMap[method];
 
-      // save commission data on trustee service
+    const axios = require('axios');
 
-      let config = {
-        method: 'post',
-        maxBodyLength: Infinity,
-        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
-        headers: {
-          accept: 'application/json',
-          'content-type': 'application/json',
-          'x-api-version': '2023-08-01',
-        },
-        data: data,
-      };
+    const tokenData = {
+      school_id: collectReq?.school_id,
+      trustee_id: collectReq?.trustee_id,
+      order_amount: pendingCollectReq?.order_amount,
+      transaction_amount,
+      platform_type: mappedPaymentMethod,
+      payment_mode: platform_type,
+      transaction_id: collectReq._id,
+    };
 
-      try {
-        const { data: commissionRes } = await axios.request(config);
-        console.log('Commission calculation response:', commissionRes);
+    const _jwt = jwt.sign(tokenData, process.env.KEY!, { noTimestamp: true });
 
-        //   // call cashfree split payment api
+    let data = JSON.stringify({
+      token: _jwt,
+      school_id: collectReq?.school_id,
+      trustee_id: collectReq?.trustee_id,
+      order_amount: pendingCollectReq?.order_amount,
+      transaction_amount,
+      platform_type: mappedPaymentMethod,
+      payment_mode: platform_type,
+      transaction_id: collectReq._id,
+    });
 
-        //   let easySplitData = JSON.stringify({
-        //     split: [
-        //       {
-        //         vendor_id: commissionRes.trustee_vendor_id,
-        //         amount: commissionRes.erpCommission,
-        //       },
-        //       {
-        //         vendor_id: commissionRes.school_vendor_id,
-        //         amount: commissionRes.school_fees,
-        //       },
-        //     ],
-        // });
+    // save commission data on trustee service
 
-        // let cashfreeConfig = {
-        //   method: 'post',
-        //   maxBodyLength: Infinity,
-        //   url: `${process.env.CASHFREE_ENDPOINT}/pg/easy-split/orders/${collectReq._id}/split`,
-        //   headers: {
-        //     accept: 'application/json',
-        //     'content-type': 'application/json',
-        //     'x-api-version': '2023-08-01',
-        //     'x-client-id': process.env.CASHFREE_CLIENT_ID,
-        //     'x-client-secret': process.env.CASHFREE_CLIENT_SECRET,
-        //   },
-        //   data: easySplitData,
-        // };
-        // try {
-        //   const { data: cashfreeRes } = await axios.request(cashfreeConfig);
-        //   console.log('Easy Split Response ', cashfreeRes);
+    let config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        'x-api-version': '2023-08-01',
+      },
+      data: data,
+    };
 
-        //   let tokenData = {
-        //     school_id: collectReq?.school_id,
-        //     trustee_id: collectReq?.trustee_id,
-        //     commission_amount: commissionRes.erpCommission,
-        //     payment_mode: platform_type,
-        //     earnings_amount: commissionRes.edvCommission,
-        //     transaction_id: collectReq._id,
-        //   };
+    try {
+      const { data: commissionRes } = await axios.request(config);
+      console.log('Commission calculation response:', commissionRes);
 
-        //   let _jwt = jwt.sign(tokenData, process.env.KEY!, {
-        //     noTimestamp: true,
-        //   });
+      //   // call cashfree split payment api
 
-        //   let data = JSON.stringify({
-        //     token: _jwt,
-        //     school_id: collectReq?.school_id,
-        //     trustee_id: collectReq?.trustee_id,
-        //     commission_amount: commissionRes.erpCommission,
-        //     payment_mode: platform_type,
-        //     earnings_amount: commissionRes.edvCommission,
-        //     transaction_id: collectReq._id,
-        //   });
+      //   let easySplitData = JSON.stringify({
+      //     split: [
+      //       {
+      //         vendor_id: commissionRes.trustee_vendor_id,
+      //         amount: commissionRes.erpCommission,
+      //       },
+      //       {
+      //         vendor_id: commissionRes.school_vendor_id,
+      //         amount: commissionRes.school_fees,
+      //       },
+      //     ],
+      // });
 
-        //   let config = {
-        //     method: 'get',
-        //     maxBodyLength: Infinity,
-        //     url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-split-calculation`,
-        //     headers: {
-        //       accept: 'application/json',
-        //       'content-type': 'application/json',
-        //       'x-api-version': '2023-08-01',
-        //     },
-        //     data: data,
-        //   };
+      // let cashfreeConfig = {
+      //   method: 'post',
+      //   maxBodyLength: Infinity,
+      //   url: `${process.env.CASHFREE_ENDPOINT}/pg/easy-split/orders/${collectReq._id}/split`,
+      //   headers: {
+      //     accept: 'application/json',
+      //     'content-type': 'application/json',
+      //     'x-api-version': '2023-08-01',
+      //     'x-client-id': process.env.CASHFREE_CLIENT_ID,
+      //     'x-client-secret': process.env.CASHFREE_CLIENT_SECRET,
+      //   },
+      //   data: easySplitData,
+      // };
+      // try {
+      //   const { data: cashfreeRes } = await axios.request(cashfreeConfig);
+      //   console.log('Easy Split Response ', cashfreeRes);
 
-        //   try {
-        //     const { data: addCommisionRes } = await axios.request(config);
-        //     console.log('Add Commision Response ', addCommisionRes);
-        //   } catch (error) {
-        //     console.error('Error adding commision:', error);
-        //   }
-        // } catch (error) {
-        //   console.error('Error spliting payment:', error);
-        // }
-      } catch (error) {
-        console.error('Error calculating commission:', error);
-      }
+      //   let tokenData = {
+      //     school_id: collectReq?.school_id,
+      //     trustee_id: collectReq?.trustee_id,
+      //     commission_amount: commissionRes.erpCommission,
+      //     payment_mode: platform_type,
+      //     earnings_amount: commissionRes.edvCommission,
+      //     transaction_id: collectReq._id,
+      //   };
+
+      //   let _jwt = jwt.sign(tokenData, process.env.KEY!, {
+      //     noTimestamp: true,
+      //   });
+
+      //   let data = JSON.stringify({
+      //     token: _jwt,
+      //     school_id: collectReq?.school_id,
+      //     trustee_id: collectReq?.trustee_id,
+      //     commission_amount: commissionRes.erpCommission,
+      //     payment_mode: platform_type,
+      //     earnings_amount: commissionRes.edvCommission,
+      //     transaction_id: collectReq._id,
+      //   });
+
+      //   let config = {
+      //     method: 'get',
+      //     maxBodyLength: Infinity,
+      //     url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-split-calculation`,
+      //     headers: {
+      //       accept: 'application/json',
+      //       'content-type': 'application/json',
+      //       'x-api-version': '2023-08-01',
+      //     },
+      //     data: data,
+      //   };
+
+      //   try {
+      //     const { data: addCommisionRes } = await axios.request(config);
+      //     console.log('Add Commision Response ', addCommisionRes);
+      //   } catch (error) {
+      //     console.error('Error adding commision:', error);
+      //   }
+      // } catch (error) {
+      //   console.error('Error spliting payment:', error);
+      // }
+    } catch (error) {
+      console.error('Error calculating commission:', error);
     }
+  }
 
     const updateReq =
       await this.databaseService.CollectRequestStatusModel.updateOne(
