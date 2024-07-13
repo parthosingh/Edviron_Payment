@@ -73,7 +73,7 @@ export class EdvironPgController {
         `${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`,
       );
     }
-
+    const axios = require('axios');
     const paymentString = JSON.parse(collectRequest?.payment_data);
     const parsedUrl = new URL(paymentString);
     const sessionId = parsedUrl.searchParams.get('session_id');
@@ -96,6 +96,7 @@ export class EdvironPgController {
     if (pay_later) disable_modes += `&pay_later=${pay_later}`;
     if (upi) disable_modes += `&upi=${upi}`;
     if (card) disable_modes += `&card=${card}`;
+
     await this.databaseService.CollectRequestModel.updateOne(
       {
         _id: collect_id,
@@ -107,7 +108,26 @@ export class EdvironPgController {
         new: true,
       },
     );
+    const collectReq =
+      await this.databaseService.CollectRequestModel.findById(collect_id);
+    const payload = { school_id: collectReq?.school_id };
+    const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET!, {
+      noTimestamp: true,
+    });
+    const data = { token, school_id: collectReq?.school_id };
 
+    let config = {
+      method: 'get',
+      maxBodyLength: Infinity,
+      url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/school-info`,
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        'x-api-version': '2023-08-01',
+      },
+      data: data,
+    };
+    const { data: info } = await axios.request(config);
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
@@ -117,7 +137,9 @@ export class EdvironPgController {
                       req.query.collect_id
                     }&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(
                       platform_charges,
-                    )}&is_blank=${isBlank}&amount=${amount}";
+                    )}&is_blank=${isBlank}&amount=${amount}&school_name=${
+                      info.school_name
+                    }";
                 }
             </script>`,
     );
