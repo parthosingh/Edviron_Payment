@@ -24,7 +24,7 @@ let CollectService = class CollectService {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
     }
-    async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], platform_charges, webHook, additional_data, custom_order_id, req_webhook_urls) {
+    async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], platform_charges, webHook, additional_data, custom_order_id, req_webhook_urls, school_name) {
         if (custom_order_id) {
             const count = await this.databaseService.CollectRequestModel.countDocuments({
                 trustee_id,
@@ -60,7 +60,7 @@ let CollectService = class CollectService {
             payment_method: null,
         }).save();
         const transaction = (gateway === collect_request_schema_1.Gateway.EDVIRON_PG
-            ? await this.edvironPgService.collect(request, platform_charges)
+            ? await this.edvironPgService.collect(request, platform_charges, school_name)
             : await this.hdfcService.collect(request));
         await this.databaseService.CollectRequestModel.updateOne({
             _id: request._id,

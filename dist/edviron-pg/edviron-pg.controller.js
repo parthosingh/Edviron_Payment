@@ -34,6 +34,7 @@ let EdvironPgController = class EdvironPgController {
         const pay_later = req.query.pay_later;
         const upi = req.query.upi;
         const card = req.query.card;
+        const school_name = req.query.school_name;
         let disable_modes = '';
         if (wallet)
             disable_modes += `&wallet=${wallet}`;
@@ -49,7 +50,7 @@ let EdvironPgController = class EdvironPgController {
             disable_modes += `&card=${card}`;
         res.send(`<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}${disable_modes}&platform_charges=${encodeURIComponent(req.query.platform_charges)}";
+                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}${disable_modes}&platform_charges=${encodeURIComponent(req.query.platform_charges)}&school_name=${school_name}";
                 }
             </script>`);
     }
@@ -115,6 +116,9 @@ let EdvironPgController = class EdvironPgController {
             return res.redirect(`${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}`);
         }
         const callbackUrl = new URL(collectRequest?.callbackUrl);
+        if (status !== `SUCCESS`) {
+            return res.redirect(`${callbackUrl.toString()}?status=cancelled&reason=payment-declined`);
+        }
         callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
         return res.redirect(callbackUrl.toString());
     }
@@ -227,6 +231,11 @@ let EdvironPgController = class EdvironPgController {
             new: true,
         });
         const webHookUrl = collectReq?.webHookUrl;
+        const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+        const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: collectIdObject,
+        });
+        const custom_order_id = collectRequest?.custom_order_id || '';
         if (webHookUrl !== null) {
             const amount = reqToCheck?.amount;
             const webHookData = await (0, sign_1.sign)({
@@ -236,6 +245,9 @@ let EdvironPgController = class EdvironPgController {
                 trustee_id: collectReq.trustee_id,
                 school_id: collectReq.school_id,
                 req_webhook_urls: collectReq?.req_webhook_urls,
+                custom_order_id,
+                createdAt: collectRequestStatus?.createdAt,
+                transaction_time: collectRequestStatus?.updatedAt,
             });
             const config = {
                 method: 'post',
@@ -367,6 +379,8 @@ let EdvironPgController = class EdvironPgController {
                                     currency: 'INR',
                                     createdAt: '$createdAt',
                                     updatedAt: '$updatedAt',
+                                    transaction_time: '$updatedAt',
+                                    custom_order_id: '$collect_request.custom_order_id',
                                 },
                             ],
                         },
@@ -513,6 +527,8 @@ let EdvironPgController = class EdvironPgController {
                                         currency: 'INR',
                                         createdAt: '$createdAt',
                                         updatedAt: '$updatedAt',
+                                        transaction_time: '$updatedAt',
+                                        custom_order_id: '$collect_request.custom_order_id'
                                     },
                                 ],
                             },

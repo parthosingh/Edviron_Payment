@@ -32,6 +32,7 @@ export class EdvironPgController {
     const pay_later = req.query.pay_later;
     const upi = req.query.upi;
     const card = req.query.card;
+    const school_name = req.query.school_name;
     let disable_modes = '';
     if (wallet) disable_modes += `&wallet=${wallet}`;
     if (cardless) disable_modes += `&cardless=${cardless}`;
@@ -50,7 +51,7 @@ export class EdvironPgController {
                       req.query.amount
                     }${disable_modes}&platform_charges=${encodeURIComponent(
                       req.query.platform_charges,
-                    )}";
+                    )}&school_name=${school_name}";
                 }
             </script>`,
     );
@@ -149,6 +150,9 @@ export class EdvironPgController {
       );
     }
     const callbackUrl = new URL(collectRequest?.callbackUrl);
+    if(status !== `SUCCESS`){
+      return res.redirect(`${callbackUrl.toString()}?status=cancelled&reason=payment-declined`)
+    }
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
     return res.redirect(callbackUrl.toString());
   }
@@ -391,6 +395,13 @@ export class EdvironPgController {
 
     const webHookUrl = collectReq?.webHookUrl;
 
+    const collectRequest =
+      await this.databaseService.CollectRequestModel.findById(collect_id);
+    const collectRequestStatus =
+      await this.databaseService.CollectRequestStatusModel.findOne({
+        collect_id: collectIdObject,
+      });
+    const custom_order_id = collectRequest?.custom_order_id || '';
     if (webHookUrl !== null) {
       const amount = reqToCheck?.amount;
       const webHookData = await sign({
@@ -400,6 +411,9 @@ export class EdvironPgController {
         trustee_id: collectReq.trustee_id,
         school_id: collectReq.school_id,
         req_webhook_urls: collectReq?.req_webhook_urls,
+        custom_order_id,
+        createdAt: collectRequestStatus?.createdAt,
+        transaction_time: collectRequestStatus?.updatedAt,
       });
 
       const config = {
@@ -559,6 +573,8 @@ export class EdvironPgController {
                     currency: 'INR',
                     createdAt: '$createdAt',
                     updatedAt: '$updatedAt',
+                    transaction_time: '$updatedAt',
+                    custom_order_id: '$collect_request.custom_order_id',
                   },
                 ],
               },
@@ -730,6 +746,8 @@ export class EdvironPgController {
                     currency: 'INR',
                     createdAt: '$createdAt',
                     updatedAt: '$updatedAt',
+                    transaction_time: '$updatedAt',
+                    custom_order_id: '$collect_request.custom_order_id'
                   },
                 ],
               },

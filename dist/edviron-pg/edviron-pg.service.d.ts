@@ -7,7 +7,7 @@ import { platformChange } from 'src/collect/collect.controller';
 export declare class EdvironPgService implements GatewayService {
     private readonly databaseService;
     constructor(databaseService: DatabaseService);
-    collect(request: CollectRequest, platform_charges: platformChange[]): Promise<Transaction | undefined>;
+    collect(request: CollectRequest, platform_charges: platformChange[], school_name: any): Promise<Transaction | undefined>;
     checkStatus(collect_request_id: String, collect_request: CollectRequest): Promise<{
         status: TransactionStatus;
         amount: number;

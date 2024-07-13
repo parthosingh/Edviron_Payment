@@ -12,8 +12,10 @@ export class EdvironPgService implements GatewayService {
   async collect(
     request: CollectRequest,
     platform_charges: platformChange[],
+    school_name:any
   ): Promise<Transaction | undefined> {
     try {
+      const schoolName=school_name.replace(/ /g, '-'); //replace spaces because url dosent support spaces
       const axios = require('axios');
       let data = JSON.stringify({
         customer_details: {
@@ -64,7 +66,7 @@ export class EdvironPgService implements GatewayService {
           '&' +
           disabled_modes_string +
           '&platform_charges=' +
-          encodedPlatformCharges,
+          encodedPlatformCharges +'&school_name='+schoolName,
       };
     } catch (err) {
       console.log(err);

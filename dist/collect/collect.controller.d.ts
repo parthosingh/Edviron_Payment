@@ -1,4 +1,5 @@
 import { CollectService } from './collect.service';
+import { DatabaseService } from 'src/database/database.service';
 type RangeCharge = {
     upto: number;
     charge_type: string;
@@ -11,7 +12,8 @@ export type platformChange = {
 };
 export declare class CollectController {
     private readonly collectService;
-    constructor(collectService: CollectService);
+    private readonly databaseService;
+    constructor(collectService: CollectService, databaseService: DatabaseService);
     collect(body: {
         amount: Number;
         callbackUrl: string;
@@ -26,6 +28,8 @@ export declare class CollectController {
         additional_data?: {};
         custom_order_id?: string;
         req_webhook_urls?: string[];
+        school_name?: string;
     }): Promise<any>;
+    callbackUrl(res: any, collect_id: string): Promise<void>;
 }
 export {};

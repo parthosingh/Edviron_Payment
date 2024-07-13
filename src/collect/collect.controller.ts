@@ -3,7 +3,9 @@ import {
   Body,
   Controller,
   ForbiddenException,
+  Get,
   Post,
+  Query,
   Req,
   Res,
   UnauthorizedException,
@@ -11,6 +13,7 @@ import {
 import { CollectService } from './collect.service';
 import * as _jwt from 'jsonwebtoken';
 import { sign } from '../utils/sign';
+import { DatabaseService } from 'src/database/database.service';
 
 type RangeCharge = {
   upto: number;
@@ -26,7 +29,10 @@ export type platformChange = {
 
 @Controller('collect')
 export class CollectController {
-  constructor(private readonly collectService: CollectService) {}
+  constructor(
+    private readonly collectService: CollectService,
+    private readonly databaseService: DatabaseService,
+  ) {}
   @Post('/')
   async collect(
     @Body()
@@ -44,6 +50,7 @@ export class CollectController {
       additional_data?: {};
       custom_order_id?: string;
       req_webhook_urls?: string[];
+      school_name?: string;
     },
   ) {
     const {
@@ -60,6 +67,7 @@ export class CollectController {
       trustee_id,
       custom_order_id,
       req_webhook_urls,
+      school_name,
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -98,6 +106,7 @@ export class CollectController {
           additional_data || {},
           custom_order_id,
           req_webhook_urls,
+          school_name,
         ),
       );
     } catch (e) {
@@ -106,5 +115,17 @@ export class CollectController {
         throw new UnauthorizedException('JWT invalid');
       throw e;
     }
+  }
+
+  @Get('callback')
+  async callbackUrl(
+    @Res() res: any,
+    @Query('collect_id')
+    collect_id: string,
+  ) {
+    const collect_request =
+      await this.databaseService.CollectRequestModel.findById(collect_id);
+    const callback_url = `${collect_request?.callbackUrl}?status=cancelled&reason=dropped-by-user`;
+    res.redirect(callback_url);
   }
 }

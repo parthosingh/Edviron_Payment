@@ -17,8 +17,9 @@ let EdvironPgService = class EdvironPgService {
     constructor(databaseService) {
         this.databaseService = databaseService;
     }
-    async collect(request, platform_charges) {
+    async collect(request, platform_charges, school_name) {
         try {
+            const schoolName = school_name.replace(/ /g, '-');
             const axios = require('axios');
             let data = JSON.stringify({
                 customer_details: {
@@ -63,7 +64,7 @@ let EdvironPgService = class EdvironPgService {
                     '&' +
                     disabled_modes_string +
                     '&platform_charges=' +
-                    encodedPlatformCharges,
+                    encodedPlatformCharges + '&school_name=' + schoolName,
             };
         }
         catch (err) {

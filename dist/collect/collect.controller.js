@@ -17,12 +17,14 @@ const common_1 = require("@nestjs/common");
 const collect_service_1 = require("./collect.service");
 const _jwt = require("jsonwebtoken");
 const sign_1 = require("../utils/sign");
+const database_service_1 = require("../database/database.service");
 let CollectController = class CollectController {
-    constructor(collectService) {
+    constructor(collectService, databaseService) {
         this.collectService = collectService;
+        this.databaseService = databaseService;
     }
     async collect(body) {
-        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, } = body;
+        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, school_name, } = body;
         if (!jwt)
             throw new common_1.BadRequestException('JWT not provided');
         if (!amount)
@@ -45,7 +47,7 @@ let CollectController = class CollectController {
                 })) {
                 throw new common_1.ForbiddenException('Request forged');
             }
-            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes, platform_charges, webHook, additional_data || {}, custom_order_id, req_webhook_urls));
+            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes, platform_charges, webHook, additional_data || {}, custom_order_id, req_webhook_urls, school_name));
         }
         catch (e) {
             console.log(e);
@@ -53,6 +55,11 @@ let CollectController = class CollectController {
                 throw new common_1.UnauthorizedException('JWT invalid');
             throw e;
         }
+    }
+    async callbackUrl(res, collect_id) {
+        const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id);
+        const callback_url = `${collect_request?.callbackUrl}?status=cancelled&reason=dropped-by-user`;
+        res.redirect(callback_url);
     }
 };
 exports.CollectController = CollectController;
@@ -63,8 +70,17 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CollectController.prototype, "collect", null);
+__decorate([
+    (0, common_1.Get)('callback'),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Query)('collect_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], CollectController.prototype, "callbackUrl", null);
 exports.CollectController = CollectController = __decorate([
     (0, common_1.Controller)('collect'),
-    __metadata("design:paramtypes", [collect_service_1.CollectService])
+    __metadata("design:paramtypes", [collect_service_1.CollectService,
+        database_service_1.DatabaseService])
 ], CollectController);
 //# sourceMappingURL=collect.controller.js.map
