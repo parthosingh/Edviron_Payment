@@ -271,7 +271,7 @@ export class EdvironPgController {
       transaction_amount,
       platform_type: mappedPaymentMethod,
       payment_mode: platform_type,
-      transaction_id: collectReq._id,
+      transaction_id: collect_id
     });
 
     // save commission data on trustee service
