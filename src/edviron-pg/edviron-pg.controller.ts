@@ -117,7 +117,7 @@ export class EdvironPgController {
                       req.query.collect_id
                     }&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(
                       platform_charges,
-                    )}&is_blank=${isBlank}";
+                    )}&is_blank=${isBlank}&amount=${amount}";
                 }
             </script>`,
     );
