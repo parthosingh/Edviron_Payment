@@ -33,8 +33,8 @@ export class CheckStatusController {
     // ) {
     //   throw new Error('Request forged');
     // } else {
-      const status = await this.checkStatusService.checkStatus(transactionId);
-      return sign(status);
+    const status = await this.checkStatusService.checkStatus(transactionId);
+    return sign(status);
     // }
   }
 
