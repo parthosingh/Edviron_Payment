@@ -184,7 +184,7 @@ let EdvironPgController = class EdvironPgController {
                 transaction_amount,
                 platform_type: mappedPaymentMethod,
                 payment_mode: platform_type,
-                transaction_id: collectReq._id,
+                collect_id: collectReq._id,
             };
             const _jwt = jwt.sign(tokenData, process.env.KEY, { noTimestamp: true });
             let data = JSON.stringify({
@@ -195,7 +195,7 @@ let EdvironPgController = class EdvironPgController {
                 transaction_amount,
                 platform_type: mappedPaymentMethod,
                 payment_mode: platform_type,
-                transaction_id: collect_id
+                collect_id: collectReq._id,
             });
             let config = {
                 method: 'post',
