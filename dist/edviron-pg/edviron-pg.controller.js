@@ -195,7 +195,7 @@ let EdvironPgController = class EdvironPgController {
                 transaction_amount,
                 platform_type: mappedPaymentMethod,
                 payment_mode: platform_type,
-                transaction_id: collectReq._id,
+                transaction_id: collect_id
             });
             let config = {
                 method: 'post',
