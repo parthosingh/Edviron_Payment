@@ -584,7 +584,7 @@ let EdvironPgController = class EdvironPgController {
             const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id);
             const trustee_id = collect_request?.trustee_id;
             const payload = { trustee_id };
-            const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET, {
+            const token = jwt.sign(payload, process.env.KEY, {
                 noTimestamp: true,
             });
             const data = { token };

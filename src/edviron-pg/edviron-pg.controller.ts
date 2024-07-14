@@ -813,7 +813,7 @@ export class EdvironPgController {
       const trustee_id = collect_request?.trustee_id;
       const payload = { trustee_id };
 
-      const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET!, {
+      const token = jwt.sign(payload, process.env.KEY!, {
         noTimestamp: true,
       });
 
