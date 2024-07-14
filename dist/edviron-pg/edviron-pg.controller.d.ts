@@ -16,4 +16,5 @@ export declare class EdvironPgController {
         trustee_id: string;
         token: string;
     }, res: any, req: any): Promise<void>;
+    getErpLogo(collect_id: string): Promise<any>;
 }

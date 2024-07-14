@@ -547,7 +547,7 @@ let EdvironPgController = class EdvironPgController {
                                         createdAt: '$createdAt',
                                         updatedAt: '$updatedAt',
                                         transaction_time: '$updatedAt',
-                                        custom_order_id: '$collect_request.custom_order_id'
+                                        custom_order_id: '$collect_request.custom_order_id',
                                     },
                                 ],
                             },
@@ -577,6 +577,31 @@ let EdvironPgController = class EdvironPgController {
         }
         catch (error) {
             throw new Error(error.message);
+        }
+    }
+    async getErpLogo(collect_id) {
+        try {
+            const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            const trustee_id = collect_request?.trustee_id;
+            const payload = { trustee_id };
+            const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET, {
+                noTimestamp: true,
+            });
+            const data = { token };
+            const response = await (0, axios_1.default)({
+                method: 'get',
+                maxBodyLength: Infinity,
+                url: `${process.env.VANILLA_SERVICE}/erp/trustee-logo?trustee_id=${trustee_id}`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                },
+                data: data,
+            });
+            return response.data;
+        }
+        catch (e) {
+            throw new Error(e.message);
         }
     }
 };
@@ -631,6 +656,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "bulkTransactions", null);
+__decorate([
+    (0, common_1.Get)('erp-logo'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getErpLogo", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
