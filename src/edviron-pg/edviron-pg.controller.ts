@@ -822,7 +822,7 @@ export class EdvironPgController {
       const response = await axios({
         method: 'get',
         maxBodyLength: Infinity,
-        url: `${process.env.VANILLA_SERVICE}/erp/trustee-logo?trustee_id=${trustee_id}`,
+        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/trustee-logo?trustee_id=${trustee_id}`,
         headers: {
           accept: 'application/json',
           'content-type': 'application/json',
