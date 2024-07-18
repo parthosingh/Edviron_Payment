@@ -290,6 +290,7 @@ let EdvironPgController = class EdvironPgController {
         res.status(200).send('OK');
     }
     async easebuzzWebhook(body, headers) {
+        console.log('easebuzz webhook recived');
         console.log(`recive body`, body);
         console.log(`recive head`, headers);
         return true;
