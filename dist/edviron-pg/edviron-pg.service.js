@@ -123,7 +123,8 @@ let EdvironPgService = class EdvironPgService {
                     '&platform_charges=' +
                     encodedPlatformCharges +
                     '&school_name=' +
-                    schoolName + '&easebuzz_pg=' +
+                    schoolName +
+                    '&easebuzz_pg=' +
                     easebuzz_pg +
                     '&payment_id=' +
                     id,
@@ -172,6 +173,48 @@ let EdvironPgService = class EdvironPgService {
                     JSON.parse(collect_status.details),
             },
         };
+    }
+    async easebuzzCheckStatus(collect_request_id, collect_request) {
+        const axios = require('axios');
+        let hashData = process.env.EASEBUZZ_KEY +
+            '|' +
+            collect_request_id +
+            '|' +
+            collect_request.amount +
+            '|' +
+            'noreply@edviron.com' +
+            '|' +
+            '9898989898' +
+            '|' +
+            process.env.EASEBUZZ_SALT;
+        console.log(hashData);
+        let hash = await (0, sign_1.calculateSHA512Hash)(hashData);
+        let encodedParams = new URLSearchParams();
+        encodedParams.set('txnid', collect_request_id.toString());
+        encodedParams.set('amount', collect_request.amount.toString());
+        encodedParams.set('phone', '9898989898');
+        encodedParams.set('email', 'noreply@edviron.com');
+        encodedParams.set('hash', hash);
+        const data = {
+            txnid: collect_request_id,
+            key: process.env.EASEBUZZ_KEY,
+            amount: collect_request.amount,
+            email: 'noreply@edviron.com',
+            phone: '9898989898',
+            hash,
+        };
+        console.log(data);
+        const config = {
+            method: 'POST',
+            url: `https://dashboard.easebuzz.in/transaction/v1/retrieve`,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Accept: 'application/json',
+            },
+            data: encodedParams,
+        };
+        const { data: statusRes } = await axios.request(config);
+        console.log(statusRes);
     }
 };
 exports.EdvironPgService = EdvironPgService;

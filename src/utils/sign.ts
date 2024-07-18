@@ -10,5 +10,5 @@ export const sign = async (body: any) => {
 export const calculateSHA512Hash = async (data: any) => {
   const hash = crypto.createHash('sha512');
   hash.update(data);
-  return hash.digest('hex');
-};
+  return hash.digest('hex'); 
+}; 

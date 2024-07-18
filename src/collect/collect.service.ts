@@ -35,6 +35,8 @@ export class CollectService {
     school_name?:string,
     easebuzz_sub_merchant_id?:string,
   ): Promise<{ url: string; request: CollectRequest }> {
+    console.log(req_webhook_urls,'webhook url');
+    
     if (custom_order_id) {
       const count =
         await this.databaseService.CollectRequestModel.countDocuments({

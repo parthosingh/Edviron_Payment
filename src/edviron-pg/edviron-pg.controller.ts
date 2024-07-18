@@ -473,12 +473,46 @@ export class EdvironPgController {
   }
 
   @Post('/easebuzz/webhook')
-  async easebuzzWebhook(@Body() body:any,@Headers() headers:any){
-    console.log('easebuzz webhook recived');
+  async easebuzzWebhook(@Body() body:any,@Headers() headers:any,@Res() res:any){
+    console.log('easebuzz webhook recived with data',body);
+    if (!body) throw new Error('Invalid webhook data');
+    const collect_id = body.txnid
+    console.log(collect_id);
     
-    console.log(`recive body`,body);
-    console.log(`recive head`,headers);
-    
+    if (!Types.ObjectId.isValid(collect_id)) {
+      throw new Error('collect_id is not valid'); 
+    }
+    const collectIdObject = new Types.ObjectId(collect_id);
+
+    const collectReq =
+      await this.databaseService.CollectRequestModel.findById(collectIdObject);
+    if (!collectReq) throw new Error('Collect request not found');
+
+    const transaction_amount=body.net_amount_debit || null
+    const payment_method=body.mode || null
+    // const saveWebhook = await new this.databaseService.WebhooksModel({
+    //   collect_id: collectIdObject,
+    //   body: JSON.stringify(body),
+    // }).save();
+
+    // const pendingCollectReq =
+    //   await this.databaseService.CollectRequestStatusModel.findOne({
+    //     collect_id: collectIdObject,
+    //   });
+    // if (
+    //   pendingCollectReq &&
+    //   pendingCollectReq.status !== PaymentStatus.PENDING
+    // ) {
+    //   console.log('No pending request found for', collect_id);
+    //   res.status(200).send('OK');
+    //   return;
+    // }
+
+    const reqToCheck = await this.edvironPgService.easebuzzCheckStatus(
+      collect_id,
+      collectReq,
+    );
+
     return true 
  
     

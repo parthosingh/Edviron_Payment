@@ -289,10 +289,22 @@ let EdvironPgController = class EdvironPgController {
         }
         res.status(200).send('OK');
     }
-    async easebuzzWebhook(body, headers) {
-        console.log('easebuzz webhook recived');
-        console.log(`recive body`, body);
-        console.log(`recive head`, headers);
+    async easebuzzWebhook(body, headers, res) {
+        console.log('easebuzz webhook recived with data', body);
+        if (!body)
+            throw new Error('Invalid webhook data');
+        const collect_id = body.txnid;
+        console.log(collect_id);
+        if (!mongoose_1.Types.ObjectId.isValid(collect_id)) {
+            throw new Error('collect_id is not valid');
+        }
+        const collectIdObject = new mongoose_1.Types.ObjectId(collect_id);
+        const collectReq = await this.databaseService.CollectRequestModel.findById(collectIdObject);
+        if (!collectReq)
+            throw new Error('Collect request not found');
+        const transaction_amount = body.net_amount_debit || null;
+        const payment_method = body.mode || null;
+        const reqToCheck = await this.edvironPgService.easebuzzCheckStatus(collect_id, collectReq);
         return true;
     }
     async transactionsReport(body, res, req) {
@@ -662,8 +674,9 @@ __decorate([
     (0, common_1.Post)('/easebuzz/webhook'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Headers)()),
+    __param(2, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "easebuzzWebhook", null);
 __decorate([

@@ -47,8 +47,8 @@ export class EdvironPgService implements GatewayService {
         },
         data: data,
       };
-      let id=''
-      let easebuzz_pg=false
+      let id = '';
+      let easebuzz_pg = false;
       if (request.easebuzz_sub_merchant_id) {
         // Easebuzz pg data
         let productinfo = 'payment gateway customer';
@@ -110,8 +110,8 @@ export class EdvironPgService implements GatewayService {
           data: encodedParams,
         };
         const { data: easebuzzRes } = await axios.request(options);
-        id=  easebuzzRes.data
-        easebuzz_pg=true
+        id = easebuzzRes.data;
+        easebuzz_pg = true;
         console.log({ easebuzzRes, _id: request._id });
       }
 
@@ -136,8 +136,9 @@ export class EdvironPgService implements GatewayService {
           '&platform_charges=' +
           encodedPlatformCharges +
           '&school_name=' +
-          schoolName + '&easebuzz_pg=' +
-          easebuzz_pg+
+          schoolName +
+          '&easebuzz_pg=' +
+          easebuzz_pg +
           '&payment_id=' +
           id,
       };
@@ -200,5 +201,61 @@ export class EdvironPgService implements GatewayService {
           JSON.parse(collect_status.details as string),
       },
     };
+  }
+
+  async easebuzzCheckStatus(
+    collect_request_id: String,
+    collect_request: CollectRequest,
+  ) {
+    const axios = require('axios');
+    let hashData =
+      process.env.EASEBUZZ_KEY +
+      '|' +
+      collect_request_id +
+      '|' +
+      collect_request.amount +
+      '|' +
+      'noreply@edviron.com' +
+      '|' +
+      '9898989898' +
+      '|' +
+      process.env.EASEBUZZ_SALT;
+
+    console.log(hashData);
+    
+    let hash = await calculateSHA512Hash(hashData);
+    let encodedParams = new URLSearchParams();
+
+    encodedParams.set('txnid', collect_request_id.toString());
+    encodedParams.set('amount', collect_request.amount.toString());
+    encodedParams.set('phone', '9898989898');
+    encodedParams.set('email', 'noreply@edviron.com');
+    encodedParams.set('hash', hash);
+
+    const data = {
+      txnid: collect_request_id,
+      key: process.env.EASEBUZZ_KEY,
+      amount: collect_request.amount,
+      email: 'noreply@edviron.com',
+      phone: '9898989898',
+      hash,
+    };
+
+    console.log(data);
+    
+
+    const config = {
+      method: 'POST',
+      url: `https://dashboard.easebuzz.in/transaction/v1/retrieve`,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'application/json',
+      },
+      data: encodedParams,
+    };
+
+    const { data: statusRes } = await axios.request(config);
+    console.log(statusRes);
+    
   }
 }
