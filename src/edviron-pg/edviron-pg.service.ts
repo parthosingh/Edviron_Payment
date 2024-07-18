@@ -5,6 +5,7 @@ import { Transaction } from '../types/transaction';
 import { DatabaseService } from '../database/database.service';
 import { TransactionStatus } from '../types/transactionStatus';
 import { platformChange } from 'src/collect/collect.controller';
+import { calculateSHA512Hash } from 'src/utils/sign';
 
 @Injectable()
 export class EdvironPgService implements GatewayService {
@@ -12,10 +13,10 @@ export class EdvironPgService implements GatewayService {
   async collect(
     request: CollectRequest,
     platform_charges: platformChange[],
-    school_name:any
+    school_name: any,
   ): Promise<Transaction | undefined> {
     try {
-      const schoolName=school_name.replace(/ /g, '-'); //replace spaces because url dosent support spaces
+      const schoolName = school_name.replace(/ /g, '-'); //replace spaces because url dosent support spaces
       const axios = require('axios');
       let data = JSON.stringify({
         customer_details: {
@@ -46,6 +47,73 @@ export class EdvironPgService implements GatewayService {
         },
         data: data,
       };
+      let id=''
+      let easebuzz_pg=false
+      if (request.easebuzz_sub_merchant_id) {
+        // Easebuzz pg data
+        let productinfo = 'payment gateway customer';
+        let firstname = 'customer';
+        let email = 'noreply@edviron.com';
+        let hashData =
+          process.env.EASEBUZZ_KEY +
+          '|' +
+          request._id +
+          '|' +
+          parseFloat(request.amount.toFixed(2)) +
+          '|' +
+          productinfo +
+          '|' +
+          firstname +
+          '|' +
+          email +
+          '|||||||||||' +
+          process.env.EASEBUZZ_SALT;
+
+        const easebuzz_cb_surl =
+          'http://localhost:4001' +
+          '/edviron-pg/easebuzz-callback?collect_request_id=' +
+          request._id +
+          '&status=pass';
+
+        const easebuzz_cb_furl =
+          'http://localhost:4001' +
+          '/edviron-pg/easebuzz-callback?collect_request_id=' +
+          request._id +
+          '&status=fail';
+
+        let hash = await calculateSHA512Hash(hashData);
+        let encodedParams = new URLSearchParams();
+        encodedParams.set('key', process.env.EASEBUZZ_KEY!);
+        encodedParams.set('txnid', request._id.toString());
+        encodedParams.set(
+          'amount',
+          parseFloat(request.amount.toFixed(2)).toString(),
+        );
+        console.log(request.easebuzz_sub_merchant_id, 'sub merchant');
+
+        encodedParams.set('productinfo', productinfo);
+        encodedParams.set('firstname', firstname);
+        encodedParams.set('phone', '9898989898');
+        encodedParams.set('email', email);
+        encodedParams.set('surl', easebuzz_cb_surl);
+        encodedParams.set('furl', easebuzz_cb_furl);
+        encodedParams.set('hash', hash);
+        encodedParams.set('request_flow', 'SEAMLESS');
+        encodedParams.set('sub_merchant_id', request.easebuzz_sub_merchant_id);
+        const options = {
+          method: 'POST',
+          url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Accept: 'application/json',
+          },
+          data: encodedParams,
+        };
+        const { data: easebuzzRes } = await axios.request(options);
+        id=  easebuzzRes.data
+        easebuzz_pg=true
+        console.log({ easebuzzRes, _id: request._id });
+      }
 
       const { data: cashfreeRes } = await axios.request(config);
       const disabled_modes_string = request.disabled_modes
@@ -66,7 +134,12 @@ export class EdvironPgService implements GatewayService {
           '&' +
           disabled_modes_string +
           '&platform_charges=' +
-          encodedPlatformCharges +'&school_name='+schoolName,
+          encodedPlatformCharges +
+          '&school_name=' +
+          schoolName + '&easebuzz_pg=' +
+          easebuzz_pg+
+          '&payment_id=' +
+          id,
       };
     } catch (err) {
       console.log(err);

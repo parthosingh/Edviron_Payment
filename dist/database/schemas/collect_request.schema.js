@@ -47,6 +47,10 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
+], CollectRequest.prototype, "easebuzz_sub_merchant_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
 ], CollectRequest.prototype, "clientSecret", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),

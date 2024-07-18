@@ -141,6 +141,12 @@ let EdvironPgController = class EdvironPgController {
         callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
         return res.redirect(callbackUrl.toString());
     }
+    async handleEasebuzzCallback(req, res) {
+        const { collect_request_id } = req.query;
+        console.log(req.query.status, 'cb status');
+        const collectRequest = (await this.databaseService.CollectRequestModel.findById(collect_request_id));
+        return res.redirect(`https://www.google.com/?status=${req.query.status}`);
+    }
     async handleWebhook(body, res) {
         const { data: webHookData } = JSON.parse(JSON.stringify(body));
         console.log('webhook received with data', { body });
@@ -282,6 +288,11 @@ let EdvironPgController = class EdvironPgController {
             console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
         }
         res.status(200).send('OK');
+    }
+    async easebuzzWebhook(body, headers) {
+        console.log(`recive body`, body);
+        console.log(`recive head`, headers);
+        return true;
     }
     async transactionsReport(body, res, req) {
         const { school_id, token } = body;
@@ -631,6 +642,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "handleCallback", null);
 __decorate([
+    (0, common_1.Post)('/easebuzz-callback'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "handleEasebuzzCallback", null);
+__decorate([
     (0, common_1.Post)('/webhook'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Res)()),
@@ -638,6 +657,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "handleWebhook", null);
+__decorate([
+    (0, common_1.Post)('/easebuzz/webhook'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Headers)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "easebuzzWebhook", null);
 __decorate([
     (0, common_1.Get)('transactions-report'),
     __param(0, (0, common_1.Body)()),

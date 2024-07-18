@@ -28,6 +28,9 @@ export class CollectRequest {
   clientId: string;
 
   @Prop({ required: false })
+  easebuzz_sub_merchant_id: string;
+
+  @Prop({ required: false })
   clientSecret: string;
 
   @Prop({ required: false })

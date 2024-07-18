@@ -1,5 +1,6 @@
 import {
   Body,
+  Headers,
   Controller,
   ForbiddenException,
   Get,
@@ -182,6 +183,20 @@ export class EdvironPgController {
     return res.redirect(callbackUrl.toString());
   }
 
+  @Post('/easebuzz-callback')
+  async handleEasebuzzCallback(@Req() req: any, @Res() res: any) {
+    const { collect_request_id } = req.query;
+    console.log(req.query.status,'cb status');
+    
+    const collectRequest =
+      (await this.databaseService.CollectRequestModel.findById(
+        collect_request_id,
+      ))!;
+
+    
+    return res.redirect(`https://www.google.com/?status=${req.query.status}`);
+  }
+
   @Post('/webhook')
   async handleWebhook(@Body() body: any, @Res() res: any) {
     const { data: webHookData } = JSON.parse(JSON.stringify(body));
@@ -195,7 +210,7 @@ export class EdvironPgController {
     // console.log('collect_id', collect_id);
 
     if (!Types.ObjectId.isValid(collect_id)) {
-      throw new Error('collect_id is not valid');
+      throw new Error('collect_id is not valid'); 
     }
     const collectIdObject = new Types.ObjectId(collect_id);
 
@@ -455,6 +470,16 @@ export class EdvironPgController {
       console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
     }
     res.status(200).send('OK');
+  }
+
+  @Post('/easebuzz/webhook')
+  async easebuzzWebhook(@Body() body:any,@Headers() headers:any){
+    console.log(`recive body`,body);
+    console.log(`recive head`,headers);
+    
+    return true
+
+    
   }
 
   @Get('transactions-report')

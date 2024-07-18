@@ -32,7 +32,8 @@ export class CollectService {
     additional_data?: {},
     custom_order_id?: string,
     req_webhook_urls?: string[],
-    school_name?:string
+    school_name?:string,
+    easebuzz_sub_merchant_id?:string,
   ): Promise<{ url: string; request: CollectRequest }> {
     if (custom_order_id) {
       const count =
@@ -64,6 +65,7 @@ export class CollectService {
       additional_data: JSON.stringify(additional_data),
       custom_order_id,
       req_webhook_urls,
+      easebuzz_sub_merchant_id
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({

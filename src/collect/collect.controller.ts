@@ -51,6 +51,7 @@ export class CollectController {
       custom_order_id?: string;
       req_webhook_urls?: string[];
       school_name?: string;
+      easebuzz_sub_merchant_id?:string
     },
   ) {
     const {
@@ -68,6 +69,7 @@ export class CollectController {
       custom_order_id,
       req_webhook_urls,
       school_name,
+      easebuzz_sub_merchant_id
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -107,6 +109,7 @@ export class CollectController {
           custom_order_id,
           req_webhook_urls,
           school_name,
+          easebuzz_sub_merchant_id,
         ),
       );
     } catch (e) {
