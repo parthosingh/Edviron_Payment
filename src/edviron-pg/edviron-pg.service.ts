@@ -209,7 +209,7 @@ export class EdvironPgService implements GatewayService {
   ) {
 
     const amount = parseFloat(collect_request.amount.toString()).toFixed(1)
-    console.log(amount);
+    
     
     const axios = require('axios');
     let hashData =
@@ -238,9 +238,6 @@ export class EdvironPgService implements GatewayService {
       'phone': '9898989898',
       'hash': hash
     });
-
-    console.log(data);
-    
 
     const config = {
       method: 'POST',

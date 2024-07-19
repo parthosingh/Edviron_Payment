@@ -74,6 +74,8 @@ let EdvironPgController = class EdvironPgController {
         const wallet = params.get('wallet');
         const cardless = params.get('cardless');
         const netbanking = params.get('netbanking');
+        const payment_id = params.get('payment_id');
+        const easebuzz_pg = params.get('easebuzz_pg');
         const pay_later = params.get('pay_later');
         const upi = params.get('upi');
         const card = params.get('card');
@@ -120,7 +122,7 @@ let EdvironPgController = class EdvironPgController {
         const { data: info } = await axios.request(config);
         res.send(`<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "${process.env.PG_FRONTEND}?session_id=${sessionId}&collect_request_id=${req.query.collect_id}&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(platform_charges)}&is_blank=${isBlank}&amount=${amount}&school_name=${info.school_name}";
+                    location.href = "${process.env.PG_FRONTEND}?session_id=${sessionId}&collect_request_id=${req.query.collect_id}&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(platform_charges)}&is_blank=${isBlank}&amount=${amount}&school_name=${info.school_name}&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}";
                 }
             </script>`);
     }
@@ -145,7 +147,7 @@ let EdvironPgController = class EdvironPgController {
     }
     async handleEasebuzzCallback(req, res) {
         const { collect_request_id } = req.query;
-        console.log(req.query.status, 'cb status');
+        console.log(req.query.status, 'easebuzz callback status');
         const collectRequest = (await this.databaseService.CollectRequestModel.findById(collect_request_id));
         const reqToCheck = await this.edvironPgService.easebuzzCheckStatus(collect_request_id, collectRequest);
         const status = reqToCheck.msg.status;
@@ -306,7 +308,7 @@ let EdvironPgController = class EdvironPgController {
         }
         res.status(200).send('OK');
     }
-    async easebuzzWebhook(body, headers, res) {
+    async easebuzzWebhook(body, res) {
         console.log('easebuzz webhook recived with data', body);
         if (!body)
             throw new Error('Invalid webhook data');
@@ -756,10 +758,9 @@ __decorate([
 __decorate([
     (0, common_1.Post)('/easebuzz/webhook'),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Headers)()),
-    __param(2, (0, common_1.Res)()),
+    __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object, Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "easebuzzWebhook", null);
 __decorate([

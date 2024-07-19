@@ -85,7 +85,8 @@ export class EdvironPgController {
     const wallet = params.get('wallet');
     const cardless = params.get('cardless');
     const netbanking = params.get('netbanking');
-
+    const payment_id=params.get('payment_id')
+    const easebuzz_pg=params.get('easebuzz_pg')
     const pay_later = params.get('pay_later');
     const upi = params.get('upi');
     const card = params.get('card');
@@ -143,7 +144,7 @@ export class EdvironPgController {
                       platform_charges,
                     )}&is_blank=${isBlank}&amount=${amount}&school_name=${
                       info.school_name
-                    }";
+                    }&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}";
                 }
             </script>`,
     );
@@ -188,7 +189,7 @@ export class EdvironPgController {
   @Post('/easebuzz-callback')
   async handleEasebuzzCallback(@Req() req: any, @Res() res: any) {
     const { collect_request_id } = req.query;
-    console.log(req.query.status, 'cb status');
+    console.log(req.query.status, 'easebuzz callback status');
 
     const collectRequest =
       (await this.databaseService.CollectRequestModel.findById(
@@ -201,6 +202,7 @@ export class EdvironPgController {
     );
 
     const status=reqToCheck.msg.status
+
     if (collectRequest?.sdkPayment) {
       if (status === `success`) {
         console.log(`SDK payment success for ${collect_request_id}`);
@@ -214,6 +216,7 @@ export class EdvironPgController {
         `${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}`,
       );
     }
+
     const callbackUrl = new URL(collectRequest?.callbackUrl);
     if (status !== `success`) {
       return res.redirect(
@@ -502,10 +505,10 @@ export class EdvironPgController {
   @Post('/easebuzz/webhook')
   async easebuzzWebhook(
     @Body() body: any,
-    @Headers() headers: any,
     @Res() res: any,
   ) {
     console.log('easebuzz webhook recived with data', body);
+
     if (!body) throw new Error('Invalid webhook data');
     const collect_id = body.txnid;
     console.log(collect_id);
@@ -544,6 +547,8 @@ export class EdvironPgController {
       collectReq,
     );
     const status = reqToCheck.msg.status;
+
+    // currently we only use easebuzz for netbanking change this later if add more payment mode handle cases for diffrent payment modes
     const details = {
       netbanking: {
         netbanking_bank_code: body.bankcode,
@@ -972,7 +977,7 @@ export class EdvironPgController {
       });
 
       const data = { token };
-
+ 
       const response = await axios({
         method: 'get',
         maxBodyLength: Infinity,

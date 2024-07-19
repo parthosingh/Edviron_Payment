@@ -176,7 +176,6 @@ let EdvironPgService = class EdvironPgService {
     }
     async easebuzzCheckStatus(collect_request_id, collect_request) {
         const amount = parseFloat(collect_request.amount.toString()).toFixed(1);
-        console.log(amount);
         const axios = require('axios');
         let hashData = process.env.EASEBUZZ_KEY +
             '|' +
@@ -199,7 +198,6 @@ let EdvironPgService = class EdvironPgService {
             'phone': '9898989898',
             'hash': hash
         });
-        console.log(data);
         const config = {
             method: 'POST',
             url: `https://dashboard.easebuzz.in/transaction/v1/retrieve`,

@@ -9,7 +9,7 @@ export declare class EdvironPgController {
     handleCallback(req: any, res: any): Promise<any>;
     handleEasebuzzCallback(req: any, res: any): Promise<any>;
     handleWebhook(body: any, res: any): Promise<void>;
-    easebuzzWebhook(body: any, headers: any, res: any): Promise<void>;
+    easebuzzWebhook(body: any, res: any): Promise<void>;
     transactionsReport(body: {
         school_id: string;
         token: string;
