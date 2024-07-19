@@ -207,13 +207,17 @@ export class EdvironPgService implements GatewayService {
     collect_request_id: String,
     collect_request: CollectRequest,
   ) {
+
+    const amount = parseFloat(collect_request.amount.toString()).toFixed(1)
+    console.log(amount);
+    
     const axios = require('axios');
     let hashData =
       process.env.EASEBUZZ_KEY +
       '|' +
       collect_request_id +
       '|' +
-      collect_request.amount +
+      amount.toString() +
       '|' +
       'noreply@edviron.com' +
       '|' +
@@ -221,25 +225,19 @@ export class EdvironPgService implements GatewayService {
       '|' +
       process.env.EASEBUZZ_SALT;
 
-    console.log(hashData);
+   
     
     let hash = await calculateSHA512Hash(hashData);
-    let encodedParams = new URLSearchParams();
+    const qs = require('qs');
 
-    encodedParams.set('txnid', collect_request_id.toString());
-    encodedParams.set('amount', collect_request.amount.toString());
-    encodedParams.set('phone', '9898989898');
-    encodedParams.set('email', 'noreply@edviron.com');
-    encodedParams.set('hash', hash);
-
-    const data = {
-      txnid: collect_request_id,
-      key: process.env.EASEBUZZ_KEY,
-      amount: collect_request.amount,
-      email: 'noreply@edviron.com',
-      phone: '9898989898',
-      hash,
-    };
+    const data = qs.stringify({
+      'txnid': collect_request_id,
+      'key': process.env.EASEBUZZ_KEY,
+      'amount': amount,
+      'email': 'noreply@edviron.com',
+      'phone': '9898989898',
+      'hash': hash
+    });
 
     console.log(data);
     
@@ -251,11 +249,12 @@ export class EdvironPgService implements GatewayService {
         'Content-Type': 'application/x-www-form-urlencoded',
         Accept: 'application/json',
       },
-      data: encodedParams,
+      data: data,
     };
 
     const { data: statusRes } = await axios.request(config);
     console.log(statusRes);
+    return statusRes
     
   }
 }
