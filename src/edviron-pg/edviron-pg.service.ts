@@ -70,13 +70,13 @@ export class EdvironPgService implements GatewayService {
           process.env.EASEBUZZ_SALT;
 
         const easebuzz_cb_surl =
-          'http://localhost:4001' +
+          process.env.URL +
           '/edviron-pg/easebuzz-callback?collect_request_id=' +
           request._id +
           '&status=pass';
 
         const easebuzz_cb_furl =
-          'http://localhost:4001' +
+          process.env.URL +
           '/edviron-pg/easebuzz-callback?collect_request_id=' +
           request._id +
           '&status=fail';

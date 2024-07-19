@@ -35,8 +35,8 @@ export class EdvironPgController {
     const upi = req.query.upi;
     const card = req.query.card;
     const school_name = req.query.school_name;
-    const easebuzz_pg=req.query.easebuzz_pg
-    const payment_id=req.query.payment_id
+    const easebuzz_pg = req.query.easebuzz_pg;
+    const payment_id = req.query.payment_id;
     let disable_modes = '';
     if (wallet) disable_modes += `&wallet=${wallet}`;
     if (cardless) disable_modes += `&cardless=${cardless}`;
@@ -85,8 +85,8 @@ export class EdvironPgController {
     const wallet = params.get('wallet');
     const cardless = params.get('cardless');
     const netbanking = params.get('netbanking');
-    const payment_id=params.get('payment_id')
-    const easebuzz_pg=params.get('easebuzz_pg')
+    const payment_id = params.get('payment_id');
+    const easebuzz_pg = params.get('easebuzz_pg');
     const pay_later = params.get('pay_later');
     const upi = params.get('upi');
     const card = params.get('card');
@@ -201,7 +201,7 @@ export class EdvironPgController {
       collectRequest,
     );
 
-    const status=reqToCheck.msg.status
+    const status = reqToCheck.msg.status;
 
     if (collectRequest?.sdkPayment) {
       if (status === `success`) {
@@ -503,10 +503,7 @@ export class EdvironPgController {
   }
 
   @Post('/easebuzz/webhook')
-  async easebuzzWebhook(
-    @Body() body: any,
-    @Res() res: any,
-  ) {
+  async easebuzzWebhook(@Body() body: any, @Res() res: any) {
     console.log('easebuzz webhook recived with data', body);
 
     if (!body) throw new Error('Invalid webhook data');
@@ -977,7 +974,7 @@ export class EdvironPgController {
       });
 
       const data = { token };
- 
+
       const response = await axios({
         method: 'get',
         maxBodyLength: Infinity,

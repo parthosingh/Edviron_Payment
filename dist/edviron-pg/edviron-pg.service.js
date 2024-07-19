@@ -68,11 +68,11 @@ let EdvironPgService = class EdvironPgService {
                     email +
                     '|||||||||||' +
                     process.env.EASEBUZZ_SALT;
-                const easebuzz_cb_surl = 'http://localhost:4001' +
+                const easebuzz_cb_surl = process.env.URL +
                     '/edviron-pg/easebuzz-callback?collect_request_id=' +
                     request._id +
                     '&status=pass';
-                const easebuzz_cb_furl = 'http://localhost:4001' +
+                const easebuzz_cb_furl = process.env.URL +
                     '/edviron-pg/easebuzz-callback?collect_request_id=' +
                     request._id +
                     '&status=fail';
