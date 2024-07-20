@@ -35,6 +35,7 @@ export declare class CollectRequest {
     callbackUrl: string;
     gateway: Gateway;
     clientId: string;
+    easebuzz_sub_merchant_id: string;
     clientSecret: string;
     webHookUrl: string;
     disabled_modes: string[];

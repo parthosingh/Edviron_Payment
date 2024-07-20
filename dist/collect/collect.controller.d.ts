@@ -29,6 +29,7 @@ export declare class CollectController {
         custom_order_id?: string;
         req_webhook_urls?: string[];
         school_name?: string;
+        easebuzz_sub_merchant_id?: string;
     }): Promise<any>;
     callbackUrl(res: any, collect_id: string): Promise<void>;
 }

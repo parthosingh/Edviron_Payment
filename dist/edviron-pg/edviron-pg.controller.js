@@ -35,6 +35,8 @@ let EdvironPgController = class EdvironPgController {
         const upi = req.query.upi;
         const card = req.query.card;
         const school_name = req.query.school_name;
+        const easebuzz_pg = req.query.easebuzz_pg;
+        const payment_id = req.query.payment_id;
         let disable_modes = '';
         if (wallet)
             disable_modes += `&wallet=${wallet}`;
@@ -50,7 +52,7 @@ let EdvironPgController = class EdvironPgController {
             disable_modes += `&card=${card}`;
         res.send(`<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}${disable_modes}&platform_charges=${encodeURIComponent(req.query.platform_charges)}&school_name=${school_name}";
+                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}${disable_modes}&platform_charges=${encodeURIComponent(req.query.platform_charges)}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}";
                 }
             </script>`);
     }
@@ -72,6 +74,8 @@ let EdvironPgController = class EdvironPgController {
         const wallet = params.get('wallet');
         const cardless = params.get('cardless');
         const netbanking = params.get('netbanking');
+        const payment_id = params.get('payment_id');
+        const easebuzz_pg = params.get('easebuzz_pg');
         const pay_later = params.get('pay_later');
         const upi = params.get('upi');
         const card = params.get('card');
@@ -118,7 +122,7 @@ let EdvironPgController = class EdvironPgController {
         const { data: info } = await axios.request(config);
         res.send(`<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "${process.env.PG_FRONTEND}?session_id=${sessionId}&collect_request_id=${req.query.collect_id}&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(platform_charges)}&is_blank=${isBlank}&amount=${amount}&school_name=${info.school_name}";
+                    location.href = "${process.env.PG_FRONTEND}?session_id=${sessionId}&collect_request_id=${req.query.collect_id}&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(platform_charges)}&is_blank=${isBlank}&amount=${amount}&school_name=${info.school_name}&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}";
                 }
             </script>`);
     }
@@ -136,6 +140,27 @@ let EdvironPgController = class EdvironPgController {
         }
         const callbackUrl = new URL(collectRequest?.callbackUrl);
         if (status !== `SUCCESS`) {
+            return res.redirect(`${callbackUrl.toString()}?status=cancelled&reason=payment-declined`);
+        }
+        callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
+        return res.redirect(callbackUrl.toString());
+    }
+    async handleEasebuzzCallback(req, res) {
+        const { collect_request_id } = req.query;
+        console.log(req.query.status, 'easebuzz callback status');
+        const collectRequest = (await this.databaseService.CollectRequestModel.findById(collect_request_id));
+        const reqToCheck = await this.edvironPgService.easebuzzCheckStatus(collect_request_id, collectRequest);
+        const status = reqToCheck.msg.status;
+        if (collectRequest?.sdkPayment) {
+            if (status === `success`) {
+                console.log(`SDK payment success for ${collect_request_id}`);
+                return res.redirect(`${process.env.PG_FRONTEND}/payment-success?collect_id=${collect_request_id}`);
+            }
+            console.log(`SDK payment failed for ${collect_request_id}`);
+            return res.redirect(`${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}`);
+        }
+        const callbackUrl = new URL(collectRequest?.callbackUrl);
+        if (status !== `success`) {
             return res.redirect(`${callbackUrl.toString()}?status=cancelled&reason=payment-declined`);
         }
         callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
@@ -244,6 +269,90 @@ let EdvironPgController = class EdvironPgController {
                 payment_method,
                 details: JSON.stringify(webHookData.payment.payment_method),
                 bank_reference: webHookData.payment.bank_reference,
+            },
+        }, {
+            upsert: true,
+            new: true,
+        });
+        const webHookUrl = collectReq?.webHookUrl;
+        const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+        const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: collectIdObject,
+        });
+        const custom_order_id = collectRequest?.custom_order_id || '';
+        if (webHookUrl !== null) {
+            const amount = reqToCheck?.amount;
+            const webHookData = await (0, sign_1.sign)({
+                collect_id,
+                amount,
+                status,
+                trustee_id: collectReq.trustee_id,
+                school_id: collectReq.school_id,
+                req_webhook_urls: collectReq?.req_webhook_urls,
+                custom_order_id,
+                createdAt: collectRequestStatus?.createdAt,
+                transaction_time: collectRequestStatus?.updatedAt,
+            });
+            const config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${webHookUrl}`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                },
+                data: webHookData,
+            };
+            const webHookSent = await axios_1.default.request(config);
+            console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
+        }
+        res.status(200).send('OK');
+    }
+    async easebuzzWebhook(body, res) {
+        console.log('easebuzz webhook recived with data', body);
+        if (!body)
+            throw new Error('Invalid webhook data');
+        const collect_id = body.txnid;
+        console.log(collect_id);
+        if (!mongoose_1.Types.ObjectId.isValid(collect_id)) {
+            throw new Error('collect_id is not valid');
+        }
+        const collectIdObject = new mongoose_1.Types.ObjectId(collect_id);
+        const collectReq = await this.databaseService.CollectRequestModel.findById(collectIdObject);
+        if (!collectReq)
+            throw new Error('Collect request not found');
+        const transaction_amount = body.net_amount_debit || null;
+        const payment_method = body.mode || null;
+        const saveWebhook = await new this.databaseService.WebhooksModel({
+            collect_id: collectIdObject,
+            body: JSON.stringify(body),
+        }).save();
+        const pendingCollectReq = await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: collectIdObject,
+        });
+        if (pendingCollectReq &&
+            pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.PENDING) {
+            console.log('No pending request found for', collect_id);
+            res.status(200).send('OK');
+            return;
+        }
+        const reqToCheck = await this.edvironPgService.easebuzzCheckStatus(collect_id, collectReq);
+        const status = reqToCheck.msg.status;
+        const details = {
+            netbanking: {
+                netbanking_bank_code: body.bankcode,
+                netbanking_bank_name: body.bnak_name,
+            },
+        };
+        const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
+            collect_id: collectIdObject,
+        }, {
+            $set: {
+                status,
+                transaction_amount,
+                payment_method,
+                details: JSON.stringify(details),
+                bank_reference: body.bank_ref_num,
             },
         }, {
             upsert: true,
@@ -631,6 +740,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "handleCallback", null);
 __decorate([
+    (0, common_1.Post)('/easebuzz-callback'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "handleEasebuzzCallback", null);
+__decorate([
     (0, common_1.Post)('/webhook'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Res)()),
@@ -638,6 +755,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "handleWebhook", null);
+__decorate([
+    (0, common_1.Post)('/easebuzz/webhook'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "easebuzzWebhook", null);
 __decorate([
     (0, common_1.Get)('transactions-report'),
     __param(0, (0, common_1.Body)()),
