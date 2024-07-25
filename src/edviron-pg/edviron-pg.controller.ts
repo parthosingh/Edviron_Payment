@@ -549,7 +549,7 @@ export class EdvironPgController {
     const details = {
       netbanking: {
         netbanking_bank_code: body.bankcode,
-        netbanking_bank_name: body.bnak_name,
+        netbanking_bank_name: body.bank_name,
       },
     };
     const updateReq =
