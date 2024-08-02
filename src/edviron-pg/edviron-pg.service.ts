@@ -171,7 +171,8 @@ export class EdvironPgService implements GatewayService {
     };
 
     const { data: cashfreeRes } = await axios.request(config);
-    console.log({ cashfreeRes });
+ 
+    
 
     const order_status_to_transaction_status_map = {
       ACTIVE: TransactionStatus.PENDING,
@@ -181,11 +182,16 @@ export class EdvironPgService implements GatewayService {
       TERMINATION_REQUESTED: TransactionStatus.FAILURE,
     };
 
-    console.log({ cashfreeRes });
     const collect_status =
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: collect_request_id,
       });
+      let transaction_time=""
+      if(order_status_to_transaction_status_map[
+        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+      ]===TransactionStatus.SUCCESS){
+        transaction_time=collect_status?.updatedAt?.toString() as string
+      }
 
     return {
       status:
@@ -199,6 +205,8 @@ export class EdvironPgService implements GatewayService {
         payment_methods:
           collect_status?.details &&
           JSON.parse(collect_status.details as string),
+        transaction_time,
+        order_status: cashfreeRes.order_status,
       },
     };
   }
@@ -207,10 +215,8 @@ export class EdvironPgService implements GatewayService {
     collect_request_id: String,
     collect_request: CollectRequest,
   ) {
+    const amount = parseFloat(collect_request.amount.toString()).toFixed(1);
 
-    const amount = parseFloat(collect_request.amount.toString()).toFixed(1)
-    
-    
     const axios = require('axios');
     let hashData =
       process.env.EASEBUZZ_KEY +
@@ -225,18 +231,16 @@ export class EdvironPgService implements GatewayService {
       '|' +
       process.env.EASEBUZZ_SALT;
 
-   
-    
     let hash = await calculateSHA512Hash(hashData);
     const qs = require('qs');
 
     const data = qs.stringify({
-      'txnid': collect_request_id,
-      'key': process.env.EASEBUZZ_KEY,
-      'amount': amount,
-      'email': 'noreply@edviron.com',
-      'phone': '9898989898',
-      'hash': hash
+      txnid: collect_request_id,
+      key: process.env.EASEBUZZ_KEY,
+      amount: amount,
+      email: 'noreply@edviron.com',
+      phone: '9898989898',
+      hash: hash,
     });
 
     const config = {
@@ -251,7 +255,6 @@ export class EdvironPgService implements GatewayService {
 
     const { data: statusRes } = await axios.request(config);
     console.log(statusRes);
-    return statusRes
-    
+    return statusRes;
   }
 }

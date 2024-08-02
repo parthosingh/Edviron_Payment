@@ -152,7 +152,6 @@ let EdvironPgService = class EdvironPgService {
             },
         };
         const { data: cashfreeRes } = await axios.request(config);
-        console.log({ cashfreeRes });
         const order_status_to_transaction_status_map = {
             ACTIVE: transactionStatus_1.TransactionStatus.PENDING,
             PAID: transactionStatus_1.TransactionStatus.SUCCESS,
@@ -160,10 +159,13 @@ let EdvironPgService = class EdvironPgService {
             TERMINATED: transactionStatus_1.TransactionStatus.FAILURE,
             TERMINATION_REQUESTED: transactionStatus_1.TransactionStatus.FAILURE,
         };
-        console.log({ cashfreeRes });
         const collect_status = await this.databaseService.CollectRequestStatusModel.findOne({
             collect_id: collect_request_id,
         });
+        let transaction_time = "";
+        if (order_status_to_transaction_status_map[cashfreeRes.order_status] === transactionStatus_1.TransactionStatus.SUCCESS) {
+            transaction_time = collect_status?.updatedAt?.toString();
+        }
         return {
             status: order_status_to_transaction_status_map[cashfreeRes.order_status],
             amount: cashfreeRes.order_amount,
@@ -171,6 +173,8 @@ let EdvironPgService = class EdvironPgService {
                 bank_ref: collect_status?.bank_reference && collect_status?.bank_reference,
                 payment_methods: collect_status?.details &&
                     JSON.parse(collect_status.details),
+                transaction_time,
+                order_status: cashfreeRes.order_status,
             },
         };
     }
@@ -191,12 +195,12 @@ let EdvironPgService = class EdvironPgService {
         let hash = await (0, sign_1.calculateSHA512Hash)(hashData);
         const qs = require('qs');
         const data = qs.stringify({
-            'txnid': collect_request_id,
-            'key': process.env.EASEBUZZ_KEY,
-            'amount': amount,
-            'email': 'noreply@edviron.com',
-            'phone': '9898989898',
-            'hash': hash
+            txnid: collect_request_id,
+            key: process.env.EASEBUZZ_KEY,
+            amount: amount,
+            email: 'noreply@edviron.com',
+            phone: '9898989898',
+            hash: hash,
         });
         const config = {
             method: 'POST',
