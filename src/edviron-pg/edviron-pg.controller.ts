@@ -226,7 +226,7 @@ export class EdvironPgController {
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
     return res.redirect(callbackUrl.toString());
   }
-
+  
   @Post('/webhook')
   async handleWebhook(@Body() body: any, @Res() res: any) {
     const { data: webHookData } = JSON.parse(JSON.stringify(body));

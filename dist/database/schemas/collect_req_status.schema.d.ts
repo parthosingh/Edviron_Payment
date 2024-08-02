@@ -14,6 +14,7 @@ export declare class CollectRequestStatus {
     transaction_amount: Number;
     payment_method: String;
     details: String;
+    status_details: String;
     bank_reference: string;
     _id: ObjectId;
 }
