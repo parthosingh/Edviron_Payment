@@ -862,7 +862,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "handleCallback", null);
 __decorate([
-    (0, common_1.Post)('/easebuzz-callback'),
+    (0, common_1.Get)('/easebuzz-callback'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),

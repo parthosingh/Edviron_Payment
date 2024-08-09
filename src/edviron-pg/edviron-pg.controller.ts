@@ -187,7 +187,7 @@ export class EdvironPgController {
     return res.redirect(callbackUrl.toString());
   }
 
-  @Post('/easebuzz-callback')
+  @Get('/easebuzz-callback')
   async handleEasebuzzCallback(@Req() req: any, @Res() res: any) {
     const { collect_request_id } = req.query;
     console.log(req.query.status, 'easebuzz callback status');
