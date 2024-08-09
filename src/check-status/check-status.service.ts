@@ -24,6 +24,10 @@ export class CheckStatusService {
       console.log('Collect request not found', collect_request_id);
       throw new NotFoundException('Collect request not found');
     }
+    const collect_req_status =
+      await this.databaseService.CollectRequestStatusModel.findOne({
+        collect_id: collectRequest._id,
+      });
     console.log('checking status', collect_request_id, collectRequest);
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
@@ -35,6 +39,22 @@ export class CheckStatusService {
           collect_request_id,
           collectRequest,
         );
+      case Gateway.EDVIRON_EASEBUZZ:
+        const easebuzzStatus = await this.edvironPgService.easebuzzCheckStatus(
+          collect_request_id.toString(),
+          collectRequest,
+        );
+        const ezb_status_response = {
+          status: easebuzzStatus.msg.status.toUpperCase(),
+          amount: parseInt(easebuzzStatus.msg.amount),
+          details: {
+            bank_ref: easebuzzStatus.msg.bank_ref_num,
+            payment_method: { mode: easebuzzStatus.msg.mode },
+            transaction_time: collect_req_status?.updatedAt,
+            order_status: easebuzzStatus.msg.status,
+          },
+        };
+        return ezb_status_response;
     }
   }
 

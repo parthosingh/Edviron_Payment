@@ -11,9 +11,20 @@ export declare class CheckStatusService {
     checkStatus(collect_request_id: String): Promise<{
         status: import("../types/transactionStatus").TransactionStatus;
         amount: number;
-    }>;
+    } | {
+        status: any;
+        amount: number;
+        details: {
+            bank_ref: any;
+            payment_method: {
+                mode: any;
+            };
+            transaction_time: Date | undefined;
+            order_status: any;
+        };
+    } | undefined>;
     checkStatusByOrderId(order_id: String, trusteeId: string): Promise<{
         status: import("../types/transactionStatus").TransactionStatus;
         amount: number;
-    }>;
+    } | undefined>;
 }

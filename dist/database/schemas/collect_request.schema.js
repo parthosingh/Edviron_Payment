@@ -16,6 +16,9 @@ var Gateway;
     Gateway["PHONEPE"] = "PHONEPE";
     Gateway["HDFC"] = "HDFC";
     Gateway["EDVIRON_PG"] = "EDVIRON_PG";
+    Gateway["EDVIRON_CCAVENUE"] = "EDVIRON_CCAVENUE";
+    Gateway["EDVIRON_CASHFREE"] = "EDVIRON_CASHFREE";
+    Gateway["EDVIRON_EASEBUZZ"] = "EDVIRON_EASEBUZZ";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let CollectRequest = class CollectRequest {
 };

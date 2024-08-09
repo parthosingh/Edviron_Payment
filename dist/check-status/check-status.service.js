@@ -30,6 +30,9 @@ let CheckStatusService = class CheckStatusService {
             console.log('Collect request not found', collect_request_id);
             throw new common_1.NotFoundException('Collect request not found');
         }
+        const collect_req_status = await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: collectRequest._id,
+        });
         console.log('checking status', collect_request_id, collectRequest);
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:
@@ -38,6 +41,19 @@ let CheckStatusService = class CheckStatusService {
                 return await this.phonePeService.checkStatus(collect_request_id);
             case collect_request_schema_1.Gateway.EDVIRON_PG:
                 return await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
+            case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
+                const easebuzzStatus = await this.edvironPgService.easebuzzCheckStatus(collect_request_id.toString(), collectRequest);
+                const ezb_status_response = {
+                    status: easebuzzStatus.msg.status.toUpperCase(),
+                    amount: parseInt(easebuzzStatus.msg.amount),
+                    details: {
+                        bank_ref: easebuzzStatus.msg.bank_ref_num,
+                        payment_method: { mode: easebuzzStatus.msg.mode },
+                        transaction_time: collect_req_status?.updatedAt,
+                        order_status: easebuzzStatus.msg.status,
+                    },
+                };
+                return ezb_status_response;
         }
     }
     async checkStatusByOrderId(order_id, trusteeId) {
