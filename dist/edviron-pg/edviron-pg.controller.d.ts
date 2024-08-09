@@ -8,6 +8,7 @@ export declare class EdvironPgController {
     handleSdkRedirect(req: any, res: any): Promise<any>;
     handleCallback(req: any, res: any): Promise<any>;
     handleEasebuzzCallback(req: any, res: any): Promise<any>;
+    handleEasebuzzCallbackPost(req: any, res: any): Promise<any>;
     handleWebhook(body: any, res: any): Promise<void>;
     easebuzzWebhook(body: any, res: any): Promise<void>;
     transactionsReport(body: {

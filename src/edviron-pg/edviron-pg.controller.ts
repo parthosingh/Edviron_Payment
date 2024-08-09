@@ -223,7 +223,50 @@ export class EdvironPgController {
     const callbackUrl = new URL(collectRequest?.callbackUrl);
     if (status !== `success`) {
       return res.redirect(
-        `${callbackUrl.toString()}?status=cancelled&reason=payment-declined`,
+        `${callbackUrl.toString()}?status=can celled&reason=payment-declined`,
+      );
+    }
+    callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
+    return res.redirect(callbackUrl.toString());
+  }
+
+  @Post('/easebuzz-callback')
+  async handleEasebuzzCallbackPost(@Req() req: any, @Res() res: any) {
+    const { collect_request_id } = req.query;
+    console.log(req.query.status, 'easebuzz callback status');
+
+    const collectRequest =
+      (await this.databaseService.CollectRequestModel.findById(
+        collect_request_id,
+      ))!;
+
+    collectRequest.gateway = Gateway.EDVIRON_EASEBUZZ;
+    await collectRequest.save();
+    const reqToCheck = await this.edvironPgService.easebuzzCheckStatus(
+      collect_request_id,
+      collectRequest,
+    );
+
+    const status = reqToCheck.msg.status;
+
+    if (collectRequest?.sdkPayment) {
+      if (status === `success`) {
+        console.log(`SDK payment success for ${collect_request_id}`);
+        return res.redirect(
+          `${process.env.PG_FRONTEND}/payment-success?collect_id=${collect_request_id}`,
+        );
+      }
+      console.log(`SDK payment failed for ${collect_request_id}`);
+
+      return res.redirect(
+        `${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}`,
+      );
+    }
+
+    const callbackUrl = new URL(collectRequest?.callbackUrl);
+    if (status !== `success`) {
+      return res.redirect(
+        `${callbackUrl.toString()}?status=can celled&reason=payment-declined`,
       );
     }
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
