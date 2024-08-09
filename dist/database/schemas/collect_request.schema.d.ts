@@ -26,7 +26,10 @@ import { ObjectId } from 'mongoose';
 export declare enum Gateway {
     PHONEPE = "PHONEPE",
     HDFC = "HDFC",
-    EDVIRON_PG = "EDVIRON_PG"
+    EDVIRON_PG = "EDVIRON_PG",
+    EDVIRON_CCAVENUE = "EDVIRON_CCAVENUE",
+    EDVIRON_CASHFREE = "EDVIRON_CASHFREE",
+    EDVIRON_EASEBUZZ = "EDVIRON_EASEBUZZ"
 }
 export declare class CollectRequest {
     amount: number;

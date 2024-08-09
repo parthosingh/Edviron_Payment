@@ -22,6 +22,7 @@ const axios_1 = require("axios");
 const mongoose_1 = require("mongoose");
 const jwt = require("jsonwebtoken");
 const transactionStatus_1 = require("../types/transactionStatus");
+const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 let EdvironPgController = class EdvironPgController {
     constructor(edvironPgService, databaseService) {
         this.edvironPgService = edvironPgService;
@@ -149,6 +150,8 @@ let EdvironPgController = class EdvironPgController {
         const { collect_request_id } = req.query;
         console.log(req.query.status, 'easebuzz callback status');
         const collectRequest = (await this.databaseService.CollectRequestModel.findById(collect_request_id));
+        collectRequest.gateway = collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ;
+        await collectRequest.save();
         const reqToCheck = await this.edvironPgService.easebuzzCheckStatus(collect_request_id, collectRequest);
         const status = reqToCheck.msg.status;
         if (collectRequest?.sdkPayment) {
@@ -313,7 +316,7 @@ let EdvironPgController = class EdvironPgController {
         if (!body)
             throw new Error('Invalid webhook data');
         const collect_id = body.txnid;
-        console.log(collect_id);
+        console.log('webhook for ', collect_id);
         if (!mongoose_1.Types.ObjectId.isValid(collect_id)) {
             throw new Error('collect_id is not valid');
         }
@@ -322,7 +325,8 @@ let EdvironPgController = class EdvironPgController {
         if (!collectReq)
             throw new Error('Collect request not found');
         const transaction_amount = body.net_amount_debit || null;
-        const payment_method = body.mode || null;
+        let payment_method;
+        let details;
         const saveWebhook = await new this.databaseService.WebhooksModel({
             collect_id: collectIdObject,
             body: JSON.stringify(body),
@@ -336,14 +340,88 @@ let EdvironPgController = class EdvironPgController {
             res.status(200).send('OK');
             return;
         }
-        const reqToCheck = await this.edvironPgService.easebuzzCheckStatus(collect_id, collectReq);
+        const statusResponse = await this.edvironPgService.easebuzzCheckStatus(collect_id, collectReq);
+        const reqToCheck = statusResponse;
+        console.log(statusResponse, 'status response check');
         const status = reqToCheck.msg.status;
-        const details = {
-            netbanking: {
-                netbanking_bank_code: body.bankcode,
-                netbanking_bank_name: body.bank_name,
-            },
-        };
+        let platform_type;
+        switch (body.mode) {
+            case 'MW':
+                payment_method = 'wallet';
+                platform_type = 'Wallet';
+                details = {
+                    app: {
+                        channel: reqToCheck.msg.bank_name,
+                        provider: reqToCheck.msg.bank_name,
+                    },
+                };
+                break;
+            case 'OM':
+                payment_method = 'wallet';
+                platform_type = 'Wallet';
+                details = {
+                    app: {
+                        channel: reqToCheck.msg.bank_name,
+                        provider: reqToCheck.msg.bank_name,
+                    },
+                };
+                break;
+            case 'NB':
+                payment_method = 'net_banking';
+                platform_type = 'NetBanking';
+                details = {
+                    netbanking: {
+                        netbanking_bank_code: reqToCheck.msg.bank_code,
+                        netbanking_bank_name: reqToCheck.msg.bank_name,
+                    },
+                };
+                break;
+            case 'CC':
+                payment_method = 'credit_card';
+                platform_type = 'CreditCard';
+                details = {
+                    card: {
+                        card_bank_name: reqToCheck.msg.bank_name,
+                        provicard_network: reqToCheck.msg.cardCategory,
+                        card_number: reqToCheck.msg.cardnum,
+                        card_type: 'credit_card',
+                    },
+                };
+                break;
+            case 'DC':
+                payment_method = 'debit_card';
+                platform_type = 'DebitCard';
+                details = {
+                    card: {
+                        card_bank_name: reqToCheck.msg.bank_name,
+                        provicard_network: reqToCheck.msg.cardCategory,
+                        card_number: reqToCheck.msg.cardnum,
+                        card_type: 'debit_card',
+                    },
+                };
+                break;
+            case 'UPI':
+                payment_method = 'upi';
+                platform_type = 'UPI';
+                details = {
+                    card: {
+                        upi_id: reqToCheck.msg.upi_va,
+                    },
+                };
+                break;
+            case 'PL':
+                payment_method = 'pay_later';
+                platform_type = 'PayLater';
+                details = {
+                    pay_later: {
+                        channel: reqToCheck.msg.bank_name,
+                        provider: reqToCheck.msg.bank_name,
+                    },
+                };
+                break;
+            default:
+                payment_method = 'Unknown';
+        }
         const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
             collect_id: collectIdObject,
         }, {
@@ -387,8 +465,52 @@ let EdvironPgController = class EdvironPgController {
                 },
                 data: webHookData,
             };
-            const webHookSent = await axios_1.default.request(config);
-            console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
+            try {
+                const webHookSent = await axios_1.default.request(config);
+                console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
+            }
+            catch (e) {
+                console.log(`Failed webhook sent to ${webHookUrl}  ${e.message}`);
+            }
+        }
+        const payment_mode = body.bank_name;
+        const tokenData = {
+            school_id: collectReq?.school_id,
+            trustee_id: collectReq?.trustee_id,
+            order_amount: pendingCollectReq?.order_amount,
+            transaction_amount,
+            platform_type,
+            payment_mode,
+            collect_id: collectReq?._id,
+        };
+        const _jwt = jwt.sign(tokenData, process.env.KEY, { noTimestamp: true });
+        let data = JSON.stringify({
+            token: _jwt,
+            school_id: collectReq?.school_id,
+            trustee_id: collectReq?.trustee_id,
+            order_amount: pendingCollectReq?.order_amount,
+            transaction_amount,
+            platform_type,
+            payment_mode,
+            collect_id: collectReq?._id,
+        });
+        let config = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
+            headers: {
+                accept: 'application/json',
+                'content-type': 'application/json',
+                'x-api-version': '2023-08-01',
+            },
+            data: data,
+        };
+        try {
+            const { data: commissionRes } = await axios_1.default.request(config);
+            console.log(commissionRes, 'Commission saved');
+        }
+        catch (e) {
+            console.log(`failed to save commision ${e.message}`);
         }
         res.status(200).send('OK');
     }
