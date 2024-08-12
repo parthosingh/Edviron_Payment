@@ -49,6 +49,9 @@ export declare class CollectRequest {
     sdkPayment: boolean;
     custom_order_id: string;
     req_webhook_urls: string[];
+    ccavenue_merchant_id: string;
+    ccavenue_access_code: string;
+    ccavenue_working_key: string;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;
