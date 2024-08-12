@@ -8,7 +8,7 @@ import * as qs from 'qs';
 import axios from 'axios';
 import { DatabaseService } from 'src/database/database.service';
 
-// const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 @Injectable()
 export class CcavenueService {
@@ -16,8 +16,8 @@ export class CcavenueService {
   encrypt(plainText: string, workingKey: string) {
     const m = createHash('md5');
     m.update(workingKey);
-
     const key = m.digest();
+
     const iv =
       '\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f';
     const cipher = createCipheriv('aes-128-cbc', key, iv);
@@ -162,7 +162,9 @@ export class CcavenueService {
       'customer_identifier=' +
       p_customer_identifier +
       '&';
+
     const encrypted = this.encrypt(merchant_data, ccavenue_working_key);
+
     return {
       encRequest: encrypted,
       access_code: ccavenue_access_code,
@@ -170,8 +172,7 @@ export class CcavenueService {
   }
 
   async createOrder(request: CollectRequest) {
-    const p_merchant_id =
-      request.ccavenue_merchant_id ;
+    const p_merchant_id = request.ccavenue_merchant_id;
     const p_order_id = request._id.toString();
     const p_currency = 'INR';
     const p_amount = request.amount.toFixed(2);
@@ -206,6 +207,8 @@ export class CcavenueService {
     const p_merchant_param5 = '';
     const p_promo_code = '';
     const p_customer_identifier = '';
+    console.log(request);
+    
 
     const { encRequest, access_code } = this.ccavRequestHandler(
       p_merchant_id,
@@ -241,11 +244,20 @@ export class CcavenueService {
       request.ccavenue_access_code,
     );
 
-    return {url:`${process.env.PG_FRONTEND}/ccavenue?encRequest=${encRequest}&access_code=${access_code}`}
-
+    return {
+      url:
+        process.env.PG_FRONTEND +
+        '/ccavenue?encRequest=' +
+        encRequest +
+        '&access_code=' +
+        access_code,
+    };
   }
 
-  async ccavResponseToCollectRequestId(encResp: string,ccavenue_working_key:string): Promise<String> {
+  async ccavResponseToCollectRequestId(
+    encResp: string,
+    ccavenue_working_key: string,
+  ): Promise<String> {
     const decResp = this.decrypt(encResp, ccavenue_working_key);
     console.log(decResp);
 
@@ -256,33 +268,38 @@ export class CcavenueService {
   }
 
   async checkStatus(
-    collectRequestId: String,
-    ccavenue_working_key: string,
-    ccavenue_access_code: string,
+    collect_request: CollectRequest,
+    collect_request_id: string,
   ): Promise<{
     status: TransactionStatus;
     amount: number;
     paymentInstrument?: string | null;
     paymentInstrumentBank?: string | null;
     decrypt_res?: any;
-    transaction_time?:string
+    transaction_time?: string;
+    bank_ref?: string;
   }> {
     console.log(`checking status for ccavenue`);
-    
+    const { ccavenue_working_key, ccavenue_access_code } = collect_request;
     const collectRequest =
-      await this.databaseService.CollectRequestModel.findById(collectRequestId);
+      await this.databaseService.CollectRequestModel.findById(
+        collect_request_id,
+      );
     const encrypted_data: string = await this.encrypt(
-      JSON.stringify({ order_no: collectRequestId }),
+      JSON.stringify({ order_no: collect_request_id }),
       ccavenue_working_key,
     );
 
-    const collectReqStatus=await this.databaseService.CollectRequestStatusModel.findOne({collect_id:collectRequest?._id})
+    const collectReqStatus =
+      await this.databaseService.CollectRequestStatusModel.findOne({
+        collect_id: collectRequest?._id,
+      });
     const data = qs.stringify({
       enc_request: encrypted_data,
       access_code: ccavenue_access_code,
       request_type: 'JSON',
       command: 'orderStatusTracker',
-      order_no: collectRequestId,
+      order_no: collect_request_id,
     });
     const config = {
       method: 'post',
@@ -322,7 +339,9 @@ export class CcavenueService {
           paymentInstrument,
           paymentInstrumentBank,
           decrypt_res,
-          transaction_time:collectReqStatus?.updatedAt?.toISOString() || 'null' 
+          transaction_time:
+            collectReqStatus?.updatedAt?.toISOString() || 'null',
+          bank_ref: order_status_result['order_bank_ref_no'],
         };
       } else if (
         order_status_result['order_status'] === 'Unsuccessful' ||
@@ -345,4 +364,3 @@ export class CcavenueService {
     }
   }
 }
- 

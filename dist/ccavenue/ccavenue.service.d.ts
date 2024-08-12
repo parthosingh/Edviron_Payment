@@ -14,12 +14,13 @@ export declare class CcavenueService {
         url: string;
     }>;
     ccavResponseToCollectRequestId(encResp: string, ccavenue_working_key: string): Promise<String>;
-    checkStatus(collectRequestId: String, ccavenue_working_key: string, ccavenue_access_code: string): Promise<{
+    checkStatus(collect_request: CollectRequest, collect_request_id: string): Promise<{
         status: TransactionStatus;
         amount: number;
         paymentInstrument?: string | null;
         paymentInstrumentBank?: string | null;
         decrypt_res?: any;
         transaction_time?: string;
+        bank_ref?: string;
     }>;
 }

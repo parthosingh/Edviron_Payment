@@ -29,7 +29,7 @@ export class CcavenueController {
                 </script>`,
     );
   }
- 
+
   @Post('/callback')
   async handleCallback(@Body() body: any, @Res() res: any, @Req() req: any) {
     console.log('callback recived from ccavenue');
@@ -39,9 +39,12 @@ export class CcavenueController {
       await this.databaseService.CollectRequestModel.findById(collectIdObject);
     if (!collectReq) throw new Error('Collect request not found');
 
-    collectReq.gateway=Gateway.EDVIRON_CCAVENUE
-    await collectReq.save()
-    const status = await this.ccavenueService.checkStatus(collectIdObject,collectReq.ccavenue_working_key,collectReq.ccavenue_access_code);
+    collectReq.gateway = Gateway.EDVIRON_CCAVENUE;
+    await collectReq.save();
+    const status = await this.ccavenueService.checkStatus(
+      collectReq,
+      collectIdObject,
+    );
     console.log(status, 'status ccavenye');
 
     const orderDetails = JSON.parse(status.decrypt_res);
@@ -93,9 +96,9 @@ export class CcavenueController {
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: collectIdObject,
       });
-    
-    if(!collectRequest){
-      throw new Error(`transaction not found`)
+
+    if (!collectRequest) {
+      throw new Error(`transaction not found`);
     }
 
     const custom_order_id = collectRequest?.custom_order_id || '';
@@ -122,23 +125,25 @@ export class CcavenueController {
         },
         data: webHookData,
       };
-      try{
-
+      try {
         const webHookSent = await axios.request(config);
         console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
-      }catch(e){
-        console.log(` failed to send webhook to ${webHookUrl} reason ${e.message}`);
+      } catch (e) {
+        console.log(
+          ` failed to send webhook to ${webHookUrl} reason ${e.message}`,
+        );
       }
     }
     const { encResp } = body;
 
     const collectRequestId =
-      await this.ccavenueService.ccavResponseToCollectRequestId(encResp,collectRequest.ccavenue_working_key);
+      await this.ccavenueService.ccavResponseToCollectRequestId(
+        encResp,
+        collectRequest.ccavenue_working_key,
+      );
 
     res.redirect(collectRequest?.callbackUrl);
   }
-
-  
 }
 
 // const Order_Status_Result = {

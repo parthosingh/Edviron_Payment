@@ -16,6 +16,7 @@ const crypto_1 = require("crypto");
 const qs = require("qs");
 const axios_1 = require("axios");
 const database_service_1 = require("../database/database.service");
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let CcavenueService = class CcavenueService {
     constructor(databaseService) {
         this.databaseService = databaseService;
@@ -168,8 +169,15 @@ let CcavenueService = class CcavenueService {
         const p_merchant_param5 = '';
         const p_promo_code = '';
         const p_customer_identifier = '';
+        console.log(request);
         const { encRequest, access_code } = this.ccavRequestHandler(p_merchant_id, p_order_id, p_currency, p_amount, p_redirect_url, p_cancel_url, p_language, p_billing_name, p_billing_address, p_billing_city, p_billing_state, p_billing_zip, p_billing_country, p_billing_tel, p_billing_email, p_delivery_name, p_delivery_address, p_delivery_city, p_delivery_state, p_delivery_zip, p_delivery_country, p_delivery_tel, p_merchant_param1, p_merchant_param2, p_merchant_param3, p_merchant_param4, p_merchant_param5, p_promo_code, p_customer_identifier, request.ccavenue_working_key, request.ccavenue_access_code);
-        return { url: `${process.env.PG_FRONTEND}/ccavenue?encRequest=${encRequest}&access_code=${access_code}` };
+        return {
+            url: process.env.PG_FRONTEND +
+                '/ccavenue?encRequest=' +
+                encRequest +
+                '&access_code=' +
+                access_code,
+        };
     }
     async ccavResponseToCollectRequestId(encResp, ccavenue_working_key) {
         const decResp = this.decrypt(encResp, ccavenue_working_key);
@@ -179,17 +187,20 @@ let CcavenueService = class CcavenueService {
         const paramObject = Object.fromEntries(params.entries());
         return paramObject.order_id;
     }
-    async checkStatus(collectRequestId, ccavenue_working_key, ccavenue_access_code) {
+    async checkStatus(collect_request, collect_request_id) {
         console.log(`checking status for ccavenue`);
-        const collectRequest = await this.databaseService.CollectRequestModel.findById(collectRequestId);
-        const encrypted_data = await this.encrypt(JSON.stringify({ order_no: collectRequestId }), ccavenue_working_key);
-        const collectReqStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: collectRequest?._id });
+        const { ccavenue_working_key, ccavenue_access_code } = collect_request;
+        const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_request_id);
+        const encrypted_data = await this.encrypt(JSON.stringify({ order_no: collect_request_id }), ccavenue_working_key);
+        const collectReqStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: collectRequest?._id,
+        });
         const data = qs.stringify({
             enc_request: encrypted_data,
             access_code: ccavenue_access_code,
             request_type: 'JSON',
             command: 'orderStatusTracker',
-            order_no: collectRequestId,
+            order_no: collect_request_id,
         });
         const config = {
             method: 'post',
@@ -220,7 +231,8 @@ let CcavenueService = class CcavenueService {
                     paymentInstrument,
                     paymentInstrumentBank,
                     decrypt_res,
-                    transaction_time: collectReqStatus?.updatedAt?.toISOString() || 'null'
+                    transaction_time: collectReqStatus?.updatedAt?.toISOString() || 'null',
+                    bank_ref: order_status_result['order_bank_ref_no'],
                 };
             }
             else if (order_status_result['order_status'] === 'Unsuccessful' ||

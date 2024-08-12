@@ -48,7 +48,7 @@ let CcavenueController = class CcavenueController {
             throw new Error('Collect request not found');
         collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_CCAVENUE;
         await collectReq.save();
-        const status = await this.ccavenueService.checkStatus(collectIdObject, collectReq.ccavenue_working_key, collectReq.ccavenue_access_code);
+        const status = await this.ccavenueService.checkStatus(collectReq, collectIdObject);
         console.log(status, 'status ccavenye');
         const orderDetails = JSON.parse(status.decrypt_res);
         console.log(`order details new ${orderDetails.Order_Status_Result}`);

@@ -30,6 +30,9 @@ export declare class CollectController {
         req_webhook_urls?: string[];
         school_name?: string;
         easebuzz_sub_merchant_id?: string;
+        ccavenue_merchant_id?: string;
+        ccavenue_access_code?: string;
+        ccavenue_working_key?: string;
     }): Promise<any>;
     callbackUrl(res: any, collect_id: string): Promise<void>;
 }
