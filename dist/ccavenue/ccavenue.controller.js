@@ -45,7 +45,7 @@ let CcavenueController = class CcavenueController {
                 throw new Error('Collect request not found');
             collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_CCAVENUE;
             await collectReq.save();
-            res.redirect(collectReq?.callbackUrl);
+            res.redirect(collectReq?.callbackUrl + `?collect_id=${collectIdObject}`);
         }
         catch (e) {
             console.log(`Error,${e}`);

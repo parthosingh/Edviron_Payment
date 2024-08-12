@@ -147,7 +147,7 @@ export class CcavenueController {
     //     collectRequest.ccavenue_working_key,
     //   );
 
-    res.redirect(collectReq?.callbackUrl);
+    res.redirect(collectReq?.callbackUrl+`?collect_id=${collectIdObject}`);
   }catch(e){ 
     console.log(`Error,${e}`);
     throw new Error(`Error in callback,${e.message}`)
