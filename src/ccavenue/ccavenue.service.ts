@@ -208,7 +208,6 @@ export class CcavenueService {
     const p_promo_code = '';
     const p_customer_identifier = '';
     console.log(request);
-    
 
     const { encRequest, access_code } = this.ccavRequestHandler(
       p_merchant_id,
@@ -279,16 +278,18 @@ export class CcavenueService {
     transaction_time?: string;
     bank_ref?: string;
   }> {
-    console.log(`checking status for ccavenue`);
     const { ccavenue_working_key, ccavenue_access_code } = collect_request;
     const collectRequest =
       await this.databaseService.CollectRequestModel.findById(
         collect_request_id,
       );
+
     const encrypted_data: string = await this.encrypt(
       JSON.stringify({ order_no: collect_request_id }),
       ccavenue_working_key,
     );
+
+    console.log(`checking status for ccavenue`);
 
     const collectReqStatus =
       await this.databaseService.CollectRequestStatusModel.findOne({
@@ -301,6 +302,8 @@ export class CcavenueService {
       command: 'orderStatusTracker',
       order_no: collect_request_id,
     });
+    console.log(ccavenue_access_code);
+
     const config = {
       method: 'post',
       maxBodyLength: Infinity,
@@ -313,16 +316,16 @@ export class CcavenueService {
     // await sleep(10000);
     try {
       const res = await axios.request(config);
+
       const params = new URLSearchParams(res.data);
       const paramObject = Object.fromEntries(params.entries());
+
       const decrypt_res = this.decrypt(
         paramObject['enc_response'],
         ccavenue_working_key,
       );
-      console.log(`decrypted staus response ${decrypt_res}`);
 
       const order_status_result = JSON.parse(decrypt_res).Order_Status_Result;
-      console.log({ order_status_result });
 
       const paymentInstrument = order_status_result['order_option_type'];
       const paymentInstrumentBank = order_status_result['order_card_name'];
@@ -359,7 +362,7 @@ export class CcavenueService {
         decrypt_res,
       };
     } catch (err) {
-      // console.log(err);
+      console.log(err);
       throw new UnprocessableEntityException(err.message);
     }
   }

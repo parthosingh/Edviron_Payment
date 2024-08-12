@@ -33,6 +33,7 @@ export class CcavenueController {
   @Post('/callback')
   async handleCallback(@Body() body: any, @Res() res: any, @Req() req: any) {
     console.log('callback recived from ccavenue');
+    try{
     console.log(req.query.collect_id);
     const collectIdObject = req.query.collect_id;
     const collectReq =
@@ -41,10 +42,14 @@ export class CcavenueController {
 
     collectReq.gateway = Gateway.EDVIRON_CCAVENUE;
     await collectReq.save();
+    
+    
+    
     const status = await this.ccavenueService.checkStatus(
       collectReq,
       collectIdObject,
     );
+    console.log('test collect');
     console.log(status, 'status ccavenye');
 
     const orderDetails = JSON.parse(status.decrypt_res);
@@ -143,6 +148,10 @@ export class CcavenueController {
       );
 
     res.redirect(collectRequest?.callbackUrl);
+  }catch(e){ 
+    console.log(`Error,${e}`);
+    throw new Error(`Error in callback,${e.message}`)
+  }
   }
 }
 

@@ -188,10 +188,10 @@ let CcavenueService = class CcavenueService {
         return paramObject.order_id;
     }
     async checkStatus(collect_request, collect_request_id) {
-        console.log(`checking status for ccavenue`);
         const { ccavenue_working_key, ccavenue_access_code } = collect_request;
         const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_request_id);
         const encrypted_data = await this.encrypt(JSON.stringify({ order_no: collect_request_id }), ccavenue_working_key);
+        console.log(`checking status for ccavenue`);
         const collectReqStatus = await this.databaseService.CollectRequestStatusModel.findOne({
             collect_id: collectRequest?._id,
         });
@@ -202,6 +202,7 @@ let CcavenueService = class CcavenueService {
             command: 'orderStatusTracker',
             order_no: collect_request_id,
         });
+        console.log(ccavenue_access_code);
         const config = {
             method: 'post',
             maxBodyLength: Infinity,
@@ -216,9 +217,7 @@ let CcavenueService = class CcavenueService {
             const params = new URLSearchParams(res.data);
             const paramObject = Object.fromEntries(params.entries());
             const decrypt_res = this.decrypt(paramObject['enc_response'], ccavenue_working_key);
-            console.log(`decrypted staus response ${decrypt_res}`);
             const order_status_result = JSON.parse(decrypt_res).Order_Status_Result;
-            console.log({ order_status_result });
             const paymentInstrument = order_status_result['order_option_type'];
             const paymentInstrumentBank = order_status_result['order_card_name'];
             if ((order_status_result['order_status'] === 'Shipped' ||
@@ -250,6 +249,7 @@ let CcavenueService = class CcavenueService {
             };
         }
         catch (err) {
+            console.log(err);
             throw new common_1.UnprocessableEntityException(err.message);
         }
     }

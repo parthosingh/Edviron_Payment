@@ -8,10 +8,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CcavenueModule = void 0;
 const common_1 = require("@nestjs/common");
+const ccavenue_controller_1 = require("./ccavenue.controller");
+const ccavenue_service_1 = require("./ccavenue.service");
+const database_module_1 = require("../database/database.module");
 let CcavenueModule = class CcavenueModule {
 };
 exports.CcavenueModule = CcavenueModule;
 exports.CcavenueModule = CcavenueModule = __decorate([
-    (0, common_1.Module)({})
+    (0, common_1.Module)({
+        controllers: [ccavenue_controller_1.CcavenueController],
+        providers: [ccavenue_service_1.CcavenueService],
+        imports: [database_module_1.DatabaseModule]
+    })
 ], CcavenueModule);
 //# sourceMappingURL=ccavenue.module.js.map
