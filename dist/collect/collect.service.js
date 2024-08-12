@@ -17,14 +17,16 @@ const hdfc_service_1 = require("../hdfc/hdfc.service");
 const phonepe_service_1 = require("../phonepe/phonepe.service");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
+const ccavenue_service_1 = require("../ccavenue/ccavenue.service");
 let CollectService = class CollectService {
-    constructor(phonepeService, hdfcService, edvironPgService, databaseService) {
+    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService) {
         this.phonepeService = phonepeService;
         this.hdfcService = hdfcService;
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
+        this.ccavenueService = ccavenueService;
     }
-    async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], platform_charges, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id) {
+    async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], platform_charges, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key) {
         console.log(req_webhook_urls, 'webhook url');
         if (custom_order_id) {
             const count = await this.databaseService.CollectRequestModel.countDocuments({
@@ -61,6 +63,11 @@ let CollectService = class CollectService {
             transaction_amount: request.amount,
             payment_method: null,
         }).save();
+        if (ccavenue_merchant_id) {
+            console.log('creating order with CCavenue');
+            const transaction = await this.ccavenueService.createOrder(request);
+            return { url: transaction.url, request };
+        }
         const transaction = (gateway === collect_request_schema_1.Gateway.EDVIRON_PG
             ? await this.edvironPgService.collect(request, platform_charges, school_name)
             : await this.hdfcService.collect(request));
@@ -78,6 +85,7 @@ exports.CollectService = CollectService = __decorate([
     __metadata("design:paramtypes", [phonepe_service_1.PhonepeService,
         hdfc_service_1.HdfcService,
         edviron_pg_service_1.EdvironPgService,
-        database_service_1.DatabaseService])
+        database_service_1.DatabaseService,
+        ccavenue_service_1.CcavenueService])
 ], CollectService);
 //# sourceMappingURL=collect.service.js.map

@@ -16,6 +16,7 @@ const phonepe_module_1 = require("./phonepe/phonepe.module");
 const check_status_module_1 = require("./check-status/check-status.module");
 const hdfc_module_1 = require("./hdfc/hdfc.module");
 const edviron_pg_module_1 = require("./edviron-pg/edviron-pg.module");
+const ccavenue_module_1 = require("./ccavenue/ccavenue.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -28,6 +29,7 @@ exports.AppModule = AppModule = __decorate([
             check_status_module_1.CheckStatusModule,
             hdfc_module_1.HdfcModule,
             edviron_pg_module_1.EdvironPgModule,
+            ccavenue_module_1.CcavenueModule
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

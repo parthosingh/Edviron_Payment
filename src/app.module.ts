@@ -8,6 +8,7 @@ import { PhonepeModule } from './phonepe/phonepe.module';
 import { CheckStatusModule } from './check-status/check-status.module';
 import { HdfcModule } from './hdfc/hdfc.module';
 import { EdvironPgModule } from './edviron-pg/edviron-pg.module';
+import { CcavenueModule } from './ccavenue/ccavenue.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { EdvironPgModule } from './edviron-pg/edviron-pg.module';
     CheckStatusModule,
     HdfcModule,
     EdvironPgModule,
+    CcavenueModule
   ],
   controllers: [AppController],
   providers: [AppService],

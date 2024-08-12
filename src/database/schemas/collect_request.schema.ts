@@ -63,6 +63,15 @@ export class CollectRequest {
   @Prop({ default: [] })
   req_webhook_urls: string[];
 
+  @Prop({ required: false })
+  ccavenue_merchant_id: string;
+
+  @Prop({ required: false })
+  ccavenue_access_code: string;
+
+  @Prop({ required: false })
+  ccavenue_working_key: string;
+
   _id: ObjectId;
 }
 
