@@ -16,6 +16,10 @@ exports.CcavenueController = void 0;
 const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const ccavenue_service_1 = require("./ccavenue.service");
+const mongoose_1 = require("mongoose");
+const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
+const sign_1 = require("../utils/sign");
+const axios_1 = require("axios");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 let CcavenueController = class CcavenueController {
     constructor(ccavenueService, databaseService) {
@@ -45,6 +49,77 @@ let CcavenueController = class CcavenueController {
                 throw new Error('Collect request not found');
             collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_CCAVENUE;
             await collectReq.save();
+            const status = await this.ccavenueService.checkStatus(collectReq, collectIdObject);
+            console.log('test collect');
+            console.log(status, 'status ccavenye');
+            const orderDetails = JSON.parse(status.decrypt_res);
+            console.log(`order details new ${orderDetails.Order_Status_Result}`);
+            console.log(`order details new ${orderDetails.Order_Status_Result.order_status}`);
+            const pendingCollectReq = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: new mongoose_1.Types.ObjectId(req.query.collect_id),
+            });
+            if (pendingCollectReq &&
+                pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.PENDING) {
+                console.log('No pending request found for', req.query.collect_id);
+                res.status(200).send('OK');
+                return;
+            }
+            const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
+                collect_id: collectIdObject,
+            }, {
+                $set: {
+                    status: status.status,
+                    transaction_amount: orderDetails.Order_Status_Result.order_gross_amt,
+                    payment_method: orderDetails.Order_Status_Result.order_option_type,
+                    details: JSON.stringify(orderDetails),
+                    bank_reference: orderDetails.Order_Status_Result.order_bank_ref_no,
+                },
+            }, {
+                upsert: true,
+                new: true,
+            });
+            const webHookUrl = collectReq?.webHookUrl;
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collectIdObject);
+            const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: collectIdObject,
+            });
+            if (!collectRequest) {
+                throw new Error(`transaction not found`);
+            }
+            const custom_order_id = collectRequest?.custom_order_id || '';
+            if (webHookUrl !== null) {
+                const amount = orderDetails.Order_Status_Result.order_amt;
+                const webHookData = await (0, sign_1.sign)({
+                    collect_id: req.query.collect_id,
+                    amount,
+                    status: status.status,
+                    trustee_id: collectReq.trustee_id,
+                    school_id: collectReq.school_id,
+                    req_webhook_urls: collectReq?.req_webhook_urls,
+                    custom_order_id,
+                    createdAt: collectRequestStatus?.createdAt,
+                    transaction_time: collectRequestStatus?.updatedAt,
+                });
+                const config = {
+                    method: 'post',
+                    maxBodyLength: Infinity,
+                    url: `${webHookUrl}`,
+                    headers: {
+                        accept: 'application/json',
+                        'content-type': 'application/json',
+                    },
+                    data: webHookData,
+                };
+                try {
+                    const webHookSent = await axios_1.default.request(config);
+                    console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
+                }
+                catch (e) {
+                    console.log(` failed to send webhook to ${webHookUrl} reason ${e.message}`);
+                }
+            }
+            const { encResp } = body;
+            const collectRequestId = await this.ccavenueService.ccavResponseToCollectRequestId(encResp, collectRequest.ccavenue_working_key);
             res.redirect(collectReq?.callbackUrl + `?collect_id=${collectIdObject}`);
         }
         catch (e) {
