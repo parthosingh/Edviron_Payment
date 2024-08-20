@@ -201,6 +201,8 @@ export class CcavenueController {
         res.status(200).send('OK');
         return;
       }
+      console.log(`payment mode ${orderDetails.Order_Status_Result.order_option_type}`);
+      
       let payment_method = orderDetails.Order_Status_Result.order_option_type;
       let details = JSON.stringify(orderDetails);
       if (payment_method === 'OPTUPI') {
