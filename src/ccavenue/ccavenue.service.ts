@@ -207,7 +207,7 @@ export class CcavenueService {
     const p_merchant_param5 = '';
     const p_promo_code = '';
     const p_customer_identifier = '';
-    console.log(request);
+    
 
     const { encRequest, access_code } = this.ccavRequestHandler(
       p_merchant_id,
@@ -243,10 +243,18 @@ export class CcavenueService {
       request.ccavenue_access_code,
     );
 
+    // return {
+    //   url:
+    //     process.env.PG_FRONTEND +
+    //     '/ccavenue?encRequest=' +
+    //     encRequest +
+    //     '&access_code=' +
+    //     access_code,
+    // };
     return {
       url:
-        process.env.PG_FRONTEND +
-        '/ccavenue?encRequest=' +
+        process.env.URL +
+        '/ccavenue/redirect?encRequest=' +
         encRequest +
         '&access_code=' +
         access_code,
