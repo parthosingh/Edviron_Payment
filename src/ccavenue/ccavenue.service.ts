@@ -243,10 +243,18 @@ export class CcavenueService {
       request.ccavenue_access_code,
     );
 
+    // return {
+    //   url:
+    //     process.env.PG_FRONTEND +
+    //     '/ccavenue?encRequest=' +
+    //     encRequest +
+    //     '&access_code=' +
+    //     access_code,
+    // };
     return {
       url:
-        process.env.PG_FRONTEND +
-        '/ccavenue?encRequest=' +
+        process.env.URL +
+        '/ccavenue/redirect?encRequest=' +
         encRequest +
         '&access_code=' +
         access_code,

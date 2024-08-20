@@ -427,7 +427,7 @@ let EdvironPgController = class EdvironPgController {
                 payment_method = 'upi';
                 platform_type = 'UPI';
                 details = {
-                    card: {
+                    upi: {
                         upi_id: reqToCheck.msg.upi_va,
                     },
                 };
