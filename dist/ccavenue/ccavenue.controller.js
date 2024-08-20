@@ -138,11 +138,9 @@ let CcavenueController = class CcavenueController {
             collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_CCAVENUE;
             await collectReq.save();
             const status = await this.ccavenueService.checkStatus(collectReq, collectIdObject);
-            console.log('test collect');
-            console.log(status, 'status ccavenue');
             const orderDetails = JSON.parse(status.decrypt_res);
             console.log(`order details new ${orderDetails.Order_Status_Result}`);
-            console.log(`order details new ${orderDetails.Order_Status_Result.order_status}`);
+            console.log(`order status ${orderDetails.Order_Status_Result.order_status}`);
             const pendingCollectReq = await this.databaseService.CollectRequestStatusModel.findOne({
                 collect_id: new mongoose_1.Types.ObjectId(req.query.collect_id),
             });
@@ -154,7 +152,7 @@ let CcavenueController = class CcavenueController {
             }
             let payment_method = orderDetails.Order_Status_Result.order_option_type;
             let details = JSON.stringify(orderDetails);
-            if (orderDetails.Order_Status_Result.order_option_type === 'OPTUPI') {
+            if (payment_method === 'OPTUPI') {
                 payment_method = 'upi';
                 const details_data = {
                     upi: { channel: null, upi_id: 'NA' },

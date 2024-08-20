@@ -181,13 +181,11 @@ export class CcavenueController {
         collectReq,
         collectIdObject,
       );
-      console.log('test collect');
-      console.log(status, 'status ccavenue');
 
       const orderDetails = JSON.parse(status.decrypt_res);
       console.log(`order details new ${orderDetails.Order_Status_Result}`);
       console.log(
-        `order details new ${orderDetails.Order_Status_Result.order_status}`,
+        `order status ${orderDetails.Order_Status_Result.order_status}`,
       );
 
       const pendingCollectReq =
@@ -205,12 +203,12 @@ export class CcavenueController {
       }
       let payment_method = orderDetails.Order_Status_Result.order_option_type;
       let details = JSON.stringify(orderDetails);
-      if (orderDetails.Order_Status_Result.order_option_type === 'OPTUPI') {
+      if (payment_method === 'OPTUPI') {
         payment_method = 'upi';
         const details_data = {
           upi: { channel: null, upi_id: 'NA' },
         };
-        details=JSON.stringify(details_data)
+        details = JSON.stringify(details_data);
       }
       const updateReq =
         await this.databaseService.CollectRequestStatusModel.updateOne(
@@ -290,15 +288,14 @@ export class CcavenueController {
           collectRequest.ccavenue_working_key,
         );
 
-        const callbackUrl = new URL(collectRequest?.callbackUrl);
-        if (status.status.toUpperCase() !== `SUCCESS`) {
-          return res.redirect(
-            `${callbackUrl.toString()}?status=cancelled&reason=payment-declined`,
-          );
-        }
-        callbackUrl.searchParams.set('EdvironCollectRequestId', collectIdObject);
-        return res.redirect(callbackUrl.toString());
-      
+      const callbackUrl = new URL(collectRequest?.callbackUrl);
+      if (status.status.toUpperCase() !== `SUCCESS`) {
+        return res.redirect(
+          `${callbackUrl.toString()}?status=cancelled&reason=payment-declined`,
+        );
+      }
+      callbackUrl.searchParams.set('EdvironCollectRequestId', collectIdObject);
+      return res.redirect(callbackUrl.toString());
     } catch (e) {
       console.log(`Error,${e}`);
       throw new Error(`Error in callback,${e.message}`);
