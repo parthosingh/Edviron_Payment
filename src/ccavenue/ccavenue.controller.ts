@@ -183,6 +183,8 @@ export class CcavenueController {
       );
 
       const orderDetails = JSON.parse(status.decrypt_res);
+      console.log(orderDetails,'order details');
+      
       console.log(`order details new ${orderDetails.Order_Status_Result}`);
       console.log(
         `order status ${orderDetails.Order_Status_Result.order_status}`,
@@ -205,7 +207,7 @@ export class CcavenueController {
       
       let payment_method = orderDetails.Order_Status_Result.order_option_type;
       let details = JSON.stringify(orderDetails);
-      if (payment_method === 'OPTUPI') {
+      if (status.paymentInstrument === 'OPTUPI') {
         payment_method = 'upi';
         const details_data = {
           upi: { channel: null, upi_id: 'NA' },
