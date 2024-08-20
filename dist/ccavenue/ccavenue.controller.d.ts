@@ -5,6 +5,6 @@ export declare class CcavenueController {
     private readonly databaseService;
     constructor(ccavenueService: CcavenueService, databaseService: DatabaseService);
     handleRedirect(req: any, res: any): Promise<void>;
-    handleCallback(body: any, res: any, req: any): Promise<void>;
+    handleCallback(body: any, res: any, req: any): Promise<any>;
     handleCcavenueCallback(body: any, res: any, req: any): Promise<any>;
 }

@@ -49,13 +49,13 @@ export class CcavenueController {
         collectReq,
         collectIdObject,
       );
-      console.log('test collect');
-      console.log(status, 'status ccavenye');
 
       const orderDetails = JSON.parse(status.decrypt_res);
+      console.log(orderDetails, 'order details');
+
       console.log(`order details new ${orderDetails.Order_Status_Result}`);
       console.log(
-        `order details new ${orderDetails.Order_Status_Result.order_status}`,
+        `order status ${orderDetails.Order_Status_Result.order_status}`,
       );
 
       const pendingCollectReq =
@@ -71,7 +71,19 @@ export class CcavenueController {
         res.status(200).send('OK');
         return;
       }
+      console.log(
+        `payment mode ${orderDetails.Order_Status_Result.order_option_type}`,
+      );
 
+      let payment_method = orderDetails.Order_Status_Result.order_option_type;
+      let details = JSON.stringify(orderDetails);
+      if (status.paymentInstrument === 'OPTUPI') {
+        payment_method = 'upi';
+        const details_data = {
+          upi: { channel: null, upi_id: 'NA' },
+        };
+        details = JSON.stringify(details_data);
+      }
       const updateReq =
         await this.databaseService.CollectRequestStatusModel.updateOne(
           {
@@ -82,9 +94,8 @@ export class CcavenueController {
               status: status.status,
               transaction_amount:
                 orderDetails.Order_Status_Result.order_gross_amt,
-              payment_method:
-                orderDetails.Order_Status_Result.order_option_type,
-              details: JSON.stringify(orderDetails),
+              payment_method: payment_method,
+              details: details,
               bank_reference:
                 orderDetails.Order_Status_Result.order_bank_ref_no,
             },
@@ -151,7 +162,14 @@ export class CcavenueController {
           collectRequest.ccavenue_working_key,
         );
 
-      res.redirect(collectReq?.callbackUrl + `?collect_id=${collectIdObject}`);
+      const callbackUrl = new URL(collectRequest?.callbackUrl);
+      if (status.status.toUpperCase() !== `SUCCESS`) {
+        return res.redirect(
+          `${callbackUrl.toString()}?status=cancelled&reason=payment-declined`,
+        );
+      }
+      callbackUrl.searchParams.set('EdvironCollectRequestId', collectIdObject);
+      return res.redirect(callbackUrl.toString());
     } catch (e) {
       console.log(`Error,${e}`);
       throw new Error(`Error in callback,${e.message}`);
@@ -183,8 +201,8 @@ export class CcavenueController {
       );
 
       const orderDetails = JSON.parse(status.decrypt_res);
-      console.log(orderDetails,'order details');
-      
+      console.log(orderDetails, 'order details');
+
       console.log(`order details new ${orderDetails.Order_Status_Result}`);
       console.log(
         `order status ${orderDetails.Order_Status_Result.order_status}`,
@@ -203,8 +221,10 @@ export class CcavenueController {
         res.status(200).send('OK');
         return;
       }
-      console.log(`payment mode ${orderDetails.Order_Status_Result.order_option_type}`);
-      
+      console.log(
+        `payment mode ${orderDetails.Order_Status_Result.order_option_type}`,
+      );
+
       let payment_method = orderDetails.Order_Status_Result.order_option_type;
       let details = JSON.stringify(orderDetails);
       if (status.paymentInstrument === 'OPTUPI') {

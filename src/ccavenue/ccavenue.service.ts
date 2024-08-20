@@ -207,7 +207,7 @@ export class CcavenueService {
     const p_merchant_param5 = '';
     const p_promo_code = '';
     const p_customer_identifier = '';
-    console.log(request);
+    
 
     const { encRequest, access_code } = this.ccavRequestHandler(
       p_merchant_id,
