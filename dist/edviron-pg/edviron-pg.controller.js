@@ -141,7 +141,7 @@ let EdvironPgController = class EdvironPgController {
         }
         const callbackUrl = new URL(collectRequest?.callbackUrl);
         if (status !== `SUCCESS`) {
-            return res.redirect(`${callbackUrl.toString()}?status=cancelled&reason=payment-declined`);
+            return res.redirect(`${callbackUrl.toString()}?EdvironCollectRequestId=${collect_request_id}&status=cancelled&reason=Payment-declined`);
         }
         callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
         return res.redirect(callbackUrl.toString());
@@ -164,7 +164,12 @@ let EdvironPgController = class EdvironPgController {
         }
         const callbackUrl = new URL(collectRequest?.callbackUrl);
         if (status !== `success`) {
-            return res.redirect(`${callbackUrl.toString()}?status=can celled&reason=payment-declined`);
+            console.log('failure');
+            let reason = reqToCheck?.msg?.error_Message || 'payment-declined';
+            if (reason === 'Collect Expired') {
+                reason = 'Order Expired';
+            }
+            return res.redirect(`${callbackUrl.toString()}?EdvironCollectRequestId=${collect_request_id}&status=cancelled&reason=${reason}`);
         }
         callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
         return res.redirect(callbackUrl.toString());
@@ -187,7 +192,8 @@ let EdvironPgController = class EdvironPgController {
         }
         const callbackUrl = new URL(collectRequest?.callbackUrl);
         if (status !== `success`) {
-            return res.redirect(`${callbackUrl.toString()}?status=can celled&reason=payment-declined`);
+            console.log('failure');
+            return res.redirect(`${callbackUrl.toString()}?EdvironCollectRequestId=${collect_request_id}&status=cancelled&reason=payment-declined`);
         }
         callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
         return res.redirect(callbackUrl.toString());
