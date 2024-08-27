@@ -314,8 +314,10 @@ export class CcavenueController {
 
       const callbackUrl = new URL(collectRequest?.callbackUrl);
       if (status.status.toUpperCase() !== `SUCCESS`) {
+        console.log('payment failure',status.status);
+        
         return res.redirect(
-          `${callbackUrl.toString()}?status=cancelled&reason=payment-declined`,
+          `${callbackUrl.toString()}?EdvironCollectRequestId=${collectIdObject}status=cancelled&reason=payment-declined`,
         );
       }
       callbackUrl.searchParams.set('EdvironCollectRequestId', collectIdObject);

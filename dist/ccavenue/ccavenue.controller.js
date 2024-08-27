@@ -233,7 +233,8 @@ let CcavenueController = class CcavenueController {
             const collectRequestId = await this.ccavenueService.ccavResponseToCollectRequestId(encResp, collectRequest.ccavenue_working_key);
             const callbackUrl = new URL(collectRequest?.callbackUrl);
             if (status.status.toUpperCase() !== `SUCCESS`) {
-                return res.redirect(`${callbackUrl.toString()}?status=cancelled&reason=payment-declined`);
+                console.log('payment failure', status.status);
+                return res.redirect(`${callbackUrl.toString()}?EdvironCollectRequestId=${collectIdObject}status=cancelled&reason=payment-declined`);
             }
             callbackUrl.searchParams.set('EdvironCollectRequestId', collectIdObject);
             return res.redirect(callbackUrl.toString());
