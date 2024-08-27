@@ -547,6 +547,7 @@ let EdvironPgController = class EdvironPgController {
         const { school_id, token } = body;
         if (!token)
             throw new Error('Token not provided');
+        console.log(`getting transaction report`);
         try {
             const page = req.query.page || 1;
             const limit = req.query.limit || 10;
@@ -585,7 +586,7 @@ let EdvironPgController = class EdvironPgController {
                     },
                 };
             }
-            if (status === 'SUCCESS' || status === 'PENDING') {
+            if (status.toUpperCase() === 'SUCCESS' || status.toUpperCase() === 'PENDING') {
                 query = {
                     ...query,
                     status,
@@ -625,6 +626,9 @@ let EdvironPgController = class EdvironPgController {
                         'collect_request.trustee_id': 0,
                         'collect_request.sdkPayment': 0,
                         'collect_request.payment_data': 0,
+                        'collect_request.ccavenue_merchant_id': 0,
+                        'collect_request.ccavenue_access_code': 0,
+                        'collect_request.ccavenue_working_key': 0,
                     },
                 },
                 {
@@ -732,6 +736,7 @@ let EdvironPgController = class EdvironPgController {
                     },
                 };
             }
+            console.log(`getting transaction`);
             if (status === 'SUCCESS' || status === 'PENDING') {
                 query = {
                     ...query,
@@ -773,6 +778,9 @@ let EdvironPgController = class EdvironPgController {
                             'collect_request.trustee_id': 0,
                             'collect_request.sdkPayment': 0,
                             'collect_request.payment_data': 0,
+                            'collect_request.ccavenue_merchant_id': 0,
+                            'collect_request.ccavenue_access_code': 0,
+                            'collect_request.ccavenue_working_key': 0,
                         },
                     },
                     {
