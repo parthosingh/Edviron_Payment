@@ -71,6 +71,7 @@ export class CheckStatusService {
           amount: res.amount,
           details: {
             transaction_time: res.transaction_time,
+            payment_methods:res.paymentInstrument,
             order_status: order_info.Order_Status_Result.order_bank_response,
           },
         };
