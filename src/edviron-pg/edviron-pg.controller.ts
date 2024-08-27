@@ -857,7 +857,7 @@ export class EdvironPgController {
         };
       }
 
-      if (status.toUpperCase() === 'SUCCESS' || status.toUpperCase() === 'PENDING') {
+      if (status === 'SUCCESS' || status === 'PENDING') {
         query = {
           ...query,
           status,
