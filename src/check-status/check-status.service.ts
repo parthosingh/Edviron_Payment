@@ -71,7 +71,7 @@ export class CheckStatusService {
           amount: res.amount,
           details: {
             transaction_time: res.transaction_time,
-            payment_methods:res.paymentInstrument,
+            payment_methods: res.paymentInstrument,
             order_status: order_info.Order_Status_Result.order_bank_response,
           },
         };
@@ -90,6 +90,11 @@ export class CheckStatusService {
       console.log('Collect request not found', order_id);
       throw new NotFoundException('Collect request not found');
     }
+    const collect_req_status =
+      await this.databaseService.CollectRequestStatusModel.findOne({
+        collect_id: collectRequest._id,
+      });
+    const collectidString = collectRequest._id.toString();
     console.log('checking status', order_id, collectRequest);
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
@@ -105,6 +110,40 @@ export class CheckStatusService {
           collectRequest._id.toString(),
           collectRequest,
         );
+
+      case Gateway.EDVIRON_EASEBUZZ:
+        const easebuzzStatus = await this.edvironPgService.easebuzzCheckStatus(
+          collectidString,
+          collectRequest,
+        );
+        const ezb_status_response = {
+          status: easebuzzStatus.msg.status.toUpperCase(),
+          amount: parseInt(easebuzzStatus.msg.amount),
+          details: {
+            bank_ref: easebuzzStatus.msg.bank_ref_num,
+            payment_method: { mode: easebuzzStatus.msg.mode },
+            transaction_time: collect_req_status?.updatedAt,
+            order_status: easebuzzStatus.msg.status,
+          },
+        };
+        return ezb_status_response;
+      case Gateway.EDVIRON_CCAVENUE:
+        const res = await this.ccavenueService.checkStatus(
+          collectRequest,
+          collectidString,
+          // collectRequest.ccavenue_access_code,
+        );
+        const order_info = JSON.parse(res.decrypt_res);
+        const status_response = {
+          status: res.status,
+          amount: res.amount,
+          details: {
+            transaction_time: res.transaction_time,
+            payment_methods: res.paymentInstrument,
+            order_status: order_info.Order_Status_Result.order_bank_response,
+          },
+        };
+        return status_response;
     }
   }
 }
