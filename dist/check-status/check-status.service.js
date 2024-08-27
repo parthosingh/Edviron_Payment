@@ -41,7 +41,6 @@ let CheckStatusService = class CheckStatusService {
                 return await this.hdfcService.checkStatus(collect_request_id);
             case collect_request_schema_1.Gateway.PHONEPE:
                 return await this.phonePeService.checkStatus(collect_request_id);
-            case collect_request_schema_1.Gateway.EDVIRON_CCAVENUE:
             case collect_request_schema_1.Gateway.EDVIRON_PG:
                 return await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:

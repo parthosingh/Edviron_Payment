@@ -37,7 +37,6 @@ export class CheckStatusService {
         return await this.hdfcService.checkStatus(collect_request_id);
       case Gateway.PHONEPE:
         return await this.phonePeService.checkStatus(collect_request_id);
-      case Gateway.EDVIRON_CCAVENUE:
       case Gateway.EDVIRON_PG:
         return await this.edvironPgService.checkStatus(
           collect_request_id,

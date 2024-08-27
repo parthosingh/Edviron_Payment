@@ -188,8 +188,11 @@ let CcavenueService = class CcavenueService {
     }
     async checkStatus(collect_request, collect_request_id) {
         const { ccavenue_working_key, ccavenue_access_code } = collect_request;
+        console.log(ccavenue_access_code, 'ccavcode');
+        console.log(collect_request_id);
         const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_request_id);
         const encrypted_data = await this.encrypt(JSON.stringify({ order_no: collect_request_id }), ccavenue_working_key);
+        console.log(ccavenue_working_key, 'collec');
         console.log(`checking status for ccavenue`);
         const collectReqStatus = await this.databaseService.CollectRequestStatusModel.findOne({
             collect_id: collectRequest?._id,
