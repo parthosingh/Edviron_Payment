@@ -16,12 +16,14 @@ const collect_request_schema_1 = require("../database/schemas/collect_request.sc
 const hdfc_service_1 = require("../hdfc/hdfc.service");
 const phonepe_service_1 = require("../phonepe/phonepe.service");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
+const ccavenue_service_1 = require("../ccavenue/ccavenue.service");
 let CheckStatusService = class CheckStatusService {
-    constructor(databaseService, hdfcService, phonePeService, edvironPgService) {
+    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService) {
         this.databaseService = databaseService;
         this.hdfcService = hdfcService;
         this.phonePeService = phonePeService;
         this.edvironPgService = edvironPgService;
+        this.ccavenueService = ccavenueService;
     }
     async checkStatus(collect_request_id) {
         console.log('checking status', collect_request_id);
@@ -39,6 +41,7 @@ let CheckStatusService = class CheckStatusService {
                 return await this.hdfcService.checkStatus(collect_request_id);
             case collect_request_schema_1.Gateway.PHONEPE:
                 return await this.phonePeService.checkStatus(collect_request_id);
+            case collect_request_schema_1.Gateway.EDVIRON_CCAVENUE:
             case collect_request_schema_1.Gateway.EDVIRON_PG:
                 return await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
@@ -54,6 +57,18 @@ let CheckStatusService = class CheckStatusService {
                     },
                 };
                 return ezb_status_response;
+            case collect_request_schema_1.Gateway.EDVIRON_CCAVENUE:
+                const res = await this.ccavenueService.checkStatus(collectRequest, collect_request_id.toString());
+                const order_info = JSON.parse(res.decrypt_res);
+                const status_response = {
+                    status: res.status,
+                    amount: res.amount,
+                    details: {
+                        transaction_time: res.transaction_time,
+                        order_status: order_info.Order_Status_Result.order_bank_response,
+                    },
+                };
+                return status_response;
         }
     }
     async checkStatusByOrderId(order_id, trusteeId) {
@@ -83,6 +98,7 @@ exports.CheckStatusService = CheckStatusService = __decorate([
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
         hdfc_service_1.HdfcService,
         phonepe_service_1.PhonepeService,
-        edviron_pg_service_1.EdvironPgService])
+        edviron_pg_service_1.EdvironPgService,
+        ccavenue_service_1.CcavenueService])
 ], CheckStatusService);
 //# sourceMappingURL=check-status.service.js.map

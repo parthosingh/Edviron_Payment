@@ -5,6 +5,7 @@ import { HdfcService } from 'src/hdfc/hdfc.service';
 import { PhonepeService } from 'src/phonepe/phonepe.service';
 import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
 import mongoose from 'mongoose';
+import { CcavenueService } from 'src/ccavenue/ccavenue.service';
 
 @Injectable()
 export class CheckStatusService {
@@ -13,6 +14,7 @@ export class CheckStatusService {
     private readonly hdfcService: HdfcService,
     private readonly phonePeService: PhonepeService,
     private readonly edvironPgService: EdvironPgService,
+    private readonly ccavenueService: CcavenueService,
   ) {}
   async checkStatus(collect_request_id: String) {
     console.log('checking status', collect_request_id);
@@ -29,16 +31,19 @@ export class CheckStatusService {
         collect_id: collectRequest._id,
       });
     console.log('checking status', collect_request_id, collectRequest);
+
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
         return await this.hdfcService.checkStatus(collect_request_id);
       case Gateway.PHONEPE:
         return await this.phonePeService.checkStatus(collect_request_id);
+      case Gateway.EDVIRON_CCAVENUE:
       case Gateway.EDVIRON_PG:
         return await this.edvironPgService.checkStatus(
           collect_request_id,
           collectRequest,
         );
+
       case Gateway.EDVIRON_EASEBUZZ:
         const easebuzzStatus = await this.edvironPgService.easebuzzCheckStatus(
           collect_request_id.toString(),
@@ -55,6 +60,22 @@ export class CheckStatusService {
           },
         };
         return ezb_status_response;
+      case Gateway.EDVIRON_CCAVENUE:
+        const res = await this.ccavenueService.checkStatus(
+          collectRequest,
+          collect_request_id.toString(),
+          // collectRequest.ccavenue_access_code,
+        );
+        const order_info = JSON.parse(res.decrypt_res);
+        const status_response = {
+          status: res.status,
+          amount: res.amount,
+          details: {
+            transaction_time: res.transaction_time,
+            order_status: order_info.Order_Status_Result.order_bank_response,
+          },
+        };
+        return status_response;
     }
   }
 
