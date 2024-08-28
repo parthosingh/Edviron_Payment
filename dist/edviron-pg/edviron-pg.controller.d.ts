@@ -1,5 +1,6 @@
 import { DatabaseService } from '../database/database.service';
 import { EdvironPgService } from './edviron-pg.service';
+import { Gateway } from 'src/database/schemas/collect_request.schema';
 export declare class EdvironPgController {
     private readonly edvironPgService;
     private readonly databaseService;
@@ -20,4 +21,5 @@ export declare class EdvironPgController {
         token: string;
     }, res: any, req: any): Promise<void>;
     getErpLogo(collect_id: string): Promise<any>;
+    getGatewayName(req: any): Promise<Gateway>;
 }

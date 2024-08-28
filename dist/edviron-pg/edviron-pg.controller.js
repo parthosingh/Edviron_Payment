@@ -872,6 +872,21 @@ let EdvironPgController = class EdvironPgController {
             throw new Error(e.message);
         }
     }
+    async getGatewayName(req) {
+        try {
+            const token = req.query.token;
+            let decrypted = jwt.verify(token, process.env.JWT_SECRET_FOR_TRUSTEE);
+            const order_id = decrypted.order_id;
+            const order = await this.databaseService.CollectRequestModel.findOne({ _id: order_id });
+            if (!order) {
+                throw new Error('Invalid Order ID');
+            }
+            return order.gateway;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -955,6 +970,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getErpLogo", null);
+__decorate([
+    (0, common_1.Get)('gatewat-name'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getGatewayName", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

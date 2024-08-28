@@ -9,6 +9,7 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { EdvironPgService } from './edviron-pg.service';
@@ -1179,6 +1180,25 @@ export class EdvironPgController {
       return response.data;
     } catch (e) {
       throw new Error(e.message);
+    }
+  }
+
+  @Get('gatewat-name')
+  async getGatewayName(
+    @Req() req: any
+  ){
+    try{
+
+      const token=req.query.token
+      let decrypted = jwt.verify(token, process.env.JWT_SECRET_FOR_TRUSTEE!) as any;
+      const order_id=decrypted.order_id
+      const order=await this.databaseService.CollectRequestModel.findOne({_id:order_id})
+      if(!order){
+        throw new Error('Invalid Order ID')
+      }
+      return order.gateway
+    }catch(e){
+      throw new BadRequestException(e.message)
     }
   }
 }
