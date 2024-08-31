@@ -629,6 +629,7 @@ let EdvironPgController = class EdvironPgController {
                         'collect_request.ccavenue_merchant_id': 0,
                         'collect_request.ccavenue_access_code': 0,
                         'collect_request.ccavenue_working_key': 0,
+                        'collect_request.easebuzz_sub_merchant_id': 0,
                     },
                 },
                 {
@@ -781,6 +782,7 @@ let EdvironPgController = class EdvironPgController {
                             'collect_request.ccavenue_merchant_id': 0,
                             'collect_request.ccavenue_access_code': 0,
                             'collect_request.ccavenue_working_key': 0,
+                            'collect_request.easebuzz_sub_merchant_id': 0,
                         },
                     },
                     {
