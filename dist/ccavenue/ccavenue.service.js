@@ -170,6 +170,18 @@ let CcavenueService = class CcavenueService {
         const p_promo_code = '';
         const p_customer_identifier = '';
         const { encRequest, access_code } = this.ccavRequestHandler(p_merchant_id, p_order_id, p_currency, p_amount, p_redirect_url, p_cancel_url, p_language, p_billing_name, p_billing_address, p_billing_city, p_billing_state, p_billing_zip, p_billing_country, p_billing_tel, p_billing_email, p_delivery_name, p_delivery_address, p_delivery_city, p_delivery_state, p_delivery_zip, p_delivery_country, p_delivery_tel, p_merchant_param1, p_merchant_param2, p_merchant_param3, p_merchant_param4, p_merchant_param5, p_promo_code, p_customer_identifier, request.ccavenue_working_key, request.ccavenue_access_code);
+        const collectRequest = await this.databaseService.CollectRequestModel.findById(p_order_id);
+        const info = {
+            url: process.env.URL +
+                '/ccavenue/redirect?encRequest=' +
+                encRequest +
+                '&access_code=' +
+                access_code,
+        };
+        if (collectRequest) {
+            collectRequest.payment_data = info.url;
+            await collectRequest.save();
+        }
         return {
             url: process.env.URL +
                 '/ccavenue/redirect?encRequest=' +

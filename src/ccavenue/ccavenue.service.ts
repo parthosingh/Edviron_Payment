@@ -208,6 +208,7 @@ export class CcavenueService {
     const p_promo_code = '';
     const p_customer_identifier = '';
     
+    
 
     const { encRequest, access_code } = this.ccavRequestHandler(
       p_merchant_id,
@@ -242,6 +243,22 @@ export class CcavenueService {
       request.ccavenue_working_key,
       request.ccavenue_access_code,
     );
+
+    const collectRequest=await this.databaseService.CollectRequestModel.findById(p_order_id)
+    
+    const info={
+      url:
+        process.env.URL +
+        '/ccavenue/redirect?encRequest=' +
+        encRequest +
+        '&access_code=' +
+        access_code,
+    };
+
+    if(collectRequest){
+      collectRequest.payment_data=info.url
+      await collectRequest.save()
+    }
 
     // return {
     //   url:

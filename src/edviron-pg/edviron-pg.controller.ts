@@ -79,6 +79,9 @@ export class EdvironPgController {
         `${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`,
       );
     }
+    console.log(collectRequest);
+    
+
     const axios = require('axios');
     const paymentString = JSON.parse(collectRequest?.payment_data);
     const parsedUrl = new URL(paymentString);
