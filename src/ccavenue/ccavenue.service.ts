@@ -1,5 +1,5 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { CollectRequest } from 'src/database/schemas/collect_request.schema';
+import { CollectRequest, Gateway } from 'src/database/schemas/collect_request.schema';
 import { GatewayService } from 'src/types/gateway.type';
 import { Transaction } from 'src/types/transaction';
 import { TransactionStatus } from 'src/types/transactionStatus';
@@ -256,6 +256,7 @@ export class CcavenueService {
     };
 
     if(collectRequest){
+      collectRequest.gateway=Gateway.EDVIRON_CCAVENUE
       collectRequest.payment_data=info.url
       await collectRequest.save()
     }

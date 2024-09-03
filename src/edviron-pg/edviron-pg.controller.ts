@@ -79,7 +79,21 @@ export class EdvironPgController {
         `${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`,
       );
     }
-    console.log(collectRequest);
+    if(collectRequest?.gateway === Gateway.EDVIRON_CCAVENUE){
+      
+    await this.databaseService.CollectRequestModel.updateOne(
+      {
+        _id: collect_id,
+      },
+      {
+        sdkPayment: true,
+      },
+      {
+        new: true,
+      },
+    );
+    res.redirect(collectRequest.payment_data)
+    }
     
 
     const axios = require('axios');

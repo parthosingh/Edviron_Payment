@@ -67,7 +67,16 @@ let EdvironPgController = class EdvironPgController {
         if (!collectRequest) {
             res.redirect(`${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`);
         }
-        console.log(collectRequest);
+        if (collectRequest?.gateway === collect_request_schema_1.Gateway.EDVIRON_CCAVENUE) {
+            await this.databaseService.CollectRequestModel.updateOne({
+                _id: collect_id,
+            }, {
+                sdkPayment: true,
+            }, {
+                new: true,
+            });
+            res.redirect(collectRequest.payment_data);
+        }
         const axios = require('axios');
         const paymentString = JSON.parse(collectRequest?.payment_data);
         const parsedUrl = new URL(paymentString);

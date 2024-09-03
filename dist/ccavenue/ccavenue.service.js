@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CcavenueService = void 0;
 const common_1 = require("@nestjs/common");
+const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const transactionStatus_1 = require("../types/transactionStatus");
 const crypto_1 = require("crypto");
 const qs = require("qs");
@@ -179,6 +180,7 @@ let CcavenueService = class CcavenueService {
                 access_code,
         };
         if (collectRequest) {
+            collectRequest.gateway = collect_request_schema_1.Gateway.EDVIRON_CCAVENUE;
             collectRequest.payment_data = info.url;
             await collectRequest.save();
         }
