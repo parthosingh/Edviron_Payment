@@ -79,22 +79,20 @@ export class EdvironPgController {
         `${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`,
       );
     }
-    if(collectRequest?.gateway === Gateway.EDVIRON_CCAVENUE){
-      
-    await this.databaseService.CollectRequestModel.updateOne(
-      {
-        _id: collect_id,
-      },
-      {
-        sdkPayment: true,
-      },
-      {
-        new: true,
-      },
-    );
-    res.redirect(collectRequest.payment_data)
+    if (collectRequest?.gateway === Gateway.EDVIRON_CCAVENUE) {
+      await this.databaseService.CollectRequestModel.updateOne(
+        {
+          _id: collect_id,
+        },
+        {
+          sdkPayment: true,
+        },
+        {
+          new: true,
+        },
+      );
+      res.redirect(collectRequest.payment_data);
     }
-    
 
     const axios = require('axios');
     const paymentString = JSON.parse(collectRequest?.payment_data);
@@ -241,9 +239,9 @@ export class EdvironPgController {
     const callbackUrl = new URL(collectRequest?.callbackUrl);
     if (status !== `success`) {
       console.log('failure');
-      let reason=reqToCheck?.msg?.error_Message || 'payment-declined'
-      if(reason === 'Collect Expired'){
-        reason='Order Expired'
+      let reason = reqToCheck?.msg?.error_Message || 'payment-declined';
+      if (reason === 'Collect Expired') {
+        reason = 'Order Expired';
       }
       return res.redirect(
         `${callbackUrl.toString()}?EdvironCollectRequestId=${collect_request_id}&status=cancelled&reason=${reason}`,
@@ -289,7 +287,7 @@ export class EdvironPgController {
     const callbackUrl = new URL(collectRequest?.callbackUrl);
     if (status !== `success`) {
       console.log('failure');
-      
+
       return res.redirect(
         `${callbackUrl.toString()}?EdvironCollectRequestId=${collect_request_id}&status=cancelled&reason=payment-declined`,
       );
@@ -543,7 +541,7 @@ export class EdvironPgController {
         collect_id: collectIdObject,
       });
     const custom_order_id = collectRequest?.custom_order_id || '';
-    const additional_data=collectRequest?.additional_data || ''
+    const additional_data = collectRequest?.additional_data || '';
     if (webHookUrl !== null) {
       const amount = reqToCheck?.amount;
       const webHookData = await sign({
@@ -556,10 +554,10 @@ export class EdvironPgController {
         custom_order_id,
         createdAt: collectRequestStatus?.createdAt,
         transaction_time: collectRequestStatus?.updatedAt,
-        additional_data
+        additional_data,
       });
 
-      const createConfig = (url:string) => ({
+      const createConfig = (url: string) => ({
         method: 'post',
         maxBodyLength: Infinity,
         url: url,
@@ -572,19 +570,23 @@ export class EdvironPgController {
       try {
         try {
           const sendWebhook = (url: string) => {
-            axios.request(createConfig(url))
+            axios
+              .request(createConfig(url))
               .then(() => console.log(`Webhook sent to ${url}`))
-              .catch(error => console.error(`Error sending webhook to ${url}:`, error.message));
+              .catch((error) =>
+                console.error(
+                  `Error sending webhook to ${url}:`,
+                  error.message,
+                ),
+              );
           };
-      
+
           webHookUrl.forEach(sendWebhook);
         } catch (error) {
           console.error('Error in webhook sending process:', error);
         }
-       
       } catch (error) {
         console.error('Error sending webhooks:', error);
-        throw error;
       }
       // const config = {
       //   method: 'post',
@@ -595,7 +597,7 @@ export class EdvironPgController {
       //     'content-type': 'application/json',
       //   },
       //   data: webHookData,
-      // }; 
+      // };
       // // const webHookSent = await axios.request(config);
       // console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
     }
@@ -755,7 +757,7 @@ export class EdvironPgController {
         },
       );
 
-    const webHookUrl = collectReq?.webHookUrl;
+    const webHookUrl = collectReq?.req_webhook_urls;
 
     const collectRequest =
       await this.databaseService.CollectRequestModel.findById(collect_id);
@@ -763,9 +765,8 @@ export class EdvironPgController {
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: collectIdObject,
       });
-
     const custom_order_id = collectRequest?.custom_order_id || '';
-
+    const additional_data = collectRequest?.additional_data || '';
     if (webHookUrl !== null) {
       const amount = reqToCheck?.amount;
       const webHookData = await sign({
@@ -778,70 +779,85 @@ export class EdvironPgController {
         custom_order_id,
         createdAt: collectRequestStatus?.createdAt,
         transaction_time: collectRequestStatus?.updatedAt,
+        additional_data,
       });
 
-      const config = {
+      const createConfig = (url: string) => ({
         method: 'post',
         maxBodyLength: Infinity,
-        url: `${webHookUrl}`,
+        url: url,
         headers: {
           accept: 'application/json',
           'content-type': 'application/json',
         },
         data: webHookData,
+      });
+      try {
+        try {
+          const sendWebhook = (url: string) => {
+            axios
+              .request(createConfig(url))
+              .then(() => console.log(`Webhook sent to ${url}`))
+              .catch((error) =>
+                console.error(
+                  `Error sending webhook to ${url}:`,
+                  error.message,
+                ),
+              );
+          };
+
+          webHookUrl.forEach(sendWebhook);
+        } catch (error) {
+          console.error('Error in webhook sending process:', error);
+        }
+      } catch (error) {
+        console.error('Error sending webhooks:', error);
+      }
+
+      const payment_mode = body.bank_name;
+
+      const tokenData = {
+        school_id: collectReq?.school_id,
+        trustee_id: collectReq?.trustee_id,
+        order_amount: pendingCollectReq?.order_amount,
+        transaction_amount,
+        platform_type,
+        payment_mode,
+        collect_id: collectReq?._id,
+      };
+      const _jwt = jwt.sign(tokenData, process.env.KEY!, { noTimestamp: true });
+
+      let data = JSON.stringify({
+        token: _jwt,
+        school_id: collectReq?.school_id,
+        trustee_id: collectReq?.trustee_id,
+        order_amount: pendingCollectReq?.order_amount,
+        transaction_amount,
+        platform_type,
+        payment_mode,
+        collect_id: collectReq?._id,
+      });
+      let config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-api-version': '2023-08-01',
+        },
+        data: data,
       };
       try {
-        const webHookSent = await axios.request(config);
-        console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
+        const { data: commissionRes } = await axios.request(config);
+        console.log(commissionRes, 'Commission saved');
       } catch (e) {
-        console.log(`Failed webhook sent to ${webHookUrl}  ${e.message}`);
+        console.log(`failed to save commision ${e.message}`);
       }
+
+      res.status(200).send('OK');
     }
-
-    const payment_mode = body.bank_name;
-
-    const tokenData = {
-      school_id: collectReq?.school_id,
-      trustee_id: collectReq?.trustee_id,
-      order_amount: pendingCollectReq?.order_amount,
-      transaction_amount,
-      platform_type,
-      payment_mode,
-      collect_id: collectReq?._id,
-    };
-    const _jwt = jwt.sign(tokenData, process.env.KEY!, { noTimestamp: true });
-
-    let data = JSON.stringify({
-      token: _jwt,
-      school_id: collectReq?.school_id,
-      trustee_id: collectReq?.trustee_id,
-      order_amount: pendingCollectReq?.order_amount,
-      transaction_amount,
-      platform_type,
-      payment_mode,
-      collect_id: collectReq?._id,
-    });
-    let config = {
-      method: 'post',
-      maxBodyLength: Infinity,
-      url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
-      headers: {
-        accept: 'application/json',
-        'content-type': 'application/json',
-        'x-api-version': '2023-08-01',
-      },
-      data: data,
-    };
-    try {
-      const { data: commissionRes } = await axios.request(config);
-      console.log(commissionRes, 'Commission saved');
-    } catch (e) {
-      console.log(`failed to save commision ${e.message}`);
-    }
-
-    res.status(200).send('OK');
   }
-
   @Get('transactions-report')
   async transactionsReport(
     @Body()
@@ -855,7 +871,7 @@ export class EdvironPgController {
     const { school_id, token } = body;
     if (!token) throw new Error('Token not provided');
     console.log(`getting transaction report`);
-    
+
     try {
       const page = req.query.page || 1;
       const limit = req.query.limit || 10;
@@ -950,10 +966,10 @@ export class EdvironPgController {
               'collect_request.trustee_id': 0,
               'collect_request.sdkPayment': 0,
               'collect_request.payment_data': 0,
-              'collect_request.ccavenue_merchant_id':0,
-              'collect_request.ccavenue_access_code':0,
-              'collect_request.ccavenue_working_key':0,
-              'collect_request.easebuzz_sub_merchant_id':0,
+              'collect_request.ccavenue_merchant_id': 0,
+              'collect_request.ccavenue_access_code': 0,
+              'collect_request.ccavenue_working_key': 0,
+              'collect_request.easebuzz_sub_merchant_id': 0,
             },
           },
 
@@ -1082,7 +1098,7 @@ export class EdvironPgController {
         };
       }
       console.log(`getting transaction`);
-      
+
       if (status === 'SUCCESS' || status === 'PENDING') {
         query = {
           ...query,
@@ -1129,10 +1145,10 @@ export class EdvironPgController {
               'collect_request.trustee_id': 0,
               'collect_request.sdkPayment': 0,
               'collect_request.payment_data': 0,
-              'collect_request.ccavenue_merchant_id':0,
-              'collect_request.ccavenue_access_code':0,
-              'collect_request.ccavenue_working_key':0,
-              'collect_request.easebuzz_sub_merchant_id':0,
+              'collect_request.ccavenue_merchant_id': 0,
+              'collect_request.ccavenue_access_code': 0,
+              'collect_request.ccavenue_working_key': 0,
+              'collect_request.easebuzz_sub_merchant_id': 0,
             },
           },
           {
@@ -1232,21 +1248,23 @@ export class EdvironPgController {
   }
 
   @Get('gatewat-name')
-  async getGatewayName(
-    @Req() req: any
-  ){
-    try{
-
-      const token=req.query.token
-      let decrypted = jwt.verify(token, process.env.JWT_SECRET_FOR_TRUSTEE!) as any;
-      const order_id=decrypted.order_id
-      const order=await this.databaseService.CollectRequestModel.findOne({_id:order_id})
-      if(!order){
-        throw new Error('Invalid Order ID')
+  async getGatewayName(@Req() req: any) {
+    try {
+      const token = req.query.token;
+      let decrypted = jwt.verify(
+        token,
+        process.env.JWT_SECRET_FOR_TRUSTEE!,
+      ) as any;
+      const order_id = decrypted.order_id;
+      const order = await this.databaseService.CollectRequestModel.findOne({
+        _id: order_id,
+      });
+      if (!order) {
+        throw new Error('Invalid Order ID');
       }
-      return order.gateway
-    }catch(e){
-      throw new BadRequestException(e.message)
+      return order.gateway;
+    } catch (e) {
+      throw new BadRequestException(e.message);
     }
   }
 }

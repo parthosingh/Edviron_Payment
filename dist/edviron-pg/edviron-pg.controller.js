@@ -335,7 +335,7 @@ let EdvironPgController = class EdvironPgController {
                 custom_order_id,
                 createdAt: collectRequestStatus?.createdAt,
                 transaction_time: collectRequestStatus?.updatedAt,
-                additional_data
+                additional_data,
             });
             const createConfig = (url) => ({
                 method: 'post',
@@ -350,9 +350,10 @@ let EdvironPgController = class EdvironPgController {
             try {
                 try {
                     const sendWebhook = (url) => {
-                        axios_1.default.request(createConfig(url))
+                        axios_1.default
+                            .request(createConfig(url))
                             .then(() => console.log(`Webhook sent to ${url}`))
-                            .catch(error => console.error(`Error sending webhook to ${url}:`, error.message));
+                            .catch((error) => console.error(`Error sending webhook to ${url}:`, error.message));
                     };
                     webHookUrl.forEach(sendWebhook);
                 }
@@ -362,7 +363,6 @@ let EdvironPgController = class EdvironPgController {
             }
             catch (error) {
                 console.error('Error sending webhooks:', error);
-                throw error;
             }
         }
         res.status(200).send('OK');
@@ -492,12 +492,13 @@ let EdvironPgController = class EdvironPgController {
             upsert: true,
             new: true,
         });
-        const webHookUrl = collectReq?.webHookUrl;
+        const webHookUrl = collectReq?.req_webhook_urls;
         const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
         const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
             collect_id: collectIdObject,
         });
         const custom_order_id = collectRequest?.custom_order_id || '';
+        const additional_data = collectRequest?.additional_data || '';
         if (webHookUrl !== null) {
             const amount = reqToCheck?.amount;
             const webHookData = await (0, sign_1.sign)({
@@ -510,65 +511,76 @@ let EdvironPgController = class EdvironPgController {
                 custom_order_id,
                 createdAt: collectRequestStatus?.createdAt,
                 transaction_time: collectRequestStatus?.updatedAt,
+                additional_data,
             });
-            const config = {
+            const createConfig = (url) => ({
                 method: 'post',
                 maxBodyLength: Infinity,
-                url: `${webHookUrl}`,
+                url: url,
                 headers: {
                     accept: 'application/json',
                     'content-type': 'application/json',
                 },
                 data: webHookData,
+            });
+            try {
+                try {
+                    const sendWebhook = (url) => {
+                        axios_1.default
+                            .request(createConfig(url))
+                            .then(() => console.log(`Webhook sent to ${url}`))
+                            .catch((error) => console.error(`Error sending webhook to ${url}:`, error.message));
+                    };
+                    webHookUrl.forEach(sendWebhook);
+                }
+                catch (error) {
+                    console.error('Error in webhook sending process:', error);
+                }
+            }
+            catch (error) {
+                console.error('Error sending webhooks:', error);
+            }
+            const payment_mode = body.bank_name;
+            const tokenData = {
+                school_id: collectReq?.school_id,
+                trustee_id: collectReq?.trustee_id,
+                order_amount: pendingCollectReq?.order_amount,
+                transaction_amount,
+                platform_type,
+                payment_mode,
+                collect_id: collectReq?._id,
+            };
+            const _jwt = jwt.sign(tokenData, process.env.KEY, { noTimestamp: true });
+            let data = JSON.stringify({
+                token: _jwt,
+                school_id: collectReq?.school_id,
+                trustee_id: collectReq?.trustee_id,
+                order_amount: pendingCollectReq?.order_amount,
+                transaction_amount,
+                platform_type,
+                payment_mode,
+                collect_id: collectReq?._id,
+            });
+            let config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                },
+                data: data,
             };
             try {
-                const webHookSent = await axios_1.default.request(config);
-                console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
+                const { data: commissionRes } = await axios_1.default.request(config);
+                console.log(commissionRes, 'Commission saved');
             }
             catch (e) {
-                console.log(`Failed webhook sent to ${webHookUrl}  ${e.message}`);
+                console.log(`failed to save commision ${e.message}`);
             }
+            res.status(200).send('OK');
         }
-        const payment_mode = body.bank_name;
-        const tokenData = {
-            school_id: collectReq?.school_id,
-            trustee_id: collectReq?.trustee_id,
-            order_amount: pendingCollectReq?.order_amount,
-            transaction_amount,
-            platform_type,
-            payment_mode,
-            collect_id: collectReq?._id,
-        };
-        const _jwt = jwt.sign(tokenData, process.env.KEY, { noTimestamp: true });
-        let data = JSON.stringify({
-            token: _jwt,
-            school_id: collectReq?.school_id,
-            trustee_id: collectReq?.trustee_id,
-            order_amount: pendingCollectReq?.order_amount,
-            transaction_amount,
-            platform_type,
-            payment_mode,
-            collect_id: collectReq?._id,
-        });
-        let config = {
-            method: 'post',
-            maxBodyLength: Infinity,
-            url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
-            headers: {
-                accept: 'application/json',
-                'content-type': 'application/json',
-                'x-api-version': '2023-08-01',
-            },
-            data: data,
-        };
-        try {
-            const { data: commissionRes } = await axios_1.default.request(config);
-            console.log(commissionRes, 'Commission saved');
-        }
-        catch (e) {
-            console.log(`failed to save commision ${e.message}`);
-        }
-        res.status(200).send('OK');
     }
     async transactionsReport(body, res, req) {
         const { school_id, token } = body;
@@ -906,7 +918,9 @@ let EdvironPgController = class EdvironPgController {
             const token = req.query.token;
             let decrypted = jwt.verify(token, process.env.JWT_SECRET_FOR_TRUSTEE);
             const order_id = decrypted.order_id;
-            const order = await this.databaseService.CollectRequestModel.findOne({ _id: order_id });
+            const order = await this.databaseService.CollectRequestModel.findOne({
+                _id: order_id,
+            });
             if (!order) {
                 throw new Error('Invalid Order ID');
             }
