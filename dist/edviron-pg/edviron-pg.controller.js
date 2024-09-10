@@ -140,6 +140,12 @@ let EdvironPgController = class EdvironPgController {
     async handleCallback(req, res) {
         const { collect_request_id } = req.query;
         const collectRequest = (await this.databaseService.CollectRequestModel.findById(collect_request_id));
+        const info = await this.databaseService.CollectRequestModel.findById(collect_request_id);
+        if (!info) {
+            throw new Error('transaction not found');
+        }
+        info.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
+        await info.save();
         const { status } = await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
         if (collectRequest?.sdkPayment) {
             if (status === `SUCCESS`) {

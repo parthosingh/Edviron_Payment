@@ -19,6 +19,7 @@ var Gateway;
     Gateway["EDVIRON_CCAVENUE"] = "EDVIRON_CCAVENUE";
     Gateway["EDVIRON_CASHFREE"] = "EDVIRON_CASHFREE";
     Gateway["EDVIRON_EASEBUZZ"] = "EDVIRON_EASEBUZZ";
+    Gateway["PENDING"] = "PENDING";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let CollectRequest = class CollectRequest {
 };

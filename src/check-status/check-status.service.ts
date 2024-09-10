@@ -76,6 +76,11 @@ export class CheckStatusService {
           },
         };
         return status_response;
+        case Gateway.PENDING:
+          return {
+            status: 'NOT INITIATED',
+            amount: collectRequest.amount,
+          };
     }
   }
 

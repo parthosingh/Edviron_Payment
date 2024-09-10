@@ -42,7 +42,7 @@ let CollectService = class CollectService {
         console.log('collect request for amount: ' + amount + ' received.', {
             disabled_modes,
         });
-        const gateway = clientId === 'edviron' ? collect_request_schema_1.Gateway.HDFC : collect_request_schema_1.Gateway.EDVIRON_PG;
+        const gateway = clientId === 'edviron' ? collect_request_schema_1.Gateway.HDFC : collect_request_schema_1.Gateway.PENDING;
         const request = await new this.databaseService.CollectRequestModel({
             amount,
             callbackUrl,
@@ -73,7 +73,7 @@ let CollectService = class CollectService {
             const transaction = await this.ccavenueService.createOrder(request);
             return { url: transaction.url, request };
         }
-        const transaction = (gateway === collect_request_schema_1.Gateway.EDVIRON_PG
+        const transaction = (gateway === collect_request_schema_1.Gateway.PENDING
             ? await this.edvironPgService.collect(request, platform_charges, school_name)
             : await this.hdfcService.collect(request));
         await this.databaseService.CollectRequestModel.updateOne({

@@ -69,6 +69,11 @@ let CheckStatusService = class CheckStatusService {
                     },
                 };
                 return status_response;
+            case collect_request_schema_1.Gateway.PENDING:
+                return {
+                    status: 'NOT INITIATED',
+                    amount: collectRequest.amount,
+                };
         }
     }
     async checkStatusByOrderId(order_id, trusteeId) {

@@ -175,6 +175,12 @@ export class EdvironPgController {
         collect_request_id,
       ))!;
 
+    const info=await this.databaseService.CollectRequestModel.findById(collect_request_id)
+    if(!info){
+      throw new Error('transaction not found')
+    }
+    info.gateway=Gateway.EDVIRON_PG
+    await info.save()
     const { status } = await this.edvironPgService.checkStatus(
       collect_request_id,
       collectRequest,

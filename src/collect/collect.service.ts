@@ -60,7 +60,7 @@ export class CollectService {
       disabled_modes,
     });
 
-    const gateway = clientId === 'edviron' ? Gateway.HDFC : Gateway.EDVIRON_PG;
+    const gateway = clientId === 'edviron' ? Gateway.HDFC : Gateway.PENDING;
 
     const request = await new this.databaseService.CollectRequestModel({
       amount,
@@ -96,7 +96,7 @@ export class CollectService {
     }
 
     const transaction = (
-      gateway === Gateway.EDVIRON_PG
+      gateway === Gateway.PENDING
         ? await this.edvironPgService.collect(request, platform_charges,school_name)
         : await this.hdfcService.collect(request)
     )!;
