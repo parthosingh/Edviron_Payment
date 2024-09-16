@@ -16,6 +16,11 @@ export declare class EdvironPgController {
         school_id: string;
         token: string;
     }, res: any, req: any): Promise<void>;
+    getTransactionInfo(body: {
+        school_id: string;
+        collect_request_id: string;
+        token: string;
+    }): Promise<any[]>;
     bulkTransactions(body: {
         trustee_id: string;
         token: string;
