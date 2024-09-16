@@ -1109,6 +1109,10 @@ export class EdvironPgController {
               'collect_request.trustee_id': 0,
               'collect_request.sdkPayment': 0,
               'collect_request.payment_data': 0,
+              'collect_request.ccavenue_merchant_id': 0,
+              'collect_request.ccavenue_access_code': 0,
+              'collect_request.ccavenue_working_key': 0,
+              'collect_request.easebuzz_sub_merchant_id': 0,
             },
           },
 
@@ -1164,7 +1168,7 @@ export class EdvironPgController {
     return transactions
   }catch(e){
     console.log(e);
-    throw e;
+    throw new BadRequestException(e.message);
   }
   }
 
