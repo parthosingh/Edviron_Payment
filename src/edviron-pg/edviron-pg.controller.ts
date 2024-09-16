@@ -1055,17 +1055,21 @@ export class EdvironPgController {
     token: string;
   }) {
     const { school_id, collect_request_id, token } = body;
+    try{
+
+
     if(!collect_request_id){
       throw new Error('Collect request id not provided');
     }
     if (!token) throw new Error('Token not provided');
     let decrypted = jwt.verify(token, process.env.KEY!) as any;
-
+    
+    
     if(decrypted.school_id != school_id){
       throw new ForbiddenException('Request forged');
     }
 
-    if(decrypted.collect_request_id != school_id){
+    if(decrypted.collect_request_id != collect_request_id){
       throw new ForbiddenException('Request forged');
     }
 
@@ -1158,6 +1162,10 @@ export class EdvironPgController {
         ]);
 
     return transactions
+  }catch(e){
+    console.log(e);
+    throw e;
+  }
   }
 
   @Get('bulk-transactions-report')
