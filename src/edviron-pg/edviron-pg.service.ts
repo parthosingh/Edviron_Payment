@@ -257,4 +257,57 @@ export class EdvironPgService implements GatewayService {
     console.log(statusRes);
     return statusRes;
   }
+
+  async getPaymentDetails(school_id: string, startDate: string, mode: string) {
+    try {
+      console.log({ school_id, startDate, mode });
+      console.log(mode.toUpperCase());
+
+      const data =
+        await this.databaseService.CollectRequestStatusModel.aggregate([
+          {
+            $match: {
+              status: { $in: ['success', 'SUCCESS'] },
+              createdAt: { $gte: new Date(startDate) },
+              payment_method: {
+                $in: [mode.toLocaleLowerCase(), mode.toUpperCase()],
+              },
+            },
+          },
+          {
+            $lookup: {
+              from: 'collectrequests',
+              localField: 'collect_id',
+              foreignField: '_id',
+              as: 'collect_request_data',
+            },
+          },
+          {
+            $unwind: '$collect_request_data',
+          },
+          {
+            $match: {
+              'collect_request_data.gateway': {
+                $in: ['EDVIRON_PG', 'EDVIRON_EASEBUZZ'],
+              },
+              'collect_request_data.school_id': school_id,
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              gateway: '$collect_request_data.gateway',
+              transaction_amount: 1,
+              payment_method: 1,
+            },
+          },
+        ]);
+      // console.log(data);
+
+      return data;
+    } catch (e) {
+      console.log(e);
+      throw new BadRequestException('Error fetching payment details');
+    }
+  }
 }

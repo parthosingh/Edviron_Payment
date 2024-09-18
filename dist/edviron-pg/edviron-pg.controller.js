@@ -1047,6 +1047,26 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async getpaymentRatio(body) {
+        const { school_id, mode, start_date } = body;
+        const payments = await this.edvironPgService.getPaymentDetails(school_id, start_date, mode);
+        let cashfreeSum = 0;
+        let easebuzzSum = 0;
+        for (const payment of payments) {
+            const gateway = payment.gateway;
+            const amount = payment.transaction_amount;
+            if (gateway === collect_request_schema_1.Gateway.EDVIRON_PG) {
+                cashfreeSum += amount;
+            }
+            else if (gateway === collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ) {
+                easebuzzSum += amount;
+            }
+        }
+        const totalTransactionAmount = cashfreeSum + easebuzzSum;
+        const percentageCashfree = parseFloat(((cashfreeSum / totalTransactionAmount) * 100).toFixed(2));
+        const percentageEasebuzz = parseFloat(((easebuzzSum / totalTransactionAmount) * 100).toFixed(2));
+        return { cashfreeSum, easebuzzSum, percentageCashfree, percentageEasebuzz };
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -1144,6 +1164,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getGatewayName", null);
+__decorate([
+    (0, common_1.Get)('/payments-ratio'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getpaymentRatio", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

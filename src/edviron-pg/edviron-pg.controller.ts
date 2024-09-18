@@ -10,6 +10,7 @@ import {
   Res,
   UnauthorizedException,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { EdvironPgService } from './edviron-pg.service';
@@ -1378,6 +1379,28 @@ export class EdvironPgController {
     }
   }
 
+  
+
+  // @Get('/payments-info')
+  // async getpaymentsInfo(@Query('collect_id') collect_id: string) {
+  //   try {
+  //     const collectReq =
+  //       await this.databaseService.CollectRequestModel.findById(collect_id);
+  //     if (!collectReq) {
+  //       throw new NotFoundException('Collect Request not found');
+  //     }
+  //     return {
+  //       payments_id: collectReq.paymentIds,
+  //       encodedPlatformCharges: collectReq.encodedPlatformCharges,
+  //       disabled_modes_string: collectReq.disabled_modes_string,
+  //       school_id:collectReq.school_id
+  //     };
+  //   } catch (e) {
+  //     throw new Error(e.message); 
+  //   }
+  // }
+
+
   @Get('gatewat-name')
   async getGatewayName(@Req() req: any) {
     try {
@@ -1397,5 +1420,49 @@ export class EdvironPgController {
     } catch (e) {
       throw new BadRequestException(e.message);
     }
+  }
+
+
+   @Get('/payments-ratio')
+  async getpaymentRatio(
+    @Body()
+    body: {
+      school_id: string;
+      mode: string;
+      start_date: string;
+      token?: string;
+    },
+  ) {
+    const { school_id, mode, start_date } = body;
+
+    const payments = await this.edvironPgService.getPaymentDetails(
+      school_id,
+      start_date,
+      mode,
+    );
+    let cashfreeSum = 0;
+    let easebuzzSum = 0;
+
+    for (const payment of payments) {
+      const gateway = payment.gateway;
+      const amount = payment.transaction_amount;
+
+      if (gateway === Gateway.EDVIRON_PG) {
+        cashfreeSum += amount;
+      } else if (gateway === Gateway.EDVIRON_EASEBUZZ) {
+        easebuzzSum += amount;
+      }
+    }
+
+    const totalTransactionAmount = cashfreeSum + easebuzzSum;
+
+    const percentageCashfree = parseFloat(
+      ((cashfreeSum / totalTransactionAmount) * 100).toFixed(2),
+    );
+    const percentageEasebuzz = parseFloat(
+      ((easebuzzSum / totalTransactionAmount) * 100).toFixed(2),
+    );
+
+    return { cashfreeSum, easebuzzSum, percentageCashfree, percentageEasebuzz };
   }
 }

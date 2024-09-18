@@ -27,4 +27,15 @@ export declare class EdvironPgController {
     }, res: any, req: any): Promise<void>;
     getErpLogo(collect_id: string): Promise<any>;
     getGatewayName(req: any): Promise<Gateway>;
+    getpaymentRatio(body: {
+        school_id: string;
+        mode: string;
+        start_date: string;
+        token?: string;
+    }): Promise<{
+        cashfreeSum: number;
+        easebuzzSum: number;
+        percentageCashfree: number;
+        percentageEasebuzz: number;
+    }>;
 }
