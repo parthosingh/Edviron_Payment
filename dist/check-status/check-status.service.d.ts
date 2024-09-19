@@ -33,6 +33,8 @@ export declare class CheckStatusService {
     checkStatusByOrderId(order_id: String, trusteeId: string): Promise<{
         status: import("../types/transactionStatus").TransactionStatus;
         amount: number;
+        paymentInstrument?: string | null | undefined;
+        paymentInstrumentBank?: string | null | undefined;
     } | {
         status: any;
         amount: number;
@@ -44,5 +46,8 @@ export declare class CheckStatusService {
             transaction_time: Date | undefined;
             order_status: any;
         };
+    } | {
+        status: string;
+        amount: number;
     } | undefined>;
 }
