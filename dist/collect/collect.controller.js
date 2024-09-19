@@ -58,7 +58,7 @@ let CollectController = class CollectController {
     }
     async callbackUrl(res, collect_id) {
         const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id);
-        const callback_url = `${collect_request?.callbackUrl}?status=cancelled&reason=dropped-by-user`;
+        const callback_url = `${collect_request?.callbackUrl}?EdvironCollectRequestId=${collect_id}status=cancelled&reason=dropped-by-user`;
         res.redirect(callback_url);
     }
 };
