@@ -166,9 +166,18 @@ let EdvironPgService = class EdvironPgService {
         if (order_status_to_transaction_status_map[cashfreeRes.order_status] === transactionStatus_1.TransactionStatus.SUCCESS) {
             transaction_time = collect_status?.updatedAt?.toString();
         }
+        const checkStatus = order_status_to_transaction_status_map[cashfreeRes.order_status];
+        let status_code;
+        if (checkStatus === transactionStatus_1.TransactionStatus.SUCCESS) {
+            status_code = 200;
+        }
+        else {
+            status_code = 400;
+        }
         return {
             status: order_status_to_transaction_status_map[cashfreeRes.order_status],
             amount: cashfreeRes.order_amount,
+            status_code,
             details: {
                 bank_ref: collect_status?.bank_reference && collect_status?.bank_reference,
                 payment_methods: collect_status?.details &&

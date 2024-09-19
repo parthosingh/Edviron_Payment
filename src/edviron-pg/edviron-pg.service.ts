@@ -155,7 +155,7 @@ export class EdvironPgService implements GatewayService {
   async checkStatus(
     collect_request_id: String,
     collect_request: CollectRequest,
-  ): Promise<{ status: TransactionStatus; amount: number; details?: any }> {
+  ): Promise<{ status: TransactionStatus; amount: number; status_code?:number; details?: any }> {
     const axios = require('axios');
 
     let config = {
@@ -192,6 +192,15 @@ export class EdvironPgService implements GatewayService {
       ]===TransactionStatus.SUCCESS){
         transaction_time=collect_status?.updatedAt?.toString() as string
       }
+      const checkStatus=order_status_to_transaction_status_map[
+        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+      ]
+      let status_code
+      if(checkStatus===TransactionStatus.SUCCESS){
+        status_code=200
+      }else{
+        status_code=400
+      }
 
     return {
       status:
@@ -199,6 +208,7 @@ export class EdvironPgService implements GatewayService {
           cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ],
       amount: cashfreeRes.order_amount,
+      status_code,
       details: {
         bank_ref:
           collect_status?.bank_reference && collect_status?.bank_reference,

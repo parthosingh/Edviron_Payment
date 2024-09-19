@@ -17,6 +17,7 @@ const hdfc_service_1 = require("../hdfc/hdfc.service");
 const phonepe_service_1 = require("../phonepe/phonepe.service");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const ccavenue_service_1 = require("../ccavenue/ccavenue.service");
+const transactionStatus_1 = require("../types/transactionStatus");
 let CheckStatusService = class CheckStatusService {
     constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService) {
         this.databaseService = databaseService;
@@ -45,8 +46,16 @@ let CheckStatusService = class CheckStatusService {
                 return await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
                 const easebuzzStatus = await this.edvironPgService.easebuzzCheckStatus(collect_request_id.toString(), collectRequest);
+                let status_code;
+                if (easebuzzStatus.msg.status.toUpperCase() === 'SUCCESS') {
+                    status_code = 200;
+                }
+                else {
+                    status_code = 400;
+                }
                 const ezb_status_response = {
                     status: easebuzzStatus.msg.status.toUpperCase(),
+                    status_code,
                     amount: parseInt(easebuzzStatus.msg.amount),
                     details: {
                         bank_ref: easebuzzStatus.msg.bank_ref_num,
@@ -58,9 +67,17 @@ let CheckStatusService = class CheckStatusService {
                 return ezb_status_response;
             case collect_request_schema_1.Gateway.EDVIRON_CCAVENUE:
                 const res = await this.ccavenueService.checkStatus(collectRequest, collect_request_id.toString());
+                let status_codes;
+                if (easebuzzStatus.msg.status.toUpperCase() === transactionStatus_1.TransactionStatus.SUCCESS) {
+                    status_codes = 200;
+                }
+                else {
+                    status_codes = 400;
+                }
                 const order_info = JSON.parse(res.decrypt_res);
                 const status_response = {
                     status: res.status,
+                    status_code: status_codes,
                     amount: res.amount,
                     details: {
                         transaction_time: res.transaction_time,
@@ -73,6 +90,7 @@ let CheckStatusService = class CheckStatusService {
                 return {
                     status: 'NOT INITIATED',
                     amount: collectRequest.amount,
+                    status_code: 202
                 };
         }
     }
@@ -100,8 +118,16 @@ let CheckStatusService = class CheckStatusService {
                 return await this.edvironPgService.checkStatus(collectRequest._id.toString(), collectRequest);
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
                 const easebuzzStatus = await this.edvironPgService.easebuzzCheckStatus(collectidString, collectRequest);
+                let status_code;
+                if (easebuzzStatus.msg.status.toUpperCase() === 'SUCCESS') {
+                    status_code = 200;
+                }
+                else {
+                    status_code = 400;
+                }
                 const ezb_status_response = {
                     status: easebuzzStatus.msg.status.toUpperCase(),
+                    status_code,
                     amount: parseInt(easebuzzStatus.msg.amount),
                     details: {
                         bank_ref: easebuzzStatus.msg.bank_ref_num,
@@ -114,8 +140,16 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.EDVIRON_CCAVENUE:
                 const res = await this.ccavenueService.checkStatus(collectRequest, collectidString);
                 const order_info = JSON.parse(res.decrypt_res);
+                let status_codes;
+                if (easebuzzStatus.msg.status.toUpperCase() === transactionStatus_1.TransactionStatus.SUCCESS) {
+                    status_codes = 200;
+                }
+                else {
+                    status_codes = 400;
+                }
                 const status_response = {
                     status: res.status,
+                    status_code: status_codes,
                     amount: res.amount,
                     details: {
                         transaction_time: res.transaction_time,
@@ -128,6 +162,7 @@ let CheckStatusService = class CheckStatusService {
                 return {
                     status: 'NOT INITIATED',
                     amount: collectRequest.amount,
+                    status_code: 202
                 };
         }
     }

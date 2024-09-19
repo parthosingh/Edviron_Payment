@@ -6,6 +6,7 @@ import { PhonepeService } from 'src/phonepe/phonepe.service';
 import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
 import mongoose from 'mongoose';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
+import { TransactionStatus } from 'src/types/transactionStatus';
 
 @Injectable()
 export class CheckStatusService {
@@ -48,8 +49,15 @@ export class CheckStatusService {
           collect_request_id.toString(),
           collectRequest,
         );
+        let status_code
+        if(easebuzzStatus.msg.status.toUpperCase()==='SUCCESS'){
+          status_code = 200
+        }else{
+          status_code = 400
+        }
         const ezb_status_response = {
           status: easebuzzStatus.msg.status.toUpperCase(),
+          status_code,
           amount: parseInt(easebuzzStatus.msg.amount),
           details: {
             bank_ref: easebuzzStatus.msg.bank_ref_num,
@@ -65,9 +73,16 @@ export class CheckStatusService {
           collect_request_id.toString(),
           // collectRequest.ccavenue_access_code,
         );
+        let status_codes
+        if(easebuzzStatus.msg.status.toUpperCase()===TransactionStatus.SUCCESS){
+          status_codes = 200
+        }else{
+          status_codes = 400
+        }
         const order_info = JSON.parse(res.decrypt_res);
         const status_response = {
           status: res.status,
+          status_code:status_codes,
           amount: res.amount,
           details: {
             transaction_time: res.transaction_time,
@@ -80,6 +95,7 @@ export class CheckStatusService {
           return {
             status: 'NOT INITIATED',
             amount: collectRequest.amount,
+            status_code:202
           };
     }
   }
@@ -121,8 +137,15 @@ export class CheckStatusService {
           collectidString,
           collectRequest,
         );
+        let status_code
+        if(easebuzzStatus.msg.status.toUpperCase()==='SUCCESS'){
+          status_code = 200
+        }else{
+          status_code = 400
+        }
         const ezb_status_response = {
           status: easebuzzStatus.msg.status.toUpperCase(),
+          status_code,
           amount: parseInt(easebuzzStatus.msg.amount),
           details: {
             bank_ref: easebuzzStatus.msg.bank_ref_num,
@@ -139,8 +162,15 @@ export class CheckStatusService {
           // collectRequest.ccavenue_access_code,
         );
         const order_info = JSON.parse(res.decrypt_res);
+        let status_codes
+        if(easebuzzStatus.msg.status.toUpperCase()===TransactionStatus.SUCCESS){
+          status_codes = 200
+        }else{
+          status_codes = 400
+        }
         const status_response = {
           status: res.status,
+          status_code: status_codes,
           amount: res.amount,
           details: {
             transaction_time: res.transaction_time,
@@ -154,6 +184,7 @@ export class CheckStatusService {
           return {
             status: 'NOT INITIATED',
             amount: collectRequest.amount,
+            status_code:202
           };
     }
   }

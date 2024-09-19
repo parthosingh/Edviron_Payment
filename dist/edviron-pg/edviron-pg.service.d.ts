@@ -11,6 +11,7 @@ export declare class EdvironPgService implements GatewayService {
     checkStatus(collect_request_id: String, collect_request: CollectRequest): Promise<{
         status: TransactionStatus;
         amount: number;
+        status_code?: number;
         details?: any;
     }>;
     easebuzzCheckStatus(collect_request_id: String, collect_request: CollectRequest): Promise<any>;
