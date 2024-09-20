@@ -152,6 +152,7 @@ let EdvironPgService = class EdvironPgService {
             },
         };
         const { data: cashfreeRes } = await axios.request(config);
+        console.log(cashfreeRes, 'cashfree status response');
         const order_status_to_transaction_status_map = {
             ACTIVE: transactionStatus_1.TransactionStatus.PENDING,
             PAID: transactionStatus_1.TransactionStatus.SUCCESS,
