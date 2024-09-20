@@ -169,7 +169,9 @@ export class EdvironPgService implements GatewayService {
         'x-partner-apikey': process.env.CASHFREE_API_KEY,
       },
     };
+    try{
 
+ 
     const { data: cashfreeRes } = await axios.request(config);
  
     console.log(cashfreeRes,'cashfree status response');
@@ -219,7 +221,13 @@ export class EdvironPgService implements GatewayService {
         transaction_time,
         order_status: cashfreeRes.order_status,
       },
+      
     };
+  }catch(e){
+    console.log(e);
+    throw new BadRequestException(e.message)
+    
+  }
   }
 
   async easebuzzCheckStatus(

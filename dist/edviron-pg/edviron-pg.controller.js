@@ -762,7 +762,7 @@ let EdvironPgController = class EdvironPgController {
             const transactions = await this.databaseService.CollectRequestStatusModel.aggregate([
                 {
                     $match: {
-                        collect_id: new mongoose_1.Types.ObjectId(collect_request_id)
+                        collect_id: new mongoose_1.Types.ObjectId(collect_request_id),
                     },
                 },
                 {
@@ -846,7 +846,7 @@ let EdvironPgController = class EdvironPgController {
                 },
                 {
                     $sort: { createdAt: -1 },
-                }
+                },
             ]);
             return transactions;
         }
@@ -1030,6 +1030,18 @@ let EdvironPgController = class EdvironPgController {
             throw new Error(e.message);
         }
     }
+    async getSchoolId(collect_id) {
+        try {
+            const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collect_request) {
+                throw new common_1.NotFoundException('Collect Request not found');
+            }
+            return collect_request.school_id;
+        }
+        catch (e) {
+            throw new Error(e.message);
+        }
+    }
     async getGatewayName(req) {
         try {
             const token = req.query.token;
@@ -1157,6 +1169,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getErpLogo", null);
+__decorate([
+    (0, common_1.Get)('school-id'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getSchoolId", null);
 __decorate([
     (0, common_1.Get)('gatewat-name'),
     __param(0, (0, common_1.Req)()),

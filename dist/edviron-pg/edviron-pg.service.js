@@ -151,42 +151,48 @@ let EdvironPgService = class EdvironPgService {
                 'x-partner-apikey': process.env.CASHFREE_API_KEY,
             },
         };
-        const { data: cashfreeRes } = await axios.request(config);
-        console.log(cashfreeRes, 'cashfree status response');
-        const order_status_to_transaction_status_map = {
-            ACTIVE: transactionStatus_1.TransactionStatus.PENDING,
-            PAID: transactionStatus_1.TransactionStatus.SUCCESS,
-            EXPIRED: transactionStatus_1.TransactionStatus.FAILURE,
-            TERMINATED: transactionStatus_1.TransactionStatus.FAILURE,
-            TERMINATION_REQUESTED: transactionStatus_1.TransactionStatus.FAILURE,
-        };
-        const collect_status = await this.databaseService.CollectRequestStatusModel.findOne({
-            collect_id: collect_request_id,
-        });
-        let transaction_time = "";
-        if (order_status_to_transaction_status_map[cashfreeRes.order_status] === transactionStatus_1.TransactionStatus.SUCCESS) {
-            transaction_time = collect_status?.updatedAt?.toString();
+        try {
+            const { data: cashfreeRes } = await axios.request(config);
+            console.log(cashfreeRes, 'cashfree status response');
+            const order_status_to_transaction_status_map = {
+                ACTIVE: transactionStatus_1.TransactionStatus.PENDING,
+                PAID: transactionStatus_1.TransactionStatus.SUCCESS,
+                EXPIRED: transactionStatus_1.TransactionStatus.FAILURE,
+                TERMINATED: transactionStatus_1.TransactionStatus.FAILURE,
+                TERMINATION_REQUESTED: transactionStatus_1.TransactionStatus.FAILURE,
+            };
+            const collect_status = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: collect_request_id,
+            });
+            let transaction_time = "";
+            if (order_status_to_transaction_status_map[cashfreeRes.order_status] === transactionStatus_1.TransactionStatus.SUCCESS) {
+                transaction_time = collect_status?.updatedAt?.toString();
+            }
+            const checkStatus = order_status_to_transaction_status_map[cashfreeRes.order_status];
+            let status_code;
+            if (checkStatus === transactionStatus_1.TransactionStatus.SUCCESS) {
+                status_code = 200;
+            }
+            else {
+                status_code = 400;
+            }
+            return {
+                status: order_status_to_transaction_status_map[cashfreeRes.order_status],
+                amount: cashfreeRes.order_amount,
+                status_code,
+                details: {
+                    bank_ref: collect_status?.bank_reference && collect_status?.bank_reference,
+                    payment_methods: collect_status?.details &&
+                        JSON.parse(collect_status.details),
+                    transaction_time,
+                    order_status: cashfreeRes.order_status,
+                },
+            };
         }
-        const checkStatus = order_status_to_transaction_status_map[cashfreeRes.order_status];
-        let status_code;
-        if (checkStatus === transactionStatus_1.TransactionStatus.SUCCESS) {
-            status_code = 200;
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
         }
-        else {
-            status_code = 400;
-        }
-        return {
-            status: order_status_to_transaction_status_map[cashfreeRes.order_status],
-            amount: cashfreeRes.order_amount,
-            status_code,
-            details: {
-                bank_ref: collect_status?.bank_reference && collect_status?.bank_reference,
-                payment_methods: collect_status?.details &&
-                    JSON.parse(collect_status.details),
-                transaction_time,
-                order_status: cashfreeRes.order_status,
-            },
-        };
     }
     async easebuzzCheckStatus(collect_request_id, collect_request) {
         const amount = parseFloat(collect_request.amount.toString()).toFixed(1);

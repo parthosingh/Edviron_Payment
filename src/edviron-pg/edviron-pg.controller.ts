@@ -176,12 +176,15 @@ export class EdvironPgController {
         collect_request_id,
       ))!;
 
-    const info=await this.databaseService.CollectRequestModel.findById(collect_request_id)
-    if(!info){
-      throw new Error('transaction not found')
+    const info =
+      await this.databaseService.CollectRequestModel.findById(
+        collect_request_id,
+      );
+    if (!info) {
+      throw new Error('transaction not found');
     }
-    info.gateway=Gateway.EDVIRON_PG
-    await info.save()
+    info.gateway = Gateway.EDVIRON_PG;
+    await info.save();
     const { status } = await this.edvironPgService.checkStatus(
       collect_request_id,
       collectRequest,
@@ -1049,36 +1052,35 @@ export class EdvironPgController {
   }
 
   @Get('transaction-info')
-  async getTransactionInfo(@Body()
-  body: {
-    school_id: string;
-    collect_request_id:string;
-    token: string;
-  }) {
+  async getTransactionInfo(
+    @Body()
+    body: {
+      school_id: string;
+      collect_request_id: string;
+      token: string;
+    },
+  ) {
     const { school_id, collect_request_id, token } = body;
-    try{
+    try {
+      if (!collect_request_id) {
+        throw new Error('Collect request id not provided');
+      }
+      if (!token) throw new Error('Token not provided');
+      let decrypted = jwt.verify(token, process.env.KEY!) as any;
 
+      if (decrypted.school_id != school_id) {
+        throw new ForbiddenException('Request forged');
+      }
 
-    if(!collect_request_id){
-      throw new Error('Collect request id not provided');
-    }
-    if (!token) throw new Error('Token not provided');
-    let decrypted = jwt.verify(token, process.env.KEY!) as any;
-    
-    
-    if(decrypted.school_id != school_id){
-      throw new ForbiddenException('Request forged');
-    }
+      if (decrypted.collect_request_id != collect_request_id) {
+        throw new ForbiddenException('Request forged');
+      }
 
-    if(decrypted.collect_request_id != collect_request_id){
-      throw new ForbiddenException('Request forged');
-    }
-
-    const transactions =
+      const transactions =
         await this.databaseService.CollectRequestStatusModel.aggregate([
           {
             $match: {
-              collect_id:new Types.ObjectId(collect_request_id)
+              collect_id: new Types.ObjectId(collect_request_id),
             },
           },
           {
@@ -1163,14 +1165,14 @@ export class EdvironPgController {
           },
           {
             $sort: { createdAt: -1 },
-          }
+          },
         ]);
 
-    return transactions
-  }catch(e){
-    console.log(e);
-    throw new BadRequestException(e.message);
-  }
+      return transactions;
+    } catch (e) {
+      console.log(e);
+      throw new BadRequestException(e.message);
+    }
   }
 
   @Get('bulk-transactions-report')
@@ -1379,7 +1381,19 @@ export class EdvironPgController {
     }
   }
 
-  
+  @Get('school-id')
+  async getSchoolId(@Query('collect_id') collect_id: string) {
+    try {
+      const collect_request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+     if(!collect_request){
+       throw new NotFoundException('Collect Request not found');
+     }
+     return collect_request.school_id
+    } catch (e) {
+      throw new Error(e.message);
+    }
+  }
 
   // @Get('/payments-info')
   // async getpaymentsInfo(@Query('collect_id') collect_id: string) {
@@ -1396,10 +1410,9 @@ export class EdvironPgController {
   //       school_id:collectReq.school_id
   //     };
   //   } catch (e) {
-  //     throw new Error(e.message); 
+  //     throw new Error(e.message);
   //   }
   // }
-
 
   @Get('gatewat-name')
   async getGatewayName(@Req() req: any) {
@@ -1422,8 +1435,7 @@ export class EdvironPgController {
     }
   }
 
-
-   @Get('/payments-ratio')
+  @Get('/payments-ratio')
   async getpaymentRatio(
     @Body()
     body: {
