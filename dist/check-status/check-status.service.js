@@ -96,6 +96,7 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.PENDING:
                 return {
                     status: 'NOT INITIATED',
+                    custom_order_id,
                     amount: collectRequest.amount,
                     status_code: 202,
                 };
@@ -122,7 +123,11 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.PHONEPE:
                 return await this.phonePeService.checkStatus(collectRequest._id.toString());
             case collect_request_schema_1.Gateway.EDVIRON_PG:
-                return await this.edvironPgService.checkStatus(collectRequest._id.toString(), collectRequest);
+                const edv_response = await this.edvironPgService.checkStatus(collectRequest._id.toString(), collectRequest);
+                return {
+                    ...edv_response,
+                    edviron_order_id: collectRequest._id.toString(),
+                };
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
                 const easebuzzStatus = await this.edvironPgService.easebuzzCheckStatus(collectidString, collectRequest);
                 let status_code;
@@ -135,6 +140,7 @@ let CheckStatusService = class CheckStatusService {
                 const ezb_status_response = {
                     status: easebuzzStatus.msg.status.toUpperCase(),
                     status_code,
+                    edviron_order_id: collectRequest._id.toString(),
                     amount: parseInt(easebuzzStatus.msg.amount),
                     details: {
                         bank_ref: easebuzzStatus.msg.bank_ref_num,
@@ -156,6 +162,7 @@ let CheckStatusService = class CheckStatusService {
                 }
                 const status_response = {
                     status: res.status,
+                    edviron_order_id: collectRequest._id.toString(),
                     status_code: status_codes,
                     amount: res.amount,
                     details: {
@@ -169,6 +176,7 @@ let CheckStatusService = class CheckStatusService {
                 return {
                     status: 'NOT INITIATED',
                     amount: collectRequest.amount,
+                    edviron_order_id: collectRequest._id.toString(),
                     status_code: 202,
                 };
         }

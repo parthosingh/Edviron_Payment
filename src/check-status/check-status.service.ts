@@ -103,6 +103,7 @@ export class CheckStatusService {
       case Gateway.PENDING:
         return {
           status: 'NOT INITIATED',
+          custom_order_id,
           amount: collectRequest.amount,
           status_code: 202,
         };
@@ -136,10 +137,14 @@ export class CheckStatusService {
           collectRequest._id.toString(),
         );
       case Gateway.EDVIRON_PG:
-        return await this.edvironPgService.checkStatus(
+        const edv_response= await this.edvironPgService.checkStatus(
           collectRequest._id.toString(),
           collectRequest,
         );
+        return {
+          ...edv_response,
+          edviron_order_id:collectRequest._id.toString(),
+        }
 
       case Gateway.EDVIRON_EASEBUZZ:
         const easebuzzStatus = await this.edvironPgService.easebuzzCheckStatus(
@@ -155,6 +160,7 @@ export class CheckStatusService {
         const ezb_status_response = {
           status: easebuzzStatus.msg.status.toUpperCase(),
           status_code,
+          edviron_order_id:collectRequest._id.toString(),
           amount: parseInt(easebuzzStatus.msg.amount),
           details: {
             bank_ref: easebuzzStatus.msg.bank_ref_num,
@@ -181,6 +187,7 @@ export class CheckStatusService {
         }
         const status_response = {
           status: res.status,
+          edviron_order_id:collectRequest._id.toString(),
           status_code: status_codes,
           amount: res.amount,
           details: {
@@ -195,6 +202,7 @@ export class CheckStatusService {
         return {
           status: 'NOT INITIATED',
           amount: collectRequest.amount,
+          edviron_order_id:collectRequest._id.toString(),
           status_code: 202,
         };
     }
