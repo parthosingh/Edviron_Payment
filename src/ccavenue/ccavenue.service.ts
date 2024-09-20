@@ -1,5 +1,8 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { CollectRequest, Gateway } from 'src/database/schemas/collect_request.schema';
+import {
+  CollectRequest,
+  Gateway,
+} from 'src/database/schemas/collect_request.schema';
 import { GatewayService } from 'src/types/gateway.type';
 import { Transaction } from 'src/types/transaction';
 import { TransactionStatus } from 'src/types/transactionStatus';
@@ -207,8 +210,6 @@ export class CcavenueService {
     const p_merchant_param5 = '';
     const p_promo_code = '';
     const p_customer_identifier = '';
-    
-    
 
     const { encRequest, access_code } = this.ccavRequestHandler(
       p_merchant_id,
@@ -244,9 +245,10 @@ export class CcavenueService {
       request.ccavenue_access_code,
     );
 
-    const collectRequest=await this.databaseService.CollectRequestModel.findById(p_order_id)
-    
-    const info={
+    const collectRequest =
+      await this.databaseService.CollectRequestModel.findById(p_order_id);
+
+    const info = {
       url:
         process.env.URL +
         '/ccavenue/redirect?encRequest=' +
@@ -255,10 +257,10 @@ export class CcavenueService {
         access_code,
     };
 
-    if(collectRequest){
-      collectRequest.gateway=Gateway.EDVIRON_CCAVENUE
-      collectRequest.payment_data=info.url
-      await collectRequest.save()
+    if (collectRequest) {
+      collectRequest.gateway = Gateway.EDVIRON_CCAVENUE;
+      collectRequest.payment_data = info.url;
+      await collectRequest.save();
     }
 
     // return {
@@ -305,22 +307,16 @@ export class CcavenueService {
     bank_ref?: string;
   }> {
     const { ccavenue_working_key, ccavenue_access_code } = collect_request;
-    console.log(ccavenue_access_code,'ccavcode');
-    console.log(collect_request_id);
-    
-    
     const collectRequest =
       await this.databaseService.CollectRequestModel.findById(
         collect_request_id,
       );
-    
-      
-      
-      const encrypted_data: string = await this.encrypt(
+
+    const encrypted_data: string = await this.encrypt(
       JSON.stringify({ order_no: collect_request_id }),
       ccavenue_working_key,
     );
-    console.log(ccavenue_working_key,'collec');
+    console.log(ccavenue_working_key, 'collec');
 
     console.log(`checking status for ccavenue`);
 
@@ -349,7 +345,7 @@ export class CcavenueService {
     // await sleep(10000);
     try {
       const res = await axios.request(config);
-
+      console.log(res.data);
       const params = new URLSearchParams(res.data);
       const paramObject = Object.fromEntries(params.entries());
 

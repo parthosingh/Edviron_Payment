@@ -202,8 +202,6 @@ let CcavenueService = class CcavenueService {
     }
     async checkStatus(collect_request, collect_request_id) {
         const { ccavenue_working_key, ccavenue_access_code } = collect_request;
-        console.log(ccavenue_access_code, 'ccavcode');
-        console.log(collect_request_id);
         const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_request_id);
         const encrypted_data = await this.encrypt(JSON.stringify({ order_no: collect_request_id }), ccavenue_working_key);
         console.log(ccavenue_working_key, 'collec');
@@ -230,6 +228,7 @@ let CcavenueService = class CcavenueService {
         };
         try {
             const res = await axios_1.default.request(config);
+            console.log(res.data);
             const params = new URLSearchParams(res.data);
             const paramObject = Object.fromEntries(params.entries());
             const decrypt_res = this.decrypt(paramObject['enc_response'], ccavenue_working_key);
