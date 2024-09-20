@@ -155,7 +155,7 @@ export class EdvironPgService implements GatewayService {
   async checkStatus(
     collect_request_id: String,
     collect_request: CollectRequest,
-  ): Promise<{ status: TransactionStatus; amount: number; status_code?:number; details?: any }> {
+  ): Promise<{ status: TransactionStatus; amount: number; status_code?:number; details?: any,custom_order_id?:string }> {
     const axios = require('axios');
 
     let config = {
@@ -201,7 +201,7 @@ export class EdvironPgService implements GatewayService {
       }else{
         status_code=400
       }
-
+    
     return {
       status:
         order_status_to_transaction_status_map[

@@ -13,6 +13,7 @@ export declare class EdvironPgService implements GatewayService {
         amount: number;
         status_code?: number;
         details?: any;
+        custom_order_id?: string;
     }>;
     easebuzzCheckStatus(collect_request_id: String, collect_request: CollectRequest): Promise<any>;
     getPaymentDetails(school_id: string, startDate: string, mode: string): Promise<any[]>;

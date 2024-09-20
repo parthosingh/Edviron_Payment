@@ -33,6 +33,7 @@ let CheckStatusService = class CheckStatusService {
             console.log('Collect request not found', collect_request_id);
             throw new common_1.NotFoundException('Collect request not found');
         }
+        const custom_order_id = collectRequest.custom_order_id || null;
         const collect_req_status = await this.databaseService.CollectRequestStatusModel.findOne({
             collect_id: collectRequest._id,
         });
@@ -43,7 +44,11 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.PHONEPE:
                 return await this.phonePeService.checkStatus(collect_request_id);
             case collect_request_schema_1.Gateway.EDVIRON_PG:
-                return await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
+                const edvironPgResponse = await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
+                return {
+                    ...edvironPgResponse,
+                    custom_order_id,
+                };
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
                 const easebuzzStatus = await this.edvironPgService.easebuzzCheckStatus(collect_request_id.toString(), collectRequest);
                 let status_code;
@@ -56,6 +61,7 @@ let CheckStatusService = class CheckStatusService {
                 const ezb_status_response = {
                     status: easebuzzStatus.msg.status.toUpperCase(),
                     status_code,
+                    custom_order_id,
                     amount: parseInt(easebuzzStatus.msg.amount),
                     details: {
                         bank_ref: easebuzzStatus.msg.bank_ref_num,
@@ -78,6 +84,7 @@ let CheckStatusService = class CheckStatusService {
                 const status_response = {
                     status: res.status,
                     status_code: status_codes,
+                    custom_order_id,
                     amount: res.amount,
                     details: {
                         transaction_time: res.transaction_time,
@@ -90,7 +97,7 @@ let CheckStatusService = class CheckStatusService {
                 return {
                     status: 'NOT INITIATED',
                     amount: collectRequest.amount,
-                    status_code: 202
+                    status_code: 202,
                 };
         }
     }
@@ -162,7 +169,7 @@ let CheckStatusService = class CheckStatusService {
                 return {
                     status: 'NOT INITIATED',
                     amount: collectRequest.amount,
-                    status_code: 202
+                    status_code: 202,
                 };
         }
     }

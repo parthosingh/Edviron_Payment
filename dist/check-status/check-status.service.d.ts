@@ -17,6 +17,7 @@ export declare class CheckStatusService {
     } | {
         status: any;
         status_code: number;
+        custom_order_id: string | null;
         amount: number;
         details: {
             bank_ref: any;
@@ -26,6 +27,12 @@ export declare class CheckStatusService {
             transaction_time: Date | undefined;
             order_status: any;
         };
+    } | {
+        custom_order_id: string | null;
+        status: TransactionStatus;
+        amount: number;
+        status_code?: number | undefined;
+        details?: any;
     } | {
         status: string;
         amount: number;
