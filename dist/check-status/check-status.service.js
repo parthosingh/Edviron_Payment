@@ -74,7 +74,7 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.EDVIRON_CCAVENUE:
                 const res = await this.ccavenueService.checkStatus(collectRequest, collect_request_id.toString());
                 let status_codes;
-                if (easebuzzStatus.msg.status.toUpperCase() === transactionStatus_1.TransactionStatus.SUCCESS) {
+                if (res.status.toUpperCase() === transactionStatus_1.TransactionStatus.SUCCESS) {
                     status_codes = 200;
                 }
                 else {
@@ -154,7 +154,7 @@ let CheckStatusService = class CheckStatusService {
                 const res = await this.ccavenueService.checkStatus(collectRequest, collectidString);
                 const order_info = JSON.parse(res.decrypt_res);
                 let status_codes;
-                if (easebuzzStatus.msg.status.toUpperCase() === transactionStatus_1.TransactionStatus.SUCCESS) {
+                if (res.status.toUpperCase() === transactionStatus_1.TransactionStatus.SUCCESS) {
                     status_codes = 200;
                 }
                 else {

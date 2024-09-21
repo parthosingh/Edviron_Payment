@@ -81,7 +81,7 @@ export class CheckStatusService {
         );
         let status_codes;
         if (
-          easebuzzStatus.msg.status.toUpperCase() === TransactionStatus.SUCCESS
+          res.status.toUpperCase() === TransactionStatus.SUCCESS
         ) {
           status_codes = 200;
         } else {
@@ -179,7 +179,7 @@ export class CheckStatusService {
         const order_info = JSON.parse(res.decrypt_res);
         let status_codes;
         if (
-          easebuzzStatus.msg.status.toUpperCase() === TransactionStatus.SUCCESS
+          res.status.toUpperCase() === TransactionStatus.SUCCESS
         ) {
           status_codes = 200;
         } else {
