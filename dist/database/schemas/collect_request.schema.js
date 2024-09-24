@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CollectRequestSchema = exports.CollectRequest = exports.Gateway = void 0;
+exports.CollectRequestSchema = exports.CollectRequest = exports.PaymentIds = exports.Gateway = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 var Gateway;
 (function (Gateway) {
@@ -21,6 +21,29 @@ var Gateway;
     Gateway["EDVIRON_EASEBUZZ"] = "EDVIRON_EASEBUZZ";
     Gateway["PENDING"] = "PENDING";
 })(Gateway || (exports.Gateway = Gateway = {}));
+class PaymentIds {
+}
+exports.PaymentIds = PaymentIds;
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, }),
+    __metadata("design:type", Object)
+], PaymentIds.prototype, "cashfree_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Object)
+], PaymentIds.prototype, "easebuzz_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Object)
+], PaymentIds.prototype, "easebuzz_cc_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Object)
+], PaymentIds.prototype, "easebuzz_dc_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Object)
+], PaymentIds.prototype, "ccavenue_id", void 0);
 let CollectRequest = class CollectRequest {
 };
 exports.CollectRequest = CollectRequest;
@@ -108,6 +131,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "deepLink", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Object, required: false }),
+    __metadata("design:type", PaymentIds)
+], CollectRequest.prototype, "paymentIds", void 0);
 exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequest);

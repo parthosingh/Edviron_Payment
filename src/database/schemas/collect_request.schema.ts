@@ -12,6 +12,24 @@ export enum Gateway {
 }
 
 
+export class PaymentIds {
+  @Prop({ required: false, })
+  cashfree_id?: string | null;
+
+  @Prop({ required: false })
+  easebuzz_id?: string | null;
+
+  @Prop({ required: false })
+  easebuzz_cc_id?: string | null;
+
+  @Prop({ required: false })
+  easebuzz_dc_id?: string | null;
+
+  @Prop({ required: false })
+  ccavenue_id?: string | null;
+
+}
+
 @Schema({ timestamps: true })
 export class CollectRequest {
   @Prop({ required: true })
@@ -75,6 +93,9 @@ export class CollectRequest {
 
   @Prop({ required: false })
   deepLink: string;
+
+  @Prop({ type:Object, required: false })
+  paymentIds: PaymentIds;
 
   _id: ObjectId;
 }

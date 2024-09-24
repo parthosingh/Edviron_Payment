@@ -1479,4 +1479,27 @@ export class EdvironPgController {
 
     return { cashfreeSum, easebuzzSum, percentageCashfree, percentageEasebuzz };
   }
+
+  @Get('/pg-status')
+  async getPgStatus(@Query('collect_id') collect_id: string) {
+    const request=await this.databaseService.CollectRequestModel.findById(collect_id)
+    if(!request){
+      throw new NotFoundException('Collect Request not found');
+    }
+    const {paymentIds}=request
+    if(!paymentIds){
+      throw new Error('Payment ids not found');
+    }
+    let pgStatus={
+      cashfree:false,
+      easebuzz:false
+    }
+    if(paymentIds.cashfree_id){
+      pgStatus.cashfree=true
+    }
+    if(paymentIds.easebuzz_id){
+      pgStatus.easebuzz=true
+    }
+    return pgStatus;
+  }
 }

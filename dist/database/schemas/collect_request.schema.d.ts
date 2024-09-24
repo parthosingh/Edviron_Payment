@@ -32,6 +32,13 @@ export declare enum Gateway {
     EDVIRON_EASEBUZZ = "EDVIRON_EASEBUZZ",
     PENDING = "PENDING"
 }
+export declare class PaymentIds {
+    cashfree_id?: string | null;
+    easebuzz_id?: string | null;
+    easebuzz_cc_id?: string | null;
+    easebuzz_dc_id?: string | null;
+    ccavenue_id?: string | null;
+}
 export declare class CollectRequest {
     amount: number;
     createdAt?: Date;
@@ -54,6 +61,7 @@ export declare class CollectRequest {
     ccavenue_access_code: string;
     ccavenue_working_key: string;
     deepLink: string;
+    paymentIds: PaymentIds;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;

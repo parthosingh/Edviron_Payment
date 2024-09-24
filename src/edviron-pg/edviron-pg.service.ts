@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CollectRequest } from '../database/schemas/collect_request.schema';
+import { CollectRequest, PaymentIds } from '../database/schemas/collect_request.schema';
 import { GatewayService } from '../types/gateway.type';
 import { Transaction } from '../types/transaction';
 import { DatabaseService } from '../database/database.service';
@@ -16,6 +16,13 @@ export class EdvironPgService implements GatewayService {
     school_name: any,
   ): Promise<Transaction | undefined> {
     try {
+      let paymentInfo:PaymentIds={
+        cashfree_id:null,
+        easebuzz_id: null,
+        easebuzz_cc_id: null,
+        easebuzz_dc_id: null,
+        ccavenue_id: null,
+      }
       const schoolName = school_name.replace(/ /g, '-'); //replace spaces because url dosent support spaces
       const axios = require('axios');
       let data = JSON.stringify({
@@ -111,7 +118,8 @@ export class EdvironPgService implements GatewayService {
         };
         const { data: easebuzzRes } = await axios.request(options);
         id = easebuzzRes.data;
-        await this.getQr(id, request._id.toString());
+        paymentInfo.easebuzz_id=id || null
+        // await this.getQr(id, request._id.toString()); // uncomment after fixing easebuzz QR code issue
         easebuzz_pg = true;
         console.log({ easebuzzRes, _id: request._id });
       }
@@ -120,6 +128,7 @@ export class EdvironPgService implements GatewayService {
       if(request.clientId){
         const { data: cashfreeRes } = await axios.request(config);
         cf_payment_id=cashfreeRes.payment_session_id
+        paymentInfo.cashfree_id=cf_payment_id || null;
        
       }
       const disabled_modes_string = request.disabled_modes

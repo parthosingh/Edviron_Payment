@@ -39,4 +39,8 @@ export declare class EdvironPgController {
         percentageCashfree: number;
         percentageEasebuzz: number;
     }>;
+    getPgStatus(collect_id: string): Promise<{
+        cashfree: boolean;
+        easebuzz: boolean;
+    }>;
 }
