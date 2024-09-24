@@ -9,6 +9,8 @@ import { CheckStatusModule } from './check-status/check-status.module';
 import { HdfcModule } from './hdfc/hdfc.module';
 import { EdvironPgModule } from './edviron-pg/edviron-pg.module';
 import { CcavenueModule } from './ccavenue/ccavenue.module';
+import { EasebuzzController } from './easebuzz/easebuzz.controller';
+import { EasebuzzService } from './easebuzz/easebuzz.service';
 
 @Module({
   imports: [
@@ -20,7 +22,7 @@ import { CcavenueModule } from './ccavenue/ccavenue.module';
     EdvironPgModule,
     CcavenueModule
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, EasebuzzController],
+  providers: [AppService, EasebuzzService],
 })
 export class AppModule {}

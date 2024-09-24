@@ -53,6 +53,7 @@ export declare class CollectRequest {
     ccavenue_merchant_id: string;
     ccavenue_access_code: string;
     ccavenue_working_key: string;
+    deepLink: string;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;

@@ -73,6 +73,9 @@ export class CollectRequest {
   @Prop({ required: false })
   ccavenue_working_key: string;
 
+  @Prop({ required: false })
+  deepLink: string;
+
   _id: ObjectId;
 }
 

@@ -14,6 +14,7 @@ const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const transactionStatus_1 = require("../types/transactionStatus");
 const sign_1 = require("../utils/sign");
+const axios_1 = require("axios");
 let EdvironPgService = class EdvironPgService {
     constructor(databaseService) {
         this.databaseService = databaseService;
@@ -102,6 +103,7 @@ let EdvironPgService = class EdvironPgService {
                 };
                 const { data: easebuzzRes } = await axios.request(options);
                 id = easebuzzRes.data;
+                await this.getQr(id, request._id.toString());
                 easebuzz_pg = true;
                 console.log({ easebuzzRes, _id: request._id });
             }
@@ -282,6 +284,33 @@ let EdvironPgService = class EdvironPgService {
         catch (e) {
             console.log(e);
             throw new common_1.BadRequestException('Error fetching payment details');
+        }
+    }
+    async getQr(access_key, collect_id) {
+        try {
+            console.log(access_key);
+            let formData = new FormData();
+            formData.append('access_key', access_key);
+            formData.append('payment_mode', 'UPI');
+            formData.append('upi_qr', 'true');
+            formData.append('request_mode', 'SUVA');
+            let config = {
+                method: 'POST',
+                url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/initiate_seamless_payment/`,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+                data: formData,
+            };
+            const response = await axios_1.default.request(config);
+            console.log(response.data, 'res');
+            await this.databaseService.CollectRequestModel.findByIdAndUpdate(collect_id, {
+                deepLink: response.data.qr_link,
+            });
+        }
+        catch (error) {
+            console.log(error);
+            throw new Error(error.message);
         }
     }
 };

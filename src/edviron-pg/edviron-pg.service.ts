@@ -6,7 +6,7 @@ import { DatabaseService } from '../database/database.service';
 import { TransactionStatus } from '../types/transactionStatus';
 import { platformChange } from 'src/collect/collect.controller';
 import { calculateSHA512Hash } from 'src/utils/sign';
-
+import axios from 'axios';
 @Injectable()
 export class EdvironPgService implements GatewayService {
   constructor(private readonly databaseService: DatabaseService) {}
@@ -111,6 +111,7 @@ export class EdvironPgService implements GatewayService {
         };
         const { data: easebuzzRes } = await axios.request(options);
         id = easebuzzRes.data;
+        await this.getQr(id, request._id.toString());
         easebuzz_pg = true;
         console.log({ easebuzzRes, _id: request._id });
       }
@@ -119,6 +120,7 @@ export class EdvironPgService implements GatewayService {
       if(request.clientId){
         const { data: cashfreeRes } = await axios.request(config);
         cf_payment_id=cashfreeRes.payment_session_id
+       
       }
       const disabled_modes_string = request.disabled_modes
         .map((mode) => `${mode}=false`)
@@ -331,6 +333,41 @@ export class EdvironPgService implements GatewayService {
     } catch (e) {
       console.log(e);
       throw new BadRequestException('Error fetching payment details');
+    }
+  }
+
+  async getQr(access_key: string, collect_id: string) {
+    try {
+      console.log(access_key);
+      
+      let formData = new FormData();
+      formData.append('access_key', access_key);
+      formData.append('payment_mode', 'UPI');
+      formData.append('upi_qr', 'true');
+      formData.append('request_mode', 'SUVA');
+
+      let config = {
+        method: 'POST',
+        url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/initiate_seamless_payment/`,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        data: formData,
+      };
+
+      const response = await axios.request(config);
+      console.log(response.data,'res');
+      
+      await this.databaseService.CollectRequestModel.findByIdAndUpdate(
+        collect_id,
+        {
+          deepLink: response.data.qr_link,
+        },
+      );
+
+    } catch (error) {
+      console.log(error);
+      throw new Error(error.message);
     }
   }
 }
