@@ -18,10 +18,10 @@ export declare class CollectController {
         amount: Number;
         callbackUrl: string;
         jwt: string;
-        clientId: string;
-        clientSecret: string;
         school_id: string;
         trustee_id: string;
+        clientId?: string;
+        clientSecret?: string;
         webHook?: string;
         disabled_modes?: string[];
         platform_charges: platformChange[];

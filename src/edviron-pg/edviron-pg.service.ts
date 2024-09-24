@@ -42,7 +42,7 @@ export class EdvironPgService implements GatewayService {
           accept: 'application/json',
           'content-type': 'application/json',
           'x-api-version': '2023-08-01',
-          'x-partner-merchantid': request.clientId,
+          'x-partner-merchantid': request.clientId || null,
           'x-partner-apikey': process.env.CASHFREE_API_KEY,
         },
         data: data,
@@ -115,7 +115,11 @@ export class EdvironPgService implements GatewayService {
         console.log({ easebuzzRes, _id: request._id });
       }
 
-      const { data: cashfreeRes } = await axios.request(config);
+      let cf_payment_id=''
+      if(request.clientId){
+        const { data: cashfreeRes } = await axios.request(config);
+        cf_payment_id=cashfreeRes.payment_session_id
+      }
       const disabled_modes_string = request.disabled_modes
         .map((mode) => `${mode}=false`)
         .join('&');
@@ -126,7 +130,7 @@ export class EdvironPgService implements GatewayService {
         url:
           process.env.URL +
           '/edviron-pg/redirect?session_id=' +
-          cashfreeRes.payment_session_id +
+          cf_payment_id +
           '&collect_request_id=' +
           request._id +
           '&amount=' +

@@ -26,7 +26,7 @@ let CollectService = class CollectService {
         this.databaseService = databaseService;
         this.ccavenueService = ccavenueService;
     }
-    async collect(amount, callbackUrl, clientId, clientSecret, school_id, trustee_id, disabled_modes = [], platform_charges, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key) {
+    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key) {
         console.log(req_webhook_urls, 'webhook url');
         console.log(webHook);
         console.log(ccavenue_merchant_id, 'ccavenue', ccavenue_access_code, ccavenue_working_key);

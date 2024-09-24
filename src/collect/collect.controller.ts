@@ -40,10 +40,10 @@ export class CollectController {
       amount: Number;
       callbackUrl: string;
       jwt: string;
-      clientId: string;
-      clientSecret: string;
       school_id: string;
       trustee_id: string;
+      clientId?: string;
+      clientSecret?: string;
       webHook?: string;
       disabled_modes?: string[];
       platform_charges: platformChange[];
@@ -85,6 +85,8 @@ export class CollectController {
     try {
       console.log(disabled_modes);
       let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
+      console.log(decrypted);
+      
       if (
         JSON.stringify({
           ...JSON.parse(JSON.stringify(decrypted)),
@@ -94,8 +96,8 @@ export class CollectController {
         JSON.stringify({
           amount,
           callbackUrl,
-          clientId,
-          clientSecret,
+          // clientId,
+          // clientSecret,
         })
       ) {
         throw new ForbiddenException('Request forged');
@@ -104,12 +106,12 @@ export class CollectController {
         await this.collectService.collect(
           amount,
           callbackUrl,
-          clientId,
-          clientSecret,
           school_id,
           trustee_id,
           disabled_modes,
           platform_charges,
+          clientId,
+          clientSecret,
           webHook,
           additional_data || {},
           custom_order_id,
