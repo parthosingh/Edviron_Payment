@@ -135,7 +135,7 @@ __decorate([
     __metadata("design:type", String)
 ], CollectRequest.prototype, "deepLink", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ type: Object, required: false }),
+    (0, mongoose_1.Prop)({ type: PaymentIds, required: false }),
     __metadata("design:type", PaymentIds)
 ], CollectRequest.prototype, "paymentIds", void 0);
 exports.CollectRequest = CollectRequest = __decorate([

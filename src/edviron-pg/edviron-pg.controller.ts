@@ -1486,6 +1486,8 @@ export class EdvironPgController {
     if(!request){
       throw new NotFoundException('Collect Request not found');
     }
+    console.log(request,'req');
+    
     const {paymentIds}=request
     if(!paymentIds){
       throw new Error('Payment ids not found');

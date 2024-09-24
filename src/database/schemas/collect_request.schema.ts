@@ -94,7 +94,7 @@ export class CollectRequest {
   @Prop({ required: false })
   deepLink: string;
 
-  @Prop({ type:Object, required: false })
+  @Prop({ type: PaymentIds, required: false })
   paymentIds: PaymentIds;
 
   _id: ObjectId;

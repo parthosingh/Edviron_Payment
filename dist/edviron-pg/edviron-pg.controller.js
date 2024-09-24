@@ -1086,6 +1086,7 @@ let EdvironPgController = class EdvironPgController {
         if (!request) {
             throw new common_1.NotFoundException('Collect Request not found');
         }
+        console.log(request, 'req');
         const { paymentIds } = request;
         if (!paymentIds) {
             throw new Error('Payment ids not found');

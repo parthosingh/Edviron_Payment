@@ -23,6 +23,10 @@ export class EdvironPgService implements GatewayService {
         easebuzz_dc_id: null,
         ccavenue_id: null,
       }
+      const collectReq=await this.databaseService.CollectRequestModel.findById(request._id)
+      if(!collectReq){
+        throw new BadRequestException('Collect request not found');
+      }
       const schoolName = school_name.replace(/ /g, '-'); //replace spaces because url dosent support spaces
       const axios = require('axios');
       let data = JSON.stringify({
@@ -137,6 +141,8 @@ export class EdvironPgService implements GatewayService {
       const encodedPlatformCharges = encodeURIComponent(
         JSON.stringify(platform_charges),
       );
+      collectReq.paymentIds=paymentInfo
+      await collectReq.save();
       return {
         url:
           process.env.URL +

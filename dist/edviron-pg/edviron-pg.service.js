@@ -28,6 +28,10 @@ let EdvironPgService = class EdvironPgService {
                 easebuzz_dc_id: null,
                 ccavenue_id: null,
             };
+            const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
+            if (!collectReq) {
+                throw new common_1.BadRequestException('Collect request not found');
+            }
             const schoolName = school_name.replace(/ /g, '-');
             const axios = require('axios');
             let data = JSON.stringify({
@@ -124,6 +128,8 @@ let EdvironPgService = class EdvironPgService {
                 .map((mode) => `${mode}=false`)
                 .join('&');
             const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
+            collectReq.paymentIds = paymentInfo;
+            await collectReq.save();
             return {
                 url: process.env.URL +
                     '/edviron-pg/redirect?session_id=' +
