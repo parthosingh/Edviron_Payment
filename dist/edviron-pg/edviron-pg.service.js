@@ -291,7 +291,7 @@ let EdvironPgService = class EdvironPgService {
             console.log(access_key);
             let formData = new FormData();
             formData.append('access_key', access_key);
-            formData.append('payment_mode', 'UPI');
+            formData.append('payment_mode', `['UPI']`);
             formData.append('upi_qr', 'true');
             formData.append('request_mode', 'SUVA');
             let config = {
