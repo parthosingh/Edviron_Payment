@@ -35,17 +35,6 @@ let CollectController = class CollectController {
             console.log(disabled_modes);
             let decrypted = _jwt.verify(jwt, process.env.KEY);
             console.log(decrypted);
-            if (JSON.stringify({
-                ...JSON.parse(JSON.stringify(decrypted)),
-                iat: undefined,
-                exp: undefined,
-            }) !==
-                JSON.stringify({
-                    amount,
-                    callbackUrl,
-                })) {
-                throw new common_1.ForbiddenException('Request forged');
-            }
             return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, school_id, trustee_id, disabled_modes, platform_charges, clientId, clientSecret, webHook, additional_data || {}, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key));
         }
         catch (e) {

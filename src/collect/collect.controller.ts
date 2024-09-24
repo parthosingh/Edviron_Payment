@@ -87,21 +87,11 @@ export class CollectController {
       let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
       console.log(decrypted);
       
-      if (
-        JSON.stringify({
-          ...JSON.parse(JSON.stringify(decrypted)),
-          iat: undefined,
-          exp: undefined,
-        }) !==
-        JSON.stringify({
-          amount,
-          callbackUrl,
-          // clientId,
-          // clientSecret,
-        })
-      ) {
-        throw new ForbiddenException('Request forged');
-      }
+      // if (
+      //   decrypted.amount !== amount || decrypted.callbackUrl !== callbackUrl
+      // ) {
+      //   throw new ForbiddenException('Request forged');
+      // }
       return sign(
         await this.collectService.collect(
           amount,
