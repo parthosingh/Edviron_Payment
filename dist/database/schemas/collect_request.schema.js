@@ -21,29 +21,32 @@ var Gateway;
     Gateway["EDVIRON_EASEBUZZ"] = "EDVIRON_EASEBUZZ";
     Gateway["PENDING"] = "PENDING";
 })(Gateway || (exports.Gateway = Gateway = {}));
-class PaymentIds {
-}
+let PaymentIds = class PaymentIds {
+};
 exports.PaymentIds = PaymentIds;
 __decorate([
-    (0, mongoose_1.Prop)({ required: false, }),
+    (0, mongoose_1.Prop)({ type: String, required: false }),
     __metadata("design:type", Object)
 ], PaymentIds.prototype, "cashfree_id", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: false }),
+    (0, mongoose_1.Prop)({ type: String, required: false }),
     __metadata("design:type", Object)
 ], PaymentIds.prototype, "easebuzz_id", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: false }),
+    (0, mongoose_1.Prop)({ type: String, required: false }),
     __metadata("design:type", Object)
 ], PaymentIds.prototype, "easebuzz_cc_id", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: false }),
+    (0, mongoose_1.Prop)({ type: String, required: false }),
     __metadata("design:type", Object)
 ], PaymentIds.prototype, "easebuzz_dc_id", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: false }),
+    (0, mongoose_1.Prop)({ type: String, required: false }),
     __metadata("design:type", Object)
 ], PaymentIds.prototype, "ccavenue_id", void 0);
+exports.PaymentIds = PaymentIds = __decorate([
+    (0, mongoose_1.Schema)()
+], PaymentIds);
 let CollectRequest = class CollectRequest {
 };
 exports.CollectRequest = CollectRequest;

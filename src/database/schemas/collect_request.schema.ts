@@ -12,22 +12,22 @@ export enum Gateway {
 }
 
 
+@Schema()
 export class PaymentIds {
-  @Prop({ required: false, })
+  @Prop({ type: String, required: false })
   cashfree_id?: string | null;
 
-  @Prop({ required: false })
+  @Prop({ type: String, required: false })
   easebuzz_id?: string | null;
 
-  @Prop({ required: false })
+  @Prop({ type: String, required: false })
   easebuzz_cc_id?: string | null;
 
-  @Prop({ required: false })
+  @Prop({ type: String, required: false })
   easebuzz_dc_id?: string | null;
 
-  @Prop({ required: false })
+  @Prop({ type: String, required: false })
   ccavenue_id?: string | null;
-
 }
 
 @Schema({ timestamps: true })
