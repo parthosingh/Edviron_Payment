@@ -631,6 +631,8 @@ export class EdvironPgController {
       await this.databaseService.CollectRequestModel.findById(collectIdObject);
     if (!collectReq) throw new Error('Collect request not found');
 
+    collectReq.gateway=Gateway.EDVIRON_EASEBUZZ
+    await collectReq.save()
     const transaction_amount = body.net_amount_debit || null;
     // const payment_method = body.mode || null;
     let payment_method;
