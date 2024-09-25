@@ -184,9 +184,9 @@ let EdvironPgService = class EdvironPgService {
             const collect_status = await this.databaseService.CollectRequestStatusModel.findOne({
                 collect_id: collect_request_id,
             });
-            let transaction_time = "";
+            let transaction_time = '';
             if (order_status_to_transaction_status_map[cashfreeRes.order_status] === transactionStatus_1.TransactionStatus.SUCCESS) {
-                transaction_time = collect_status?.updatedAt?.toString();
+                transaction_time = collect_status?.updatedAt?.toISOString();
             }
             const checkStatus = order_status_to_transaction_status_map[cashfreeRes.order_status];
             let status_code;

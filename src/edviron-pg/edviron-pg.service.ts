@@ -1,5 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CollectRequest, PaymentIds } from '../database/schemas/collect_request.schema';
+import {
+  CollectRequest,
+  PaymentIds,
+} from '../database/schemas/collect_request.schema';
 import { GatewayService } from '../types/gateway.type';
 import { Transaction } from '../types/transaction';
 import { DatabaseService } from '../database/database.service';
@@ -16,15 +19,16 @@ export class EdvironPgService implements GatewayService {
     school_name: any,
   ): Promise<Transaction | undefined> {
     try {
-      let paymentInfo:PaymentIds={
-        cashfree_id:null,
+      let paymentInfo: PaymentIds = {
+        cashfree_id: null,
         easebuzz_id: null,
         easebuzz_cc_id: null,
         easebuzz_dc_id: null,
         ccavenue_id: null,
-      }
-      const collectReq=await this.databaseService.CollectRequestModel.findById(request._id)
-      if(!collectReq){
+      };
+      const collectReq =
+        await this.databaseService.CollectRequestModel.findById(request._id);
+      if (!collectReq) {
         throw new BadRequestException('Collect request not found');
       }
       const schoolName = school_name.replace(/ /g, '-'); //replace spaces because url dosent support spaces
@@ -122,18 +126,17 @@ export class EdvironPgService implements GatewayService {
         };
         const { data: easebuzzRes } = await axios.request(options);
         id = easebuzzRes.data;
-        paymentInfo.easebuzz_id=id || null
+        paymentInfo.easebuzz_id = id || null;
         // await this.getQr(id, request._id.toString()); // uncomment after fixing easebuzz QR code issue
         easebuzz_pg = true;
         console.log({ easebuzzRes, _id: request._id });
       }
 
-      let cf_payment_id=''
-      if(request.clientId){
+      let cf_payment_id = '';
+      if (request.clientId) {
         const { data: cashfreeRes } = await axios.request(config);
-        cf_payment_id=cashfreeRes.payment_session_id
-        paymentInfo.cashfree_id=cf_payment_id || null;
-       
+        cf_payment_id = cashfreeRes.payment_session_id;
+        paymentInfo.cashfree_id = cf_payment_id || null;
       }
       const disabled_modes_string = request.disabled_modes
         .map((mode) => `${mode}=false`)
@@ -141,7 +144,7 @@ export class EdvironPgService implements GatewayService {
       const encodedPlatformCharges = encodeURIComponent(
         JSON.stringify(platform_charges),
       );
-      collectReq.paymentIds=paymentInfo
+      collectReq.paymentIds = paymentInfo;
       await collectReq.save();
       return {
         url:
@@ -176,7 +179,13 @@ export class EdvironPgService implements GatewayService {
   async checkStatus(
     collect_request_id: String,
     collect_request: CollectRequest,
-  ): Promise<{ status: TransactionStatus; amount: number; status_code?:number; details?: any,custom_order_id?:string }> {
+  ): Promise<{
+    status: TransactionStatus;
+    amount: number;
+    status_code?: number;
+    details?: any;
+    custom_order_id?: string;
+  }> {
     const axios = require('axios');
 
     let config = {
@@ -190,65 +199,63 @@ export class EdvironPgService implements GatewayService {
         'x-partner-apikey': process.env.CASHFREE_API_KEY,
       },
     };
-    try{
+    try {
+      const { data: cashfreeRes } = await axios.request(config);
 
- 
-    const { data: cashfreeRes } = await axios.request(config);
- 
-    console.log(cashfreeRes,'cashfree status response');
-    
+      console.log(cashfreeRes, 'cashfree status response');
 
-    const order_status_to_transaction_status_map = {
-      ACTIVE: TransactionStatus.PENDING,
-      PAID: TransactionStatus.SUCCESS,
-      EXPIRED: TransactionStatus.FAILURE,
-      TERMINATED: TransactionStatus.FAILURE,
-      TERMINATION_REQUESTED: TransactionStatus.FAILURE,
-    };
+      const order_status_to_transaction_status_map = {
+        ACTIVE: TransactionStatus.PENDING,
+        PAID: TransactionStatus.SUCCESS,
+        EXPIRED: TransactionStatus.FAILURE,
+        TERMINATED: TransactionStatus.FAILURE,
+        TERMINATION_REQUESTED: TransactionStatus.FAILURE,
+      };
 
-    const collect_status =
-      await this.databaseService.CollectRequestStatusModel.findOne({
-        collect_id: collect_request_id,
-      });
-      let transaction_time=""
-      if(order_status_to_transaction_status_map[
-        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
-      ]===TransactionStatus.SUCCESS){
-        transaction_time=collect_status?.updatedAt?.toString() as string
-      }
-      const checkStatus=order_status_to_transaction_status_map[
-        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
-      ]
-      let status_code
-      if(checkStatus===TransactionStatus.SUCCESS){
-        status_code=200
-      }else{
-        status_code=400
-      }
-    
-    return {
-      status:
+      const collect_status =
+        await this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: collect_request_id,
+        });
+      let transaction_time = '';
+      if (
         order_status_to_transaction_status_map[
           cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
-        ],
-      amount: cashfreeRes.order_amount,
-      status_code,
-      details: {
-        bank_ref:
-          collect_status?.bank_reference && collect_status?.bank_reference,
-        payment_methods:
-          collect_status?.details &&
-          JSON.parse(collect_status.details as string),
-        transaction_time,
-        order_status: cashfreeRes.order_status,
-      },
-      
-    };
-  }catch(e){
-    console.log(e);
-    throw new BadRequestException(e.message)
-    
-  }
+        ] === TransactionStatus.SUCCESS
+      ) {
+        transaction_time = collect_status?.updatedAt?.toISOString() as string;
+      }
+      const checkStatus =
+        order_status_to_transaction_status_map[
+          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+        ];
+      let status_code;
+      if (checkStatus === TransactionStatus.SUCCESS) {
+        status_code = 200;
+      } else {
+        status_code = 400;
+      }
+
+      return {
+        status:
+          order_status_to_transaction_status_map[
+            cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+          ],
+        amount: cashfreeRes.order_amount,
+        status_code,
+        details: {
+          bank_ref:
+            collect_status?.bank_reference && collect_status?.bank_reference,
+          payment_methods:
+            collect_status?.details &&
+            JSON.parse(collect_status.details as string),
+          transaction_time,
+          order_status: cashfreeRes.order_status,
+        },
+      };
+    } catch (e) {
+      console.log(e);
+      throw new BadRequestException(e.message);
+    }
   }
 
   async easebuzzCheckStatus(
@@ -354,7 +361,7 @@ export class EdvironPgService implements GatewayService {
   async getQr(access_key: string, collect_id: string) {
     try {
       console.log(access_key);
-      
+
       let formData = new FormData();
       formData.append('access_key', access_key);
       formData.append('payment_mode', `['UPI']`);
@@ -371,15 +378,14 @@ export class EdvironPgService implements GatewayService {
       };
 
       const response = await axios.request(config);
-      console.log(response.data,'res');
-      
+      console.log(response.data, 'res');
+
       await this.databaseService.CollectRequestModel.findByIdAndUpdate(
         collect_id,
         {
           deepLink: response.data.qr_link,
         },
       );
-
     } catch (error) {
       console.log(error);
       throw new Error(error.message);

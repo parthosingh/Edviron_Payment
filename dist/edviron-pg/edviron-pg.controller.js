@@ -1082,6 +1082,7 @@ let EdvironPgController = class EdvironPgController {
         return { cashfreeSum, easebuzzSum, percentageCashfree, percentageEasebuzz };
     }
     async getPgStatus(collect_id) {
+        console.log(collect_id);
         const request = await this.databaseService.CollectRequestModel.findById(collect_id);
         if (!request) {
             throw new common_1.NotFoundException('Collect Request not found');

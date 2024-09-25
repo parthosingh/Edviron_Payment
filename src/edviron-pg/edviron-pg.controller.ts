@@ -1482,6 +1482,8 @@ export class EdvironPgController {
 
   @Get('/pg-status')
   async getPgStatus(@Query('collect_id') collect_id: string) {
+    console.log(collect_id);
+    
     const request=await this.databaseService.CollectRequestModel.findById(collect_id)
     if(!request){
       throw new NotFoundException('Collect Request not found');
