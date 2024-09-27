@@ -48,7 +48,7 @@ export class CollectService {
     if (custom_order_id) {
       const count =
         await this.databaseService.CollectRequestModel.countDocuments({
-          trustee_id,
+          school_id,
           custom_order_id,
         });
 

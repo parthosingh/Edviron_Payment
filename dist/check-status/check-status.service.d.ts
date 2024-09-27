@@ -39,7 +39,7 @@ export declare class CheckStatusService {
         amount: number;
         status_code: number;
     } | undefined>;
-    checkStatusByOrderId(order_id: String, trusteeId: string): Promise<{
+    checkStatusByOrderId(order_id: String, school_id: string): Promise<{
         status: TransactionStatus;
         amount: number;
     } | {

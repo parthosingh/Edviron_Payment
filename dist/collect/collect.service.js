@@ -32,7 +32,7 @@ let CollectService = class CollectService {
         console.log(ccavenue_merchant_id, 'ccavenue', ccavenue_access_code, ccavenue_working_key);
         if (custom_order_id) {
             const count = await this.databaseService.CollectRequestModel.countDocuments({
-                trustee_id,
+                school_id,
                 custom_order_id,
             });
             if (count > 0) {

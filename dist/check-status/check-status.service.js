@@ -102,11 +102,11 @@ let CheckStatusService = class CheckStatusService {
                 };
         }
     }
-    async checkStatusByOrderId(order_id, trusteeId) {
+    async checkStatusByOrderId(order_id, school_id) {
         console.log('checking status for custom order id', order_id);
         const collectRequest = await this.databaseService.CollectRequestModel.findOne({
             custom_order_id: order_id,
-            trustee_id: trusteeId,
+            school_id,
         });
         if (!collectRequest) {
             console.log('Collect request not found', order_id);

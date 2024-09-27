@@ -29,6 +29,7 @@ let CheckStatusController = class CheckStatusController {
         if (!jwt)
             throw new common_1.BadRequestException('JWT is required');
         const decrypted = _jwt.verify(jwt, process.env.KEY);
+        console.log(decrypted);
         if (JSON.stringify({
             transactionId: decrypted.transactionId,
         }) !==
@@ -38,7 +39,7 @@ let CheckStatusController = class CheckStatusController {
             throw new Error('Request forged');
         }
         else {
-            const status = await this.checkStatusService.checkStatusByOrderId(transactionId, decrypted.trusteeId);
+            const status = await this.checkStatusService.checkStatusByOrderId(transactionId, decrypted.school_id);
             return (0, sign_1.sign)(status);
         }
     }
