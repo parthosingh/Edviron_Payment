@@ -132,9 +132,13 @@ export class CollectController {
     if(!collect_request){
       throw new BadRequestException('tranaction missing')
     }
-      const callbackUrl = new URL(collect_request.callbackUrl);
+      let callbackUrl = new URL(collect_request.callbackUrl);
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_id);
-    const callback_url = `${collect_request?.callbackUrl}&status=cancelled&reason=dropped-by-user`;
-    res.redirect(callback_url);
+    callbackUrl.searchParams.set('status', 'cancelled');
+    callbackUrl.searchParams.set('reason', 'dropped-by-user');
+    res.redirect(callbackUrl.toString());
+
+    // const callback_url = `${collect_request?.callbackUrl}&status=cancelled&reason=dropped-by-user`;
+    // res.redirect(callback_url);
   }
 }
