@@ -209,7 +209,7 @@ export class EdvironPgController {
       return res.redirect(
         `${callbackUrl.toString()}&status=cancelled&reason=Payment-declined`,
       );
-    }
+    } 
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
     return res.redirect(callbackUrl.toString());
   }
@@ -254,8 +254,9 @@ export class EdvironPgController {
       if (reason === 'Collect Expired') {
         reason = 'Order Expired';
       }
+      callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
       return res.redirect(
-        `${callbackUrl.toString()}?EdvironCollectRequestId=${collect_request_id}&status=cancelled&reason=${reason}`,
+        `${callbackUrl.toString()}&status=cancelled&reason=${reason}`,
       );
     }
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);

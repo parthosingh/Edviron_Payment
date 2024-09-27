@@ -46,7 +46,12 @@ let CollectController = class CollectController {
     }
     async callbackUrl(res, collect_id) {
         const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id);
-        const callback_url = `${collect_request?.callbackUrl}?EdvironCollectRequestId=${collect_id}&status=cancelled&reason=dropped-by-user`;
+        if (!collect_request) {
+            throw new common_1.BadRequestException('tranaction missing');
+        }
+        const callbackUrl = new URL(collect_request.callbackUrl);
+        callbackUrl.searchParams.set('EdvironCollectRequestId', collect_id);
+        const callback_url = `${collect_request?.callbackUrl}&status=cancelled&reason=dropped-by-user`;
         res.redirect(callback_url);
     }
 };
