@@ -20,15 +20,16 @@ export const calculateSHA256 = async (data: any) => {
 };
 
 export const merchantKeySHA256 = async () => {
-  // const merchantKey = process.env.EASEBUZZ_KEY;
-   const merchantKey = "S128810WGAA"
+  const merchantKey = process.env.EASEBUZZ_KEY;
+  const salt = process.env.EASEBUZZ_SALT;
+  console.log({merchantKey,salt});
+  
   const key = crypto
     .createHash('sha256')
     .update(merchantKey)
     .digest()
     .toString('hex')
     .slice(0, 32);
-  const salt = process.env.EASEBUZZ_SALT;
   const iv = crypto
     .createHash('sha256')
     .update(salt)
