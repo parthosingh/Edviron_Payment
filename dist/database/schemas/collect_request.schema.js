@@ -35,6 +35,10 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({ type: String, required: false }),
     __metadata("design:type", Object)
+], PaymentIds.prototype, "easebuzz_upi_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, required: false }),
+    __metadata("design:type", Object)
 ], PaymentIds.prototype, "easebuzz_cc_id", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ type: String, required: false }),

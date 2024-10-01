@@ -21,6 +21,9 @@ export class PaymentIds {
   easebuzz_id?: string | null;
 
   @Prop({ type: String, required: false })
+  easebuzz_upi_id?: string | null;
+
+  @Prop({ type: String, required: false })
   easebuzz_cc_id?: string | null;
 
   @Prop({ type: String, required: false })

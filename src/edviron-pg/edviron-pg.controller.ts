@@ -1399,6 +1399,12 @@ export class EdvironPgController {
     }
   }
 
+  // https://payements.edviron.com/edviron-pg/easebuzz/settlement
+  @Post('easebuzz/settlement')
+  async easebuzzSettlement(@Body() body:any){
+    
+  }
+
   // @Get('/payments-info')
   // async getpaymentsInfo(@Query('collect_id') collect_id: string) {
   //   try {

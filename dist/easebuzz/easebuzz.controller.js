@@ -15,6 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EasebuzzController = void 0;
 const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
+const sign_1 = require("../utils/sign");
+const sign_2 = require("../utils/sign");
 let EasebuzzController = class EasebuzzController {
     constructor(databaseService) {
         this.databaseService = databaseService;
@@ -36,6 +38,34 @@ let EasebuzzController = class EasebuzzController {
             throw new common_1.BadRequestException(error.message);
         }
     }
+    async getEncryptedInfo(res, req, body) {
+        console.log('encrypting key and iv');
+        const { key, iv } = await (0, sign_1.merchantKeySHA256)();
+        console.log('key and iv generated', { key, iv });
+        console.log(`encrypting data: ${body.card_number}`);
+        const card_number = await (0, sign_2.encryptCard)(body.card_number, key, iv);
+        const card_holder = await (0, sign_2.encryptCard)(body.card_holder_name, key, iv);
+        const card_cvv = await (0, sign_2.encryptCard)(body.card_cvv, key, iv);
+        const card_exp = await (0, sign_2.encryptCard)(body.card_exp, key, iv);
+        const decrypt_card_number = await (0, sign_1.decrypt)(card_number, key, iv);
+        const decrypt_cvv = await (0, sign_1.decrypt)(card_cvv, key, iv);
+        const decrypt_exp = await (0, sign_1.decrypt)(card_exp, key, iv);
+        const decrypt_card_holder_name = await (0, sign_1.decrypt)(card_holder, key, iv);
+        return res.send({
+            encryptedData: {
+                card_number,
+                card_holder,
+                card_cvv,
+                card_exp,
+            },
+            decryptedData: {
+                decrypt_card_number,
+                decrypt_cvv,
+                decrypt_exp,
+                decrypt_card_holder_name
+            }
+        });
+    }
 };
 exports.EasebuzzController = EasebuzzController;
 __decorate([
@@ -46,6 +76,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], EasebuzzController.prototype, "getQr", null);
+__decorate([
+    (0, common_1.Get)('/encrypted-info'),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Req)()),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], EasebuzzController.prototype, "getEncryptedInfo", null);
 exports.EasebuzzController = EasebuzzController = __decorate([
     (0, common_1.Controller)('easebuzz'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService])

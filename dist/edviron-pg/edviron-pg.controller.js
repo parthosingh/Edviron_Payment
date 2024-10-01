@@ -1046,6 +1046,8 @@ let EdvironPgController = class EdvironPgController {
             throw new Error(e.message);
         }
     }
+    async easebuzzSettlement(body) {
+    }
     async getGatewayName(req) {
         try {
             const token = req.query.token;
@@ -1203,6 +1205,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getSchoolId", null);
+__decorate([
+    (0, common_1.Post)('easebuzz/settlement'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "easebuzzSettlement", null);
 __decorate([
     (0, common_1.Get)('gatewat-name'),
     __param(0, (0, common_1.Req)()),

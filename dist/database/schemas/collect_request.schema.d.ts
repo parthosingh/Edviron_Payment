@@ -35,6 +35,7 @@ export declare enum Gateway {
 export declare class PaymentIds {
     cashfree_id?: string | null;
     easebuzz_id?: string | null;
+    easebuzz_upi_id?: string | null;
     easebuzz_cc_id?: string | null;
     easebuzz_dc_id?: string | null;
     ccavenue_id?: string | null;
