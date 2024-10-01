@@ -39,31 +39,24 @@ let EasebuzzController = class EasebuzzController {
         }
     }
     async getEncryptedInfo(res, req, body) {
+        const { card_number, card_holder, card_cvv, card_exp } = req.query;
         console.log('encrypting key and iv');
         const { key, iv } = await (0, sign_1.merchantKeySHA256)();
         console.log('key and iv generated', { key, iv });
-        console.log(`encrypting data: ${body.card_number}`);
-        const card_number = await (0, sign_2.encryptCard)(body.card_number, key, iv);
-        const card_holder = await (0, sign_2.encryptCard)(body.card_holder_name, key, iv);
-        const card_cvv = await (0, sign_2.encryptCard)(body.card_cvv, key, iv);
-        const card_exp = await (0, sign_2.encryptCard)(body.card_exp, key, iv);
-        const decrypt_card_number = await (0, sign_1.decrypt)(card_number, key, iv);
-        const decrypt_cvv = await (0, sign_1.decrypt)(card_cvv, key, iv);
-        const decrypt_exp = await (0, sign_1.decrypt)(card_exp, key, iv);
-        const decrypt_card_holder_name = await (0, sign_1.decrypt)(card_holder, key, iv);
+        console.log(`encrypting data: ${card_number}`);
+        const enc_card_number = await (0, sign_2.encryptCard)(card_number, key, iv);
+        const enc_card_holder = await (0, sign_2.encryptCard)(card_holder, key, iv);
+        const enc_card_cvv = await (0, sign_2.encryptCard)(card_cvv, key, iv);
+        const enc_card_exp = await (0, sign_2.encryptCard)(card_exp, key, iv);
+        const decrypt_card_number = await (0, sign_1.decrypt)(enc_card_number, key, iv);
+        const decrypt_cvv = await (0, sign_1.decrypt)(enc_card_cvv, key, iv);
+        const decrypt_exp = await (0, sign_1.decrypt)(enc_card_exp, key, iv);
+        const decrypt_card_holder_name = await (0, sign_1.decrypt)(enc_card_holder, key, iv);
         return res.send({
-            encryptedData: {
-                card_number,
-                card_holder,
-                card_cvv,
-                card_exp,
-            },
-            decryptedData: {
-                decrypt_card_number,
-                decrypt_cvv,
-                decrypt_exp,
-                decrypt_card_holder_name
-            }
+            card_number: enc_card_number,
+            card_holder: enc_card_holder,
+            card_cvv: enc_card_cvv,
+            card_exp: enc_card_exp,
         });
     }
 };
