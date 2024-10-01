@@ -1046,8 +1046,7 @@ let EdvironPgController = class EdvironPgController {
             throw new Error(e.message);
         }
     }
-    async easebuzzSettlement(body) {
-    }
+    async easebuzzSettlement(body) { }
     async getGatewayName(req) {
         try {
             const token = req.query.token;
@@ -1081,8 +1080,20 @@ let EdvironPgController = class EdvironPgController {
             }
         }
         const totalTransactionAmount = cashfreeSum + easebuzzSum;
-        const percentageCashfree = parseFloat(((cashfreeSum / totalTransactionAmount) * 100).toFixed(2));
-        const percentageEasebuzz = parseFloat(((easebuzzSum / totalTransactionAmount) * 100).toFixed(2));
+        let percentageCashfree = 0;
+        let percentageEasebuzz = 0;
+        if (cashfreeSum !== 0) {
+            percentageCashfree = parseFloat(((cashfreeSum / totalTransactionAmount) * 100).toFixed(2));
+        }
+        if (easebuzzSum !== 0) {
+            percentageEasebuzz = parseFloat(((easebuzzSum / totalTransactionAmount) * 100).toFixed(2));
+        }
+        console.log({
+            cashfreeSum,
+            easebuzzSum,
+            percentageCashfree,
+            percentageEasebuzz,
+        });
         return { cashfreeSum, easebuzzSum, percentageCashfree, percentageEasebuzz };
     }
     async getPgStatus(collect_id) {
@@ -1098,7 +1109,7 @@ let EdvironPgController = class EdvironPgController {
         }
         let pgStatus = {
             cashfree: false,
-            easebuzz: false
+            easebuzz: false,
         };
         if (paymentIds.cashfree_id) {
             pgStatus.cashfree = true;

@@ -205,11 +205,14 @@ export class EdvironPgController {
     }
     const callbackUrl = new URL(collectRequest?.callbackUrl);
     if (status !== `SUCCESS`) {
-      callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
+      callbackUrl.searchParams.set(
+        'EdvironCollectRequestId',
+        collect_request_id,
+      );
       return res.redirect(
         `${callbackUrl.toString()}&status=cancelled&reason=Payment-declined`,
       );
-    } 
+    }
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
     return res.redirect(callbackUrl.toString());
   }
@@ -254,7 +257,10 @@ export class EdvironPgController {
       if (reason === 'Collect Expired') {
         reason = 'Order Expired';
       }
-      callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
+      callbackUrl.searchParams.set(
+        'EdvironCollectRequestId',
+        collect_request_id,
+      );
       return res.redirect(
         `${callbackUrl.toString()}&status=cancelled&reason=${reason}`,
       );
@@ -633,8 +639,8 @@ export class EdvironPgController {
       await this.databaseService.CollectRequestModel.findById(collectIdObject);
     if (!collectReq) throw new Error('Collect request not found');
 
-    collectReq.gateway=Gateway.EDVIRON_EASEBUZZ
-    await collectReq.save()
+    collectReq.gateway = Gateway.EDVIRON_EASEBUZZ;
+    await collectReq.save();
     const transaction_amount = body.net_amount_debit || null;
     // const payment_method = body.mode || null;
     let payment_method;
@@ -1390,10 +1396,10 @@ export class EdvironPgController {
     try {
       const collect_request =
         await this.databaseService.CollectRequestModel.findById(collect_id);
-     if(!collect_request){
-       throw new NotFoundException('Collect Request not found');
-     }
-     return collect_request.school_id
+      if (!collect_request) {
+        throw new NotFoundException('Collect Request not found');
+      }
+      return collect_request.school_id;
     } catch (e) {
       throw new Error(e.message);
     }
@@ -1401,9 +1407,7 @@ export class EdvironPgController {
 
   // https://payements.edviron.com/edviron-pg/easebuzz/settlement
   @Post('easebuzz/settlement')
-  async easebuzzSettlement(@Body() body:any){
-    
-  }
+  async easebuzzSettlement(@Body() body: any) {}
 
   // @Get('/payments-info')
   // async getpaymentsInfo(@Query('collect_id') collect_id: string) {
@@ -1477,13 +1481,25 @@ export class EdvironPgController {
     }
 
     const totalTransactionAmount = cashfreeSum + easebuzzSum;
+    let percentageCashfree = 0;
+    let percentageEasebuzz = 0;
+    if (cashfreeSum !== 0) {
+      percentageCashfree = parseFloat(
+        ((cashfreeSum / totalTransactionAmount) * 100).toFixed(2),
+      );
+    }
+    if(easebuzzSum !==0){
 
-    const percentageCashfree = parseFloat(
-      ((cashfreeSum / totalTransactionAmount) * 100).toFixed(2),
-    );
-    const percentageEasebuzz = parseFloat(
-      ((easebuzzSum / totalTransactionAmount) * 100).toFixed(2),
-    );
+       percentageEasebuzz = parseFloat(
+        ((easebuzzSum / totalTransactionAmount) * 100).toFixed(2),
+      );
+    }
+    console.log({
+      cashfreeSum,
+      easebuzzSum,
+      percentageCashfree,
+      percentageEasebuzz,
+    });
 
     return { cashfreeSum, easebuzzSum, percentageCashfree, percentageEasebuzz };
   }
@@ -1491,26 +1507,27 @@ export class EdvironPgController {
   @Get('/pg-status')
   async getPgStatus(@Query('collect_id') collect_id: string) {
     console.log(collect_id);
-    
-    const request=await this.databaseService.CollectRequestModel.findById(collect_id)
-    if(!request){
+
+    const request =
+      await this.databaseService.CollectRequestModel.findById(collect_id);
+    if (!request) {
       throw new NotFoundException('Collect Request not found');
     }
-    console.log(request,'req');
-    
-    const {paymentIds}=request
-    if(!paymentIds){
+    console.log(request, 'req');
+
+    const { paymentIds } = request;
+    if (!paymentIds) {
       throw new Error('Payment ids not found');
     }
-    let pgStatus={
-      cashfree:false,
-      easebuzz:false
+    let pgStatus = {
+      cashfree: false,
+      easebuzz: false,
+    };
+    if (paymentIds.cashfree_id) {
+      pgStatus.cashfree = true;
     }
-    if(paymentIds.cashfree_id){
-      pgStatus.cashfree=true
-    }
-    if(paymentIds.easebuzz_id){
-      pgStatus.easebuzz=true
+    if (paymentIds.easebuzz_id) {
+      pgStatus.easebuzz = true;
     }
     return pgStatus;
   }
