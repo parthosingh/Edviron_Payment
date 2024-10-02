@@ -7,10 +7,11 @@ import { HdfcModule } from 'src/hdfc/hdfc.module';
 import { EdvironPgModule } from '../edviron-pg/edviron-pg.module';
 import { CcavenueModule } from 'src/ccavenue/ccavenue.module';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
+import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 
 @Module({
   controllers: [CheckStatusController],
-  providers: [CheckStatusService,CcavenueService],
+  providers: [CheckStatusService,CcavenueService,EasebuzzService],
   imports: [DatabaseModule, PhonepeModule, HdfcModule, EdvironPgModule],
 })
 export class CheckStatusModule {}

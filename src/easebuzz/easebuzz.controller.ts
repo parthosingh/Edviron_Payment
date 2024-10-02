@@ -63,6 +63,7 @@ export class EasebuzzController {
     const decrypt_exp = await decrypt(enc_card_exp, key, iv);
     const decrypt_card_holder_name = await decrypt(enc_card_holder, key, iv);
 
+    console.log(decrypt_card_holder_name,decrypt_cvv,decrypt_card_number,decrypt_exp);
     
     return res.send({
       card_number: enc_card_number,

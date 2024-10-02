@@ -23,10 +23,12 @@ const mongoose_1 = require("mongoose");
 const jwt = require("jsonwebtoken");
 const transactionStatus_1 = require("../types/transactionStatus");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
+const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 let EdvironPgController = class EdvironPgController {
-    constructor(edvironPgService, databaseService) {
+    constructor(edvironPgService, databaseService, easebuzzService) {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
+        this.easebuzzService = easebuzzService;
     }
     async handleRedirect(req, res) {
         const wallet = req.query.wallet;
@@ -169,7 +171,7 @@ let EdvironPgController = class EdvironPgController {
         const collectRequest = (await this.databaseService.CollectRequestModel.findById(collect_request_id));
         collectRequest.gateway = collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ;
         await collectRequest.save();
-        const reqToCheck = await this.edvironPgService.easebuzzCheckStatus(collect_request_id, collectRequest);
+        const reqToCheck = await this.easebuzzService.statusResponse(collect_request_id, collectRequest);
         const status = reqToCheck.msg.status;
         if (collectRequest?.sdkPayment) {
             if (status === `success`) {
@@ -180,7 +182,7 @@ let EdvironPgController = class EdvironPgController {
             return res.redirect(`${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}&EdvironCollectRequestId=${collect_request_id}`);
         }
         const callbackUrl = new URL(collectRequest?.callbackUrl);
-        if (status !== `success`) {
+        if (status.toLocaleLowerCase() !== `success`) {
             console.log('failure');
             let reason = reqToCheck?.msg?.error_Message || 'payment-declined';
             if (reason === 'Collect Expired') {
@@ -198,7 +200,7 @@ let EdvironPgController = class EdvironPgController {
         const collectRequest = (await this.databaseService.CollectRequestModel.findById(collect_request_id));
         collectRequest.gateway = collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ;
         await collectRequest.save();
-        const reqToCheck = await this.edvironPgService.easebuzzCheckStatus(collect_request_id, collectRequest);
+        const reqToCheck = await this.easebuzzService.statusResponse(collect_request_id, collectRequest);
         const status = reqToCheck.msg.status;
         if (collectRequest?.sdkPayment) {
             if (status === `success`) {
@@ -209,9 +211,14 @@ let EdvironPgController = class EdvironPgController {
             return res.redirect(`${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}`);
         }
         const callbackUrl = new URL(collectRequest?.callbackUrl);
-        if (status !== `success`) {
+        if (status.toLocaleLowerCase() !== `success`) {
             console.log('failure');
-            return res.redirect(`${callbackUrl.toString()}?EdvironCollectRequestId=${collect_request_id}&status=cancelled&reason=payment-declined`);
+            let reason = reqToCheck?.msg?.error_Message || 'payment-declined';
+            if (reason === 'Collect Expired') {
+                reason = 'Order Expired';
+            }
+            callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
+            return res.redirect(`${callbackUrl.toString()}&status=cancelled&reason=${reason}`);
         }
         callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
         return res.redirect(callbackUrl.toString());
@@ -379,7 +386,10 @@ let EdvironPgController = class EdvironPgController {
         console.log('easebuzz webhook recived with data', body);
         if (!body)
             throw new Error('Invalid webhook data');
-        const collect_id = body.txnid;
+        let collect_id = body.txnid;
+        if (collect_id.startsWith('upi_')) {
+            collect_id = collect_id.replace('upi_', '');
+        }
         console.log('webhook for ', collect_id);
         if (!mongoose_1.Types.ObjectId.isValid(collect_id)) {
             throw new Error('collect_id is not valid');
@@ -1247,6 +1257,7 @@ __decorate([
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
-        database_service_1.DatabaseService])
+        database_service_1.DatabaseService,
+        easebuzz_service_1.EasebuzzService])
 ], EdvironPgController);
 //# sourceMappingURL=edviron-pg.controller.js.map

@@ -15,13 +15,14 @@ const phonepe_module_1 = require("../phonepe/phonepe.module");
 const hdfc_module_1 = require("../hdfc/hdfc.module");
 const edviron_pg_module_1 = require("../edviron-pg/edviron-pg.module");
 const ccavenue_service_1 = require("../ccavenue/ccavenue.service");
+const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 let CheckStatusModule = class CheckStatusModule {
 };
 exports.CheckStatusModule = CheckStatusModule;
 exports.CheckStatusModule = CheckStatusModule = __decorate([
     (0, common_1.Module)({
         controllers: [check_status_controller_1.CheckStatusController],
-        providers: [check_status_service_1.CheckStatusService, ccavenue_service_1.CcavenueService],
+        providers: [check_status_service_1.CheckStatusService, ccavenue_service_1.CcavenueService, easebuzz_service_1.EasebuzzService],
         imports: [database_module_1.DatabaseModule, phonepe_module_1.PhonepeModule, hdfc_module_1.HdfcModule, edviron_pg_module_1.EdvironPgModule],
     })
 ], CheckStatusModule);
