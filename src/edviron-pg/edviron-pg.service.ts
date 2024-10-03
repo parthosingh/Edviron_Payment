@@ -25,6 +25,7 @@ export class EdvironPgService implements GatewayService {
         easebuzz_cc_id: null,
         easebuzz_dc_id: null,
         ccavenue_id: null,
+        easebuzz_upi_id:null
       };
       const collectReq =
         await this.databaseService.CollectRequestModel.findById(request._id);
@@ -104,7 +105,7 @@ export class EdvironPgService implements GatewayService {
           'amount',
           parseFloat(request.amount.toFixed(2)).toString(),
         );
-        console.log(request.easebuzz_sub_merchant_id, 'sub merchant');
+        // console.log(request.easebuzz_sub_merchant_id, 'sub merchant');
 
         encodedParams.set('productinfo', productinfo);
         encodedParams.set('firstname', firstname);
@@ -127,7 +128,7 @@ export class EdvironPgService implements GatewayService {
         const { data: easebuzzRes } = await axios.request(options);
         id = easebuzzRes.data;
         paymentInfo.easebuzz_id = id || null;
-        // await this.getQr(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
+        await this.getQr(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
         easebuzz_pg = true;
         console.log({ easebuzzRes, _id: request._id });
       }
@@ -426,8 +427,12 @@ export class EdvironPgService implements GatewayService {
       };
       const { data: easebuzzRes } = await axios.request(options);
       const access_key = easebuzzRes.data;
-      collectReq.paymentIds.easebuzz_upi_id = access_key;
-      await collectReq.save();
+      console.log(access_key,'access key');
+      console.log(collectReq.paymentIds);
+      
+      // collectReq.paymentIds.easebuzz_upi_id = access_key;
+     
+      // await collectReq.save();
       let formData = new FormData();
       formData.append('access_key', access_key);
       formData.append('payment_mode', `UPI`);
@@ -444,7 +449,7 @@ export class EdvironPgService implements GatewayService {
       };
 
       const response = await axios.request(config);
-      console.log(response.data, 'res');
+      console.log(response.data, 'res in qr code');
 
       await this.databaseService.CollectRequestModel.findByIdAndUpdate(
         collect_id,

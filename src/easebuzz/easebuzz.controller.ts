@@ -37,7 +37,11 @@ export class EasebuzzController {
       if (!collectReq) {
         throw new NotFoundException('Collect request not found');
       }
-      return res.send(collectReq.deepLink);
+      const baseUrl = collectReq.deepLink;
+      const phonePe = baseUrl.replace('upi:', 'phonepe:');
+      const googlePe = 'tez://' + baseUrl;
+      const paytm = baseUrl.replace('upi:', 'paytmmp:');
+      return res.send({ qr_code: collectReq.deepLink, phonePe,googlePe,paytm });
     } catch (error) {
       console.log(error);
       throw new BadRequestException(error.message);
@@ -63,6 +67,7 @@ export class EasebuzzController {
     const decrypt_exp = await decrypt(enc_card_exp, key, iv);
     const decrypt_card_holder_name = await decrypt(enc_card_holder, key, iv);
 
+    console.log(decrypt_card_holder_name,decrypt_cvv,decrypt_card_number,decrypt_exp);
     
     return res.send({
       card_number: enc_card_number,

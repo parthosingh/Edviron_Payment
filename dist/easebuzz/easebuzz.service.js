@@ -57,7 +57,7 @@ let EasebuzzService = class EasebuzzService {
     async statusResponse(requestId, collectReq) {
         let statusResponse = await this.easebuzzCheckStatus(requestId, collectReq);
         if (statusResponse.msg.mode === 'NA') {
-            console.log(`Status 0 for ${requestId}, retrying with '_cc' suffix`);
+            console.log(`Status 0 for ${requestId}, retrying with 'upi_' suffix`);
             statusResponse = await this.easebuzzCheckStatus(`upi_${requestId}`, collectReq);
         }
         return statusResponse;

@@ -4,13 +4,15 @@ import { PhonepeService } from 'src/phonepe/phonepe.service';
 import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
 import { TransactionStatus } from 'src/types/transactionStatus';
+import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 export declare class CheckStatusService {
     private readonly databaseService;
     private readonly hdfcService;
     private readonly phonePeService;
     private readonly edvironPgService;
     private readonly ccavenueService;
-    constructor(databaseService: DatabaseService, hdfcService: HdfcService, phonePeService: PhonepeService, edvironPgService: EdvironPgService, ccavenueService: CcavenueService);
+    private readonly easebuzzService;
+    constructor(databaseService: DatabaseService, hdfcService: HdfcService, phonePeService: PhonepeService, edvironPgService: EdvironPgService, ccavenueService: CcavenueService, easebuzzService: EasebuzzService);
     checkStatus(collect_request_id: String): Promise<{
         status: TransactionStatus;
         amount: number;

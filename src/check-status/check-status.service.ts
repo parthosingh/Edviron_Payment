@@ -7,6 +7,7 @@ import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
 import mongoose from 'mongoose';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
 import { TransactionStatus } from 'src/types/transactionStatus';
+import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 
 @Injectable()
 export class CheckStatusService {
@@ -16,9 +17,10 @@ export class CheckStatusService {
     private readonly phonePeService: PhonepeService,
     private readonly edvironPgService: EdvironPgService,
     private readonly ccavenueService: CcavenueService,
+    private readonly easebuzzService:EasebuzzService
   ) {}
   async checkStatus(collect_request_id: String) {
-    console.log('checking status', collect_request_id);
+    console.log('checking status for', collect_request_id);
     const collectRequest =
       await this.databaseService.CollectRequestModel.findById(
         collect_request_id,
@@ -32,8 +34,7 @@ export class CheckStatusService {
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: collectRequest._id,
       });
-    console.log('checking status', collect_request_id, collectRequest);
-
+    
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
         return await this.hdfcService.checkStatus(collect_request_id);
@@ -50,7 +51,7 @@ export class CheckStatusService {
         }
 
       case Gateway.EDVIRON_EASEBUZZ:
-        const easebuzzStatus = await this.edvironPgService.easebuzzCheckStatus(
+        const easebuzzStatus = await this.easebuzzService.statusResponse(
           collect_request_id.toString(),
           collectRequest,
         );
@@ -126,7 +127,7 @@ export class CheckStatusService {
         collect_id: collectRequest._id,
       });
     const collectidString = collectRequest._id.toString();
-    console.log('checking status', order_id, collectRequest);
+   
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
         return await this.hdfcService.checkStatus(
@@ -147,7 +148,7 @@ export class CheckStatusService {
         }
 
       case Gateway.EDVIRON_EASEBUZZ:
-        const easebuzzStatus = await this.edvironPgService.easebuzzCheckStatus(
+        const easebuzzStatus = await this.easebuzzService.statusResponse(
           collectidString,
           collectRequest,
         );

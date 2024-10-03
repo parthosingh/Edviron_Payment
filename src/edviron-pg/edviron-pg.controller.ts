@@ -22,12 +22,14 @@ import { Types } from 'mongoose';
 import * as jwt from 'jsonwebtoken';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import { Gateway } from 'src/database/schemas/collect_request.schema';
+import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
   constructor(
     private readonly edvironPgService: EdvironPgService,
     private readonly databaseService: DatabaseService,
+    private readonly easebuzzService:EasebuzzService
   ) {}
   @Get('/redirect')
   async handleRedirect(@Req() req: any, @Res() res: any) {
@@ -229,13 +231,11 @@ export class EdvironPgController {
 
     collectRequest.gateway = Gateway.EDVIRON_EASEBUZZ;
     await collectRequest.save();
-    const reqToCheck = await this.edvironPgService.easebuzzCheckStatus(
+    const reqToCheck = await this.easebuzzService.statusResponse(
       collect_request_id,
       collectRequest,
     );
-
     const status = reqToCheck.msg.status;
-
     if (collectRequest?.sdkPayment) {
       if (status === `success`) {
         console.log(`SDK payment success for ${collect_request_id}`);
@@ -251,7 +251,7 @@ export class EdvironPgController {
     }
 
     const callbackUrl = new URL(collectRequest?.callbackUrl);
-    if (status !== `success`) {
+    if (status.toLocaleLowerCase() !== `success`) {
       console.log('failure');
       let reason = reqToCheck?.msg?.error_Message || 'payment-declined';
       if (reason === 'Collect Expired') {
@@ -281,7 +281,7 @@ export class EdvironPgController {
 
     collectRequest.gateway = Gateway.EDVIRON_EASEBUZZ;
     await collectRequest.save();
-    const reqToCheck = await this.edvironPgService.easebuzzCheckStatus(
+    const reqToCheck = await this.easebuzzService.statusResponse(
       collect_request_id,
       collectRequest,
     );
@@ -303,17 +303,25 @@ export class EdvironPgController {
     }
 
     const callbackUrl = new URL(collectRequest?.callbackUrl);
-    if (status !== `success`) {
+    if (status.toLocaleLowerCase() !== `success`) {
       console.log('failure');
-
+      let reason = reqToCheck?.msg?.error_Message || 'payment-declined';
+      if (reason === 'Collect Expired') {
+        reason = 'Order Expired';
+      }
+      callbackUrl.searchParams.set(
+        'EdvironCollectRequestId',
+        collect_request_id,
+      );
       return res.redirect(
-        `${callbackUrl.toString()}?EdvironCollectRequestId=${collect_request_id}&status=cancelled&reason=payment-declined`,
+        `${callbackUrl.toString()}&status=cancelled&reason=${reason}`,
       );
     }
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
     return res.redirect(callbackUrl.toString());
   }
 
+  // cashfree
   @Post('/webhook')
   async handleWebhook(@Body() body: any, @Res() res: any) {
     const { data: webHookData } = JSON.parse(JSON.stringify(body));
@@ -627,7 +635,10 @@ export class EdvironPgController {
     console.log('easebuzz webhook recived with data', body);
 
     if (!body) throw new Error('Invalid webhook data');
-    const collect_id = body.txnid;
+    let collect_id = body.txnid;
+    if (collect_id.startsWith('upi_')) {
+      collect_id = collect_id.replace('upi_', '');
+    }
     console.log('webhook for ', collect_id);
 
     if (!Types.ObjectId.isValid(collect_id)) {
@@ -664,13 +675,9 @@ export class EdvironPgController {
       return;
     }
 
-    // const reqToCheck = await this.easebuzzService.checkStatus(
-    //   collectReq,
-    //   collect_id,
-    // );
 
     const statusResponse = await this.edvironPgService.easebuzzCheckStatus(
-      collect_id,
+      body.txnid,
       collectReq,
     );
     const reqToCheck = statusResponse;
@@ -778,7 +785,6 @@ export class EdvironPgController {
       );
 
     const webHookUrl = collectReq?.req_webhook_urls;
-
     const collectRequest =
       await this.databaseService.CollectRequestModel.findById(collect_id);
     const collectRequestStatus =
@@ -801,7 +807,6 @@ export class EdvironPgController {
         transaction_time: collectRequestStatus?.updatedAt,
         additional_data,
       });
-
       const createConfig = (url: string) => ({
         method: 'post',
         maxBodyLength: Infinity,

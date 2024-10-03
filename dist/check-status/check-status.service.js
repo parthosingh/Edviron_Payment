@@ -18,16 +18,18 @@ const phonepe_service_1 = require("../phonepe/phonepe.service");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const ccavenue_service_1 = require("../ccavenue/ccavenue.service");
 const transactionStatus_1 = require("../types/transactionStatus");
+const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 let CheckStatusService = class CheckStatusService {
-    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService) {
+    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService) {
         this.databaseService = databaseService;
         this.hdfcService = hdfcService;
         this.phonePeService = phonePeService;
         this.edvironPgService = edvironPgService;
         this.ccavenueService = ccavenueService;
+        this.easebuzzService = easebuzzService;
     }
     async checkStatus(collect_request_id) {
-        console.log('checking status', collect_request_id);
+        console.log('checking status for', collect_request_id);
         const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_request_id);
         if (!collectRequest) {
             console.log('Collect request not found', collect_request_id);
@@ -37,7 +39,6 @@ let CheckStatusService = class CheckStatusService {
         const collect_req_status = await this.databaseService.CollectRequestStatusModel.findOne({
             collect_id: collectRequest._id,
         });
-        console.log('checking status', collect_request_id, collectRequest);
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:
                 return await this.hdfcService.checkStatus(collect_request_id);
@@ -50,7 +51,7 @@ let CheckStatusService = class CheckStatusService {
                     custom_order_id,
                 };
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
-                const easebuzzStatus = await this.edvironPgService.easebuzzCheckStatus(collect_request_id.toString(), collectRequest);
+                const easebuzzStatus = await this.easebuzzService.statusResponse(collect_request_id.toString(), collectRequest);
                 let status_code;
                 if (easebuzzStatus.msg.status.toUpperCase() === 'SUCCESS') {
                     status_code = 200;
@@ -116,7 +117,6 @@ let CheckStatusService = class CheckStatusService {
             collect_id: collectRequest._id,
         });
         const collectidString = collectRequest._id.toString();
-        console.log('checking status', order_id, collectRequest);
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:
                 return await this.hdfcService.checkStatus(collectRequest._id.toString());
@@ -129,7 +129,7 @@ let CheckStatusService = class CheckStatusService {
                     edviron_order_id: collectRequest._id.toString(),
                 };
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
-                const easebuzzStatus = await this.edvironPgService.easebuzzCheckStatus(collectidString, collectRequest);
+                const easebuzzStatus = await this.easebuzzService.statusResponse(collectidString, collectRequest);
                 let status_code;
                 if (easebuzzStatus.msg.status.toUpperCase() === 'SUCCESS') {
                     status_code = 200;
@@ -189,6 +189,7 @@ exports.CheckStatusService = CheckStatusService = __decorate([
         hdfc_service_1.HdfcService,
         phonepe_service_1.PhonepeService,
         edviron_pg_service_1.EdvironPgService,
-        ccavenue_service_1.CcavenueService])
+        ccavenue_service_1.CcavenueService,
+        easebuzz_service_1.EasebuzzService])
 ], CheckStatusService);
 //# sourceMappingURL=check-status.service.js.map

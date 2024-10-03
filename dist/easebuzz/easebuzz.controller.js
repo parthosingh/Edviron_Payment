@@ -31,7 +31,11 @@ let EasebuzzController = class EasebuzzController {
             if (!collectReq) {
                 throw new common_1.NotFoundException('Collect request not found');
             }
-            return res.send(collectReq.deepLink);
+            const baseUrl = collectReq.deepLink;
+            const phonePe = baseUrl.replace('upi:', 'phonepe:');
+            const googlePe = 'tez://' + baseUrl;
+            const paytm = baseUrl.replace('upi:', 'paytmmp:');
+            return res.send({ qr_code: collectReq.deepLink, phonePe, googlePe, paytm });
         }
         catch (error) {
             console.log(error);
@@ -52,6 +56,7 @@ let EasebuzzController = class EasebuzzController {
         const decrypt_cvv = await (0, sign_1.decrypt)(enc_card_cvv, key, iv);
         const decrypt_exp = await (0, sign_1.decrypt)(enc_card_exp, key, iv);
         const decrypt_card_holder_name = await (0, sign_1.decrypt)(enc_card_holder, key, iv);
+        console.log(decrypt_card_holder_name, decrypt_cvv, decrypt_card_number, decrypt_exp);
         return res.send({
             card_number: enc_card_number,
             card_holder: enc_card_holder,

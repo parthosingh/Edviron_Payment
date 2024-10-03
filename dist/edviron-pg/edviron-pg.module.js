@@ -11,13 +11,14 @@ const common_1 = require("@nestjs/common");
 const edviron_pg_controller_1 = require("./edviron-pg.controller");
 const edviron_pg_service_1 = require("./edviron-pg.service");
 const database_module_1 = require("../database/database.module");
+const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 let EdvironPgModule = class EdvironPgModule {
 };
 exports.EdvironPgModule = EdvironPgModule;
 exports.EdvironPgModule = EdvironPgModule = __decorate([
     (0, common_1.Module)({
         controllers: [edviron_pg_controller_1.EdvironPgController],
-        providers: [edviron_pg_service_1.EdvironPgService],
+        providers: [edviron_pg_service_1.EdvironPgService, easebuzz_service_1.EasebuzzService],
         imports: [database_module_1.DatabaseModule],
         exports: [edviron_pg_service_1.EdvironPgService],
     })
