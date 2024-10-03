@@ -31,7 +31,11 @@ let EasebuzzController = class EasebuzzController {
             if (!collectReq) {
                 throw new common_1.NotFoundException('Collect request not found');
             }
-            return res.send(collectReq.deepLink);
+            const baseUrl = collectReq.deepLink;
+            const phonePe = baseUrl.replace('upi:', 'phonepe:');
+            const googlePe = 'tez://' + baseUrl;
+            const paytm = baseUrl.replace('upi:', 'paytm:');
+            return res.send({ qr_code: collectReq.deepLink, phonePe, googlePe, paytm });
         }
         catch (error) {
             console.log(error);
