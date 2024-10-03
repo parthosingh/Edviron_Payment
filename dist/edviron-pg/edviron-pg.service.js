@@ -27,6 +27,7 @@ let EdvironPgService = class EdvironPgService {
                 easebuzz_cc_id: null,
                 easebuzz_dc_id: null,
                 ccavenue_id: null,
+                easebuzz_upi_id: null
             };
             const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
             if (!collectReq) {
@@ -93,7 +94,6 @@ let EdvironPgService = class EdvironPgService {
                 encodedParams.set('key', process.env.EASEBUZZ_KEY);
                 encodedParams.set('txnid', request._id.toString());
                 encodedParams.set('amount', parseFloat(request.amount.toFixed(2)).toString());
-                console.log(request.easebuzz_sub_merchant_id, 'sub merchant');
                 encodedParams.set('productinfo', productinfo);
                 encodedParams.set('firstname', firstname);
                 encodedParams.set('phone', '9898989898');
@@ -357,6 +357,8 @@ let EdvironPgService = class EdvironPgService {
             };
             const { data: easebuzzRes } = await axios_1.default.request(options);
             const access_key = easebuzzRes.data;
+            console.log(access_key, 'access key');
+            console.log(collectReq.paymentIds);
             collectReq.paymentIds.easebuzz_upi_id = access_key;
             await collectReq.save();
             let formData = new FormData();
