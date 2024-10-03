@@ -40,7 +40,7 @@ export class EasebuzzController {
       const baseUrl = collectReq.deepLink;
       const phonePe = baseUrl.replace('upi:', 'phonepe:');
       const googlePe = 'tez://' + baseUrl;
-      const paytm = baseUrl.replace('upi:', 'paytm:');
+      const paytm = baseUrl.replace('upi:', 'paytmmp:');
       return res.send({ qr_code: collectReq.deepLink, phonePe,googlePe,paytm });
     } catch (error) {
       console.log(error);
