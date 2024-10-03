@@ -416,7 +416,7 @@ let EdvironPgController = class EdvironPgController {
             res.status(200).send('OK');
             return;
         }
-        const statusResponse = await this.edvironPgService.easebuzzCheckStatus(collect_id, collectReq);
+        const statusResponse = await this.edvironPgService.easebuzzCheckStatus(body.txnid, collectReq);
         const reqToCheck = statusResponse;
         console.log(statusResponse, 'status response check');
         const status = reqToCheck.msg.status;

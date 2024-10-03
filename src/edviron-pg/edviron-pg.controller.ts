@@ -677,7 +677,7 @@ export class EdvironPgController {
 
 
     const statusResponse = await this.edvironPgService.easebuzzCheckStatus(
-      collect_id,
+      body.txnid,
       collectReq,
     );
     const reqToCheck = statusResponse;
