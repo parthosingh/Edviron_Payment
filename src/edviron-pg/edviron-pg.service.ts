@@ -128,7 +128,7 @@ export class EdvironPgService implements GatewayService {
         const { data: easebuzzRes } = await axios.request(options);
         id = easebuzzRes.data;
         paymentInfo.easebuzz_id = id || null;
-        // await this.getQr(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
+        await this.getQr(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
         easebuzz_pg = true;
         console.log({ easebuzzRes, _id: request._id });
       }
@@ -430,8 +430,9 @@ export class EdvironPgService implements GatewayService {
       console.log(access_key,'access key');
       console.log(collectReq.paymentIds);
       
-      collectReq.paymentIds.easebuzz_upi_id = access_key;
-      await collectReq.save();
+      // collectReq.paymentIds.easebuzz_upi_id = access_key;
+     
+      // await collectReq.save();
       let formData = new FormData();
       formData.append('access_key', access_key);
       formData.append('payment_mode', `UPI`);
@@ -448,7 +449,7 @@ export class EdvironPgService implements GatewayService {
       };
 
       const response = await axios.request(config);
-      console.log(response.data, 'res');
+      console.log(response.data, 'res in qr code');
 
       await this.databaseService.CollectRequestModel.findByIdAndUpdate(
         collect_id,

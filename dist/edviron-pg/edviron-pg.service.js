@@ -115,6 +115,7 @@ let EdvironPgService = class EdvironPgService {
                 const { data: easebuzzRes } = await axios.request(options);
                 id = easebuzzRes.data;
                 paymentInfo.easebuzz_id = id || null;
+                await this.getQr(request._id.toString(), request);
                 easebuzz_pg = true;
                 console.log({ easebuzzRes, _id: request._id });
             }
@@ -359,8 +360,6 @@ let EdvironPgService = class EdvironPgService {
             const access_key = easebuzzRes.data;
             console.log(access_key, 'access key');
             console.log(collectReq.paymentIds);
-            collectReq.paymentIds.easebuzz_upi_id = access_key;
-            await collectReq.save();
             let formData = new FormData();
             formData.append('access_key', access_key);
             formData.append('payment_mode', `UPI`);
@@ -375,7 +374,7 @@ let EdvironPgService = class EdvironPgService {
                 data: formData,
             };
             const response = await axios_1.default.request(config);
-            console.log(response.data, 'res');
+            console.log(response.data, 'res in qr code');
             await this.databaseService.CollectRequestModel.findByIdAndUpdate(collect_id, {
                 deepLink: response.data.qr_link,
             });
