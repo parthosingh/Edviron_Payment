@@ -2,11 +2,13 @@ import { DatabaseService } from '../database/database.service';
 import { EdvironPgService } from './edviron-pg.service';
 import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
+import { CashfreeService } from 'src/cashfree/cashfree.service';
 export declare class EdvironPgController {
     private readonly edvironPgService;
     private readonly databaseService;
     private readonly easebuzzService;
-    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService);
+    private readonly cashfreeService;
+    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService);
     handleRedirect(req: any, res: any): Promise<void>;
     handleSdkRedirect(req: any, res: any): Promise<any>;
     handleCallback(req: any, res: any): Promise<any>;
@@ -46,4 +48,11 @@ export declare class EdvironPgController {
         cashfree: boolean;
         easebuzz: boolean;
     }>;
+    initiaterefund(body: {
+        collect_id: string;
+        amount: number;
+        refund_id: string;
+        token: string;
+    }): Promise<any>;
+    getRefundStatus(req: any): Promise<any>;
 }

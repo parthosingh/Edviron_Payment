@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { CollectRequest } from 'src/database/schemas/collect_request.schema';
 import { calculateSHA512Hash } from 'src/utils/sign';
+import axios from 'axios';
 
 @Injectable()
 export class EasebuzzService {
@@ -50,7 +51,7 @@ export class EasebuzzService {
     };
 
     const { data: statusRes } = await axios.request(config);
-    console.log(statusRes);
+    
     return statusRes;
   }
 
@@ -62,5 +63,114 @@ export class EasebuzzService {
     }
 
     return statusResponse;
+  }
+
+  async initiateRefund(collect_id:string,refund_amount:number,refund_id:string) {
+   const collectRequest=await this.databaseService.CollectRequestModel.findById(collect_id)
+    if (!collectRequest) {
+      throw new BadRequestException('Collect Request not found');
+    }
+
+    const transaction = await this.statusResponse(collect_id,collectRequest)
+    console.log(transaction.msg.easepayid);
+    const order_id=transaction.msg.easepayid
+    if(!order_id){
+      throw new BadRequestException('Order ID not found');
+    }
+    
+
+    // key|merchant_refund_id|easebuzz_id|refund_amount|salt
+    const hashStringV2 = `${
+      process.env.EASEBUZZ_KEY
+    }|${refund_id}|${order_id}|${(refund_amount)
+      .toFixed(1)}|${process.env.EASEBUZZ_SALT}`;
+
+    let hash2 = await calculateSHA512Hash(hashStringV2);
+    const data2 = {
+      key: process.env.EASEBUZZ_KEY,
+      merchant_refund_id: refund_id,
+      easebuzz_id: order_id,
+      refund_amount: (refund_amount).toFixed(1),
+      // refund_amount: 1.0.toFixed(1),
+      hash: hash2,
+      // amount: parseFloat(total_amount).toFixed(2),
+      // email: email,
+      // phone: phone,
+      // salt: process.env.EASEBUZZ_SALT,
+    };
+    const config = {
+      method: 'POST',
+      url: `https://dashboard.easebuzz.in/transaction/v2/refund`,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'application/json',
+      },
+      data: data2,
+    };
+    try {
+      console.log('initiating refund with easebuzz');
+      
+      const response = await axios(config);
+      console.log(response.data);
+      // console.log({
+      //   hashString,
+      //   hash,
+      // });
+      return response.data;
+    } catch (e) {
+      console.log(e);
+
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  async checkRefundSttaus(
+    collect_id:string
+  ){
+    const collectRequest=await this.databaseService.CollectRequestModel.findById(collect_id)
+    if (!collectRequest) {
+      throw new BadRequestException('Collect Request not found');
+    }
+
+    const transaction = await this.statusResponse(collect_id,collectRequest)
+    console.log(transaction.msg.easepayid);
+    const order_id=transaction.msg.easepayid
+    if(!order_id){
+      throw new BadRequestException('Order ID not found');
+    }
+    const hashString = `${
+      process.env.EASEBUZZ_KEY
+    }|${order_id}|${process.env.EASEBUZZ_SALT}`;
+
+    let hash = await calculateSHA512Hash(hashString);
+    const data = {
+      key: process.env.EASEBUZZ_KEY,
+      easebuzz_id: order_id,
+      hash: hash,
+    };
+
+    const config = {
+      method: 'POST',
+      url: `https://dashboard.easebuzz.in/refund/v1/retrieve`,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'application/json',
+      },
+      data: data,
+    };
+    try {
+      console.log('checking refund status with easebuzz');
+      
+      const response = await axios(config);
+      console.log(response.data);
+      // console.log({
+      //   hashString,
+      //   hash,
+      // });
+      return response.data;
+    } catch (e) {
+      console.log(e);
+      throw new BadRequestException(e.message)
+    }
   }
 }

@@ -19,6 +19,8 @@ const edviron_pg_module_1 = require("./edviron-pg/edviron-pg.module");
 const ccavenue_module_1 = require("./ccavenue/ccavenue.module");
 const easebuzz_controller_1 = require("./easebuzz/easebuzz.controller");
 const easebuzz_service_1 = require("./easebuzz/easebuzz.service");
+const cashfree_controller_1 = require("./cashfree/cashfree.controller");
+const cashfree_module_1 = require("./cashfree/cashfree.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -31,9 +33,10 @@ exports.AppModule = AppModule = __decorate([
             check_status_module_1.CheckStatusModule,
             hdfc_module_1.HdfcModule,
             edviron_pg_module_1.EdvironPgModule,
-            ccavenue_module_1.CcavenueModule
+            ccavenue_module_1.CcavenueModule,
+            cashfree_module_1.CashfreeModule
         ],
-        controllers: [app_controller_1.AppController, easebuzz_controller_1.EasebuzzController],
+        controllers: [app_controller_1.AppController, easebuzz_controller_1.EasebuzzController, cashfree_controller_1.CashfreeController],
         providers: [app_service_1.AppService, easebuzz_service_1.EasebuzzService],
     })
 ], AppModule);

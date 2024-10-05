@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EasebuzzController = void 0;
 const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
+const axios_1 = require("axios");
 const sign_1 = require("../utils/sign");
 const sign_2 = require("../utils/sign");
 let EasebuzzController = class EasebuzzController {
@@ -35,7 +36,12 @@ let EasebuzzController = class EasebuzzController {
             const phonePe = baseUrl.replace('upi:', 'phonepe:');
             const googlePe = 'tez://' + baseUrl;
             const paytm = baseUrl.replace('upi:', 'paytmmp:');
-            return res.send({ qr_code: collectReq.deepLink, phonePe, googlePe, paytm });
+            return res.send({
+                qr_code: collectReq.deepLink,
+                phonePe,
+                googlePe,
+                paytm,
+            });
         }
         catch (error) {
             console.log(error);
@@ -64,6 +70,38 @@ let EasebuzzController = class EasebuzzController {
             card_exp: enc_card_exp,
         });
     }
+    async getRefundhash(req) {
+        const { collect_id, refund_amount, refund_id } = req.query;
+        const hashStringV2 = `${process.env.EASEBUZZ_KEY}|${refund_id}|${collect_id}|${parseFloat(refund_amount)
+            .toFixed(1)
+            .toString()}|${process.env.EASEBUZZ_SALT}`;
+        let hash2 = await (0, sign_1.calculateSHA512Hash)(hashStringV2);
+        const data2 = {
+            key: process.env.EASEBUZZ_KEY,
+            merchant_refund_id: refund_id,
+            easebuzz_id: collect_id,
+            refund_amount: parseFloat(refund_amount).toFixed(1),
+            hash: hash2,
+        };
+        const config = {
+            method: 'POST',
+            url: `https://dashboard.easebuzz.in/transaction/v2/refund`,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Accept: 'application/json',
+            },
+            data: data2,
+        };
+        try {
+            const response = await (0, axios_1.default)(config);
+            console.log(response.data);
+            return response.data;
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EasebuzzController = EasebuzzController;
 __decorate([
@@ -83,6 +121,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], EasebuzzController.prototype, "getEncryptedInfo", null);
+__decorate([
+    (0, common_1.Get)('/refundhash'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EasebuzzController.prototype, "getRefundhash", null);
 exports.EasebuzzController = EasebuzzController = __decorate([
     (0, common_1.Controller)('easebuzz'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService])
