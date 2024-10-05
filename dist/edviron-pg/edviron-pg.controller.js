@@ -24,11 +24,13 @@ const jwt = require("jsonwebtoken");
 const transactionStatus_1 = require("../types/transactionStatus");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
+const cashfree_service_1 = require("../cashfree/cashfree.service");
 let EdvironPgController = class EdvironPgController {
-    constructor(edvironPgService, databaseService, easebuzzService) {
+    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService) {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
         this.easebuzzService = easebuzzService;
+        this.cashfreeService = cashfreeService;
     }
     async handleRedirect(req, res) {
         const wallet = req.query.wallet;
@@ -1134,6 +1136,45 @@ let EdvironPgController = class EdvironPgController {
         }
         return pgStatus;
     }
+    async initiaterefund(body) {
+        const { collect_id, amount, refund_id, token } = body;
+        let decrypted = jwt.verify(token, process.env.KEY);
+        if (collect_id !== decrypted.collect_id || amount !== decrypted.amount || refund_id !== decrypted.refund_id) {
+            throw new common_1.UnauthorizedException('Invalid token');
+        }
+        try {
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request) {
+                throw new common_1.NotFoundException('Collect Request not found');
+            }
+            const gateway = request.gateway;
+            console.log(gateway);
+            if (gateway === collect_request_schema_1.Gateway.EDVIRON_PG) {
+                console.log('refunding fromcashgree');
+                const refunds = await this.cashfreeService.initiateRefund(refund_id, amount, collect_id);
+                console.log(refunds);
+                const response = {
+                    collect_id,
+                    refund_id,
+                    amount
+                };
+                return response;
+            }
+            if (gateway === collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ) {
+                console.log('init refund from easebuzz');
+                const refund = await this.easebuzzService.initiateRefund(collect_id, amount, refund_id);
+                console.log(refund);
+                return refund;
+            }
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async getRefundStatus(req) {
+        const collect_id = req.query.collect_id;
+        return await this.easebuzzService.checkRefundSttaus(collect_id);
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -1259,10 +1300,25 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getPgStatus", null);
+__decorate([
+    (0, common_1.Post)('/initiate-refund'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "initiaterefund", null);
+__decorate([
+    (0, common_1.Get)('/refund-status'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getRefundStatus", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
         database_service_1.DatabaseService,
-        easebuzz_service_1.EasebuzzService])
+        easebuzz_service_1.EasebuzzService,
+        cashfree_service_1.CashfreeService])
 ], EdvironPgController);
 //# sourceMappingURL=edviron-pg.controller.js.map

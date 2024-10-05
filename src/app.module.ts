@@ -11,6 +11,8 @@ import { EdvironPgModule } from './edviron-pg/edviron-pg.module';
 import { CcavenueModule } from './ccavenue/ccavenue.module';
 import { EasebuzzController } from './easebuzz/easebuzz.controller';
 import { EasebuzzService } from './easebuzz/easebuzz.service';
+import { CashfreeController } from './cashfree/cashfree.controller';
+import { CashfreeModule } from './cashfree/cashfree.module';
 
 @Module({
   imports: [
@@ -20,9 +22,10 @@ import { EasebuzzService } from './easebuzz/easebuzz.service';
     CheckStatusModule,
     HdfcModule,
     EdvironPgModule,
-    CcavenueModule
+    CcavenueModule,
+    CashfreeModule
   ],
-  controllers: [AppController, EasebuzzController],
+  controllers: [AppController, EasebuzzController, CashfreeController],
   providers: [AppService, EasebuzzService],
 })
 export class AppModule {}

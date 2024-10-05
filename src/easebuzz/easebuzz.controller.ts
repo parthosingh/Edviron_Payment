@@ -13,7 +13,11 @@ import { DatabaseService } from 'src/database/database.service';
 import axios from 'axios';
 import * as jwt from 'jsonwebtoken';
 import { stringify } from 'querystring';
-import { decrypt, merchantKeySHA256 } from 'src/utils/sign';
+import {
+  calculateSHA512Hash,
+  decrypt,
+  merchantKeySHA256,
+} from 'src/utils/sign';
 import { encryptCard } from 'src/utils/sign';
 @Controller('easebuzz')
 export class EasebuzzController {
@@ -41,7 +45,12 @@ export class EasebuzzController {
       const phonePe = baseUrl.replace('upi:', 'phonepe:');
       const googlePe = 'tez://' + baseUrl;
       const paytm = baseUrl.replace('upi:', 'paytmmp:');
-      return res.send({ qr_code: collectReq.deepLink, phonePe,googlePe,paytm });
+      return res.send({
+        qr_code: collectReq.deepLink,
+        phonePe,
+        googlePe,
+        paytm,
+      });
     } catch (error) {
       console.log(error);
       throw new BadRequestException(error.message);
@@ -67,13 +76,66 @@ export class EasebuzzController {
     const decrypt_exp = await decrypt(enc_card_exp, key, iv);
     const decrypt_card_holder_name = await decrypt(enc_card_holder, key, iv);
 
-    console.log(decrypt_card_holder_name,decrypt_cvv,decrypt_card_number,decrypt_exp);
-    
+    console.log(
+      decrypt_card_holder_name,
+      decrypt_cvv,
+      decrypt_card_number,
+      decrypt_exp,
+    );
+
     return res.send({
       card_number: enc_card_number,
       card_holder: enc_card_holder,
       card_cvv: enc_card_cvv,
       card_exp: enc_card_exp,
     });
+  }
+
+  @Get('/refundhash')
+  async getRefundhash(@Req() req: any) {
+    const { collect_id, refund_amount, refund_id } = req.query;
+
+    // key|merchant_refund_id|easebuzz_id|refund_amount|salt
+    const hashStringV2 = `${
+      process.env.EASEBUZZ_KEY
+    }|${refund_id}|${collect_id}|${parseFloat(refund_amount)
+      .toFixed(1)
+      .toString()}|${process.env.EASEBUZZ_SALT}`;
+
+    let hash2 = await calculateSHA512Hash(hashStringV2);
+    const data2 = {
+      key: process.env.EASEBUZZ_KEY,
+      merchant_refund_id: refund_id,
+      easebuzz_id: collect_id,
+      refund_amount: parseFloat(refund_amount).toFixed(1),
+      // refund_amount: 1.0.toFixed(1),
+      hash: hash2,
+      // amount: parseFloat(total_amount).toFixed(2),
+      // email: email,
+      // phone: phone,
+      // salt: process.env.EASEBUZZ_SALT,
+    };
+    const config = {
+      method: 'POST',
+      url: `https://dashboard.easebuzz.in/transaction/v2/refund`,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'application/json',
+      },
+      data: data2,
+    };
+    try {
+      const response = await axios(config);
+      console.log(response.data);
+      // console.log({
+      //   hashString,
+      //   hash,
+      // });
+      return response.data;
+    } catch (e) {
+      console.log(e);
+
+      throw new BadRequestException(e.message);
+    }
   }
 }

@@ -23,13 +23,15 @@ import * as jwt from 'jsonwebtoken';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
+import { CashfreeService } from 'src/cashfree/cashfree.service';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
   constructor(
     private readonly edvironPgService: EdvironPgService,
     private readonly databaseService: DatabaseService,
-    private readonly easebuzzService:EasebuzzService
+    private readonly easebuzzService: EasebuzzService,
+    private readonly cashfreeService: CashfreeService,
   ) {}
   @Get('/redirect')
   async handleRedirect(@Req() req: any, @Res() res: any) {
@@ -195,10 +197,10 @@ export class EdvironPgController {
     if (collectRequest?.sdkPayment) {
       if (status === `SUCCESS`) {
         const callbackUrl = new URL(collectRequest?.callbackUrl);
-      callbackUrl.searchParams.set(
-        'EdvironCollectRequestId',
-        collect_request_id,
-      );
+        callbackUrl.searchParams.set(
+          'EdvironCollectRequestId',
+          collect_request_id,
+        );
         return res.redirect(
           `${process.env.PG_FRONTEND}/payment-success?collect_id=${collect_request_id}`,
         );
@@ -688,7 +690,6 @@ export class EdvironPgController {
       res.status(200).send('OK');
       return;
     }
-
 
     const statusResponse = await this.edvironPgService.easebuzzCheckStatus(
       body.txnid,
@@ -1507,9 +1508,8 @@ export class EdvironPgController {
         ((cashfreeSum / totalTransactionAmount) * 100).toFixed(2),
       );
     }
-    if(easebuzzSum !==0){
-
-       percentageEasebuzz = parseFloat(
+    if (easebuzzSum !== 0) {
+      percentageEasebuzz = parseFloat(
         ((easebuzzSum / totalTransactionAmount) * 100).toFixed(2),
       );
     }
@@ -1549,5 +1549,71 @@ export class EdvironPgController {
       pgStatus.easebuzz = true;
     }
     return pgStatus;
+  }
+
+  @Post('/initiate-refund')
+  async initiaterefund(
+    @Body()
+    body: {
+      collect_id: string;
+      amount: number;
+      refund_id: string;
+      token: string;
+    },
+  ) {
+    const { collect_id, amount, refund_id, token } = body;
+    
+    let decrypted = jwt.verify(token, process.env.KEY!) as any;
+    if(collect_id !== decrypted.collect_id || amount !== decrypted.amount || refund_id !== decrypted.refund_id) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    try {
+      const request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!request) {
+        throw new NotFoundException('Collect Request not found');
+      }
+      const gateway = request.gateway;
+      console.log(gateway);
+      
+      if (gateway === Gateway.EDVIRON_PG) {
+        console.log('refunding fromcashgree');
+        
+        const refunds = await this.cashfreeService.initiateRefund(
+          refund_id,
+          amount,
+          collect_id,
+        );
+        console.log(refunds);
+        const response={
+          collect_id,
+          refund_id,
+          amount
+        }
+        return response;
+      }
+      if (gateway === Gateway.EDVIRON_EASEBUZZ) {
+        console.log('init refund from easebuzz');
+        
+        const refund = await this.easebuzzService.initiateRefund(
+          collect_id,
+          amount,
+          refund_id,
+        );
+        console.log(refund);
+        
+        return refund
+      }
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Get('/refund-status')
+  async getRefundStatus(@Req() req:any){
+    const collect_id = req.query.collect_id
+
+    return await this.easebuzzService.checkRefundSttaus(collect_id)
   }
 }

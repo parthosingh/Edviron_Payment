@@ -5,4 +5,6 @@ export declare class EasebuzzService {
     constructor(databaseService: DatabaseService);
     easebuzzCheckStatus(collect_request_id: String, collect_request: CollectRequest): Promise<any>;
     statusResponse(requestId: string, collectReq: CollectRequest): Promise<any>;
+    initiateRefund(collect_id: string, refund_amount: number, refund_id: string): Promise<any>;
+    checkRefundSttaus(collect_id: string): Promise<any>;
 }
