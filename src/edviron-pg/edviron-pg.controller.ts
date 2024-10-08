@@ -197,6 +197,7 @@ export class EdvironPgController {
     if (collectRequest?.sdkPayment) {
       if (status === `SUCCESS`) {
         const callbackUrl = new URL(collectRequest?.callbackUrl);
+        callbackUrl.searchParams.set('status', 'SUCCESS');
         callbackUrl.searchParams.set(
           'EdvironCollectRequestId',
           collect_request_id,
@@ -222,6 +223,7 @@ export class EdvironPgController {
       );
     }
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
+    callbackUrl.searchParams.set('status', 'SUCCESS');
     return res.redirect(callbackUrl.toString());
   }
 
@@ -250,11 +252,13 @@ export class EdvironPgController {
       );
       if (status === `success`) {
         console.log(`SDK payment success for ${collect_request_id}`);
+        callbackUrl.searchParams.set('status', 'SUCCESS');
         return res.redirect(
           `${process.env.PG_FRONTEND}/payment-success?collect_id=${collect_request_id}&EdvironCollectRequestId=${collect_request_id}`,
         );
       }
       console.log(`SDK payment failed for ${collect_request_id}`);
+      callbackUrl.searchParams.set('status', 'SUCCESS');
 
       return res.redirect(
         `${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}&EdvironCollectRequestId=${collect_request_id}`,
