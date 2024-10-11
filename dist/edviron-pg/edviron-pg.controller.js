@@ -1216,7 +1216,9 @@ let EdvironPgController = class EdvironPgController {
         if (!request) {
             throw new common_1.NotFoundException('Collect Request not found');
         }
-        return await this.edvironPgService.sendTransactionmail(email, request);
+        console.log(request.school_id);
+        const schoolInfo = await this.edvironPgService.getSchoolInfo(request.school_id);
+        console.log(schoolInfo);
     }
 };
 exports.EdvironPgController = EdvironPgController;

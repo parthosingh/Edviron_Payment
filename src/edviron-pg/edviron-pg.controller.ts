@@ -1659,6 +1659,13 @@ export class EdvironPgController {
     if (!request) {
       throw new NotFoundException('Collect Request not found');
     }
-    return await this.edvironPgService.sendTransactionmail(email, request);
+    console.log(request.school_id);
+    
+    const schoolInfo = await this.edvironPgService.getSchoolInfo(
+      request.school_id,
+    );
+    console.log(schoolInfo);
+    
+    // return await this.edvironPgService.sendTransactionmail(email, request);
   }
 }

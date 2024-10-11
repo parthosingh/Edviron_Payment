@@ -479,15 +479,23 @@ export class EdvironPgService implements GatewayService {
     let config = {
       method: 'get',
       maxBodyLength: Infinity,
-      url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-school-data?school_id=${school_id}`,
+      url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-school-data?token=${token}`,
       headers: {
         accept: 'application/json',
         'content-type': 'application/json',
         'x-api-version': '2023-08-01',
       },
     };
-    const { data: info } = await axios.request(config);
-    return info;
+    try{
+
+      const { data: info } = await axios.request(config);
+      console.log(info);
+      
+      return info;
+    }catch(e){
+      console.log(e.message);
+      
+    }
   }
 
  
