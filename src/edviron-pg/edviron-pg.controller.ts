@@ -388,18 +388,19 @@ export class EdvironPgController {
       collect_id,
       collectReq,
     );
- 
+
     //console.log('req', reqToCheck);
 
     const { status } = reqToCheck;
-    if(status == TransactionStatus.SUCCESS){
-      try{
-        const schoolInfo=await this.edvironPgService.getSchoolInfo(collectReq.school_id)
-        const email=schoolInfo.email
-        await this.edvironPgService.sendTransactionmail(email,collectReq)
-      }catch(e){
+    if (status == TransactionStatus.SUCCESS) {
+      try {
+        const schoolInfo = await this.edvironPgService.getSchoolInfo(
+          collectReq.school_id,
+        );
+        const email = schoolInfo.email;
+        await this.edvironPgService.sendTransactionmail(email, collectReq);
+      } catch (e) {
         console.log('error in sending transaction mail ');
-        
       }
     }
     // add commision and split payment to vendors
@@ -797,6 +798,58 @@ export class EdvironPgController {
         payment_method = 'Unknown';
     }
 
+    if (statusResponse.msg.status.toUpperCase() === 'SUCCESS') {
+      try {
+        const schoolInfo = await this.edvironPgService.getSchoolInfo(
+          collectReq.school_id,
+        );
+        const email = schoolInfo.email;
+        await this.edvironPgService.sendTransactionmail(email, collectReq);
+      } catch (e) {
+        console.log('error in sending transaction mail ');
+      }
+      const payment_mode = body.bank_name;
+
+      const tokenData = {
+        school_id: collectReq?.school_id,
+        trustee_id: collectReq?.trustee_id,
+        order_amount: pendingCollectReq?.order_amount,
+        transaction_amount,
+        platform_type,
+        payment_mode,
+        collect_id: collectReq?._id,
+      };
+      const _jwt = jwt.sign(tokenData, process.env.KEY!, { noTimestamp: true });
+
+      let data = JSON.stringify({
+        token: _jwt,
+        school_id: collectReq?.school_id,
+        trustee_id: collectReq?.trustee_id,
+        order_amount: pendingCollectReq?.order_amount,
+        transaction_amount,
+        platform_type,
+        payment_mode,
+        collect_id: collectReq?._id,
+      });
+      let config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-api-version': '2023-08-01',
+        },
+        data: data,
+      };
+      try {
+        const { data: commissionRes } = await axios.request(config);
+        console.log(commissionRes, 'Commission saved');
+      } catch (e) {
+        console.log(`failed to save commision ${e.message}`);
+      }
+    }
+
     const updateReq =
       await this.databaseService.CollectRequestStatusModel.updateOne(
         {
@@ -871,48 +924,6 @@ export class EdvironPgController {
       } catch (error) {
         console.error('Error sending webhooks:', error);
       }
-
-      const payment_mode = body.bank_name;
-
-      const tokenData = {
-        school_id: collectReq?.school_id,
-        trustee_id: collectReq?.trustee_id,
-        order_amount: pendingCollectReq?.order_amount,
-        transaction_amount,
-        platform_type,
-        payment_mode,
-        collect_id: collectReq?._id,
-      };
-      const _jwt = jwt.sign(tokenData, process.env.KEY!, { noTimestamp: true });
-
-      let data = JSON.stringify({
-        token: _jwt,
-        school_id: collectReq?.school_id,
-        trustee_id: collectReq?.trustee_id,
-        order_amount: pendingCollectReq?.order_amount,
-        transaction_amount,
-        platform_type,
-        payment_mode,
-        collect_id: collectReq?._id,
-      });
-      let config = {
-        method: 'post',
-        maxBodyLength: Infinity,
-        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
-        headers: {
-          accept: 'application/json',
-          'content-type': 'application/json',
-          'x-api-version': '2023-08-01',
-        },
-        data: data,
-      };
-      try {
-        const { data: commissionRes } = await axios.request(config);
-        console.log(commissionRes, 'Commission saved');
-      } catch (e) {
-        console.log(`failed to save commision ${e.message}`);
-      }
-
       res.status(200).send('OK');
     }
   }

@@ -537,7 +537,7 @@ export class EdvironPgService implements GatewayService {
     const mailOptions = {
       from: 'noreply@edviron.com',
       to: email,
-      subject: 'Transaction',
+      subject: `Edviron - Transaction success |order ID: ${replacements.transactionId}, order amount: INR ${replacements.transactionAmount}`,
       // html: emailContent,
       html:htmlToSend
     };
