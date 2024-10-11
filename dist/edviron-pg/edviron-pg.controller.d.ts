@@ -55,4 +55,5 @@ export declare class EdvironPgController {
         token: string;
     }): Promise<any>;
     getRefundStatus(req: any): Promise<any>;
+    sentMail(req: any): Promise<string>;
 }
