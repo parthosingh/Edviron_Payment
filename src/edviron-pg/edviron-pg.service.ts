@@ -9,7 +9,14 @@ import { DatabaseService } from '../database/database.service';
 import { TransactionStatus } from '../types/transactionStatus';
 import { platformChange } from 'src/collect/collect.controller';
 import { calculateSHA512Hash } from 'src/utils/sign';
+import * as jwt from 'jsonwebtoken';
 import axios from 'axios';
+import * as nodemailer from 'nodemailer';
+import * as path from 'path';
+import * as ejs from 'ejs';
+import { join } from 'path';
+import * as fs from 'fs';
+import * as handlebars from 'handlebars';
 @Injectable()
 export class EdvironPgService implements GatewayService {
   constructor(private readonly databaseService: DatabaseService) {}
@@ -25,7 +32,7 @@ export class EdvironPgService implements GatewayService {
         easebuzz_cc_id: null,
         easebuzz_dc_id: null,
         ccavenue_id: null,
-        easebuzz_upi_id:null
+        easebuzz_upi_id: null,
       };
       const collectReq =
         await this.databaseService.CollectRequestModel.findById(request._id);
@@ -427,11 +434,11 @@ export class EdvironPgService implements GatewayService {
       };
       const { data: easebuzzRes } = await axios.request(options);
       const access_key = easebuzzRes.data;
-      console.log(access_key,'access key');
+      console.log(access_key, 'access key');
       console.log(collectReq.paymentIds);
-      
+
       // collectReq.paymentIds.easebuzz_upi_id = access_key;
-     
+
       // await collectReq.save();
       let formData = new FormData();
       formData.append('access_key', access_key);
@@ -461,5 +468,81 @@ export class EdvironPgService implements GatewayService {
       console.log(error);
       throw new Error(error.message);
     }
+  }
+
+  async getSchoolInfo(school_id: string) {
+    const payload = { school_id };
+    const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET!, {
+      noTimestamp: true,
+    });
+
+    let config = {
+      method: 'get',
+      maxBodyLength: Infinity,
+      url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-school-data?school_id=${school_id}`,
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        'x-api-version': '2023-08-01',
+      },
+    };
+    const { data: info } = await axios.request(config);
+    return info;
+  }
+
+ 
+
+  async sendTransactionmail(email: string,request:CollectRequest) {
+    const collectReqStatus=await this.databaseService.CollectRequestStatusModel.findOne({collect_id:request._id})
+    if(!collectReqStatus){
+      throw new Error('Collect request status not found')
+    }
+    const __dirname = path.resolve();
+    const filePath = path.join(
+      __dirname,
+      'src/template/transactionTemplate.html',
+    );   
+    const source = fs.readFileSync(filePath, 'utf-8').toString();
+    const template = handlebars.compile(source);
+    const student_data=JSON.parse(request.additional_data)
+    console.log(student_data);
+    
+    const {student_name,student_email,student_phone_no}=student_data.student_details
+   
+    const replacements = {
+      transactionId: request._id.toString(),
+      transactionAmount: collectReqStatus.transaction_amount,
+      transactionDate: collectReqStatus.updatedAt?.toString(),
+      studentName: student_name || ' NA',
+      studentEmailId: student_email || 'NA',
+      studentPhoneNo: student_phone_no || 'NA',
+    }; 
+
+   
+    const htmlToSend = template(replacements);
+    const transporter = nodemailer.createTransport({
+      pool: true,
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        type: 'OAuth2',
+        user: process.env.EMAIL_USER,
+        clientId: process.env.OAUTH_CLIENT_ID,
+        clientSecret: process.env.OAUTH_CLIENT_SECRET,
+        refreshToken: process.env.OAUTH_REFRESH_TOKEN,
+      },
+    });
+   
+    const mailOptions = {
+      from: 'noreply@edviron.com',
+      to: email,
+      subject: 'Transaction',
+      // html: emailContent,
+      html:htmlToSend
+    };
+    const info = await transporter.sendMail(mailOptions);
+
+    return 'mail sent successfully';
   }
 }

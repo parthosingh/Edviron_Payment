@@ -388,176 +388,190 @@ export class EdvironPgController {
       collect_id,
       collectReq,
     );
-
+ 
     //console.log('req', reqToCheck);
 
     const { status } = reqToCheck;
-
-    // add commision and split payment to vendors
-
-    if (status == TransactionStatus.SUCCESS) {
-      let platform_type: string | null = null;
-      const method = payment_method.toLowerCase() as
-        | 'net_banking'
-        | 'debit_card'
-        | 'credit_card'
-        | 'upi'
-        | 'wallet'
-        | 'cardless_emi'
-        | 'pay_later'
-        | 'corporate_card';
-
-      const platformMap: { [key: string]: any } = {
-        net_banking:
-          webHookData.payment.payment_method?.netbanking?.netbanking_bank_name,
-        debit_card: webHookData.payment.payment_method?.card?.card_network,
-        credit_card: webHookData.payment.payment_method?.card?.card_network,
-        upi: 'Others',
-        wallet: webHookData.payment.payment_method?.app?.provider,
-        cardless_emi:
-          webHookData.payment.payment_method?.cardless_emi?.provider,
-        pay_later: webHookData.payment?.payment_method?.pay_later?.provider,
-      };
-
-      const methodMap: { [key: string]: string } = {
-        net_banking: 'NetBanking',
-        debit_card: 'DebitCard',
-        credit_card: 'CreditCard',
-        upi: 'UPI',
-        wallet: 'Wallet',
-        cardless_emi: 'CardLess EMI',
-        pay_later: 'PayLater',
-        corporate_card: 'CORPORATE CARDS',
-      };
-
-      platform_type = platformMap[method];
-
-      const mappedPaymentMethod = methodMap[method];
-
-      const axios = require('axios');
-
-      const tokenData = {
-        school_id: collectReq?.school_id,
-        trustee_id: collectReq?.trustee_id,
-        order_amount: pendingCollectReq?.order_amount,
-        transaction_amount,
-        platform_type: mappedPaymentMethod,
-        payment_mode: platform_type,
-        collect_id: collectReq._id,
-      };
-
-      const _jwt = jwt.sign(tokenData, process.env.KEY!, { noTimestamp: true });
-
-      let data = JSON.stringify({
-        token: _jwt,
-        school_id: collectReq?.school_id,
-        trustee_id: collectReq?.trustee_id,
-        order_amount: pendingCollectReq?.order_amount,
-        transaction_amount,
-        platform_type: mappedPaymentMethod,
-        payment_mode: platform_type,
-        collect_id: collectReq._id,
-      });
-
-      // save commission data on trustee service
-
-      let config = {
-        method: 'post',
-        maxBodyLength: Infinity,
-        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
-        headers: {
-          accept: 'application/json',
-          'content-type': 'application/json',
-          'x-api-version': '2023-08-01',
-        },
-        data: data,
-      };
-
-      try {
-        const { data: commissionRes } = await axios.request(config);
-        console.log('Commission calculation response:', commissionRes);
-
-        //   // call cashfree split payment api
-
-        //   let easySplitData = JSON.stringify({
-        //     split: [
-        //       {
-        //         vendor_id: commissionRes.trustee_vendor_id,
-        //         amount: commissionRes.erpCommission,
-        //       },
-        //       {
-        //         vendor_id: commissionRes.school_vendor_id,
-        //         amount: commissionRes.school_fees,
-        //       },
-        //     ],
-        // });
-
-        // let cashfreeConfig = {
-        //   method: 'post',
-        //   maxBodyLength: Infinity,
-        //   url: `${process.env.CASHFREE_ENDPOINT}/pg/easy-split/orders/${collectReq._id}/split`,
-        //   headers: {
-        //     accept: 'application/json',
-        //     'content-type': 'application/json',
-        //     'x-api-version': '2023-08-01',
-        //     'x-client-id': process.env.CASHFREE_CLIENT_ID,
-        //     'x-client-secret': process.env.CASHFREE_CLIENT_SECRET,
-        //   },
-        //   data: easySplitData,
-        // };
-        // try {
-        //   const { data: cashfreeRes } = await axios.request(cashfreeConfig);
-        //   console.log('Easy Split Response ', cashfreeRes);
-
-        //   let tokenData = {
-        //     school_id: collectReq?.school_id,
-        //     trustee_id: collectReq?.trustee_id,
-        //     commission_amount: commissionRes.erpCommission,
-        //     payment_mode: platform_type,
-        //     earnings_amount: commissionRes.edvCommission,
-        //     transaction_id: collectReq._id,
-        //   };
-
-        //   let _jwt = jwt.sign(tokenData, process.env.KEY!, {
-        //     noTimestamp: true,
-        //   });
-
-        //   let data = JSON.stringify({
-        //     token: _jwt,
-        //     school_id: collectReq?.school_id,
-        //     trustee_id: collectReq?.trustee_id,
-        //     commission_amount: commissionRes.erpCommission,
-        //     payment_mode: platform_type,
-        //     earnings_amount: commissionRes.edvCommission,
-        //     transaction_id: collectReq._id,
-        //   });
-
-        //   let config = {
-        //     method: 'get',
-        //     maxBodyLength: Infinity,
-        //     url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-split-calculation`,
-        //     headers: {
-        //       accept: 'application/json',
-        //       'content-type': 'application/json',
-        //       'x-api-version': '2023-08-01',
-        //     },
-        //     data: data,
-        //   };
-
-        //   try {
-        //     const { data: addCommisionRes } = await axios.request(config);
-        //     console.log('Add Commision Response ', addCommisionRes);
-        //   } catch (error) {
-        //     console.error('Error adding commision:', error);
-        //   }
-        // } catch (error) {
-        //   console.error('Error spliting payment:', error);
-        // }
-      } catch (error) {
-        console.error('Error calculating commission:', error);
+    if(status == TransactionStatus.SUCCESS){
+      try{
+        const schoolInfo=await this.edvironPgService.getSchoolInfo(collectReq.school_id)
+        const email=schoolInfo.email
+        await this.edvironPgService.sendTransactionmail(email,collectReq)
+      }catch(e){
+        console.log('error in sending transaction mail ');
+        
       }
     }
+    // add commision and split payment to vendors
+    try {
+      if (status == TransactionStatus.SUCCESS) {
+        let platform_type: string | null = null;
+        const method = payment_method.toLowerCase() as
+          | 'net_banking'
+          | 'debit_card'
+          | 'credit_card'
+          | 'upi'
+          | 'wallet'
+          | 'cardless_emi'
+          | 'pay_later'
+          | 'corporate_card';
 
+        const platformMap: { [key: string]: any } = {
+          net_banking:
+            webHookData.payment.payment_method?.netbanking
+              ?.netbanking_bank_name,
+          debit_card: webHookData.payment.payment_method?.card?.card_network,
+          credit_card: webHookData.payment.payment_method?.card?.card_network,
+          upi: 'Others',
+          wallet: webHookData.payment.payment_method?.app?.provider,
+          cardless_emi:
+            webHookData.payment.payment_method?.cardless_emi?.provider,
+          pay_later: webHookData.payment?.payment_method?.pay_later?.provider,
+        };
+
+        const methodMap: { [key: string]: string } = {
+          net_banking: 'NetBanking',
+          debit_card: 'DebitCard',
+          credit_card: 'CreditCard',
+          upi: 'UPI',
+          wallet: 'Wallet',
+          cardless_emi: 'CardLess EMI',
+          pay_later: 'PayLater',
+          corporate_card: 'CORPORATE CARDS',
+        };
+
+        platform_type = platformMap[method];
+
+        const mappedPaymentMethod = methodMap[method];
+
+        const axios = require('axios');
+
+        const tokenData = {
+          school_id: collectReq?.school_id,
+          trustee_id: collectReq?.trustee_id,
+          order_amount: pendingCollectReq?.order_amount,
+          transaction_amount,
+          platform_type: mappedPaymentMethod,
+          payment_mode: platform_type,
+          collect_id: collectReq._id,
+        };
+
+        const _jwt = jwt.sign(tokenData, process.env.KEY!, {
+          noTimestamp: true,
+        });
+
+        let data = JSON.stringify({
+          token: _jwt,
+          school_id: collectReq?.school_id,
+          trustee_id: collectReq?.trustee_id,
+          order_amount: pendingCollectReq?.order_amount,
+          transaction_amount,
+          platform_type: mappedPaymentMethod,
+          payment_mode: platform_type,
+          collect_id: collectReq._id,
+        });
+
+        // save commission data on trustee service
+
+        let config = {
+          method: 'post',
+          maxBodyLength: Infinity,
+          url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+            'x-api-version': '2023-08-01',
+          },
+          data: data,
+        };
+
+        try {
+          const { data: commissionRes } = await axios.request(config);
+          console.log('Commission calculation response:', commissionRes);
+
+          //   // call cashfree split payment api
+
+          //   let easySplitData = JSON.stringify({
+          //     split: [
+          //       {
+          //         vendor_id: commissionRes.trustee_vendor_id,
+          //         amount: commissionRes.erpCommission,
+          //       },
+          //       {
+          //         vendor_id: commissionRes.school_vendor_id,
+          //         amount: commissionRes.school_fees,
+          //       },
+          //     ],
+          // });
+
+          // let cashfreeConfig = {
+          //   method: 'post',
+          //   maxBodyLength: Infinity,
+          //   url: `${process.env.CASHFREE_ENDPOINT}/pg/easy-split/orders/${collectReq._id}/split`,
+          //   headers: {
+          //     accept: 'application/json',
+          //     'content-type': 'application/json',
+          //     'x-api-version': '2023-08-01',
+          //     'x-client-id': process.env.CASHFREE_CLIENT_ID,
+          //     'x-client-secret': process.env.CASHFREE_CLIENT_SECRET,
+          //   },
+          //   data: easySplitData,
+          // };
+          // try {
+          //   const { data: cashfreeRes } = await axios.request(cashfreeConfig);
+          //   console.log('Easy Split Response ', cashfreeRes);
+
+          //   let tokenData = {
+          //     school_id: collectReq?.school_id,
+          //     trustee_id: collectReq?.trustee_id,
+          //     commission_amount: commissionRes.erpCommission,
+          //     payment_mode: platform_type,
+          //     earnings_amount: commissionRes.edvCommission,
+          //     transaction_id: collectReq._id,
+          //   };
+
+          //   let _jwt = jwt.sign(tokenData, process.env.KEY!, {
+          //     noTimestamp: true,
+          //   });
+
+          //   let data = JSON.stringify({
+          //     token: _jwt,
+          //     school_id: collectReq?.school_id,
+          //     trustee_id: collectReq?.trustee_id,
+          //     commission_amount: commissionRes.erpCommission,
+          //     payment_mode: platform_type,
+          //     earnings_amount: commissionRes.edvCommission,
+          //     transaction_id: collectReq._id,
+          //   });
+
+          //   let config = {
+          //     method: 'get',
+          //     maxBodyLength: Infinity,
+          //     url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-split-calculation`,
+          //     headers: {
+          //       accept: 'application/json',
+          //       'content-type': 'application/json',
+          //       'x-api-version': '2023-08-01',
+          //     },
+          //     data: data,
+          //   };
+
+          //   try {
+          //     const { data: addCommisionRes } = await axios.request(config);
+          //     console.log('Add Commision Response ', addCommisionRes);
+          //   } catch (error) {
+          //     console.error('Error adding commision:', error);
+          //   }
+          // } catch (error) {
+          //   console.error('Error spliting payment:', error);
+          // }
+        } catch (error) {
+          console.error('Error calculating commission:', error);
+        }
+      }
+    } catch (e) {
+      console.log('Error in saving Commission');
+    }
     const updateReq =
       await this.databaseService.CollectRequestStatusModel.updateOne(
         {
@@ -1566,9 +1580,13 @@ export class EdvironPgController {
     },
   ) {
     const { collect_id, amount, refund_id, token } = body;
-    
+
     let decrypted = jwt.verify(token, process.env.KEY!) as any;
-    if(collect_id !== decrypted.collect_id || amount !== decrypted.amount || refund_id !== decrypted.refund_id) {
+    if (
+      collect_id !== decrypted.collect_id ||
+      amount !== decrypted.amount ||
+      refund_id !== decrypted.refund_id
+    ) {
       throw new UnauthorizedException('Invalid token');
     }
 
@@ -1580,34 +1598,34 @@ export class EdvironPgController {
       }
       const gateway = request.gateway;
       console.log(gateway);
-      
+
       if (gateway === Gateway.EDVIRON_PG) {
         console.log('refunding fromcashgree');
-        
+
         const refunds = await this.cashfreeService.initiateRefund(
           refund_id,
           amount,
           collect_id,
         );
         console.log(refunds);
-        const response={
+        const response = {
           collect_id,
           refund_id,
-          amount
-        }
+          amount,
+        };
         return response;
       }
       if (gateway === Gateway.EDVIRON_EASEBUZZ) {
         console.log('init refund from easebuzz');
-        
+
         const refund = await this.easebuzzService.initiateRefund(
           collect_id,
           amount,
           refund_id,
         );
         console.log(refund);
-        
-        return refund
+
+        return refund;
       }
     } catch (e) {
       throw new BadRequestException(e.message);
@@ -1615,9 +1633,21 @@ export class EdvironPgController {
   }
 
   @Get('/refund-status')
-  async getRefundStatus(@Req() req:any){
-    const collect_id = req.query.collect_id
+  async getRefundStatus(@Req() req: any) {
+    const collect_id = req.query.collect_id;
 
-    return await this.easebuzzService.checkRefundSttaus(collect_id)
+    return await this.easebuzzService.checkRefundSttaus(collect_id);
+  }
+
+  @Get('/sent-mail')
+  async sentMail(@Req() req: any) {
+    const email = req.query.email;
+    const collect_id = req.query.collect_id;
+    const request =
+      await this.databaseService.CollectRequestModel.findById(collect_id);
+    if (!request) {
+      throw new NotFoundException('Collect Request not found');
+    }
+    return await this.edvironPgService.sendTransactionmail(email, request);
   }
 }

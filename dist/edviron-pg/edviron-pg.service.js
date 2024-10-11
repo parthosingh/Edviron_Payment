@@ -14,7 +14,12 @@ const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const transactionStatus_1 = require("../types/transactionStatus");
 const sign_1 = require("../utils/sign");
+const jwt = require("jsonwebtoken");
 const axios_1 = require("axios");
+const nodemailer = require("nodemailer");
+const path = require("path");
+const fs = require("fs");
+const handlebars = require("handlebars");
 let EdvironPgService = class EdvironPgService {
     constructor(databaseService) {
         this.databaseService = databaseService;
@@ -27,7 +32,7 @@ let EdvironPgService = class EdvironPgService {
                 easebuzz_cc_id: null,
                 easebuzz_dc_id: null,
                 ccavenue_id: null,
-                easebuzz_upi_id: null
+                easebuzz_upi_id: null,
             };
             const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
             if (!collectReq) {
@@ -383,6 +388,67 @@ let EdvironPgService = class EdvironPgService {
             console.log(error);
             throw new Error(error.message);
         }
+    }
+    async getSchoolInfo(school_id) {
+        const payload = { school_id };
+        const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET, {
+            noTimestamp: true,
+        });
+        let config = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-school-data?school_id=${school_id}`,
+            headers: {
+                accept: 'application/json',
+                'content-type': 'application/json',
+                'x-api-version': '2023-08-01',
+            },
+        };
+        const { data: info } = await axios_1.default.request(config);
+        return info;
+    }
+    async sendTransactionmail(email, request) {
+        const collectReqStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: request._id });
+        if (!collectReqStatus) {
+            throw new Error('Collect request status not found');
+        }
+        const __dirname = path.resolve();
+        const filePath = path.join(__dirname, 'src/template/transactionTemplate.html');
+        const source = fs.readFileSync(filePath, 'utf-8').toString();
+        const template = handlebars.compile(source);
+        const student_data = JSON.parse(request.additional_data);
+        console.log(student_data);
+        const { student_name, student_email, student_phone_no } = student_data.student_details;
+        const replacements = {
+            transactionId: request._id.toString(),
+            transactionAmount: collectReqStatus.transaction_amount,
+            transactionDate: collectReqStatus.updatedAt?.toString(),
+            studentName: student_name || ' NA',
+            studentEmailId: student_email || 'NA',
+            studentPhoneNo: student_phone_no || 'NA',
+        };
+        const htmlToSend = template(replacements);
+        const transporter = nodemailer.createTransport({
+            pool: true,
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true,
+            auth: {
+                type: 'OAuth2',
+                user: process.env.EMAIL_USER,
+                clientId: process.env.OAUTH_CLIENT_ID,
+                clientSecret: process.env.OAUTH_CLIENT_SECRET,
+                refreshToken: process.env.OAUTH_REFRESH_TOKEN,
+            },
+        });
+        const mailOptions = {
+            from: 'noreply@edviron.com',
+            to: email,
+            subject: 'Transaction',
+            html: htmlToSend
+        };
+        const info = await transporter.sendMail(mailOptions);
+        return 'mail sent successfully';
     }
 };
 exports.EdvironPgService = EdvironPgService;

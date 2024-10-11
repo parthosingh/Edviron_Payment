@@ -265,68 +265,86 @@ let EdvironPgController = class EdvironPgController {
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
         const { status } = reqToCheck;
         if (status == transactionStatus_1.TransactionStatus.SUCCESS) {
-            let platform_type = null;
-            const method = payment_method.toLowerCase();
-            const platformMap = {
-                net_banking: webHookData.payment.payment_method?.netbanking?.netbanking_bank_name,
-                debit_card: webHookData.payment.payment_method?.card?.card_network,
-                credit_card: webHookData.payment.payment_method?.card?.card_network,
-                upi: 'Others',
-                wallet: webHookData.payment.payment_method?.app?.provider,
-                cardless_emi: webHookData.payment.payment_method?.cardless_emi?.provider,
-                pay_later: webHookData.payment?.payment_method?.pay_later?.provider,
-            };
-            const methodMap = {
-                net_banking: 'NetBanking',
-                debit_card: 'DebitCard',
-                credit_card: 'CreditCard',
-                upi: 'UPI',
-                wallet: 'Wallet',
-                cardless_emi: 'CardLess EMI',
-                pay_later: 'PayLater',
-                corporate_card: 'CORPORATE CARDS',
-            };
-            platform_type = platformMap[method];
-            const mappedPaymentMethod = methodMap[method];
-            const axios = require('axios');
-            const tokenData = {
-                school_id: collectReq?.school_id,
-                trustee_id: collectReq?.trustee_id,
-                order_amount: pendingCollectReq?.order_amount,
-                transaction_amount,
-                platform_type: mappedPaymentMethod,
-                payment_mode: platform_type,
-                collect_id: collectReq._id,
-            };
-            const _jwt = jwt.sign(tokenData, process.env.KEY, { noTimestamp: true });
-            let data = JSON.stringify({
-                token: _jwt,
-                school_id: collectReq?.school_id,
-                trustee_id: collectReq?.trustee_id,
-                order_amount: pendingCollectReq?.order_amount,
-                transaction_amount,
-                platform_type: mappedPaymentMethod,
-                payment_mode: platform_type,
-                collect_id: collectReq._id,
-            });
-            let config = {
-                method: 'post',
-                maxBodyLength: Infinity,
-                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
-                headers: {
-                    accept: 'application/json',
-                    'content-type': 'application/json',
-                    'x-api-version': '2023-08-01',
-                },
-                data: data,
-            };
             try {
-                const { data: commissionRes } = await axios.request(config);
-                console.log('Commission calculation response:', commissionRes);
+                const schoolInfo = await this.edvironPgService.getSchoolInfo(collectReq.school_id);
+                const email = schoolInfo.email;
+                await this.edvironPgService.sendTransactionmail(email, collectReq);
             }
-            catch (error) {
-                console.error('Error calculating commission:', error);
+            catch (e) {
+                console.log('error in sending transaction mail ');
             }
+        }
+        try {
+            if (status == transactionStatus_1.TransactionStatus.SUCCESS) {
+                let platform_type = null;
+                const method = payment_method.toLowerCase();
+                const platformMap = {
+                    net_banking: webHookData.payment.payment_method?.netbanking
+                        ?.netbanking_bank_name,
+                    debit_card: webHookData.payment.payment_method?.card?.card_network,
+                    credit_card: webHookData.payment.payment_method?.card?.card_network,
+                    upi: 'Others',
+                    wallet: webHookData.payment.payment_method?.app?.provider,
+                    cardless_emi: webHookData.payment.payment_method?.cardless_emi?.provider,
+                    pay_later: webHookData.payment?.payment_method?.pay_later?.provider,
+                };
+                const methodMap = {
+                    net_banking: 'NetBanking',
+                    debit_card: 'DebitCard',
+                    credit_card: 'CreditCard',
+                    upi: 'UPI',
+                    wallet: 'Wallet',
+                    cardless_emi: 'CardLess EMI',
+                    pay_later: 'PayLater',
+                    corporate_card: 'CORPORATE CARDS',
+                };
+                platform_type = platformMap[method];
+                const mappedPaymentMethod = methodMap[method];
+                const axios = require('axios');
+                const tokenData = {
+                    school_id: collectReq?.school_id,
+                    trustee_id: collectReq?.trustee_id,
+                    order_amount: pendingCollectReq?.order_amount,
+                    transaction_amount,
+                    platform_type: mappedPaymentMethod,
+                    payment_mode: platform_type,
+                    collect_id: collectReq._id,
+                };
+                const _jwt = jwt.sign(tokenData, process.env.KEY, {
+                    noTimestamp: true,
+                });
+                let data = JSON.stringify({
+                    token: _jwt,
+                    school_id: collectReq?.school_id,
+                    trustee_id: collectReq?.trustee_id,
+                    order_amount: pendingCollectReq?.order_amount,
+                    transaction_amount,
+                    platform_type: mappedPaymentMethod,
+                    payment_mode: platform_type,
+                    collect_id: collectReq._id,
+                });
+                let config = {
+                    method: 'post',
+                    maxBodyLength: Infinity,
+                    url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
+                    headers: {
+                        accept: 'application/json',
+                        'content-type': 'application/json',
+                        'x-api-version': '2023-08-01',
+                    },
+                    data: data,
+                };
+                try {
+                    const { data: commissionRes } = await axios.request(config);
+                    console.log('Commission calculation response:', commissionRes);
+                }
+                catch (error) {
+                    console.error('Error calculating commission:', error);
+                }
+            }
+        }
+        catch (e) {
+            console.log('Error in saving Commission');
         }
         const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
             collect_id: collectIdObject,
@@ -1143,7 +1161,9 @@ let EdvironPgController = class EdvironPgController {
     async initiaterefund(body) {
         const { collect_id, amount, refund_id, token } = body;
         let decrypted = jwt.verify(token, process.env.KEY);
-        if (collect_id !== decrypted.collect_id || amount !== decrypted.amount || refund_id !== decrypted.refund_id) {
+        if (collect_id !== decrypted.collect_id ||
+            amount !== decrypted.amount ||
+            refund_id !== decrypted.refund_id) {
             throw new common_1.UnauthorizedException('Invalid token');
         }
         try {
@@ -1160,7 +1180,7 @@ let EdvironPgController = class EdvironPgController {
                 const response = {
                     collect_id,
                     refund_id,
-                    amount
+                    amount,
                 };
                 return response;
             }
@@ -1178,6 +1198,15 @@ let EdvironPgController = class EdvironPgController {
     async getRefundStatus(req) {
         const collect_id = req.query.collect_id;
         return await this.easebuzzService.checkRefundSttaus(collect_id);
+    }
+    async sentMail(req) {
+        const email = req.query.email;
+        const collect_id = req.query.collect_id;
+        const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!request) {
+            throw new common_1.NotFoundException('Collect Request not found');
+        }
+        return await this.edvironPgService.sendTransactionmail(email, request);
     }
 };
 exports.EdvironPgController = EdvironPgController;
@@ -1318,6 +1347,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getRefundStatus", null);
+__decorate([
+    (0, common_1.Get)('/sent-mail'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "sentMail", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
