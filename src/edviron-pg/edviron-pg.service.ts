@@ -17,6 +17,7 @@ import * as ejs from 'ejs';
 import { join } from 'path';
 import * as fs from 'fs';
 import * as handlebars from 'handlebars';
+import { sign } from '../utils/sign';
 @Injectable()
 export class EdvironPgService implements GatewayService {
   constructor(private readonly databaseService: DatabaseService) {}
@@ -552,5 +553,56 @@ export class EdvironPgService implements GatewayService {
     const info = await transporter.sendMail(mailOptions);
 
     return 'mail sent successfully';
+  }
+
+  async sendErpWebhook(webHookUrl:string[],webhookData:any){
+    if (webHookUrl !== null) {
+      const amount = webhookData.amount;
+      const webHookData = await sign({
+        collect_id:webhookData.collect_id,
+        amount,
+        status,
+        trustee_id: webhookData.trustee_id,
+        school_id: webhookData.school_id,
+        req_webhook_urls: webhookData?.req_webhook_urls,
+        custom_order_id:webhookData.custom_order_id,
+        createdAt: webhookData.createdAt,
+        transaction_time: webhookData?.updatedAt,
+        additional_data:webhookData.additional_data,
+      });
+
+      const createConfig = (url: string) => ({
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: url,
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+        },
+        data: webHookData,
+      });
+      try {
+        try {
+          const sendWebhook = (url: string) => {
+            axios
+              .request(createConfig(url))
+              .then(() => console.log(`Webhook sent to ${url}`))
+              .catch((error) =>
+                console.error(
+                  `Error sending webhook to ${url}:`,
+                  error.message,
+                ),
+              );
+          };
+
+          webHookUrl.forEach(sendWebhook);
+        } catch (error) {
+          console.error('Error in webhook sending process:', error);
+        }
+      } catch (error) {
+        console.error('Error sending webhooks:', error);
+      }
+      
+    }
   }
 }

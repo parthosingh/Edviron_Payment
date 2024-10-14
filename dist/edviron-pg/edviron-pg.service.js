@@ -20,6 +20,7 @@ const nodemailer = require("nodemailer");
 const path = require("path");
 const fs = require("fs");
 const handlebars = require("handlebars");
+const sign_2 = require("../utils/sign");
 let EdvironPgService = class EdvironPgService {
     constructor(databaseService) {
         this.databaseService = databaseService;
@@ -455,6 +456,50 @@ let EdvironPgService = class EdvironPgService {
         };
         const info = await transporter.sendMail(mailOptions);
         return 'mail sent successfully';
+    }
+    async sendErpWebhook(webHookUrl, webhookData) {
+        if (webHookUrl !== null) {
+            const amount = webhookData.amount;
+            const webHookData = await (0, sign_2.sign)({
+                collect_id: webhookData.collect_id,
+                amount,
+                status,
+                trustee_id: webhookData.trustee_id,
+                school_id: webhookData.school_id,
+                req_webhook_urls: webhookData?.req_webhook_urls,
+                custom_order_id: webhookData.custom_order_id,
+                createdAt: webhookData.createdAt,
+                transaction_time: webhookData?.updatedAt,
+                additional_data: webhookData.additional_data,
+            });
+            const createConfig = (url) => ({
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: url,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                },
+                data: webHookData,
+            });
+            try {
+                try {
+                    const sendWebhook = (url) => {
+                        axios_1.default
+                            .request(createConfig(url))
+                            .then(() => console.log(`Webhook sent to ${url}`))
+                            .catch((error) => console.error(`Error sending webhook to ${url}:`, error.message));
+                    };
+                    webHookUrl.forEach(sendWebhook);
+                }
+                catch (error) {
+                    console.error('Error in webhook sending process:', error);
+                }
+            }
+            catch (error) {
+                console.error('Error sending webhooks:', error);
+            }
+        }
     }
 };
 exports.EdvironPgService = EdvironPgService;
