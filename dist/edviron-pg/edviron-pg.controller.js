@@ -247,6 +247,8 @@ let EdvironPgController = class EdvironPgController {
         const collectReq = await this.databaseService.CollectRequestModel.findById(collectIdObject);
         if (!collectReq)
             throw new Error('Collect request not found');
+        collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
+        await collectReq.save();
         const transaction_amount = webHookData?.payment?.payment_amount || null;
         const payment_method = webHookData?.payment?.payment_group || null;
         const saveWebhook = await new this.databaseService.WebhooksModel({

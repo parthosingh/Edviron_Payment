@@ -353,6 +353,7 @@ export class EdvironPgController {
     // console.log('webHookData', webHookData);
     const collect_id = webHookData.order.order_id || body.order.order_id;
     // console.log('collect_id', collect_id);
+    
 
     if (!Types.ObjectId.isValid(collect_id)) {
       throw new Error('collect_id is not valid');
@@ -362,6 +363,9 @@ export class EdvironPgController {
     const collectReq =
       await this.databaseService.CollectRequestModel.findById(collectIdObject);
     if (!collectReq) throw new Error('Collect request not found');
+
+    collectReq.gateway=Gateway.EDVIRON_PG
+    await collectReq.save()
 
     const transaction_amount = webHookData?.payment?.payment_amount || null;
     const payment_method = webHookData?.payment?.payment_group || null;
