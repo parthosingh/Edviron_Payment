@@ -346,14 +346,13 @@ export class EdvironPgController {
   async handleWebhook(@Body() body: any, @Res() res: any) {
     const { data: webHookData } = JSON.parse(JSON.stringify(body));
 
-    console.log('webhook received with data', { body });
-
+    // console.log('webhook received with data', { body });
+ 
     if (!webHookData) throw new Error('Invalid webhook data');
 
     // console.log('webHookData', webHookData);
     const collect_id = webHookData.order.order_id || body.order.order_id;
     // console.log('collect_id', collect_id);
-    
 
     if (!Types.ObjectId.isValid(collect_id)) {
       throw new Error('collect_id is not valid');
@@ -364,8 +363,8 @@ export class EdvironPgController {
       await this.databaseService.CollectRequestModel.findById(collectIdObject);
     if (!collectReq) throw new Error('Collect request not found');
 
-    collectReq.gateway=Gateway.EDVIRON_PG
-    await collectReq.save()
+    collectReq.gateway = Gateway.EDVIRON_PG;
+    await collectReq.save();
 
     const transaction_amount = webHookData?.payment?.payment_amount || null;
     const payment_method = webHookData?.payment?.payment_group || null;
@@ -605,67 +604,99 @@ export class EdvironPgController {
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: collectIdObject,
       });
+
+    const amount = reqToCheck?.amount;
     const custom_order_id = collectRequest?.custom_order_id || '';
     const additional_data = collectRequest?.additional_data || '';
+    const webHookDataInfo = {
+      collect_id,
+      amount,
+      status,
+      trustee_id: collectReq.trustee_id,
+      school_id: collectReq.school_id,
+      req_webhook_urls: collectReq?.req_webhook_urls,
+      custom_order_id,
+      createdAt: collectRequestStatus?.createdAt,
+      transaction_time: collectRequestStatus?.updatedAt,
+      additional_data,
+    };
+
     if (webHookUrl !== null) {
-      const amount = reqToCheck?.amount;
-      const webHookData = await sign({
-        collect_id,
-        amount,
-        status,
-        trustee_id: collectReq.trustee_id,
-        school_id: collectReq.school_id,
-        req_webhook_urls: collectReq?.req_webhook_urls,
-        custom_order_id,
-        createdAt: collectRequestStatus?.createdAt,
-        transaction_time: collectRequestStatus?.updatedAt,
-        additional_data,
-      });
-
-      const createConfig = (url: string) => ({
-        method: 'post',
-        maxBodyLength: Infinity,
-        url: url,
-        headers: {
-          accept: 'application/json',
-          'content-type': 'application/json',
-        },
-        data: webHookData,
-      });
-      try {
-        try {
-          const sendWebhook = (url: string) => {
-            axios
-              .request(createConfig(url))
-              .then(() => console.log(`Webhook sent to ${url}`))
-              .catch((error) =>
-                console.error(
-                  `Error sending webhook to ${url}:`,
-                  error.message,
-                ),
-              );
-          };
-
-          webHookUrl.forEach(sendWebhook);
-        } catch (error) {
-          console.error('Error in webhook sending process:', error);
-        }
-      } catch (error) {
-        console.error('Error sending webhooks:', error);
+      console.log('calling webhook');     
+      if (collectRequest?.trustee_id.toString() === '66505181ca3e97e19f142075') {
+        console.log('Webhook called for webschool');        
+        setTimeout(async () => {
+          await this.edvironPgService.sendErpWebhook(
+            webHookUrl,
+            webHookDataInfo,
+          );
+        }, 60000);
+      } else {
+        console.log("Webhook called for other schools");
+        
+        await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
       }
-      // const config = {
-      //   method: 'post',
-      //   maxBodyLength: Infinity,
-      //   url: `${webHookUrl}`,
-      //   headers: {
-      //     accept: 'application/json',
-      //     'content-type': 'application/json',
-      //   },
-      //   data: webHookData,
-      // };
-      // // const webHookSent = await axios.request(config);
-      // console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
     }
+
+    // if (webHookUrl !== null) {
+    //   const amount = reqToCheck?.amount;
+    //   const webHookData = await sign({
+    //     collect_id,
+    //     amount,
+    //     status,
+    //     trustee_id: collectReq.trustee_id,
+    //     school_id: collectReq.school_id,
+    //     req_webhook_urls: collectReq?.req_webhook_urls,
+    //     custom_order_id,
+    //     createdAt: collectRequestStatus?.createdAt,
+    //     transaction_time: collectRequestStatus?.updatedAt,
+    //     additional_data,
+    //   });
+
+    //   const createConfig = (url: string) => ({
+    //     method: 'post',
+    //     maxBodyLength: Infinity,
+    //     url: url,
+    //     headers: {
+    //       accept: 'application/json',
+    //       'content-type': 'application/json',
+    //     },
+    //     data: webHookData,
+    //   });
+    //   try {
+    //     try {
+    //       const sendWebhook = (url: string) => {
+    //         axios
+    //           .request(createConfig(url))
+    //           .then(() => console.log(`Webhook sent to ${url}`))
+    //           .catch((error) =>
+    //             console.error(
+    //               `Error sending webhook to ${url}:`,
+    //               error.message,
+    //             ),
+    //           );
+    //       };
+
+    //       webHookUrl.forEach(sendWebhook);
+    //     } catch (error) {
+    //       console.error('Error in webhook sending process:', error);
+    //     }
+    //   } catch (error) {
+    //     console.error('Error sending webhooks:', error);
+    //   }
+    //   // const config = {
+    //   //   method: 'post',
+    //   //   maxBodyLength: Infinity,
+    //   //   url: `${webHookUrl}`,
+    //   //   headers: {
+    //   //     accept: 'application/json',
+    //   //     'content-type': 'application/json',
+    //   //   },
+    //   //   data: webHookData,
+    //   // };
+    //   // // const webHookSent = await axios.request(config);
+    //   // console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
+    // }
     res.status(200).send('OK');
   }
 
@@ -1666,12 +1697,12 @@ export class EdvironPgController {
       throw new NotFoundException('Collect Request not found');
     }
     console.log(request.school_id);
-    
+
     const schoolInfo = await this.edvironPgService.getSchoolInfo(
       request.school_id,
     );
     console.log(schoolInfo);
-    
+
     // return await this.edvironPgService.sendTransactionmail(email, request);
   }
 }

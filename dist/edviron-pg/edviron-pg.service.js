@@ -20,6 +20,7 @@ const nodemailer = require("nodemailer");
 const path = require("path");
 const fs = require("fs");
 const handlebars = require("handlebars");
+const sign_2 = require("../utils/sign");
 let EdvironPgService = class EdvironPgService {
     constructor(databaseService) {
         this.databaseService = databaseService;
@@ -179,7 +180,6 @@ let EdvironPgService = class EdvironPgService {
         };
         try {
             const { data: cashfreeRes } = await axios.request(config);
-            console.log(cashfreeRes, 'cashfree status response');
             const order_status_to_transaction_status_map = {
                 ACTIVE: transactionStatus_1.TransactionStatus.PENDING,
                 PAID: transactionStatus_1.TransactionStatus.SUCCESS,
@@ -414,7 +414,9 @@ let EdvironPgService = class EdvironPgService {
         }
     }
     async sendTransactionmail(email, request) {
-        const collectReqStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: request._id });
+        const collectReqStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: request._id,
+        });
         if (!collectReqStatus) {
             throw new Error('Collect request status not found');
         }
@@ -451,10 +453,126 @@ let EdvironPgService = class EdvironPgService {
             from: 'noreply@edviron.com',
             to: email,
             subject: `Edviron - Transaction success |order ID: ${replacements.transactionId}, order amount: INR ${replacements.transactionAmount}`,
-            html: htmlToSend
+            html: htmlToSend,
         };
         const info = await transporter.sendMail(mailOptions);
         return 'mail sent successfully';
+    }
+    async sendErpWebhook(webHookUrl, webhookData) {
+        if (webHookUrl !== null) {
+            const amount = webhookData.amount;
+            const webHookData = await (0, sign_2.sign)({
+                collect_id: webhookData.collect_id,
+                amount,
+                status: webhookData.status,
+                trustee_id: webhookData.trustee_id,
+                school_id: webhookData.school_id,
+                req_webhook_urls: webhookData?.req_webhook_urls,
+                custom_order_id: webhookData.custom_order_id,
+                createdAt: webhookData.createdAt,
+                transaction_time: webhookData?.updatedAt,
+                additional_data: webhookData.additional_data,
+            });
+            const createConfig = (url) => ({
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: url,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                },
+                data: webHookData,
+            });
+            try {
+                try {
+                    const sendWebhook = (url) => {
+                        axios_1.default
+                            .request(createConfig(url))
+                            .then(() => console.log(`Webhook sent to ${url}`))
+                            .catch((error) => console.error(`Error sending webhook to ${url}:`, error.message));
+                    };
+                    webHookUrl.forEach(sendWebhook);
+                }
+                catch (error) {
+                    console.error('Error in webhook sending process:', error);
+                }
+            }
+            catch (error) {
+                console.error('Error sending webhooks:', error);
+            }
+        }
+    }
+    async test() {
+        const data = {
+            customer_details: {
+                customer_email: null,
+                customer_id: '7112AAA812234',
+                customer_name: null,
+                customer_phone: '9898989898',
+            },
+            order: {
+                order_amount: 1,
+                order_currency: 'INR',
+                order_id: '670cf66fc95a5c255c5b0fc9',
+                order_tags: null,
+            },
+            payment: {
+                auth_id: null,
+                bank_reference: '437848809219',
+                cf_payment_id: 3140236156,
+                payment_amount: 6.9,
+                payment_currency: 'INR',
+                payment_group: 'upi',
+                payment_message: '00::APPROVED OR COMPLETED SUCCESSFULLY',
+                payment_method: { upi: { channel: null, upi_id: '9074296363@ybl' } },
+                payment_status: 'SUCCESS',
+                payment_time: '2024-10-14T16:17:28+05:30',
+            },
+            payment_gateway_details: {
+                gateway_name: 'CASHFREE',
+                gateway_order_id: '3392076382',
+                gateway_order_reference_id: 'null',
+                gateway_payment_id: '3140236156',
+                gateway_settlement: 'CASHFREE',
+                gateway_status_code: null,
+            },
+            payment_offers: null,
+        };
+        const data2 = {
+            customer_details: {
+                customer_email: null,
+                customer_id: '7112AAA812234',
+                customer_name: null,
+                customer_phone: '9898989898',
+            },
+            order: {
+                order_amount: 1,
+                order_currency: 'INR',
+                order_id: '670b788613f8cf9da453fe56',
+                order_tags: null,
+            },
+            payment: {
+                auth_id: null,
+                bank_reference: '138772344109',
+                cf_payment_id: 3136782300,
+                payment_amount: 1.02,
+                payment_currency: 'INR',
+                payment_group: 'upi',
+                payment_message: '00::APPROVED OR COMPLETED SUCCESSFULLY',
+                payment_method: { upi: { channel: null, upi_id: '9074296363@axl' } },
+                payment_status: 'SUCCESS',
+                payment_time: '2024-10-13T13:07:16+05:30',
+            },
+            payment_gateway_details: {
+                gateway_name: 'CASHFREE',
+                gateway_order_id: null,
+                gateway_order_reference_id: null,
+                gateway_payment_id: null,
+                gateway_settlement: 'CASHFREE',
+                gateway_status_code: null,
+            },
+            payment_offers: null,
+        };
     }
 };
 exports.EdvironPgService = EdvironPgService;

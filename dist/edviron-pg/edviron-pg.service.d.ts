@@ -20,4 +20,6 @@ export declare class EdvironPgService implements GatewayService {
     getQr(collect_id: string, request: CollectRequest): Promise<void>;
     getSchoolInfo(school_id: string): Promise<any>;
     sendTransactionmail(email: string, request: CollectRequest): Promise<string>;
+    sendErpWebhook(webHookUrl: string[], webhookData: any): Promise<void>;
+    test(): Promise<void>;
 }
