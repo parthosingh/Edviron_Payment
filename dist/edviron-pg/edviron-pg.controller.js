@@ -236,7 +236,6 @@ let EdvironPgController = class EdvironPgController {
     }
     async handleWebhook(body, res) {
         const { data: webHookData } = JSON.parse(JSON.stringify(body));
-        console.log('webhook received with data', { body });
         if (!webHookData)
             throw new Error('Invalid webhook data');
         const collect_id = webHookData.order.order_id || body.order.order_id;
@@ -261,8 +260,6 @@ let EdvironPgController = class EdvironPgController {
         if (pendingCollectReq &&
             pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.PENDING) {
             console.log('No pending request found for', collect_id);
-            res.status(200).send('OK');
-            return;
         }
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
         const { status } = reqToCheck;
@@ -382,13 +379,18 @@ let EdvironPgController = class EdvironPgController {
             transaction_time: collectRequestStatus?.updatedAt,
             additional_data,
         };
-        if (collectRequest?.trustee_id == '662a47682916140dedaaf1af') {
-            setTimeout(async () => {
+        if (webHookUrl !== null) {
+            console.log('calling webhook');
+            if (collectRequest?.trustee_id == '66505181ca3e97e19f142075') {
+                console.log('Webhook called for webschool');
+                setTimeout(async () => {
+                    await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
+                }, 60000);
+            }
+            else {
+                console.log("Webhook called for other schools");
                 await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
-            }, 50000);
-        }
-        else {
-            await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
+            }
         }
         res.status(200).send('OK');
     }
