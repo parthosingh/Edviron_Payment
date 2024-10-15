@@ -260,6 +260,8 @@ let EdvironPgController = class EdvironPgController {
         if (pendingCollectReq &&
             pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.PENDING) {
             console.log('No pending request found for', collect_id);
+            res.status(200).send('OK');
+            return;
         }
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
         const { status } = reqToCheck;
@@ -381,7 +383,7 @@ let EdvironPgController = class EdvironPgController {
         };
         if (webHookUrl !== null) {
             console.log('calling webhook');
-            if (collectRequest?.trustee_id == '66505181ca3e97e19f142075') {
+            if (collectRequest?.trustee_id.toString() === '66505181ca3e97e19f142075') {
                 console.log('Webhook called for webschool');
                 setTimeout(async () => {
                     await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
