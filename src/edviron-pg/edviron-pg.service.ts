@@ -156,7 +156,7 @@ export class EdvironPgService implements GatewayService {
           () => {
             this.terminateOrder(request._id.toString());
           },
-          2 * 60 * 1000,
+          20 * 60 * 1000,
         ); // 20 minutes in milliseconds
       }
       const disabled_modes_string = request.disabled_modes
