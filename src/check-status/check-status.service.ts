@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
+import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 
 @Injectable()
 export class CheckStatusService {
@@ -104,6 +105,13 @@ export class CheckStatusService {
       case Gateway.PENDING:
         return {
           status: 'NOT INITIATED',
+          custom_order_id,
+          amount: collectRequest.amount,
+          status_code: 202,
+        };
+      case Gateway.EXPIRED:
+        return {
+          status: PaymentStatus.EXPIRED,
           custom_order_id,
           amount: collectRequest.amount,
           status_code: 202,
@@ -206,6 +214,13 @@ export class CheckStatusService {
           edviron_order_id:collectRequest._id.toString(),
           status_code: 202,
         };
+      case Gateway.EXPIRED:
+          return {
+            status: PaymentStatus.EXPIRED,
+            edviron_order_id:collectRequest._id.toString(),
+            amount: collectRequest.amount,
+            status_code: 202,
+          };
     }
   }
 }

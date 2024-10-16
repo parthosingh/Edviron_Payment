@@ -19,6 +19,7 @@ const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const ccavenue_service_1 = require("../ccavenue/ccavenue.service");
 const transactionStatus_1 = require("../types/transactionStatus");
 const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
+const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 let CheckStatusService = class CheckStatusService {
     constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService) {
         this.databaseService = databaseService;
@@ -101,6 +102,13 @@ let CheckStatusService = class CheckStatusService {
                     amount: collectRequest.amount,
                     status_code: 202,
                 };
+            case collect_request_schema_1.Gateway.EXPIRED:
+                return {
+                    status: collect_req_status_schema_1.PaymentStatus.EXPIRED,
+                    custom_order_id,
+                    amount: collectRequest.amount,
+                    status_code: 202,
+                };
         }
     }
     async checkStatusByOrderId(order_id, school_id) {
@@ -177,6 +185,13 @@ let CheckStatusService = class CheckStatusService {
                     status: 'NOT INITIATED',
                     amount: collectRequest.amount,
                     edviron_order_id: collectRequest._id.toString(),
+                    status_code: 202,
+                };
+            case collect_request_schema_1.Gateway.EXPIRED:
+                return {
+                    status: collect_req_status_schema_1.PaymentStatus.EXPIRED,
+                    edviron_order_id: collectRequest._id.toString(),
+                    amount: collectRequest.amount,
                     status_code: 202,
                 };
         }
