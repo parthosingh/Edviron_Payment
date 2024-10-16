@@ -1207,6 +1207,10 @@ let EdvironPgController = class EdvironPgController {
         const schoolInfo = await this.edvironPgService.getSchoolInfo(request.school_id);
         console.log(schoolInfo);
     }
+    async terminate(req) {
+        const collect_id = req.query.collect_id;
+        return await this.cashfreeService.terminateOrder(collect_id);
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -1353,6 +1357,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "sentMail", null);
+__decorate([
+    (0, common_1.Post)('/terminate'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "terminate", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

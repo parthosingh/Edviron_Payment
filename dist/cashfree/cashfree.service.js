@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CashfreeService = void 0;
 const common_1 = require("@nestjs/common");
+const axios_1 = require("axios");
 const database_service_1 = require("../database/database.service");
 let CashfreeService = class CashfreeService {
     constructor(databaseService) {
@@ -49,6 +50,33 @@ let CashfreeService = class CashfreeService {
         catch (e) {
             console.log(e);
             throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async terminateOrder(collect_id) {
+        const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!request) {
+            throw new Error('Collect Request not found');
+        }
+        let config = {
+            method: 'patch',
+            maxBodyLength: Infinity,
+            url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/${collect_id}`,
+            headers: {
+                accept: 'application/json',
+                'content-type': 'application/json',
+                'x-api-version': '2023-08-01',
+                'x-partner-merchantid': request.clientId,
+                'x-partner-apikey': process.env.CASHFREE_API_KEY,
+            },
+            data: { order_status: 'TERMINATED' },
+        };
+        console.log(config);
+        try {
+            const response = await axios_1.default.request(config);
+            return response.data;
+        }
+        catch (e) {
+            console.log(e.message);
         }
     }
 };

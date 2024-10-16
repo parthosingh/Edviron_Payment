@@ -6,6 +6,8 @@ export enum PaymentStatus {
   SUCCESS = 'SUCCESS',
   FAIL = 'FAIL',
   PENDING = 'PENDING',
+  EXPIRED = 'EXPIRED',
+  FAILURE = 'FAILURE',
 }
 
 @Schema({ timestamps: true })

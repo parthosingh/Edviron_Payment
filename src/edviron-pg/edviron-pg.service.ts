@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   CollectRequest,
+  Gateway,
   PaymentIds,
 } from '../database/schemas/collect_request.schema';
 import { GatewayService } from '../types/gateway.type';
@@ -18,9 +19,14 @@ import { join } from 'path';
 import * as fs from 'fs';
 import * as handlebars from 'handlebars';
 import { sign } from '../utils/sign';
+import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
+import { CashfreeService } from 'src/cashfree/cashfree.service';
 @Injectable()
 export class EdvironPgService implements GatewayService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly cashfreeService: CashfreeService,
+  ) {}
   async collect(
     request: CollectRequest,
     platform_charges: platformChange[],
@@ -146,6 +152,12 @@ export class EdvironPgService implements GatewayService {
         const { data: cashfreeRes } = await axios.request(config);
         cf_payment_id = cashfreeRes.payment_session_id;
         paymentInfo.cashfree_id = cf_payment_id || null;
+        setTimeout(
+          () => {
+            this.terminateOrder(request._id.toString());
+          },
+          20 * 60 * 1000,
+        ); // 20 minutes in milliseconds
       }
       const disabled_modes_string = request.disabled_modes
         .map((mode) => `${mode}=false`)
@@ -211,10 +223,10 @@ export class EdvironPgService implements GatewayService {
     try {
       const { data: cashfreeRes } = await axios.request(config);
 
-      // console.log(cashfreeRes, 'cashfree status response');
+      console.log(cashfreeRes, 'cashfree status response');
 
       const order_status_to_transaction_status_map = {
-        ACTIVE: TransactionStatus.PENDING,
+        ACTIVE: TransactionStatus.FAILURE,
         PAID: TransactionStatus.SUCCESS,
         EXPIRED: TransactionStatus.FAILURE,
         TERMINATED: TransactionStatus.FAILURE,
@@ -265,6 +277,41 @@ export class EdvironPgService implements GatewayService {
       console.log(e);
       throw new BadRequestException(e.message);
     }
+  }
+
+  async terminateOrder(collect_id: string) {
+    const request =
+      await this.databaseService.CollectRequestModel.findById(collect_id);
+    if (!request) {
+      throw new Error('Collect Request not found');
+    }
+
+    if (request.gateway !== Gateway.EDVIRON_PG) {
+      if (request.gateway === Gateway.PENDING) {
+        request.gateway = Gateway.EXPIRED;
+        await request.save();
+      }
+      return true;
+    }
+
+    const edvironPgResponse = await this.checkStatus(collect_id, request);
+    if (edvironPgResponse.status !== TransactionStatus.PENDING) {
+      const collectReqStatus =
+        await this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: request._id,
+        });
+      if (collectReqStatus) {
+        collectReqStatus.status = PaymentStatus.EXPIRED;
+        await collectReqStatus.save();
+        try {
+          await this.cashfreeService.terminateOrder(collect_id);
+        } catch (e) {
+          console.log(e.message);
+        }
+        return true;
+      }
+    }
+    return true;
   }
 
   async easebuzzCheckStatus(
@@ -560,7 +607,7 @@ export class EdvironPgService implements GatewayService {
       const webHookData = await sign({
         collect_id: webhookData.collect_id,
         amount,
-        status:webhookData.status,
+        status: webhookData.status,
         trustee_id: webhookData.trustee_id,
         school_id: webhookData.school_id,
         req_webhook_urls: webhookData?.req_webhook_urls,

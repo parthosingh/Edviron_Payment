@@ -20,6 +20,7 @@ var Gateway;
     Gateway["EDVIRON_CASHFREE"] = "EDVIRON_CASHFREE";
     Gateway["EDVIRON_EASEBUZZ"] = "EDVIRON_EASEBUZZ";
     Gateway["PENDING"] = "PENDING";
+    Gateway["EXPIRED"] = "EXPIRED";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let PaymentIds = class PaymentIds {
 };

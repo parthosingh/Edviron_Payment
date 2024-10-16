@@ -3,7 +3,9 @@ import { CollectRequest } from './collect_request.schema';
 export declare enum PaymentStatus {
     SUCCESS = "SUCCESS",
     FAIL = "FAIL",
-    PENDING = "PENDING"
+    PENDING = "PENDING",
+    EXPIRED = "EXPIRED",
+    FAILURE = "FAILURE"
 }
 export declare class CollectRequestStatus {
     createdAt?: Date;

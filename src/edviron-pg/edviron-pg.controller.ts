@@ -1705,4 +1705,11 @@ export class EdvironPgController {
 
     // return await this.edvironPgService.sendTransactionmail(email, request);
   }
+
+  
+  @Post('/terminate')
+  async terminate(@Req() req:any){
+    const collect_id=req.query.collect_id
+    return await this.cashfreeService.terminateOrder(collect_id)
+  }
 }
