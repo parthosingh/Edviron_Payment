@@ -30,7 +30,8 @@ export declare enum Gateway {
     EDVIRON_CCAVENUE = "EDVIRON_CCAVENUE",
     EDVIRON_CASHFREE = "EDVIRON_CASHFREE",
     EDVIRON_EASEBUZZ = "EDVIRON_EASEBUZZ",
-    PENDING = "PENDING"
+    PENDING = "PENDING",
+    EXPIRED = "EXPIRED"
 }
 export declare class PaymentIds {
     cashfree_id?: string | null;

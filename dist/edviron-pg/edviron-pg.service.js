@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EdvironPgService = void 0;
 const common_1 = require("@nestjs/common");
+const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const database_service_1 = require("../database/database.service");
 const transactionStatus_1 = require("../types/transactionStatus");
 const sign_1 = require("../utils/sign");
@@ -21,9 +22,12 @@ const path = require("path");
 const fs = require("fs");
 const handlebars = require("handlebars");
 const sign_2 = require("../utils/sign");
+const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
+const cashfree_service_1 = require("../cashfree/cashfree.service");
 let EdvironPgService = class EdvironPgService {
-    constructor(databaseService) {
+    constructor(databaseService, cashfreeService) {
         this.databaseService = databaseService;
+        this.cashfreeService = cashfreeService;
     }
     async collect(request, platform_charges, school_name) {
         try {
@@ -130,6 +134,9 @@ let EdvironPgService = class EdvironPgService {
                 const { data: cashfreeRes } = await axios.request(config);
                 cf_payment_id = cashfreeRes.payment_session_id;
                 paymentInfo.cashfree_id = cf_payment_id || null;
+                setTimeout(() => {
+                    this.terminateOrder(request._id.toString());
+                }, 2 * 60 * 1000);
             }
             const disabled_modes_string = request.disabled_modes
                 .map((mode) => `${mode}=false`)
@@ -180,8 +187,9 @@ let EdvironPgService = class EdvironPgService {
         };
         try {
             const { data: cashfreeRes } = await axios.request(config);
+            console.log(cashfreeRes, 'cashfree status response');
             const order_status_to_transaction_status_map = {
-                ACTIVE: transactionStatus_1.TransactionStatus.PENDING,
+                ACTIVE: transactionStatus_1.TransactionStatus.FAILURE,
                 PAID: transactionStatus_1.TransactionStatus.SUCCESS,
                 EXPIRED: transactionStatus_1.TransactionStatus.FAILURE,
                 TERMINATED: transactionStatus_1.TransactionStatus.FAILURE,
@@ -219,6 +227,32 @@ let EdvironPgService = class EdvironPgService {
             console.log(e);
             throw new common_1.BadRequestException(e.message);
         }
+    }
+    async terminateOrder(collect_id) {
+        const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!request) {
+            throw new Error('Collect Request not found');
+        }
+        if (request.gateway !== collect_request_schema_1.Gateway.EDVIRON_PG) {
+            if (request.gateway === collect_request_schema_1.Gateway.PENDING) {
+                request.gateway = collect_request_schema_1.Gateway.EXPIRED;
+                await request.save();
+            }
+            return true;
+        }
+        const edvironPgResponse = await this.checkStatus(collect_id, request);
+        if (edvironPgResponse.status !== transactionStatus_1.TransactionStatus.PENDING) {
+            const collectReqStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: request._id,
+            });
+            if (collectReqStatus) {
+                collectReqStatus.status = collect_req_status_schema_1.PaymentStatus.EXPIRED;
+                await this.cashfreeService.terminateOrder(collect_id);
+                await collectReqStatus.save();
+                return true;
+            }
+        }
+        return true;
     }
     async easebuzzCheckStatus(collect_request_id, collect_request) {
         const amount = parseFloat(collect_request.amount.toString()).toFixed(1);
@@ -578,6 +612,7 @@ let EdvironPgService = class EdvironPgService {
 exports.EdvironPgService = EdvironPgService;
 exports.EdvironPgService = EdvironPgService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [database_service_1.DatabaseService])
+    __metadata("design:paramtypes", [database_service_1.DatabaseService,
+        cashfree_service_1.CashfreeService])
 ], EdvironPgService);
 //# sourceMappingURL=edviron-pg.service.js.map

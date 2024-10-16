@@ -18,6 +18,8 @@ var PaymentStatus;
     PaymentStatus["SUCCESS"] = "SUCCESS";
     PaymentStatus["FAIL"] = "FAIL";
     PaymentStatus["PENDING"] = "PENDING";
+    PaymentStatus["EXPIRED"] = "EXPIRED";
+    PaymentStatus["FAILURE"] = "FAILURE";
 })(PaymentStatus || (exports.PaymentStatus = PaymentStatus = {}));
 let CollectRequestStatus = class CollectRequestStatus {
 };
