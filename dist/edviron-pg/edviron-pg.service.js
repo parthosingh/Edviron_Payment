@@ -247,8 +247,13 @@ let EdvironPgService = class EdvironPgService {
             });
             if (collectReqStatus) {
                 collectReqStatus.status = collect_req_status_schema_1.PaymentStatus.EXPIRED;
-                await this.cashfreeService.terminateOrder(collect_id);
                 await collectReqStatus.save();
+                try {
+                    await this.cashfreeService.terminateOrder(collect_id);
+                }
+                catch (e) {
+                    console.log(e.message);
+                }
                 return true;
             }
         }

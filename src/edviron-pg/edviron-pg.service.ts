@@ -302,8 +302,12 @@ export class EdvironPgService implements GatewayService {
         });
       if (collectReqStatus) {
         collectReqStatus.status = PaymentStatus.EXPIRED;
-        await this.cashfreeService.terminateOrder(collect_id);
         await collectReqStatus.save();
+        try {
+          await this.cashfreeService.terminateOrder(collect_id);
+        } catch (e) {
+          console.log(e.message);
+        }
         return true;
       }
     }
