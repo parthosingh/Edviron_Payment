@@ -17,7 +17,6 @@ const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const edviron_pg_service_1 = require("./edviron-pg.service");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
-const sign_1 = require("../utils/sign");
 const axios_1 = require("axios");
 const mongoose_1 = require("mongoose");
 const jwt = require("jsonwebtoken");
@@ -580,50 +579,33 @@ let EdvironPgController = class EdvironPgController {
         const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
             collect_id: collectIdObject,
         });
+        const amount = reqToCheck?.amount;
         const custom_order_id = collectRequest?.custom_order_id || '';
         const additional_data = collectRequest?.additional_data || '';
+        const webHookDataInfo = {
+            collect_id,
+            amount,
+            status,
+            trustee_id: collectReq.trustee_id,
+            school_id: collectReq.school_id,
+            req_webhook_urls: collectReq?.req_webhook_urls,
+            custom_order_id,
+            createdAt: collectRequestStatus?.createdAt,
+            transaction_time: collectRequestStatus?.updatedAt,
+            additional_data,
+        };
         if (webHookUrl !== null) {
-            const amount = reqToCheck?.amount;
-            const webHookData = await (0, sign_1.sign)({
-                collect_id,
-                amount,
-                status,
-                trustee_id: collectReq.trustee_id,
-                school_id: collectReq.school_id,
-                req_webhook_urls: collectReq?.req_webhook_urls,
-                custom_order_id,
-                createdAt: collectRequestStatus?.createdAt,
-                transaction_time: collectRequestStatus?.updatedAt,
-                additional_data,
-            });
-            const createConfig = (url) => ({
-                method: 'post',
-                maxBodyLength: Infinity,
-                url: url,
-                headers: {
-                    accept: 'application/json',
-                    'content-type': 'application/json',
-                },
-                data: webHookData,
-            });
-            try {
-                try {
-                    const sendWebhook = (url) => {
-                        axios_1.default
-                            .request(createConfig(url))
-                            .then(() => console.log(`Webhook sent to ${url}`))
-                            .catch((error) => console.error(`Error sending webhook to ${url}:`, error.message));
-                    };
-                    webHookUrl.forEach(sendWebhook);
-                }
-                catch (error) {
-                    console.error('Error in webhook sending process:', error);
-                }
+            console.log('calling webhook');
+            if (collectRequest?.trustee_id.toString() === '66505181ca3e97e19f142075') {
+                console.log('Webhook called for webschool');
+                setTimeout(async () => {
+                    await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
+                }, 60000);
             }
-            catch (error) {
-                console.error('Error sending webhooks:', error);
+            else {
+                console.log("Webhook called for other schools");
+                await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
             }
-            res.status(200).send('OK');
         }
     }
     async transactionsReport(body, res, req) {

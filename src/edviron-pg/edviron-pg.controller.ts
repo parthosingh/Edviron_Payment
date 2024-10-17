@@ -912,54 +912,87 @@ export class EdvironPgController {
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: collectIdObject,
       });
+    // const custom_order_id = collectRequest?.custom_order_id || '';
+    // const additional_data = collectRequest?.additional_data || '';
+    // if (webHookUrl !== null) {
+    //   const amount = reqToCheck?.amount;
+    //   const webHookData = await sign({
+    //     collect_id,
+    //     amount,
+    //     status,
+    //     trustee_id: collectReq.trustee_id,
+    //     school_id: collectReq.school_id,
+    //     req_webhook_urls: collectReq?.req_webhook_urls,
+    //     custom_order_id,
+    //     createdAt: collectRequestStatus?.createdAt,
+    //     transaction_time: collectRequestStatus?.updatedAt,
+    //     additional_data,
+    //   });
+    //   const createConfig = (url: string) => ({
+    //     method: 'post',
+    //     maxBodyLength: Infinity,
+    //     url: url,
+    //     headers: {
+    //       accept: 'application/json',
+    //       'content-type': 'application/json',
+    //     },
+    //     data: webHookData,
+    //   });
+    //   try {
+    //     try {
+    //       const sendWebhook = (url: string) => {
+    //         axios
+    //           .request(createConfig(url))
+    //           .then(() => console.log(`Webhook sent to ${url}`))
+    //           .catch((error) =>
+    //             console.error(
+    //               `Error sending webhook to ${url}:`,
+    //               error.message,
+    //             ),
+    //           );
+    //       };
+
+    //       webHookUrl.forEach(sendWebhook);
+    //     } catch (error) {
+    //       console.error('Error in webhook sending process:', error);
+    //     }
+    //   } catch (error) {
+    //     console.error('Error sending webhooks:', error);
+    //   }
+    //   res.status(200).send('OK');
+    // }
+
+    const amount = reqToCheck?.amount;
     const custom_order_id = collectRequest?.custom_order_id || '';
     const additional_data = collectRequest?.additional_data || '';
-    if (webHookUrl !== null) {
-      const amount = reqToCheck?.amount;
-      const webHookData = await sign({
-        collect_id,
-        amount,
-        status,
-        trustee_id: collectReq.trustee_id,
-        school_id: collectReq.school_id,
-        req_webhook_urls: collectReq?.req_webhook_urls,
-        custom_order_id,
-        createdAt: collectRequestStatus?.createdAt,
-        transaction_time: collectRequestStatus?.updatedAt,
-        additional_data,
-      });
-      const createConfig = (url: string) => ({
-        method: 'post',
-        maxBodyLength: Infinity,
-        url: url,
-        headers: {
-          accept: 'application/json',
-          'content-type': 'application/json',
-        },
-        data: webHookData,
-      });
-      try {
-        try {
-          const sendWebhook = (url: string) => {
-            axios
-              .request(createConfig(url))
-              .then(() => console.log(`Webhook sent to ${url}`))
-              .catch((error) =>
-                console.error(
-                  `Error sending webhook to ${url}:`,
-                  error.message,
-                ),
-              );
-          };
+    const webHookDataInfo = {
+      collect_id,
+      amount,
+      status,
+      trustee_id: collectReq.trustee_id,
+      school_id: collectReq.school_id,
+      req_webhook_urls: collectReq?.req_webhook_urls,
+      custom_order_id,
+      createdAt: collectRequestStatus?.createdAt,
+      transaction_time: collectRequestStatus?.updatedAt,
+      additional_data,
+    };
 
-          webHookUrl.forEach(sendWebhook);
-        } catch (error) {
-          console.error('Error in webhook sending process:', error);
-        }
-      } catch (error) {
-        console.error('Error sending webhooks:', error);
+    if (webHookUrl !== null) {
+      console.log('calling webhook');     
+      if (collectRequest?.trustee_id.toString() === '66505181ca3e97e19f142075') {
+        console.log('Webhook called for webschool');        
+        setTimeout(async () => {
+          await this.edvironPgService.sendErpWebhook(
+            webHookUrl,
+            webHookDataInfo,
+          );
+        }, 60000);
+      } else {
+        console.log("Webhook called for other schools");
+        
+        await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
       }
-      res.status(200).send('OK');
     }
   }
   @Get('transactions-report')
