@@ -395,17 +395,17 @@ export class EdvironPgController {
     //console.log('req', reqToCheck);
 
     const { status } = reqToCheck;
-    if (status == TransactionStatus.SUCCESS) {
-      try {
-        const schoolInfo = await this.edvironPgService.getSchoolInfo(
-          collectReq.school_id,
-        );
-        const email = schoolInfo.email;
-        await this.edvironPgService.sendTransactionmail(email, collectReq);
-      } catch (e) {
-        console.log('error in sending transaction mail ');
-      }
-    }
+    // if (status == TransactionStatus.SUCCESS) {
+    //   try {
+    //     const schoolInfo = await this.edvironPgService.getSchoolInfo(
+    //       collectReq.school_id,
+    //     );
+    //     const email = schoolInfo.email;
+    //     await this.edvironPgService.sendTransactionmail(email, collectReq);
+    //   } catch (e) {
+    //     console.log('error in sending transaction mail ');
+    //   }
+    // }
     // add commision and split payment to vendors
     try {
       if (status == TransactionStatus.SUCCESS) {
@@ -839,7 +839,7 @@ export class EdvironPgController {
           collectReq.school_id,
         );
         const email = schoolInfo.email;
-        await this.edvironPgService.sendTransactionmail(email, collectReq);
+        // await this.edvironPgService.sendTransactionmail(email, collectReq);
       } catch (e) {
         console.log('error in sending transaction mail ');
       }

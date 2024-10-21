@@ -264,16 +264,6 @@ let EdvironPgController = class EdvironPgController {
         }
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
         const { status } = reqToCheck;
-        if (status == transactionStatus_1.TransactionStatus.SUCCESS) {
-            try {
-                const schoolInfo = await this.edvironPgService.getSchoolInfo(collectReq.school_id);
-                const email = schoolInfo.email;
-                await this.edvironPgService.sendTransactionmail(email, collectReq);
-            }
-            catch (e) {
-                console.log('error in sending transaction mail ');
-            }
-        }
         try {
             if (status == transactionStatus_1.TransactionStatus.SUCCESS) {
                 let platform_type = null;
@@ -515,7 +505,6 @@ let EdvironPgController = class EdvironPgController {
             try {
                 const schoolInfo = await this.edvironPgService.getSchoolInfo(collectReq.school_id);
                 const email = schoolInfo.email;
-                await this.edvironPgService.sendTransactionmail(email, collectReq);
             }
             catch (e) {
                 console.log('error in sending transaction mail ');
