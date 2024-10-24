@@ -378,14 +378,15 @@ export class EdvironPgController {
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: collectIdObject,
       });
-    if (
-      pendingCollectReq &&
-      pendingCollectReq.status !== PaymentStatus.PENDING
-    ) {
-      console.log('No pending request found for', collect_id);
-      res.status(200).send('OK');
-      return;
-    }
+    // if (
+    //   pendingCollectReq &&
+    //   pendingCollectReq.status !== PaymentStatus.PENDING
+    // ) {
+    //   console.log('No pending request found for', collect_id);
+      
+    //   res.status(200).send('OK');
+    //   return;
+    // }
 
     const reqToCheck = await this.edvironPgService.checkStatus(
       collect_id,
