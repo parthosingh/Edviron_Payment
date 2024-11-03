@@ -1176,6 +1176,21 @@ let EdvironPgController = class EdvironPgController {
         const collect_id = req.query.collect_id;
         return await this.cashfreeService.terminateOrder(collect_id);
     }
+    async getCustomId(collect_id) {
+        try {
+            const result = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!result) {
+                throw new common_1.NotFoundException('Collect Request not found');
+            }
+            if (result.custom_order_id) {
+                return result.custom_order_id;
+            }
+            return 'NA';
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -1329,6 +1344,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "terminate", null);
+__decorate([
+    (0, common_1.Get)('/get-custom-id'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getCustomId", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

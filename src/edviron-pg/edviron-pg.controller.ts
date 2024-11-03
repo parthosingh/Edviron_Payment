@@ -1746,4 +1746,21 @@ export class EdvironPgController {
     const collect_id=req.query.collect_id
     return await this.cashfreeService.terminateOrder(collect_id)
   }
+
+  @Get('/get-custom-id')
+  async getCustomId(@Query('collect_id') collect_id: string) {
+    try {
+      const result =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!result) {
+        throw new NotFoundException('Collect Request not found');
+      }
+      if (result.custom_order_id) {
+        return result.custom_order_id;
+      }
+      return 'NA';
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
 }
