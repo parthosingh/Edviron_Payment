@@ -207,6 +207,7 @@ let EdvironPgService = class EdvironPgService {
             else {
                 status_code = 400;
             }
+            const date = new Date(transaction_time);
             return {
                 status: order_status_to_transaction_status_map[cashfreeRes.order_status],
                 amount: cashfreeRes.order_amount,
@@ -216,6 +217,7 @@ let EdvironPgService = class EdvironPgService {
                     payment_methods: collect_status?.details &&
                         JSON.parse(collect_status.details),
                     transaction_time,
+                    formattedTransactionDate: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
                     order_status: cashfreeRes.order_status,
                 },
             };

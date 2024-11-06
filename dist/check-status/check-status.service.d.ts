@@ -27,6 +27,7 @@ export declare class CheckStatusService {
                 mode: any;
             };
             transaction_time: Date | undefined;
+            formattedTransactionDate: string;
             order_status: any;
         };
     } | {
@@ -55,6 +56,7 @@ export declare class CheckStatusService {
                 mode: any;
             };
             transaction_time: Date | undefined;
+            formattedTransactionDate: string;
             order_status: any;
         };
     } | {
