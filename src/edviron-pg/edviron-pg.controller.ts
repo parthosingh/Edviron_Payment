@@ -605,6 +605,14 @@ export class EdvironPgController {
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: collectIdObject,
       });
+    if(!collectRequestStatus){
+      throw new Error("Collect Request Not Found")
+    }
+
+    const transactionTime=collectRequestStatus.updatedAt
+    if(!transactionTime){
+      throw new Error("Transaction Time Not Found")
+    }
 
     const amount = reqToCheck?.amount;
     const custom_order_id = collectRequest?.custom_order_id || '';
@@ -620,6 +628,7 @@ export class EdvironPgController {
       createdAt: collectRequestStatus?.createdAt,
       transaction_time: collectRequestStatus?.updatedAt,
       additional_data,
+      formattedTransaction_time: transactionTime.toLocaleDateString('en-GB') || null
     };
 
     if (webHookUrl !== null) {
