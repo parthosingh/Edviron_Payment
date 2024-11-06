@@ -628,7 +628,10 @@ export class EdvironPgController {
       createdAt: collectRequestStatus?.createdAt,
       transaction_time: collectRequestStatus?.updatedAt,
       additional_data,
-      formattedTransaction_time: transactionTime.toLocaleDateString('en-GB') || null
+      // formattedTransaction_time: transactionTime.toLocaleDateString('en-GB') || null,
+      formattedDate: `${transactionTime.getFullYear()}-${String(
+        transactionTime.getMonth() + 1,
+      ).padStart(2, '0')}-${String(transactionTime.getDate()).padStart(2, '0')}`,
     };
 
     if (webHookUrl !== null) {
