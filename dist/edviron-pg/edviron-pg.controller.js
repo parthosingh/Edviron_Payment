@@ -350,11 +350,11 @@ let EdvironPgController = class EdvironPgController {
             collect_id: collectIdObject,
         });
         if (!collectRequestStatus) {
-            throw new Error("Collect Request Not Found");
+            throw new Error('Collect Request Not Found');
         }
         const transactionTime = collectRequestStatus.updatedAt;
         if (!transactionTime) {
-            throw new Error("Transaction Time Not Found");
+            throw new Error('Transaction Time Not Found');
         }
         const amount = reqToCheck?.amount;
         const custom_order_id = collectRequest?.custom_order_id || '';
@@ -381,7 +381,7 @@ let EdvironPgController = class EdvironPgController {
                 }, 60000);
             }
             else {
-                console.log("Webhook called for other schools");
+                console.log('Webhook called for other schools');
                 await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
             }
         }
@@ -570,6 +570,13 @@ let EdvironPgController = class EdvironPgController {
         const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
             collect_id: collectIdObject,
         });
+        if (!collectRequestStatus) {
+            throw new Error('Collect Request Not Found');
+        }
+        const transactionTime = collectRequestStatus.updatedAt;
+        if (!transactionTime) {
+            throw new Error('Transaction Time Not Found');
+        }
         const amount = reqToCheck?.amount;
         const custom_order_id = collectRequest?.custom_order_id || '';
         const additional_data = collectRequest?.additional_data || '';
@@ -584,6 +591,7 @@ let EdvironPgController = class EdvironPgController {
             createdAt: collectRequestStatus?.createdAt,
             transaction_time: collectRequestStatus?.updatedAt,
             additional_data,
+            formattedDate: `${transactionTime.getFullYear()}-${String(transactionTime.getMonth() + 1).padStart(2, '0')}-${String(transactionTime.getDate()).padStart(2, '0')}`,
         };
         if (webHookUrl !== null) {
             console.log('calling webhook');
@@ -594,7 +602,7 @@ let EdvironPgController = class EdvironPgController {
                 }, 60000);
             }
             else {
-                console.log("Webhook called for other schools");
+                console.log('Webhook called for other schools');
                 await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
             }
         }

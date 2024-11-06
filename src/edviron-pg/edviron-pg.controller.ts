@@ -347,7 +347,7 @@ export class EdvironPgController {
     const { data: webHookData } = JSON.parse(JSON.stringify(body));
 
     // console.log('webhook received with data', { body });
- 
+
     if (!webHookData) throw new Error('Invalid webhook data');
 
     // console.log('webHookData', webHookData);
@@ -383,7 +383,7 @@ export class EdvironPgController {
     //   pendingCollectReq.status !== PaymentStatus.PENDING
     // ) {
     //   console.log('No pending request found for', collect_id);
-      
+
     //   res.status(200).send('OK');
     //   return;
     // }
@@ -605,13 +605,13 @@ export class EdvironPgController {
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: collectIdObject,
       });
-    if(!collectRequestStatus){
-      throw new Error("Collect Request Not Found")
+    if (!collectRequestStatus) {
+      throw new Error('Collect Request Not Found');
     }
 
-    const transactionTime=collectRequestStatus.updatedAt
-    if(!transactionTime){
-      throw new Error("Transaction Time Not Found")
+    const transactionTime = collectRequestStatus.updatedAt;
+    if (!transactionTime) {
+      throw new Error('Transaction Time Not Found');
     }
 
     const amount = reqToCheck?.amount;
@@ -631,13 +631,18 @@ export class EdvironPgController {
       // formattedTransaction_time: transactionTime.toLocaleDateString('en-GB') || null,
       formattedDate: `${transactionTime.getFullYear()}-${String(
         transactionTime.getMonth() + 1,
-      ).padStart(2, '0')}-${String(transactionTime.getDate()).padStart(2, '0')}`,
+      ).padStart(2, '0')}-${String(transactionTime.getDate()).padStart(
+        2,
+        '0',
+      )}`,
     };
 
     if (webHookUrl !== null) {
-      console.log('calling webhook');     
-      if (collectRequest?.trustee_id.toString() === '66505181ca3e97e19f142075') {
-        console.log('Webhook called for webschool');        
+      console.log('calling webhook');
+      if (
+        collectRequest?.trustee_id.toString() === '66505181ca3e97e19f142075'
+      ) {
+        console.log('Webhook called for webschool');
         setTimeout(async () => {
           await this.edvironPgService.sendErpWebhook(
             webHookUrl,
@@ -645,8 +650,8 @@ export class EdvironPgController {
           );
         }, 60000);
       } else {
-        console.log("Webhook called for other schools");
-        
+        console.log('Webhook called for other schools');
+
         await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
       }
     }
@@ -974,6 +979,13 @@ export class EdvironPgController {
     //   }
     //   res.status(200).send('OK');
     // }
+    if (!collectRequestStatus) {
+      throw new Error('Collect Request Not Found');
+    }
+    const transactionTime = collectRequestStatus.updatedAt;
+    if (!transactionTime) {
+      throw new Error('Transaction Time Not Found');
+    }
 
     const amount = reqToCheck?.amount;
     const custom_order_id = collectRequest?.custom_order_id || '';
@@ -989,12 +1001,20 @@ export class EdvironPgController {
       createdAt: collectRequestStatus?.createdAt,
       transaction_time: collectRequestStatus?.updatedAt,
       additional_data,
+      formattedDate: `${transactionTime.getFullYear()}-${String(
+        transactionTime.getMonth() + 1,
+      ).padStart(2, '0')}-${String(transactionTime.getDate()).padStart(
+        2,
+        '0',
+      )}`,
     };
 
     if (webHookUrl !== null) {
-      console.log('calling webhook');     
-      if (collectRequest?.trustee_id.toString() === '66505181ca3e97e19f142075') {
-        console.log('Webhook called for webschool');        
+      console.log('calling webhook');
+      if (
+        collectRequest?.trustee_id.toString() === '66505181ca3e97e19f142075'
+      ) {
+        console.log('Webhook called for webschool');
         setTimeout(async () => {
           await this.edvironPgService.sendErpWebhook(
             webHookUrl,
@@ -1002,8 +1022,8 @@ export class EdvironPgController {
           );
         }, 60000);
       } else {
-        console.log("Webhook called for other schools");
-        
+        console.log('Webhook called for other schools');
+
         await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
       }
     }
@@ -1752,11 +1772,10 @@ export class EdvironPgController {
     // return await this.edvironPgService.sendTransactionmail(email, request);
   }
 
-  
   @Post('/terminate')
-  async terminate(@Req() req:any){
-    const collect_id=req.query.collect_id
-    return await this.cashfreeService.terminateOrder(collect_id)
+  async terminate(@Req() req: any) {
+    const collect_id = req.query.collect_id;
+    return await this.cashfreeService.terminateOrder(collect_id);
   }
 
   @Get('/get-custom-id')
