@@ -145,6 +145,12 @@ export class CheckStatusService {
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: collectRequest._id,
       });
+    
+    if(!collect_req_status){
+      console.log('No status found for custom order id', order_id);
+      throw new NotFoundException('No status found for custom order id');
+    }
+
     const collectidString = collectRequest._id.toString();
    
     switch (collectRequest?.gateway) {
@@ -177,6 +183,10 @@ export class CheckStatusService {
         } else {
           status_code = 400;
         }
+        const date =collect_req_status.updatedAt
+        if(!date) {
+          throw new Error('No date found in the transaction status');
+        }
         const ezb_status_response = {
           status: easebuzzStatus.msg.status.toUpperCase(),
           status_code,
@@ -186,6 +196,9 @@ export class CheckStatusService {
             bank_ref: easebuzzStatus.msg.bank_ref_num,
             payment_method: { mode: easebuzzStatus.msg.mode },
             transaction_time: collect_req_status?.updatedAt,
+            formattedTransactionDate: `${date.getFullYear()}-${String(
+              date.getMonth() + 1,
+            ).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
             order_status: easebuzzStatus.msg.status,
           },
         };
