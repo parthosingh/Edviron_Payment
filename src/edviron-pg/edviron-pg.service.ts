@@ -255,7 +255,7 @@ export class EdvironPgService implements GatewayService {
       } else {
         status_code = 400;
       }
-
+      const date = new Date(transaction_time)
       return {
         status:
           order_status_to_transaction_status_map[
@@ -270,6 +270,9 @@ export class EdvironPgService implements GatewayService {
             collect_status?.details &&
             JSON.parse(collect_status.details as string),
           transaction_time,
+          formattedTransactionDate: `${date.getFullYear()}-${String(
+            date.getMonth() + 1,
+          ).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
           order_status: cashfreeRes.order_status,
         },
       };
