@@ -382,6 +382,7 @@ let EdvironPgController = class EdvironPgController {
             }
             else {
                 console.log('Webhook called for other schools');
+                console.log(webHookDataInfo);
                 await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
             }
         }

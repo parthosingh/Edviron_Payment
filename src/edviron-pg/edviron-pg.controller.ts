@@ -651,7 +651,8 @@ export class EdvironPgController {
         }, 60000);
       } else {
         console.log('Webhook called for other schools');
-
+        console.log(webHookDataInfo);
+        
         await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
       }
     }

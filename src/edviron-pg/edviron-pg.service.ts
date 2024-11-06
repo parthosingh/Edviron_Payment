@@ -615,6 +615,8 @@ export class EdvironPgService implements GatewayService {
         createdAt: webhookData.createdAt,
         transaction_time: webhookData?.updatedAt,
         additional_data: webhookData.additional_data,
+        formattedDate: webhookData?.formattedDate
+        
       });
 
       const createConfig = (url: string) => ({
