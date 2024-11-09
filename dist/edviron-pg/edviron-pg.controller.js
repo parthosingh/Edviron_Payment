@@ -880,8 +880,8 @@ let EdvironPgController = class EdvironPgController {
         if (!token)
             throw new Error('Token not provided');
         try {
-            const page = req.query.page || 1;
-            const limit = req.query.limit || 10;
+            const page = Number(req.query.page) || 1;
+            const limit = Number(req.query.limit) || 10;
             const startDate = req.query.startDate || null;
             const endDate = req.query.endDate || null;
             const status = req.query.status || null;
