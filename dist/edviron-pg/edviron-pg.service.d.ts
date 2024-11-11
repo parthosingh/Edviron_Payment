@@ -25,4 +25,28 @@ export declare class EdvironPgService implements GatewayService {
     sendTransactionmail(email: string, request: CollectRequest): Promise<string>;
     sendErpWebhook(webHookUrl: string[], webhookData: any): Promise<void>;
     test(): Promise<void>;
+    createVendor(client_id: string, vendor_info: {
+        vendor_id: string;
+        status: string;
+        name: string;
+        email: string;
+        phone: string;
+        verify_account: string;
+        dashboard_access: string;
+        schedule_option: number;
+        bank: {
+            account_number: string;
+            account_holder: string;
+            ifsc: string;
+        };
+        kyc_details: {
+            account_type: string;
+            business_type: string;
+            uidai?: string;
+            gst?: string;
+            cin?: string;
+            pan?: string;
+            passport_number?: string;
+        };
+    }): Promise<any>;
 }

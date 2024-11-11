@@ -1795,4 +1795,55 @@ export class EdvironPgController {
       throw new BadRequestException(e.message);
     }
   }
+
+  @Post('create-vendor')
+  async createVendor(
+    @Body()
+    body: {
+      token: string;
+      vendor_info: {
+        vendor_id: string;
+        status: string;
+        name: string;
+        email: string;
+        phone: string;
+        verify_account: string;
+        dashboard_access: string;
+        schedule_option: number;
+        bank: { account_number: string; account_holder: string; ifsc: string };
+        kyc_details: {
+          account_type: string;
+          business_type: string;
+          uidai?: string;
+          gst?: string;
+          cin?: string;
+          pan?: string;
+          passport_number?: string;
+        };
+      };
+      client_id: string;
+    },
+  ) {
+    console.log('vendor');
+
+    const token = body.token;
+    console.log(token);
+    const { client_id, vendor_info } = body;
+    let decrypted = jwt.verify(token, process.env.KEY!) as any;
+    console.log(decrypted);
+
+    if (decrypted.client_id != body.client_id) {
+      throw new ForbiddenException('Request forged');
+    }
+    try {
+      return await this.edvironPgService.createVendor(
+        client_id,
+        vendor_info,
+      );
+    } catch (e) {
+      // console.log(e);
+
+      throw new BadRequestException(e.message);
+    }
+  }
 }
