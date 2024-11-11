@@ -1208,6 +1208,23 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async createVendor(body) {
+        console.log('vendor');
+        const token = body.token;
+        console.log(token);
+        const { client_id, vendor_info } = body;
+        let decrypted = jwt.verify(token, process.env.KEY);
+        console.log(decrypted);
+        if (decrypted.client_id != body.client_id) {
+            throw new common_1.ForbiddenException('Request forged');
+        }
+        try {
+            return await this.edvironPgService.createVendor(client_id, vendor_info);
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -1368,6 +1385,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getCustomId", null);
+__decorate([
+    (0, common_1.Post)('create-vendor'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "createVendor", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

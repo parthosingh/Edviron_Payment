@@ -58,4 +58,32 @@ export declare class EdvironPgController {
     sentMail(req: any): Promise<void>;
     terminate(req: any): Promise<any>;
     getCustomId(collect_id: string): Promise<string>;
+    createVendor(body: {
+        token: string;
+        vendor_info: {
+            vendor_id: string;
+            status: string;
+            name: string;
+            email: string;
+            phone: string;
+            verify_account: string;
+            dashboard_access: string;
+            schedule_option: number;
+            bank: {
+                account_number: string;
+                account_holder: string;
+                ifsc: string;
+            };
+            kyc_details: {
+                account_type: string;
+                business_type: string;
+                uidai?: string;
+                gst?: string;
+                cin?: string;
+                pan?: string;
+                passport_number?: string;
+            };
+        };
+        client_id: string;
+    }): Promise<any>;
 }

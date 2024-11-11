@@ -729,4 +729,58 @@ export class EdvironPgService implements GatewayService {
       payment_offers: null,
     };
   }
+
+  async createVendor(
+    client_id: string,
+    vendor_info: {
+      vendor_id:string,
+      status: string;
+      name: string;
+      email: string;
+      phone: string;
+      verify_account: string;
+      dashboard_access: string;
+      schedule_option: number;
+      bank: { account_number: string; account_holder: string; ifsc: string };
+      kyc_details: {
+        account_type: string;
+        business_type: string;
+        uidai?: string;
+        gst?: string;
+        cin?: string;
+        pan?: string;
+        passport_number?: string;
+      };
+    }
+  ){
+    const axios = require('axios');
+    let data = JSON.stringify(vendor_info);
+    let config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: `${process.env.CASHFREE_ENDPOINT}/pg/easy-split/vendors`,
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        'x-api-version': '2023-08-01',
+        'x-partner-merchantid': client_id,
+        'x-partner-apikey': process.env.CASHFREE_API_KEY,
+      },
+      data: data,
+    };
+    console.log(config,'config');
+    
+    try{
+      const {data:Response}=await axios.request(config)
+      console.log(Response,'Res');
+      
+      return Response
+    }catch(e){
+      if(e?.response?.data){
+        throw new BadRequestException(e.response.data.message)
+      }
+      
+      throw new BadRequestException(e.message)
+    }
+  }
 }
