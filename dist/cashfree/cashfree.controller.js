@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CashfreeController = void 0;
 const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
+const jwt = require("jsonwebtoken");
 let CashfreeController = class CashfreeController {
     constructor(databaseService) {
         this.databaseService = databaseService;
@@ -55,6 +56,72 @@ let CashfreeController = class CashfreeController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async getUpiPaymentInfoUrl(req) {
+        const { token, collect_id } = req.query;
+        let decrypted = jwt.verify(token, process.env.KEY);
+        if (decrypted.collect_id != collect_id) {
+            throw new common_1.BadRequestException('Invalid token');
+        }
+        const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!request) {
+            throw new common_1.BadRequestException('Collect Request not found');
+        }
+        const cashfreeId = request.paymentIds.cashfree_id;
+        if (!cashfreeId) {
+            throw new common_1.BadRequestException('Error in Getting QR Code');
+        }
+        let intentData = JSON.stringify({
+            payment_method: {
+                upi: {
+                    channel: 'link',
+                },
+            },
+            payment_session_id: cashfreeId,
+        });
+        let qrCodeData = JSON.stringify({
+            payment_method: {
+                upi: {
+                    channel: 'qrcode',
+                },
+            },
+            payment_session_id: cashfreeId,
+        });
+        let upiConfig = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/sessions`,
+            headers: {
+                accept: 'application/json',
+                'content-type': 'application/json',
+                'x-api-version': '2023-08-01',
+            },
+            data: intentData,
+        };
+        let qrCodeConfig = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/sessions`,
+            headers: {
+                accept: 'application/json',
+                'content-type': 'application/json',
+                'x-api-version': '2023-08-01',
+            },
+            data: qrCodeData,
+        };
+        const axios = require('axios');
+        try {
+            const { data: upiIntent } = await axios.request(upiConfig);
+            const { data: qrCode } = await axios.request(qrCodeConfig);
+            const intent = upiIntent.data.payload.default;
+            const qrCodeUrl = qrCode.data.payload.qrcode;
+            const qrBase64 = qrCodeUrl.split(',')[1];
+            return { intentUrl: intent, qrCodeBase64: qrBase64, collect_id };
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.CashfreeController = CashfreeController;
 __decorate([
@@ -64,6 +131,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CashfreeController.prototype, "initiateRefund", null);
+__decorate([
+    (0, common_1.Get)('/upi-payment'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "getUpiPaymentInfoUrl", null);
 exports.CashfreeController = CashfreeController = __decorate([
     (0, common_1.Controller)('cashfree'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService])
