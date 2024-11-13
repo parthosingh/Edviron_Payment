@@ -29,7 +29,7 @@ let EdvironPgService = class EdvironPgService {
         this.databaseService = databaseService;
         this.cashfreeService = cashfreeService;
     }
-    async collect(request, platform_charges, school_name) {
+    async collect(request, platform_charges, school_name, splitPayments, vendor) {
         try {
             let paymentInfo = {
                 cashfree_id: null,
@@ -59,6 +59,44 @@ let EdvironPgService = class EdvironPgService {
                         request._id,
                 },
             });
+            console.log(splitPayments, 'split pay');
+            if (splitPayments && vendor && vendor.length > 0) {
+                data = JSON.stringify({
+                    customer_details: {
+                        customer_id: '7112AAA812234',
+                        customer_phone: '9898989898',
+                    },
+                    order_currency: 'INR',
+                    order_amount: request.amount.toFixed(2),
+                    order_id: request._id,
+                    order_meta: {
+                        return_url: process.env.URL +
+                            '/edviron-pg/callback?collect_request_id=' +
+                            request._id,
+                    },
+                    order_splits: vendor,
+                });
+                collectReq.isSplitPayments = true;
+                collectReq.vendors_info = vendor;
+                await collectReq.save();
+                vendor.map(async (info) => {
+                    const { vendor_id, percentage, amount } = info;
+                    let split_amount = amount;
+                    if (percentage) {
+                        split_amount = (request.amount * percentage) / 100;
+                    }
+                    await new this.databaseService.VendorTransactionModel({
+                        vendor_id: vendor_id,
+                        amount: split_amount,
+                        collect_id: request._id,
+                        gateway: collect_request_schema_1.Gateway.EDVIRON_PG,
+                        status: transactionStatus_1.TransactionStatus.PENDING,
+                        trustee_id: request.trustee_id,
+                        school_id: request.school_id,
+                        custom_order_id: request.custom_order_id || '',
+                    }).save();
+                });
+            }
             let config = {
                 method: 'post',
                 maxBodyLength: Infinity,
@@ -127,7 +165,6 @@ let EdvironPgService = class EdvironPgService {
                 paymentInfo.easebuzz_id = id || null;
                 await this.getQr(request._id.toString(), request);
                 easebuzz_pg = true;
-                console.log({ easebuzzRes, _id: request._id });
             }
             let cf_payment_id = '';
             if (request.clientId) {
@@ -184,7 +221,6 @@ let EdvironPgService = class EdvironPgService {
         };
         try {
             const { data: cashfreeRes } = await axios.request(config);
-            console.log(cashfreeRes, 'cashfree status response');
             const order_status_to_transaction_status_map = {
                 ACTIVE: transactionStatus_1.TransactionStatus.FAILURE,
                 PAID: transactionStatus_1.TransactionStatus.SUCCESS,
@@ -510,7 +546,7 @@ let EdvironPgService = class EdvironPgService {
                 createdAt: webhookData.createdAt,
                 transaction_time: webhookData?.updatedAt,
                 additional_data: webhookData.additional_data,
-                formattedTransactionDate: webhookData?.formattedDate
+                formattedTransactionDate: webhookData?.formattedDate,
             });
             const createConfig = (url) => ({
                 method: 'post',

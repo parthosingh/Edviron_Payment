@@ -14,6 +14,7 @@ const database_service_1 = require("./database.service");
 const dotenv = require("dotenv");
 const collect_req_status_schema_1 = require("./schemas/collect_req_status.schema");
 const webhooks_schema_1 = require("./schemas/webhooks.schema");
+const vendor_Transaction_schema_1 = require("./schemas/vendor.Transaction.schema");
 dotenv.config();
 let DatabaseModule = class DatabaseModule {
 };
@@ -31,6 +32,9 @@ exports.DatabaseModule = DatabaseModule = __decorate([
             mongoose_1.MongooseModule.forFeature([
                 { name: webhooks_schema_1.Webhooks.name, schema: webhooks_schema_1.WebhooksSchema },
             ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: vendor_Transaction_schema_1.VendorTransaction.name, schema: vendor_Transaction_schema_1.VendorTransactionSchema },
+            ]),
         ],
         providers: [database_service_1.DatabaseService],
         exports: [
@@ -44,6 +48,9 @@ exports.DatabaseModule = DatabaseModule = __decorate([
             ]),
             mongoose_1.MongooseModule.forFeature([
                 { name: webhooks_schema_1.Webhooks.name, schema: webhooks_schema_1.WebhooksSchema },
+            ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: vendor_Transaction_schema_1.VendorTransaction.name, schema: vendor_Transaction_schema_1.VendorTransactionSchema },
             ]),
         ],
     })

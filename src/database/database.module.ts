@@ -11,6 +11,7 @@ import {
   CollectRequestStatusSchema,
 } from './schemas/collect_req_status.schema';
 import { Webhooks, WebhooksSchema } from './schemas/webhooks.schema';
+import { VendorTransaction, VendorTransactionSchema } from './schemas/vendor.Transaction.schema';
 dotenv.config();
 
 @Module({
@@ -25,6 +26,9 @@ dotenv.config();
     MongooseModule.forFeature([
       { name: Webhooks.name, schema: WebhooksSchema },
     ]),
+    MongooseModule.forFeature([
+      { name: VendorTransaction.name, schema: VendorTransactionSchema },
+    ]),
   ],
   providers: [DatabaseService],
   exports: [
@@ -38,6 +42,9 @@ dotenv.config();
     ]),
     MongooseModule.forFeature([
       { name: Webhooks.name, schema: WebhooksSchema },
+    ]),
+    MongooseModule.forFeature([
+      { name: VendorTransaction.name, schema: VendorTransactionSchema },
     ]),
   ],
 })

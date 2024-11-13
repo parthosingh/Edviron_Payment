@@ -31,6 +31,8 @@ export class EdvironPgService implements GatewayService {
     request: CollectRequest,
     platform_charges: platformChange[],
     school_name: any,
+    splitPayments: boolean,
+    vendor?: [{ vendor_id: string; percentage?: number; amount?: number }],
   ): Promise<Transaction | undefined> {
     try {
       let paymentInfo: PaymentIds = {
@@ -63,6 +65,48 @@ export class EdvironPgService implements GatewayService {
             request._id,
         },
       });
+      console.log(splitPayments, 'split pay');
+
+      if (splitPayments && vendor && vendor.length > 0) {
+       data = JSON.stringify({
+          customer_details: {
+            customer_id: '7112AAA812234',
+            customer_phone: '9898989898',
+          },
+          order_currency: 'INR',
+          order_amount: request.amount.toFixed(2),
+          order_id: request._id,
+          order_meta: {
+            return_url:
+              process.env.URL +
+              '/edviron-pg/callback?collect_request_id=' +
+              request._id,
+          },
+          order_splits: vendor,
+        });
+
+        collectReq.isSplitPayments = true;
+        collectReq.vendors_info = vendor;
+        await collectReq.save();
+
+        vendor.map(async (info) => {
+          const { vendor_id, percentage, amount } = info;
+          let split_amount = amount;
+          if (percentage) {
+            split_amount = (request.amount * percentage) / 100;
+          }
+          await new this.databaseService.VendorTransactionModel({
+            vendor_id: vendor_id,
+            amount: split_amount,
+            collect_id: request._id,
+            gateway: Gateway.EDVIRON_PG,
+            status: TransactionStatus.PENDING,
+            trustee_id: request.trustee_id,
+            school_id: request.school_id,
+            custom_order_id: request.custom_order_id || '',
+          }).save();
+        });
+      }
 
       let config = {
         method: 'post',
@@ -144,7 +188,7 @@ export class EdvironPgService implements GatewayService {
         paymentInfo.easebuzz_id = id || null;
         await this.getQr(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
         easebuzz_pg = true;
-        console.log({ easebuzzRes, _id: request._id });
+        // console.log({ easebuzzRes, _id: request._id });
       }
 
       let cf_payment_id = '';
@@ -223,7 +267,7 @@ export class EdvironPgService implements GatewayService {
     try {
       const { data: cashfreeRes } = await axios.request(config);
 
-      console.log(cashfreeRes, 'cashfree status response');
+      // console.log(cashfreeRes, 'cashfree status response');
 
       const order_status_to_transaction_status_map = {
         ACTIVE: TransactionStatus.FAILURE,
@@ -255,7 +299,7 @@ export class EdvironPgService implements GatewayService {
       } else {
         status_code = 400;
       }
-      const date = new Date(transaction_time)
+      const date = new Date(transaction_time);
       return {
         status:
           order_status_to_transaction_status_map[
@@ -618,8 +662,7 @@ export class EdvironPgService implements GatewayService {
         createdAt: webhookData.createdAt,
         transaction_time: webhookData?.updatedAt,
         additional_data: webhookData.additional_data,
-        formattedTransactionDate: webhookData?.formattedDate
-        
+        formattedTransactionDate: webhookData?.formattedDate,
       });
 
       const createConfig = (url: string) => ({
@@ -733,7 +776,7 @@ export class EdvironPgService implements GatewayService {
   async createVendor(
     client_id: string,
     vendor_info: {
-      vendor_id:string,
+      vendor_id: string;
       status: string;
       name: string;
       email: string;
@@ -751,8 +794,8 @@ export class EdvironPgService implements GatewayService {
         pan?: string;
         passport_number?: string;
       };
-    }
-  ){
+    },
+  ) {
     const axios = require('axios');
     let data = JSON.stringify(vendor_info);
     let config = {
@@ -768,19 +811,19 @@ export class EdvironPgService implements GatewayService {
       },
       data: data,
     };
-    console.log(config,'config');
-    
-    try{
-      const {data:Response}=await axios.request(config)
-      console.log(Response,'Res');
-      
-      return Response
-    }catch(e){
-      if(e?.response?.data){
-        throw new BadRequestException(e.response.data.message)
+    console.log(config, 'config');
+
+    try {
+      const { data: Response } = await axios.request(config);
+      console.log(Response, 'Res');
+
+      return Response;
+    } catch (e) {
+      if (e?.response?.data) {
+        throw new BadRequestException(e.response.data.message);
       }
-      
-      throw new BadRequestException(e.message)
+
+      throw new BadRequestException(e.message);
     }
   }
 }

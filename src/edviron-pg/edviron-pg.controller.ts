@@ -222,6 +222,12 @@ export class EdvironPgController {
         `${callbackUrl.toString()}&status=cancelled&reason=Payment-declined`,
       );
     }
+    if(collectRequest.isSplitPayments) {
+      await this.databaseService.VendorTransactionModel.updateMany(
+        { collect_id: info._id },
+        { $set: { status: 'SUCCESS' } },
+      );
+    }
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
     callbackUrl.searchParams.set('status', 'SUCCESS');
     return res.redirect(callbackUrl.toString());
