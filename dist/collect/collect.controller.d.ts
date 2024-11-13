@@ -33,6 +33,12 @@ export declare class CollectController {
         ccavenue_merchant_id?: string;
         ccavenue_access_code?: string;
         ccavenue_working_key?: string;
+        split_payments?: boolean;
+        vendors_info?: [{
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+        }];
     }): Promise<any>;
     callbackUrl(res: any, collect_id: string): Promise<void>;
 }

@@ -10,6 +10,7 @@ import {
   CollectRequestStatus,
   CollectRequestStatusDocument,
 } from './schemas/collect_req_status.schema';
+import { VendorTransaction, VendorTransactionDocument } from './schemas/vendor.Transaction.schema';
 
 @Injectable()
 export class DatabaseService {
@@ -20,5 +21,7 @@ export class DatabaseService {
     public WebhooksModel: Model<WebhooksDocument>,
     @InjectModel(CollectRequestStatus.name)
     public CollectRequestStatusModel: Model<CollectRequestStatusDocument>,
+    @InjectModel(VendorTransaction.name)
+    public VendorTransactionModel: Model<VendorTransactionDocument>,
   ) {}
 }

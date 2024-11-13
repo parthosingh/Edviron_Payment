@@ -26,7 +26,7 @@ let CollectService = class CollectService {
         this.databaseService = databaseService;
         this.ccavenueService = ccavenueService;
     }
-    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key) {
+    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, splitPayments, vendor) {
         console.log(req_webhook_urls, 'webhook url');
         console.log(webHook);
         console.log(ccavenue_merchant_id, 'ccavenue', ccavenue_access_code, ccavenue_working_key);
@@ -74,7 +74,7 @@ let CollectService = class CollectService {
             return { url: transaction.url, request };
         }
         const transaction = (gateway === collect_request_schema_1.Gateway.PENDING
-            ? await this.edvironPgService.collect(request, platform_charges, school_name)
+            ? await this.edvironPgService.collect(request, platform_charges, school_name, splitPayments || false, vendor)
             : await this.hdfcService.collect(request));
         await this.databaseService.CollectRequestModel.updateOne({
             _id: request._id,

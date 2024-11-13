@@ -34,17 +34,24 @@ export class CollectService {
     additional_data?: {},
     custom_order_id?: string,
     req_webhook_urls?: string[],
-    school_name?:string,
-    easebuzz_sub_merchant_id?:string,
+    school_name?: string,
+    easebuzz_sub_merchant_id?: string,
     ccavenue_merchant_id?: string,
     ccavenue_access_code?: string,
     ccavenue_working_key?: string,
+    splitPayments?: boolean,
+    vendor?: [{ vendor_id: string; percentage?: number; amount?: number }],
   ): Promise<{ url: string; request: CollectRequest }> {
-    console.log(req_webhook_urls,'webhook url');
+    console.log(req_webhook_urls, 'webhook url');
     console.log(webHook);
-    
-    console.log(ccavenue_merchant_id,'ccavenue',ccavenue_access_code,ccavenue_working_key);
-    
+
+    console.log(
+      ccavenue_merchant_id,
+      'ccavenue',
+      ccavenue_access_code,
+      ccavenue_working_key,
+    );
+
     if (custom_order_id) {
       const count =
         await this.databaseService.CollectRequestModel.countDocuments({
@@ -76,9 +83,9 @@ export class CollectService {
       custom_order_id,
       req_webhook_urls,
       easebuzz_sub_merchant_id,
-      ccavenue_merchant_id:ccavenue_merchant_id || null,
-      ccavenue_access_code:ccavenue_access_code || null,
-      ccavenue_working_key:ccavenue_working_key || null,
+      ccavenue_merchant_id: ccavenue_merchant_id || null,
+      ccavenue_access_code: ccavenue_access_code || null,
+      ccavenue_working_key: ccavenue_working_key || null,
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({
@@ -97,7 +104,13 @@ export class CollectService {
 
     const transaction = (
       gateway === Gateway.PENDING
-        ? await this.edvironPgService.collect(request, platform_charges,school_name)
+        ? await this.edvironPgService.collect(
+            request,
+            platform_charges,
+            school_name,
+            splitPayments || false,
+            vendor, 
+          )
         : await this.hdfcService.collect(request)
     )!;
     await this.databaseService.CollectRequestModel.updateOne(

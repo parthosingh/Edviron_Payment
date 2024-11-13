@@ -143,6 +143,14 @@ __decorate([
     (0, mongoose_1.Prop)({ type: PaymentIds, required: false }),
     __metadata("design:type", PaymentIds)
 ], CollectRequest.prototype, "paymentIds", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Array)
+], CollectRequest.prototype, "vendors_info", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], CollectRequest.prototype, "isSplitPayments", void 0);
 exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequest);

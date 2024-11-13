@@ -19,11 +19,13 @@ const collect_request_schema_1 = require("./schemas/collect_request.schema");
 const mongoose_2 = require("mongoose");
 const webhooks_schema_1 = require("./schemas/webhooks.schema");
 const collect_req_status_schema_1 = require("./schemas/collect_req_status.schema");
+const vendor_Transaction_schema_1 = require("./schemas/vendor.Transaction.schema");
 let DatabaseService = class DatabaseService {
-    constructor(CollectRequestModel, WebhooksModel, CollectRequestStatusModel) {
+    constructor(CollectRequestModel, WebhooksModel, CollectRequestStatusModel, VendorTransactionModel) {
         this.CollectRequestModel = CollectRequestModel;
         this.WebhooksModel = WebhooksModel;
         this.CollectRequestStatusModel = CollectRequestStatusModel;
+        this.VendorTransactionModel = VendorTransactionModel;
     }
 };
 exports.DatabaseService = DatabaseService;
@@ -32,7 +34,9 @@ exports.DatabaseService = DatabaseService = __decorate([
     __param(0, (0, mongoose_1.InjectModel)(collect_request_schema_1.CollectRequest.name)),
     __param(1, (0, mongoose_1.InjectModel)(webhooks_schema_1.Webhooks.name)),
     __param(2, (0, mongoose_1.InjectModel)(collect_req_status_schema_1.CollectRequestStatus.name)),
+    __param(3, (0, mongoose_1.InjectModel)(vendor_Transaction_schema_1.VendorTransaction.name)),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model])
 ], DatabaseService);

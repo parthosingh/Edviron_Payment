@@ -55,6 +55,8 @@ export class CollectController {
       ccavenue_merchant_id?: string;
       ccavenue_access_code?: string;
       ccavenue_working_key?: string;
+      split_payments?: boolean;
+      vendors_info?:[{ vendor_id: string; percentage?: number; amount?: number }]
     },
   ) {
     const {
@@ -76,6 +78,8 @@ export class CollectController {
       ccavenue_access_code,
       ccavenue_working_key,
       ccavenue_merchant_id,
+      split_payments,
+      vendors_info,
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -111,6 +115,8 @@ export class CollectController {
           ccavenue_merchant_id,
           ccavenue_access_code,
           ccavenue_working_key, 
+          split_payments || false,
+          vendors_info, 
         ),
       );
     } catch (e) {

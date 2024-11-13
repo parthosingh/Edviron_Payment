@@ -64,6 +64,12 @@ export declare class CollectRequest {
     ccavenue_working_key: string;
     deepLink: string;
     paymentIds: PaymentIds;
+    vendors_info?: [{
+        vendor_id: string;
+        percentage?: number;
+        amount?: number;
+    }];
+    isSplitPayments: boolean;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;
