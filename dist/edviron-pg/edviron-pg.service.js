@@ -678,6 +678,22 @@ let EdvironPgService = class EdvironPgService {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async getVendorTransactions(query, limit, page) {
+        console.log(query);
+        const totalCount = await this.databaseService.VendorTransactionModel.countDocuments(query);
+        const totalPages = Math.ceil(totalCount / limit);
+        const vendorsTransaction = await this.databaseService.VendorTransactionModel.find(query)
+            .sort({ createdAt: -1 })
+            .limit(limit)
+            .skip((page - 1) * limit);
+        return {
+            vendorsTransaction: vendorsTransaction,
+            totalCount,
+            page,
+            limit,
+            totalPages,
+        };
+    }
 };
 exports.EdvironPgService = EdvironPgService;
 exports.EdvironPgService = EdvironPgService = __decorate([

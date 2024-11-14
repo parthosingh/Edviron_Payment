@@ -698,6 +698,8 @@ let EdvironPgController = class EdvironPgController {
                         'collect_request.ccavenue_access_code': 0,
                         'collect_request.ccavenue_working_key': 0,
                         'collect_request.easebuzz_sub_merchant_id': 0,
+                        'collect_request.paymentIds': 0,
+                        'collect_request.deepLink': 0,
                     },
                 },
                 {
@@ -733,6 +735,8 @@ let EdvironPgController = class EdvironPgController {
                                     updatedAt: '$updatedAt',
                                     transaction_time: '$updatedAt',
                                     custom_order_id: '$collect_request.custom_order_id',
+                                    isSplitPayments: '$collect_request.isSplitPayments',
+                                    vendors_info: '$collect_request.vendors_info',
                                 },
                             ],
                         },
@@ -821,6 +825,8 @@ let EdvironPgController = class EdvironPgController {
                         'collect_request.ccavenue_access_code': 0,
                         'collect_request.ccavenue_working_key': 0,
                         'collect_request.easebuzz_sub_merchant_id': 0,
+                        'collect_request.paymentIds': 0,
+                        'collect_request.deepLink': 0,
                     },
                 },
                 {
@@ -854,6 +860,8 @@ let EdvironPgController = class EdvironPgController {
                                     currency: 'INR',
                                     createdAt: '$createdAt',
                                     updatedAt: '$updatedAt',
+                                    isSplitPayments: '$collect_request.isSplitPayments',
+                                    vendors_info: '$collect_request.vendors_info',
                                 },
                             ],
                         },
@@ -999,6 +1007,8 @@ let EdvironPgController = class EdvironPgController {
                                         updatedAt: '$updatedAt',
                                         transaction_time: '$updatedAt',
                                         custom_order_id: '$collect_request.custom_order_id',
+                                        isSplitPayments: '$collect_request.isSplitPayments',
+                                        vendors_info: '$collect_request.vendors_info',
                                     },
                                 ],
                             },
@@ -1228,6 +1238,27 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async vendorTransactions(vendor_id, trustee_id, validate_trustee, school_id, collect_id, token, limit, page) {
+        const dataLimit = Number(limit) || 100;
+        const dataPage = Number(page) || 1;
+        let query = {};
+        if (vendor_id) {
+            query = { vendor_id };
+        }
+        else if (school_id) {
+            query = { school_id };
+        }
+        else if (collect_id) {
+            query = { collect_id: new mongoose_1.Types.ObjectId(collect_id) };
+        }
+        else if (trustee_id) {
+            query = { trustee_id };
+        }
+        else {
+            throw new common_1.BadRequestException('Invalid request');
+        }
+        return await this.edvironPgService.getVendorTransactions(query, dataLimit, dataPage);
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -1395,6 +1426,20 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "createVendor", null);
+__decorate([
+    (0, common_1.Get)('get-vendor-transaction'),
+    __param(0, (0, common_1.Query)('vendor_id')),
+    __param(1, (0, common_1.Query)('trustee_id')),
+    __param(2, (0, common_1.Query)('validate_trustee')),
+    __param(3, (0, common_1.Query)('school_id')),
+    __param(4, (0, common_1.Query)('collect_id')),
+    __param(5, (0, common_1.Query)('token')),
+    __param(6, (0, common_1.Query)('limit')),
+    __param(7, (0, common_1.Query)('page')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, String, String, String, String, String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "vendorTransactions", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

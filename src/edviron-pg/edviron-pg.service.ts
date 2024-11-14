@@ -68,7 +68,7 @@ export class EdvironPgService implements GatewayService {
       console.log(splitPayments, 'split pay');
 
       if (splitPayments && vendor && vendor.length > 0) {
-       data = JSON.stringify({
+        data = JSON.stringify({
           customer_details: {
             customer_id: '7112AAA812234',
             customer_phone: '9898989898',
@@ -773,7 +773,8 @@ export class EdvironPgService implements GatewayService {
     };
   }
 
-  async createVendor(
+  /*************  ✨ Codeium Command ⭐  *************/
+  /******  ec0ac6bf-aa20-4d78-8de8-0b19d7c37dc6  *******/ async createVendor(
     client_id: string,
     vendor_info: {
       vendor_id: string;
@@ -825,5 +826,29 @@ export class EdvironPgService implements GatewayService {
 
       throw new BadRequestException(e.message);
     }
+  }
+
+  async getVendorTransactions(query: any, limit: number, page: number) {
+    console.log(query);
+    
+
+    const totalCount =
+      await this.databaseService.VendorTransactionModel.countDocuments(query);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    const vendorsTransaction =
+      await this.databaseService.VendorTransactionModel.find(query)
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .skip((page - 1) * limit);
+
+    return {
+      vendorsTransaction: vendorsTransaction,
+      totalCount,
+      page,
+      limit,
+      totalPages,
+    };
   }
 }

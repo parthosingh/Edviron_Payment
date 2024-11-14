@@ -222,7 +222,7 @@ export class EdvironPgController {
         `${callbackUrl.toString()}&status=cancelled&reason=Payment-declined`,
       );
     }
-    if(collectRequest.isSplitPayments) {
+    if (collectRequest.isSplitPayments) {
       await this.databaseService.VendorTransactionModel.updateMany(
         { collect_id: info._id },
         { $set: { status: 'SUCCESS' } },
@@ -658,7 +658,7 @@ export class EdvironPgController {
       } else {
         console.log('Webhook called for other schools');
         console.log(webHookDataInfo);
-        
+
         await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
       }
     }
@@ -1147,6 +1147,8 @@ export class EdvironPgController {
               'collect_request.ccavenue_access_code': 0,
               'collect_request.ccavenue_working_key': 0,
               'collect_request.easebuzz_sub_merchant_id': 0,
+              'collect_request.paymentIds': 0,
+              'collect_request.deepLink': 0,
             },
           },
 
@@ -1183,6 +1185,8 @@ export class EdvironPgController {
                     updatedAt: '$updatedAt',
                     transaction_time: '$updatedAt',
                     custom_order_id: '$collect_request.custom_order_id',
+                    isSplitPayments: '$collect_request.isSplitPayments',
+                    vendors_info: '$collect_request.vendors_info',
                   },
                 ],
               },
@@ -1283,6 +1287,8 @@ export class EdvironPgController {
               'collect_request.ccavenue_access_code': 0,
               'collect_request.ccavenue_working_key': 0,
               'collect_request.easebuzz_sub_merchant_id': 0,
+              'collect_request.paymentIds': 0,
+              'collect_request.deepLink': 0,
             },
           },
 
@@ -1317,6 +1323,8 @@ export class EdvironPgController {
                     currency: 'INR',
                     createdAt: '$createdAt',
                     updatedAt: '$updatedAt',
+                    isSplitPayments: '$collect_request.isSplitPayments',
+                    vendors_info: '$collect_request.vendors_info',
                   },
                 ],
               },
@@ -1487,6 +1495,8 @@ export class EdvironPgController {
                     updatedAt: '$updatedAt',
                     transaction_time: '$updatedAt',
                     custom_order_id: '$collect_request.custom_order_id',
+                    isSplitPayments: '$collect_request.isSplitPayments',
+                    vendors_info: '$collect_request.vendors_info',
                   },
                 ],
               },
@@ -1842,14 +1852,49 @@ export class EdvironPgController {
       throw new ForbiddenException('Request forged');
     }
     try {
-      return await this.edvironPgService.createVendor(
-        client_id,
-        vendor_info,
-      );
+      return await this.edvironPgService.createVendor(client_id, vendor_info);
     } catch (e) {
       // console.log(e);
 
       throw new BadRequestException(e.message);
     }
+  }
+
+  @Get('get-vendor-transaction')
+  async vendorTransactions(
+    @Query('vendor_id') vendor_id: string,
+    @Query('trustee_id') trustee_id: string,
+    @Query('validate_trustee') validate_trustee: string,
+    @Query('school_id') school_id: string,
+    @Query('collect_id') collect_id: string,
+    @Query('token') token: string,
+    @Query('limit') limit: string,
+    @Query('page') page: string,
+  ) {
+    const dataLimit = Number(limit) || 100;
+    const dataPage = Number(page) || 1;
+    // const decrypted = jwt.verify(token, process.env.KEY!) as any;
+    // if (decrypted.validate_trustee !== validate_trustee) {
+    //   throw new ForbiddenException('Request forged');
+    // }
+    let query = {} as any;
+
+    if (vendor_id) {
+      query = { vendor_id };
+    } else if (school_id) {
+      query = { school_id };
+    } else if (collect_id) {
+      query = { collect_id: new Types.ObjectId(collect_id) };
+    } else if (trustee_id) {
+      query = { trustee_id };
+    } else {
+      throw new BadRequestException('Invalid request');
+    }
+
+    return await this.edvironPgService.getVendorTransactions(
+      query,
+      dataLimit,
+      dataPage,
+    );
   }
 }
