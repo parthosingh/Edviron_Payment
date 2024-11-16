@@ -102,7 +102,7 @@ export class CollectRequest {
   paymentIds: PaymentIds;
 
   @Prop({ required: false })
-  vendors_info?: [{ vendor_id: string; percentage?: number; amount?: number }];
+  vendors_info?: [{ vendor_id: string; percentage?: number; amount?: number,name?:string }];
 
   @Prop({ required: false, default: false })
   isSplitPayments: boolean;

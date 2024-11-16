@@ -40,7 +40,7 @@ export class CollectService {
     ccavenue_access_code?: string,
     ccavenue_working_key?: string,
     splitPayments?: boolean,
-    vendor?: [{ vendor_id: string; percentage?: number; amount?: number }],
+    vendor?: [{ vendor_id: string; percentage?: number; amount?: number,name?: string;}],
   ): Promise<{ url: string; request: CollectRequest }> {
     console.log(req_webhook_urls, 'webhook url');
     console.log(webHook);

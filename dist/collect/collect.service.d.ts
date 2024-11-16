@@ -16,6 +16,7 @@ export declare class CollectService {
         vendor_id: string;
         percentage?: number;
         amount?: number;
+        name?: string;
     }]): Promise<{
         url: string;
         request: CollectRequest;

@@ -38,6 +38,7 @@ export declare class CollectController {
             vendor_id: string;
             percentage?: number;
             amount?: number;
+            name?: string;
         }];
     }): Promise<any>;
     callbackUrl(res: any, collect_id: string): Promise<void>;

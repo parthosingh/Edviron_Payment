@@ -68,6 +68,7 @@ export declare class CollectRequest {
         vendor_id: string;
         percentage?: number;
         amount?: number;
+        name?: string;
     }];
     isSplitPayments: boolean;
     _id: ObjectId;

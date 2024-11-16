@@ -61,6 +61,7 @@ let EdvironPgService = class EdvironPgService {
             });
             console.log(splitPayments, 'split pay');
             if (splitPayments && vendor && vendor.length > 0) {
+                const vendor_data = vendor.map(({ vendor_id, percentage, amount, }) => ({ vendor_id, percentage, amount, }));
                 data = JSON.stringify({
                     customer_details: {
                         customer_id: '7112AAA812234',
@@ -74,13 +75,13 @@ let EdvironPgService = class EdvironPgService {
                             '/edviron-pg/callback?collect_request_id=' +
                             request._id,
                     },
-                    order_splits: vendor,
+                    order_splits: vendor_data,
                 });
                 collectReq.isSplitPayments = true;
                 collectReq.vendors_info = vendor;
                 await collectReq.save();
                 vendor.map(async (info) => {
-                    const { vendor_id, percentage, amount } = info;
+                    const { vendor_id, percentage, amount, name } = info;
                     let split_amount = amount;
                     if (percentage) {
                         split_amount = (request.amount * percentage) / 100;
@@ -94,6 +95,7 @@ let EdvironPgService = class EdvironPgService {
                         trustee_id: request.trustee_id,
                         school_id: request.school_id,
                         custom_order_id: request.custom_order_id || '',
+                        name
                     }).save();
                 });
             }

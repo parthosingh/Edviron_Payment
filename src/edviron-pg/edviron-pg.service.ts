@@ -32,7 +32,7 @@ export class EdvironPgService implements GatewayService {
     platform_charges: platformChange[],
     school_name: any,
     splitPayments: boolean,
-    vendor?: [{ vendor_id: string; percentage?: number; amount?: number }],
+    vendor?: [{ vendor_id: string; percentage?: number; amount?: number,name?: string}],
   ): Promise<Transaction | undefined> {
     try {
       let paymentInfo: PaymentIds = {
@@ -68,6 +68,7 @@ export class EdvironPgService implements GatewayService {
       console.log(splitPayments, 'split pay');
 
       if (splitPayments && vendor && vendor.length > 0) {
+        const vendor_data= vendor.map(({ vendor_id,percentage,amount, }) => ({ vendor_id,percentage,amount, }));
         data = JSON.stringify({
           customer_details: {
             customer_id: '7112AAA812234',
@@ -82,7 +83,7 @@ export class EdvironPgService implements GatewayService {
               '/edviron-pg/callback?collect_request_id=' +
               request._id,
           },
-          order_splits: vendor,
+          order_splits: vendor_data,
         });
 
         collectReq.isSplitPayments = true;
@@ -90,7 +91,7 @@ export class EdvironPgService implements GatewayService {
         await collectReq.save();
 
         vendor.map(async (info) => {
-          const { vendor_id, percentage, amount } = info;
+          const { vendor_id, percentage, amount,name } = info;
           let split_amount = amount;
           if (percentage) {
             split_amount = (request.amount * percentage) / 100;
@@ -104,6 +105,7 @@ export class EdvironPgService implements GatewayService {
             trustee_id: request.trustee_id,
             school_id: request.school_id,
             custom_order_id: request.custom_order_id || '',
+            name
           }).save();
         });
       }
