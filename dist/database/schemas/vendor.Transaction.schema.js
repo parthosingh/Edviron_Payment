@@ -60,6 +60,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], VendorTransaction.prototype, "custom_order_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], VendorTransaction.prototype, "name", void 0);
 exports.VendorTransaction = VendorTransaction = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], VendorTransaction);

@@ -41,6 +41,9 @@ export class VendorTransaction {
   @Prop({ required: false})
   custom_order_id: string;
 
+  @Prop({ required: false})
+  name: string;
+
   _id: ObjectId;
 }
 
