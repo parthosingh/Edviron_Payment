@@ -220,15 +220,15 @@ let CcavenueService = class CcavenueService {
         const config = {
             method: 'post',
             maxBodyLength: Infinity,
-            url: 'https://api.ccavenue.com/apis/servlet/DoWebTrans',
+            url: 'https://dev-payments.edviron.com/ccavenue/status',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            data: data,
+            data: { data },
         };
         try {
             const res = await axios_1.default.request(config);
-            console.log(res.data);
+            console.log(res.data, 'data');
             const params = new URLSearchParams(res.data);
             const paramObject = Object.fromEntries(params.entries());
             const decrypt_res = this.decrypt(paramObject['enc_response'], ccavenue_working_key);

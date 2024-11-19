@@ -336,16 +336,16 @@ export class CcavenueService {
     const config = {
       method: 'post',
       maxBodyLength: Infinity,
-      url: 'https://api.ccavenue.com/apis/servlet/DoWebTrans',
+      url: 'https://dev-payments.edviron.com/ccavenue/status',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      data: data,
+      data: {data},
     };
     // await sleep(10000);
     try {
       const res = await axios.request(config);
-      console.log(res.data);
+      console.log(res.data,'data');
       const params = new URLSearchParams(res.data);
       const paramObject = Object.fromEntries(params.entries());
 
