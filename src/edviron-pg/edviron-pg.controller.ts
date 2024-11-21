@@ -348,10 +348,12 @@ export class EdvironPgController {
   }
 
   // cashfree
+
   @Post('/webhook')
   async handleWebhook(@Body() body: any, @Res() res: any) {
     const { data: webHookData } = JSON.parse(JSON.stringify(body));
-
+    console.log(webHookData.payment.payment_status);
+    
     // console.log('webhook received with data', { body });
 
     if (!webHookData) throw new Error('Invalid webhook data');
@@ -401,7 +403,8 @@ export class EdvironPgController {
 
     //console.log('req', reqToCheck);
 
-    const { status } = reqToCheck;
+    // const { status } = reqToCheck;
+    const status =webHookData.payment.payment_status
     // if (status == TransactionStatus.SUCCESS) {
     //   try {
     //     const schoolInfo = await this.edvironPgService.getSchoolInfo(

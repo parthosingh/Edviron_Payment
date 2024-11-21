@@ -238,6 +238,7 @@ let EdvironPgController = class EdvironPgController {
     }
     async handleWebhook(body, res) {
         const { data: webHookData } = JSON.parse(JSON.stringify(body));
+        console.log(webHookData.payment.payment_status);
         if (!webHookData)
             throw new Error('Invalid webhook data');
         const collect_id = webHookData.order.order_id || body.order.order_id;
@@ -260,7 +261,7 @@ let EdvironPgController = class EdvironPgController {
             collect_id: collectIdObject,
         });
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
-        const { status } = reqToCheck;
+        const status = webHookData.payment.payment_status;
         try {
             if (status == transactionStatus_1.TransactionStatus.SUCCESS) {
                 let platform_type = null;
