@@ -19,6 +19,7 @@ const database_service_1 = require("../database/database.service");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const transactionStatus_1 = require("../types/transactionStatus");
+const moment = require("moment-timezone");
 let CashfreeService = class CashfreeService {
     constructor(databaseService, edvironPgService) {
         this.databaseService = databaseService;
@@ -131,6 +132,8 @@ let CashfreeService = class CashfreeService {
                 status_code = 400;
             }
             const date = new Date(transaction_time);
+            const uptDate = moment(date);
+            const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
             return {
                 status: order_status_to_transaction_status_map[cashfreeRes.order_status],
                 amount: cashfreeRes.order_amount,
@@ -140,7 +143,7 @@ let CashfreeService = class CashfreeService {
                     payment_methods: collect_status?.details &&
                         JSON.parse(collect_status.details),
                     transaction_time,
-                    formattedTransactionDate: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+                    formattedTransactionDate: istDate,
                     order_status: cashfreeRes.order_status,
                 },
             };

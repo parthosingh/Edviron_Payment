@@ -4,7 +4,7 @@ import { DatabaseService } from 'src/database/database.service';
 import { CollectRequest, Gateway } from 'src/database/schemas/collect_request.schema';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import { TransactionStatus } from 'src/types/transactionStatus';
-
+import * as moment from 'moment-timezone';
 @Injectable()
 export class CashfreeService {
   constructor(
@@ -148,7 +148,10 @@ export class CashfreeService {
       } else {
         status_code = 400;
       }
+  
       const date = new Date(transaction_time);
+      const uptDate=moment(date)
+     const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
       return {
         status:
           order_status_to_transaction_status_map[
@@ -163,9 +166,7 @@ export class CashfreeService {
             collect_status?.details &&
             JSON.parse(collect_status.details as string),
           transaction_time,
-          formattedTransactionDate: `${date.getFullYear()}-${String(
-            date.getMonth() + 1,
-          ).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+          formattedTransactionDate: istDate,
           order_status: cashfreeRes.order_status,
         },
       };
