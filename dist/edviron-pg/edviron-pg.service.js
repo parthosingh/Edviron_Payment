@@ -21,6 +21,7 @@ const nodemailer = require("nodemailer");
 const path = require("path");
 const fs = require("fs");
 const handlebars = require("handlebars");
+const moment = require("moment-timezone");
 const sign_2 = require("../utils/sign");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
@@ -230,9 +231,14 @@ let EdvironPgService = class EdvironPgService {
                 TERMINATED: transactionStatus_1.TransactionStatus.FAILURE,
                 TERMINATION_REQUESTED: transactionStatus_1.TransactionStatus.FAILURE,
             };
+            console.log(cashfreeRes, 'res');
             const collect_status = await this.databaseService.CollectRequestStatusModel.findOne({
                 collect_id: collect_request_id,
             });
+            if (!collect_status) {
+                console.log('No status found for custom order id', collect_request_id);
+                throw new common_1.NotFoundException('No status found for custom order id');
+            }
             let transaction_time = '';
             if (order_status_to_transaction_status_map[cashfreeRes.order_status] === transactionStatus_1.TransactionStatus.SUCCESS) {
                 transaction_time = collect_status?.updatedAt?.toISOString();
@@ -246,6 +252,8 @@ let EdvironPgService = class EdvironPgService {
                 status_code = 400;
             }
             const date = new Date(transaction_time);
+            const uptDate = moment(date);
+            const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
             return {
                 status: order_status_to_transaction_status_map[cashfreeRes.order_status],
                 amount: cashfreeRes.order_amount,
@@ -255,7 +263,7 @@ let EdvironPgService = class EdvironPgService {
                     payment_methods: collect_status?.details &&
                         JSON.parse(collect_status.details),
                     transaction_time,
-                    formattedTransactionDate: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+                    formattedTransactionDate: istDate,
                     order_status: cashfreeRes.order_status,
                 },
             };
