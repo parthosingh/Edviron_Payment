@@ -16,9 +16,11 @@ exports.CashfreeController = void 0;
 const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const jwt = require("jsonwebtoken");
+const cashfree_service_1 = require("./cashfree.service");
 let CashfreeController = class CashfreeController {
-    constructor(databaseService) {
+    constructor(databaseService, cashfreeService) {
         this.databaseService = databaseService;
+        this.cashfreeService = cashfreeService;
     }
     async initiateRefund(body) {
         const { collect_id, amount, refund_id } = body;
@@ -66,6 +68,7 @@ let CashfreeController = class CashfreeController {
         if (!request) {
             throw new common_1.BadRequestException('Collect Request not found');
         }
+        await request.save();
         const cashfreeId = request.paymentIds.cashfree_id;
         if (!cashfreeId) {
             throw new common_1.BadRequestException('Error in Getting QR Code');
@@ -115,10 +118,25 @@ let CashfreeController = class CashfreeController {
             const intent = upiIntent.data.payload.default;
             const qrCodeUrl = qrCode.data.payload.qrcode;
             const qrBase64 = qrCodeUrl.split(',')[1];
+            setTimeout(async () => {
+                try {
+                    await this.cashfreeService.terminateOrder(collect_id);
+                    console.log(`Order ${collect_id} terminated after 10 minutes`);
+                }
+                catch (error) {
+                    console.error(`Failed to terminate order ${collect_id}:`, error);
+                }
+            }, 600000);
             return { intentUrl: intent, qrCodeBase64: qrBase64, collect_id };
         }
         catch (e) {
             console.log(e);
+            if (e.response?.data?.message && e.response?.data?.code) {
+                if (e.response?.data?.message && e.response?.data?.code === 'order_inactive') {
+                    throw new common_1.BadRequestException('Order expired');
+                }
+                throw new common_1.BadRequestException(e.response.data.message);
+            }
             throw new common_1.BadRequestException(e.message);
         }
     }
@@ -140,6 +158,7 @@ __decorate([
 ], CashfreeController.prototype, "getUpiPaymentInfoUrl", null);
 exports.CashfreeController = CashfreeController = __decorate([
     (0, common_1.Controller)('cashfree'),
-    __metadata("design:paramtypes", [database_service_1.DatabaseService])
+    __metadata("design:paramtypes", [database_service_1.DatabaseService,
+        cashfree_service_1.CashfreeService])
 ], CashfreeController);
 //# sourceMappingURL=cashfree.controller.js.map

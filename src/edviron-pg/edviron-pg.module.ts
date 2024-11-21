@@ -1,14 +1,17 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { EdvironPgController } from './edviron-pg.controller';
 import { EdvironPgService } from './edviron-pg.service';
 import { DatabaseModule } from '../database/database.module';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
-import { CashfreeService } from 'src/cashfree/cashfree.service';
+import { CashfreeModule } from 'src/cashfree/cashfree.module';
 
 @Module({
   controllers: [EdvironPgController],
-  providers: [EdvironPgService,EasebuzzService,CashfreeService],
-  imports: [DatabaseModule],
+  providers: [EdvironPgService, EasebuzzService],
+  imports: [
+    DatabaseModule,
+    forwardRef(() => CashfreeModule), // Use forwardRef to avoid circular dependency
+  ],
   exports: [EdvironPgService],
 })
 export class EdvironPgModule {}

@@ -12,15 +12,18 @@ const edviron_pg_controller_1 = require("./edviron-pg.controller");
 const edviron_pg_service_1 = require("./edviron-pg.service");
 const database_module_1 = require("../database/database.module");
 const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
-const cashfree_service_1 = require("../cashfree/cashfree.service");
+const cashfree_module_1 = require("../cashfree/cashfree.module");
 let EdvironPgModule = class EdvironPgModule {
 };
 exports.EdvironPgModule = EdvironPgModule;
 exports.EdvironPgModule = EdvironPgModule = __decorate([
     (0, common_1.Module)({
         controllers: [edviron_pg_controller_1.EdvironPgController],
-        providers: [edviron_pg_service_1.EdvironPgService, easebuzz_service_1.EasebuzzService, cashfree_service_1.CashfreeService],
-        imports: [database_module_1.DatabaseModule],
+        providers: [edviron_pg_service_1.EdvironPgService, easebuzz_service_1.EasebuzzService],
+        imports: [
+            database_module_1.DatabaseModule,
+            (0, common_1.forwardRef)(() => cashfree_module_1.CashfreeModule),
+        ],
         exports: [edviron_pg_service_1.EdvironPgService],
     })
 ], EdvironPgModule);

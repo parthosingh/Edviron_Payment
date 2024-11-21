@@ -9,9 +9,14 @@ import {
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import * as jwt from 'jsonwebtoken';
+import { CashfreeService } from './cashfree.service';
+import { Gateway } from 'src/database/schemas/collect_request.schema';
 @Controller('cashfree')
 export class CashfreeController {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly cashfreeService: CashfreeService,
+  ) {}
   @Post('/refund')
   async initiateRefund(@Body() body: any) {
     const { collect_id, amount, refund_id } = body;
@@ -65,6 +70,9 @@ export class CashfreeController {
     if (!request) {
       throw new BadRequestException('Collect Request not found');
     }
+
+    // request.gateway=Gateway.EDVIRON_PG
+    await request.save()
     const cashfreeId = request.paymentIds.cashfree_id;
     if (!cashfreeId) {
       throw new BadRequestException('Error in Getting QR Code');
@@ -97,7 +105,7 @@ export class CashfreeController {
       },
       data: intentData,
     };
-    
+
     let qrCodeConfig = {
       method: 'post',
       maxBodyLength: Infinity,
@@ -111,20 +119,35 @@ export class CashfreeController {
     };
 
     const axios = require('axios');
-    try{
-    const { data: upiIntent } = await axios.request(upiConfig);
-    const { data: qrCode } = await axios.request(qrCodeConfig);
-  
-    const intent = upiIntent.data.payload.default
-    const qrCodeUrl = qrCode.data.payload.qrcode
-      
-    const qrBase64=qrCodeUrl.split(',')[1]
+    try {
+      const { data: upiIntent } = await axios.request(upiConfig);
+      const { data: qrCode } = await axios.request(qrCodeConfig);
 
-    return { intentUrl:intent,qrCodeBase64:qrBase64,collect_id };
-  }catch(e){
-    console.log(e);
-    throw new BadRequestException(e.message);
-  }
+      const intent = upiIntent.data.payload.default;
+      const qrCodeUrl = qrCode.data.payload.qrcode;
 
+      const qrBase64 = qrCodeUrl.split(',')[1];
+
+      // terminate order after 10 min
+      setTimeout(async () => {
+        try {
+          await this.cashfreeService.terminateOrder(collect_id);
+          console.log(`Order ${collect_id} terminated after 10 minutes`);
+        } catch (error) {
+          console.error(`Failed to terminate order ${collect_id}:`, error);
+        }
+      }, 600000);
+
+      return { intentUrl: intent, qrCodeBase64: qrBase64, collect_id };
+    } catch (e) {
+      console.log(e);
+      if(e.response?.data?.message && e.response?.data?.code){
+        if(e.response?.data?.message && e.response?.data?.code === 'order_inactive'){
+          throw new BadRequestException('Order expired')
+        }
+        throw new BadRequestException(e.response.data.message)
+      }
+      throw new BadRequestException(e.message);
+    }
   }
 }

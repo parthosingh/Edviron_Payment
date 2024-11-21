@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   CollectRequest,
   Gateway,
@@ -18,6 +18,7 @@ import * as ejs from 'ejs';
 import { join } from 'path';
 import * as fs from 'fs';
 import * as handlebars from 'handlebars';
+import * as moment from 'moment-timezone';
 import { sign } from '../utils/sign';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
@@ -278,11 +279,17 @@ export class EdvironPgService implements GatewayService {
         TERMINATED: TransactionStatus.FAILURE,
         TERMINATION_REQUESTED: TransactionStatus.FAILURE,
       };
+      console.log(cashfreeRes,'res');
+      
 
       const collect_status =
         await this.databaseService.CollectRequestStatusModel.findOne({
           collect_id: collect_request_id,
         });
+      if (!collect_status) {
+        console.log('No status found for custom order id', collect_request_id);
+        throw new NotFoundException('No status found for custom order id');
+      }
       let transaction_time = '';
       if (
         order_status_to_transaction_status_map[
@@ -302,6 +309,9 @@ export class EdvironPgService implements GatewayService {
         status_code = 400;
       }
       const date = new Date(transaction_time);
+      const uptDate=moment(date)
+     const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
+
       return {
         status:
           order_status_to_transaction_status_map[
@@ -316,9 +326,7 @@ export class EdvironPgService implements GatewayService {
             collect_status?.details &&
             JSON.parse(collect_status.details as string),
           transaction_time,
-          formattedTransactionDate: `${date.getFullYear()}-${String(
-            date.getMonth() + 1,
-          ).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+          formattedTransactionDate: istDate,
           order_status: cashfreeRes.order_status,
         },
       };

@@ -10,13 +10,20 @@ exports.CashfreeModule = void 0;
 const common_1 = require("@nestjs/common");
 const cashfree_service_1 = require("./cashfree.service");
 const database_module_1 = require("../database/database.module");
+const cashfree_controller_1 = require("./cashfree.controller");
+const edviron_pg_module_1 = require("../edviron-pg/edviron-pg.module");
 let CashfreeModule = class CashfreeModule {
 };
 exports.CashfreeModule = CashfreeModule;
 exports.CashfreeModule = CashfreeModule = __decorate([
     (0, common_1.Module)({
         providers: [cashfree_service_1.CashfreeService],
-        imports: [database_module_1.DatabaseModule]
+        imports: [
+            database_module_1.DatabaseModule,
+            (0, common_1.forwardRef)(() => edviron_pg_module_1.EdvironPgModule),
+        ],
+        exports: [cashfree_service_1.CashfreeService],
+        controllers: [cashfree_controller_1.CashfreeController],
     })
 ], CashfreeModule);
 //# sourceMappingURL=cashfree.module.js.map
