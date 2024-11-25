@@ -153,6 +153,61 @@ let CashfreeService = class CashfreeService {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async getTransactionForSettlements(utr, client_id, cursor) {
+        try {
+            const data = {
+                pagination: {
+                    limit: 40,
+                    cursor,
+                },
+                filters: {
+                    settlement_utrs: [utr],
+                },
+            };
+            let config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/settlement/recon`,
+                headers: {
+                    accept: 'application/json',
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': client_id,
+                    'x-partner-apikey': process.env.CASHFREE_API_KEY,
+                },
+                data,
+            };
+            const { data: response } = await axios_1.default.request(config);
+            const orderIds = response.data.map((order) => order.order_id);
+            const customOrders = await this.databaseService.CollectRequestModel.find({
+                _id: { $in: orderIds },
+            });
+            const customOrderMap = new Map(customOrders.map((doc) => [
+                doc._id.toString(),
+                { custom_order_id: doc.custom_order_id, school_id: doc.school_id, additional_data: doc.additional_data },
+            ]));
+            const enrichedOrders = response.data.map((order) => {
+                const customData = customOrderMap.get(order.order_id) || {};
+                return {
+                    ...order,
+                    custom_order_id: customData.custom_order_id || null,
+                    school_id: customData.school_id || null,
+                    student_id: JSON.parse(customData.additional_data).student_details.student_id || null,
+                    student_name: JSON.parse(customData.additional_data).student_details.student_name || null,
+                    student_email: JSON.parse(customData.additional_data).student_details.student_email || null,
+                    student_phone_no: JSON.parse(customData.additional_data).student_details.student_phone_no || null,
+                };
+            });
+            return {
+                cursor: response.cursor,
+                limit: response.limit,
+                settlements_transactions: enrichedOrders
+            };
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.CashfreeService = CashfreeService;
 exports.CashfreeService = CashfreeService = __decorate([

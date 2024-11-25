@@ -1,7 +1,15 @@
-import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import axios from 'axios';
 import { DatabaseService } from 'src/database/database.service';
-import { CollectRequest, Gateway } from 'src/database/schemas/collect_request.schema';
+import {
+  CollectRequest,
+  Gateway,
+} from 'src/database/schemas/collect_request.schema';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import * as moment from 'moment-timezone';
@@ -57,13 +65,13 @@ export class CashfreeService {
     if (!request) {
       throw new Error('Collect Request not found');
     }
-    request.gateway = Gateway.EDVIRON_PG
+    request.gateway = Gateway.EDVIRON_PG;
     await request.save();
     console.log(`Terminating ${collect_id}`);
-    
-    const {status}=await this.checkStatus(collect_id,request)
 
-    if(status.toUpperCase() ==='SUCCESS'){
+    const { status } = await this.checkStatus(collect_id, request);
+
+    if (status.toUpperCase() === 'SUCCESS') {
       throw new Error('Transaction already successful. Cannot terminate.');
     }
 
@@ -148,10 +156,10 @@ export class CashfreeService {
       } else {
         status_code = 400;
       }
-  
+
       const date = new Date(transaction_time);
-      const uptDate=moment(date)
-     const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
+      const uptDate = moment(date);
+      const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
       return {
         status:
           order_status_to_transaction_status_map[
@@ -172,6 +180,83 @@ export class CashfreeService {
       };
     } catch (e) {
       console.log(e);
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  async getTransactionForSettlements(utr: string, client_id: string,cursor:string | null) {
+    try {
+      const data = {
+        pagination: {
+          limit: 40,
+          cursor,
+        },
+        filters: {
+          settlement_utrs: [utr],
+        },
+      };
+      let config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: `${process.env.CASHFREE_ENDPOINT}/pg/settlement/recon`,
+        headers: {
+          accept: 'application/json',
+          'x-api-version': '2023-08-01',
+          'x-partner-merchantid': client_id,
+          'x-partner-apikey': process.env.CASHFREE_API_KEY,
+        },
+        data,
+      };
+
+      const { data: response } = await axios.request(config);
+      const orderIds = response.data.map((order: any) => order.order_id);
+
+      const customOrders = await this.databaseService.CollectRequestModel.find({
+        _id: { $in: orderIds },
+      });
+      // const customOrderMap = new Map(
+      //   customOrders.map((doc) => [doc._id.toString(), doc.custom_order_id]),
+      // );
+
+      const customOrderMap = new Map(
+        customOrders.map((doc) => [
+          doc._id.toString(),
+          { custom_order_id: doc.custom_order_id, school_id: doc.school_id,additional_data:doc.additional_data},
+        ]),
+      );
+
+
+      // const enrichedOrders = response.data.map((order: any) => ({
+      //   ...order,
+      //   custom_order_id: customOrderMap.get(order.order_id) || null, 
+      //   school_id: customOrderMap.get(order.school_id) || null,
+      //   // student_id: customOrderMap.get(JSON.parse(order.additional_data.student_details.student_id)) || null,
+      // }));
+
+      const enrichedOrders = response.data.map((order: any) => {
+        const customData:any = customOrderMap.get(order.order_id) || {};
+
+        
+        return {
+          ...order,
+          custom_order_id: customData.custom_order_id || null,
+          school_id: customData.school_id || null,
+          student_id: JSON.parse(customData.additional_data).student_details.student_id || null,
+          student_name: JSON.parse(customData.additional_data).student_details.student_name || null,
+          student_email: JSON.parse(customData.additional_data).student_details.student_email || null,
+          student_phone_no: JSON.parse(customData.additional_data).student_details.student_phone_no || null,
+          
+        };
+      });
+
+      return {
+        cursor:response.cursor,
+        limit:response.limit,
+        settlements_transactions:enrichedOrders
+      };
+    } catch (e) {
+      console.log(e);
+
       throw new BadRequestException(e.message);
     }
   }

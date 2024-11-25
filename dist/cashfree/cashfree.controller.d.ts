@@ -10,4 +10,11 @@ export declare class CashfreeController {
         qrCodeBase64: any;
         collect_id: any;
     }>;
+    getSettlementsTransactions(body: {
+        cursor: string | null;
+    }, req: any): Promise<{
+        cursor: any;
+        limit: any;
+        settlements_transactions: any;
+    }>;
 }
