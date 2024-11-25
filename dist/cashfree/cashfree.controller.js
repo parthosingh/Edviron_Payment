@@ -140,6 +140,15 @@ let CashfreeController = class CashfreeController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async getSettlementsTransactions(body, req) {
+        const { utr, client_id, token } = req.query;
+        try {
+            return await this.cashfreeService.getTransactionForSettlements(utr, client_id, body.cursor);
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.CashfreeController = CashfreeController;
 __decorate([
@@ -156,6 +165,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CashfreeController.prototype, "getUpiPaymentInfoUrl", null);
+__decorate([
+    (0, common_1.Post)('/settlements-transactions'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "getSettlementsTransactions", null);
 exports.CashfreeController = CashfreeController = __decorate([
     (0, common_1.Controller)('cashfree'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

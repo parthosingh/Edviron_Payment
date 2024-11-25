@@ -150,4 +150,18 @@ export class CashfreeController {
       throw new BadRequestException(e.message);
     }
   }
+
+  @Post('/settlements-transactions')
+  async getSettlementsTransactions(
+    @Body() body:{cursor:string | null},
+    @Req() req: any) {
+    const {utr,client_id,token}=req.query
+    try{
+
+      return await this.cashfreeService.getTransactionForSettlements(utr,client_id,body.cursor);
+    }catch(e){
+      // console.log(e)
+      throw new BadRequestException(e.message)
+    }
+  }
 }

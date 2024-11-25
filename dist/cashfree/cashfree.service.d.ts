@@ -15,4 +15,9 @@ export declare class CashfreeService {
         details?: any;
         custom_order_id?: string;
     }>;
+    getTransactionForSettlements(utr: string, client_id: string, cursor: string | null): Promise<{
+        cursor: any;
+        limit: any;
+        settlements_transactions: any;
+    }>;
 }
