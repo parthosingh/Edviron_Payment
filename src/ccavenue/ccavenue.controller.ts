@@ -170,6 +170,7 @@ export class CcavenueController {
         );
       }
       callbackUrl.searchParams.set('EdvironCollectRequestId', collectIdObject);
+      callbackUrl.searchParams.set('status', 'SUCCESS');
       return res.redirect(callbackUrl.toString());
     } catch (e) {
       console.log(`Error,${e}`);

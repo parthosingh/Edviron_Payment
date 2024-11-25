@@ -135,6 +135,7 @@ let CcavenueController = class CcavenueController {
                 return res.redirect(`${callbackUrl.toString()}&status=cancelled&reason=payment-declined`);
             }
             callbackUrl.searchParams.set('EdvironCollectRequestId', collectIdObject);
+            callbackUrl.searchParams.set('status', 'SUCCESS');
             return res.redirect(callbackUrl.toString());
         }
         catch (e) {
