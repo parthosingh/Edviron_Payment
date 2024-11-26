@@ -153,11 +153,11 @@ let CashfreeService = class CashfreeService {
             throw new common_1.BadRequestException(e.message);
         }
     }
-    async getTransactionForSettlements(utr, client_id, cursor) {
+    async getTransactionForSettlements(utr, client_id, limit, cursor) {
         try {
             const data = {
                 pagination: {
-                    limit: 40,
+                    limit: limit,
                     cursor,
                 },
                 filters: {

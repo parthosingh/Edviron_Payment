@@ -11,6 +11,7 @@ export declare class CashfreeController {
         collect_id: any;
     }>;
     getSettlementsTransactions(body: {
+        limit: number;
         cursor: string | null;
     }, req: any): Promise<{
         cursor: any;

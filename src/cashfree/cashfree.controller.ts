@@ -153,12 +153,12 @@ export class CashfreeController {
 
   @Post('/settlements-transactions')
   async getSettlementsTransactions(
-    @Body() body:{cursor:string | null},
+    @Body() body:{limit:number,cursor:string | null},
     @Req() req: any) {
     const {utr,client_id,token}=req.query
     try{
-
-      return await this.cashfreeService.getTransactionForSettlements(utr,client_id,body.cursor);
+      const limit = body.limit || 40
+      return await this.cashfreeService.getTransactionForSettlements(utr,client_id,limit,body.cursor);
     }catch(e){
       // console.log(e)
       throw new BadRequestException(e.message)

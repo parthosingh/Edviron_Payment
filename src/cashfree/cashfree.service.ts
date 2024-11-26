@@ -184,11 +184,11 @@ export class CashfreeService {
     }
   }
 
-  async getTransactionForSettlements(utr: string, client_id: string,cursor:string | null) {
+  async getTransactionForSettlements(utr: string, client_id: string,limit:number,cursor:string | null) {
     try {
       const data = {
         pagination: {
-          limit: 40,
+          limit: limit,
           cursor,
         },
         filters: {

@@ -143,7 +143,8 @@ let CashfreeController = class CashfreeController {
     async getSettlementsTransactions(body, req) {
         const { utr, client_id, token } = req.query;
         try {
-            return await this.cashfreeService.getTransactionForSettlements(utr, client_id, body.cursor);
+            const limit = body.limit || 40;
+            return await this.cashfreeService.getTransactionForSettlements(utr, client_id, limit, body.cursor);
         }
         catch (e) {
             throw new common_1.BadRequestException(e.message);
