@@ -353,7 +353,7 @@ export class EdvironPgController {
   async handleWebhook(@Body() body: any, @Res() res: any) {
     const { data: webHookData } = JSON.parse(JSON.stringify(body));
     console.log(webHookData.payment.payment_status);
-    
+
     // console.log('webhook received with data', { body });
 
     if (!webHookData) throw new Error('Invalid webhook data');
@@ -388,7 +388,7 @@ export class EdvironPgController {
       });
     if (
       pendingCollectReq &&
-      pendingCollectReq.status !== PaymentStatus.PENDING
+      pendingCollectReq.status === PaymentStatus.SUCCESS
     ) {
       console.log('No pending request found for', collect_id);
 
@@ -404,7 +404,7 @@ export class EdvironPgController {
     //console.log('req', reqToCheck);
 
     // const { status } = reqToCheck;
-    const status =webHookData.payment.payment_status
+    const status = webHookData.payment.payment_status;
     // if (status == TransactionStatus.SUCCESS) {
     //   try {
     //     const schoolInfo = await this.edvironPgService.getSchoolInfo(
@@ -580,7 +580,7 @@ export class EdvironPgController {
           //   console.error('Error spliting payment:', error);
           // }
         } catch (error) {
-          console.error('Error calculating commission:', error);
+          console.error('Error calculating commission:', error.message);
         }
       }
     } catch (e) {
@@ -653,16 +653,26 @@ export class EdvironPgController {
       ) {
         console.log('Webhook called for webschool');
         setTimeout(async () => {
-          await this.edvironPgService.sendErpWebhook(
-            webHookUrl,
-            webHookDataInfo,
-          );
+          try {
+            await this.edvironPgService.sendErpWebhook(
+              webHookUrl,
+              webHookDataInfo,
+            );
+          } catch (e) {
+            console.log(`Error sending webhook to ${webHookUrl}:`, e.message);
+          }
         }, 60000);
       } else {
         console.log('Webhook called for other schools');
         console.log(webHookDataInfo);
-
-        await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
+        try {
+          await this.edvironPgService.sendErpWebhook(
+            webHookUrl,
+            webHookDataInfo,
+          );
+        } catch (e) {
+          console.log(`Error sending webhook to ${webHookUrl}:`, e.message);
+        }
       }
     }
 

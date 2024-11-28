@@ -261,7 +261,7 @@ let EdvironPgController = class EdvironPgController {
             collect_id: collectIdObject,
         });
         if (pendingCollectReq &&
-            pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.PENDING) {
+            pendingCollectReq.status === collect_req_status_schema_1.PaymentStatus.SUCCESS) {
             console.log('No pending request found for', collect_id);
             res.status(200).send('OK');
             return;
@@ -333,7 +333,7 @@ let EdvironPgController = class EdvironPgController {
                     console.log('Commission calculation response:', commissionRes);
                 }
                 catch (error) {
-                    console.error('Error calculating commission:', error);
+                    console.error('Error calculating commission:', error.message);
                 }
             }
         }
@@ -387,13 +387,23 @@ let EdvironPgController = class EdvironPgController {
             if (collectRequest?.trustee_id.toString() === '66505181ca3e97e19f142075') {
                 console.log('Webhook called for webschool');
                 setTimeout(async () => {
-                    await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
+                    try {
+                        await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
+                    }
+                    catch (e) {
+                        console.log(`Error sending webhook to ${webHookUrl}:`, e.message);
+                    }
                 }, 60000);
             }
             else {
                 console.log('Webhook called for other schools');
                 console.log(webHookDataInfo);
-                await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
+                try {
+                    await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
+                }
+                catch (e) {
+                    console.log(`Error sending webhook to ${webHookUrl}:`, e.message);
+                }
             }
         }
         res.status(200).send('OK');
