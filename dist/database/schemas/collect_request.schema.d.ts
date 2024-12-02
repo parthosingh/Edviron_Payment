@@ -71,6 +71,7 @@ export declare class CollectRequest {
         name?: string;
     }];
     isSplitPayments: boolean;
+    isQRPayment: boolean;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;

@@ -128,6 +128,9 @@ export class CashfreeController {
 
       const qrBase64 = qrCodeUrl.split(',')[1];
 
+      request.isQRPayment = true;
+      await request.save();
+
       // terminate order after 10 min
       setTimeout(async () => {
         try {

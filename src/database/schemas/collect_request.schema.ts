@@ -106,6 +106,9 @@ export class CollectRequest {
 
   @Prop({ required: false, default: false })
   isSplitPayments: boolean;
+  
+  @Prop({ required: false, default: false })
+  isQRPayment: boolean;
 
   _id: ObjectId;
 }

@@ -118,6 +118,8 @@ let CashfreeController = class CashfreeController {
             const intent = upiIntent.data.payload.default;
             const qrCodeUrl = qrCode.data.payload.qrcode;
             const qrBase64 = qrCodeUrl.split(',')[1];
+            request.isQRPayment = true;
+            await request.save();
             setTimeout(async () => {
                 try {
                     await this.cashfreeService.terminateOrder(collect_id);

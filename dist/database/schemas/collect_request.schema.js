@@ -151,6 +151,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false, default: false }),
     __metadata("design:type", Boolean)
 ], CollectRequest.prototype, "isSplitPayments", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], CollectRequest.prototype, "isQRPayment", void 0);
 exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequest);
