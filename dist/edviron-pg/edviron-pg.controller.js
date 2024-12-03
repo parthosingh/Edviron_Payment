@@ -1276,6 +1276,21 @@ let EdvironPgController = class EdvironPgController {
         }
         return await this.edvironPgService.getVendorTransactions(query, dataLimit, dataPage);
     }
+    async getQRData(req) {
+        const { token, collect_id } = req.query;
+        let decrypted = jwt.verify(token, process.env.KEY);
+        if (decrypted.collect_id != collect_id) {
+            throw new common_1.BadRequestException('Invalid token');
+        }
+        const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!request) {
+            throw new common_1.NotFoundException('Collect Request not found');
+        }
+        if (request.deepLink) {
+            return await this.easebuzzService.getQrBase64(collect_id);
+        }
+        return await this.cashfreeService.getUpiPaymentInfoUrl(collect_id);
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -1457,6 +1472,13 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "vendorTransactions", null);
+__decorate([
+    (0, common_1.Get)('upi-pay-qr'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getQRData", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

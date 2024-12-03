@@ -120,4 +120,9 @@ export declare class EdvironPgController {
         limit: number;
         totalPages: number;
     }>;
+    getQRData(req: any): Promise<{
+        intentUrl: any;
+        qrCodeBase64: any;
+        collect_id: string;
+    }>;
 }

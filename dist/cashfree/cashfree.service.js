@@ -183,7 +183,11 @@ let CashfreeService = class CashfreeService {
             });
             const customOrderMap = new Map(customOrders.map((doc) => [
                 doc._id.toString(),
-                { custom_order_id: doc.custom_order_id, school_id: doc.school_id, additional_data: doc.additional_data },
+                {
+                    custom_order_id: doc.custom_order_id,
+                    school_id: doc.school_id,
+                    additional_data: doc.additional_data,
+                },
             ]));
             const enrichedOrders = response.data.map((order) => {
                 const customData = customOrderMap.get(order.order_id) || {};
@@ -191,20 +195,104 @@ let CashfreeService = class CashfreeService {
                     ...order,
                     custom_order_id: customData.custom_order_id || null,
                     school_id: customData.school_id || null,
-                    student_id: JSON.parse(customData.additional_data).student_details.student_id || null,
-                    student_name: JSON.parse(customData.additional_data).student_details.student_name || null,
-                    student_email: JSON.parse(customData.additional_data).student_details.student_email || null,
-                    student_phone_no: JSON.parse(customData.additional_data).student_details.student_phone_no || null,
+                    student_id: JSON.parse(customData.additional_data).student_details.student_id ||
+                        null,
+                    student_name: JSON.parse(customData.additional_data).student_details
+                        .student_name || null,
+                    student_email: JSON.parse(customData.additional_data).student_details
+                        .student_email || null,
+                    student_phone_no: JSON.parse(customData.additional_data).student_details
+                        .student_phone_no || null,
                 };
             });
             return {
                 cursor: response.cursor,
                 limit: response.limit,
-                settlements_transactions: enrichedOrders
+                settlements_transactions: enrichedOrders,
             };
         }
         catch (e) {
             console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async getUpiPaymentInfoUrl(collect_id) {
+        const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!request) {
+            throw new common_1.BadRequestException('Collect Request not found');
+        }
+        await request.save();
+        const cashfreeId = request.paymentIds.cashfree_id;
+        if (!cashfreeId) {
+            throw new common_1.BadRequestException('Error in Getting QR Code');
+        }
+        let intentData = JSON.stringify({
+            payment_method: {
+                upi: {
+                    channel: 'link',
+                },
+            },
+            payment_session_id: cashfreeId,
+        });
+        let qrCodeData = JSON.stringify({
+            payment_method: {
+                upi: {
+                    channel: 'qrcode',
+                },
+            },
+            payment_session_id: cashfreeId,
+        });
+        let upiConfig = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/sessions`,
+            headers: {
+                accept: 'application/json',
+                'content-type': 'application/json',
+                'x-api-version': '2023-08-01',
+            },
+            data: intentData,
+        };
+        let qrCodeConfig = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/sessions`,
+            headers: {
+                accept: 'application/json',
+                'content-type': 'application/json',
+                'x-api-version': '2023-08-01',
+            },
+            data: qrCodeData,
+        };
+        const axios = require('axios');
+        try {
+            const { data: upiIntent } = await axios.request(upiConfig);
+            const { data: qrCode } = await axios.request(qrCodeConfig);
+            const intent = upiIntent.data.payload.default;
+            const qrCodeUrl = qrCode.data.payload.qrcode;
+            const qrBase64 = qrCodeUrl.split(',')[1];
+            request.isQRPayment = true;
+            await request.save();
+            setTimeout(async () => {
+                try {
+                    await this.terminateOrder(collect_id);
+                    console.log(`Order ${collect_id} terminated after 10 minutes`);
+                }
+                catch (error) {
+                    console.error(`Failed to terminate order ${collect_id}:`, error);
+                }
+            }, 600000);
+            return { intentUrl: intent, qrCodeBase64: qrBase64, collect_id };
+        }
+        catch (e) {
+            console.log(e);
+            if (e.response?.data?.message && e.response?.data?.code) {
+                if (e.response?.data?.message &&
+                    e.response?.data?.code === 'order_inactive') {
+                    throw new common_1.BadRequestException('Order expired');
+                }
+                throw new common_1.BadRequestException(e.response.data.message);
+            }
             throw new common_1.BadRequestException(e.message);
         }
     }

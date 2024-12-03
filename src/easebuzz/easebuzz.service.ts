@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { CollectRequest } from 'src/database/schemas/collect_request.schema';
+import { CollectRequest, Gateway } from 'src/database/schemas/collect_request.schema';
 import { calculateSHA512Hash } from 'src/utils/sign';
 import axios from 'axios';
 
@@ -173,4 +173,21 @@ export class EasebuzzService {
       throw new BadRequestException(e.message)
     }
   }
-}
+
+  async getQrBase64(collect_id: string){
+    const collectRequest=await this.databaseService.CollectRequestModel.findById(collect_id)
+    if (!collectRequest) {
+      throw new BadRequestException('Collect Request not found');
+    }
+    collectRequest.gateway=Gateway.EDVIRON_EASEBUZZ
+    await collectRequest.save();
+    const upiIntentUrl = collectRequest.deepLink
+    var QRCode = require('qrcode')
+    const qrCodeBase64 = await QRCode.toDataURL(upiIntentUrl, {
+      margin: 2, 
+      width: 300,
+    });
+    return { intentUrl: upiIntentUrl, qrCodeBase64: qrCodeBase64, collect_id }
+
+  }
+} 

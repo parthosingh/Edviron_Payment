@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EasebuzzService = void 0;
 const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
+const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const sign_1 = require("../utils/sign");
 const axios_1 = require("axios");
 let EasebuzzService = class EasebuzzService {
@@ -140,6 +141,21 @@ let EasebuzzService = class EasebuzzService {
             console.log(e);
             throw new common_1.BadRequestException(e.message);
         }
+    }
+    async getQrBase64(collect_id) {
+        const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!collectRequest) {
+            throw new common_1.BadRequestException('Collect Request not found');
+        }
+        collectRequest.gateway = collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ;
+        await collectRequest.save();
+        const upiIntentUrl = collectRequest.deepLink;
+        var QRCode = require('qrcode');
+        const qrCodeBase64 = await QRCode.toDataURL(upiIntentUrl, {
+            margin: 2,
+            width: 300,
+        });
+        return { intentUrl: upiIntentUrl, qrCodeBase64: qrCodeBase64, collect_id };
     }
 };
 exports.EasebuzzService = EasebuzzService;

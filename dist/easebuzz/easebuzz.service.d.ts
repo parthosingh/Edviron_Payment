@@ -7,4 +7,9 @@ export declare class EasebuzzService {
     statusResponse(requestId: string, collectReq: CollectRequest): Promise<any>;
     initiateRefund(collect_id: string, refund_amount: number, refund_id: string): Promise<any>;
     checkRefundSttaus(collect_id: string): Promise<any>;
+    getQrBase64(collect_id: string): Promise<{
+        intentUrl: string;
+        qrCodeBase64: any;
+        collect_id: string;
+    }>;
 }

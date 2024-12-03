@@ -1910,4 +1910,24 @@ export class EdvironPgController {
       dataPage,
     );
   }
+
+  @Get('upi-pay-qr')
+  async getQRData(
+    @Req() req: any,
+  ){
+    const { token, collect_id } = req.query;
+    let decrypted = jwt.verify(token, process.env.KEY!) as any;
+    if (decrypted.collect_id != collect_id) {
+      throw new BadRequestException('Invalid token');
+    }
+    const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+    if (!request) {
+      throw new NotFoundException('Collect Request not found');
+    }
+    if(request.deepLink){
+      return await this.easebuzzService.getQrBase64(collect_id);
+    }
+
+    return await this.cashfreeService.getUpiPaymentInfoUrl(collect_id);
+  }
 }

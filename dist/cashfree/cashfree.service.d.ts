@@ -20,4 +20,9 @@ export declare class CashfreeService {
         limit: any;
         settlements_transactions: any;
     }>;
+    getUpiPaymentInfoUrl(collect_id: string): Promise<{
+        intentUrl: any;
+        qrCodeBase64: any;
+        collect_id: string;
+    }>;
 }
