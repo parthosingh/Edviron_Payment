@@ -1384,6 +1384,10 @@ export class EdvironPgController {
       const endDate = req.query.endDate || null;
       const status = req.query.status || null;
 
+      const endOfDay = new Date(endDate);
+      // Set hours, minutes, seconds, and milliseconds to the last moment of the day
+      endOfDay.setHours(23, 59, 59, 999);
+
       let decrypted = jwt.verify(token, process.env.KEY!) as any;
       if (
         JSON.stringify({
@@ -1397,15 +1401,21 @@ export class EdvironPgController {
       ) {
         throw new ForbiddenException('Request forged');
       }
-
+      console.time('fetching all transaction');
       const orders = await this.databaseService.CollectRequestModel.find({
         trustee_id: trustee_id,
+        createdAt: {
+          $gte: new Date(startDate),
+          $lt: endOfDay,
+        }
       }).select('_id');
 
       let transactions: any[] = [];
 
       const orderIds = orders.map((order: any) => order._id);
-
+      console.log(orderIds.length);
+      
+      console.timeEnd('fetching all transaction');
       let query: any = {
         collect_id: { $in: orderIds },
       };
@@ -1428,11 +1438,12 @@ export class EdvironPgController {
         };
       }
 
+      console.time('counting all transaction');
       const transactionsCount =
         await this.databaseService.CollectRequestStatusModel.countDocuments(
           query,
         );
-
+        console.timeEnd('counting all transaction');
       transactions =
         await this.databaseService.CollectRequestStatusModel.aggregate([
           {
@@ -1924,9 +1935,9 @@ export class EdvironPgController {
     if (!request) {
       throw new NotFoundException('Collect Request not found');
     }
-    if(request.deepLink){
-      return await this.easebuzzService.getQrBase64(collect_id);
-    }
+    // if(request.deepLink){
+    //   return await this.easebuzzService.getQrBase64(collect_id);
+    // }
 
     return await this.cashfreeService.getUpiPaymentInfoUrl(collect_id);
   }

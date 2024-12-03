@@ -913,6 +913,8 @@ let EdvironPgController = class EdvironPgController {
             const startDate = req.query.startDate || null;
             const endDate = req.query.endDate || null;
             const status = req.query.status || null;
+            const endOfDay = new Date(endDate);
+            endOfDay.setHours(23, 59, 59, 999);
             let decrypted = jwt.verify(token, process.env.KEY);
             if (JSON.stringify({
                 ...JSON.parse(JSON.stringify(decrypted)),
@@ -924,11 +926,18 @@ let EdvironPgController = class EdvironPgController {
                 })) {
                 throw new common_1.ForbiddenException('Request forged');
             }
+            console.time('fetching all transaction');
             const orders = await this.databaseService.CollectRequestModel.find({
                 trustee_id: trustee_id,
+                createdAt: {
+                    $gte: new Date(startDate),
+                    $lt: endOfDay,
+                }
             }).select('_id');
             let transactions = [];
             const orderIds = orders.map((order) => order._id);
+            console.log(orderIds.length);
+            console.timeEnd('fetching all transaction');
             let query = {
                 collect_id: { $in: orderIds },
             };
@@ -948,7 +957,9 @@ let EdvironPgController = class EdvironPgController {
                     status,
                 };
             }
+            console.time('counting all transaction');
             const transactionsCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
+            console.timeEnd('counting all transaction');
             transactions =
                 await this.databaseService.CollectRequestStatusModel.aggregate([
                     {
@@ -1285,9 +1296,6 @@ let EdvironPgController = class EdvironPgController {
         const request = await this.databaseService.CollectRequestModel.findById(collect_id);
         if (!request) {
             throw new common_1.NotFoundException('Collect Request not found');
-        }
-        if (request.deepLink) {
-            return await this.easebuzzService.getQrBase64(collect_id);
         }
         return await this.cashfreeService.getUpiPaymentInfoUrl(collect_id);
     }
