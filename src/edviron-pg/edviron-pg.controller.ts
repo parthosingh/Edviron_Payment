@@ -1935,9 +1935,9 @@ export class EdvironPgController {
     if (!request) {
       throw new NotFoundException('Collect Request not found');
     }
-    // if(request.deepLink){
-    //   return await this.easebuzzService.getQrBase64(collect_id);
-    // }
+    if(request.deepLink){
+      return await this.easebuzzService.getQrBase64(collect_id);
+    }
 
     return await this.cashfreeService.getUpiPaymentInfoUrl(collect_id);
   }

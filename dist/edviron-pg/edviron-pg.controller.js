@@ -1297,6 +1297,9 @@ let EdvironPgController = class EdvironPgController {
         if (!request) {
             throw new common_1.NotFoundException('Collect Request not found');
         }
+        if (request.deepLink) {
+            return await this.easebuzzService.getQrBase64(collect_id);
+        }
         return await this.cashfreeService.getUpiPaymentInfoUrl(collect_id);
     }
 };
