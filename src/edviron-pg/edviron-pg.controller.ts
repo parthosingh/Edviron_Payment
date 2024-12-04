@@ -1397,6 +1397,8 @@ export class EdvironPgController {
       if (req.query.school_id) {
         collectQuery['school_id'] = req.query.school_id;
       }
+      console.log(collectQuery,'collectQuery');
+      
       let decrypted = jwt.verify(token, process.env.KEY!) as any;
       if (
         JSON.stringify({
@@ -1423,6 +1425,7 @@ export class EdvironPgController {
         .select('_id')
         .skip(page)
         .limit(limit);
+console.log(orders,'order');
 
       let transactions: any[] = [];
       const orderIds = orders.map((order: any) => order._id);
@@ -1438,7 +1441,7 @@ export class EdvironPgController {
           ...query,
           createdAt: {
             $gte: new Date(startDate),
-            $lt: new Date(endDate),
+            $lt: new Date(endOfDay),
           },
         };
       }
@@ -1460,7 +1463,7 @@ export class EdvironPgController {
         },
       })
         .select('_id')
-        console.log(transactionsCount);
+      
         
       console.timeEnd('counting all transaction');
       console.time('aggregating transaction');
