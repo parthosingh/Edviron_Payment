@@ -932,7 +932,7 @@ let EdvironPgController = class EdvironPgController {
                 createdAt: {
                     $gte: new Date(startDate),
                     $lt: endOfDay,
-                }
+                },
             }).select('_id');
             let transactions = [];
             const orderIds = orders.map((order) => order._id);
@@ -1289,10 +1289,6 @@ let EdvironPgController = class EdvironPgController {
     }
     async getQRData(req) {
         const { token, collect_id } = req.query;
-        let decrypted = jwt.verify(token, process.env.KEY);
-        if (decrypted.collect_id != collect_id) {
-            throw new common_1.BadRequestException('Invalid token');
-        }
         const request = await this.databaseService.CollectRequestModel.findById(collect_id);
         if (!request) {
             throw new common_1.NotFoundException('Collect Request not found');
@@ -1300,7 +1296,12 @@ let EdvironPgController = class EdvironPgController {
         if (request.deepLink) {
             return await this.easebuzzService.getQrBase64(collect_id);
         }
-        return await this.cashfreeService.getUpiPaymentInfoUrl(collect_id);
+        try {
+            return await this.cashfreeService.getUpiPaymentInfoUrl(collect_id);
+        }
+        catch (e) {
+            console.log(e);
+        }
     }
 };
 exports.EdvironPgController = EdvironPgController;

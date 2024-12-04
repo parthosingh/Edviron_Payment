@@ -124,5 +124,5 @@ export declare class EdvironPgController {
         intentUrl: any;
         qrCodeBase64: any;
         collect_id: string;
-    }>;
+    } | undefined>;
 }

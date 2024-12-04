@@ -1407,14 +1407,14 @@ export class EdvironPgController {
         createdAt: {
           $gte: new Date(startDate),
           $lt: endOfDay,
-        }
+        },
       }).select('_id');
 
       let transactions: any[] = [];
 
       const orderIds = orders.map((order: any) => order._id);
       console.log(orderIds.length);
-      
+
       console.timeEnd('fetching all transaction');
       let query: any = {
         collect_id: { $in: orderIds },
@@ -1443,7 +1443,7 @@ export class EdvironPgController {
         await this.databaseService.CollectRequestStatusModel.countDocuments(
           query,
         );
-        console.timeEnd('counting all transaction');
+      console.timeEnd('counting all transaction');
       transactions =
         await this.databaseService.CollectRequestStatusModel.aggregate([
           {
@@ -1923,22 +1923,24 @@ export class EdvironPgController {
   }
 
   @Get('upi-pay-qr')
-  async getQRData(
-    @Req() req: any,
-  ){
+  async getQRData(@Req() req: any) {
     const { token, collect_id } = req.query;
-    let decrypted = jwt.verify(token, process.env.KEY!) as any;
-    if (decrypted.collect_id != collect_id) {
-      throw new BadRequestException('Invalid token');
-    }
-    const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+    // let decrypted = jwt.verify(token, process.env.KEY!) as any;
+    // if (decrypted.collect_id != collect_id) {
+    //   throw new BadRequestException('Invalid token');
+    // }
+    const request =
+      await this.databaseService.CollectRequestModel.findById(collect_id);
     if (!request) {
       throw new NotFoundException('Collect Request not found');
     }
-    if(request.deepLink){
+    if (request.deepLink) {
       return await this.easebuzzService.getQrBase64(collect_id);
     }
- 
-    return await this.cashfreeService.getUpiPaymentInfoUrl(collect_id);
+    try {
+      return await this.cashfreeService.getUpiPaymentInfoUrl(collect_id);
+    } catch (e) {
+      console.log(e);
+    }
   }
 }
