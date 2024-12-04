@@ -972,7 +972,15 @@ let EdvironPgController = class EdvironPgController {
                 };
             }
             console.time('counting all transaction');
-            const transactionsCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
+            const transactionsCount = await this.databaseService.CollectRequestModel.find({
+                trustee_id: trustee_id,
+                createdAt: {
+                    $gte: new Date(startDate),
+                    $lt: endOfDay,
+                },
+            })
+                .select('_id');
+            console.log(transactionsCount);
             console.timeEnd('counting all transaction');
             console.time('aggregating transaction');
             transactions =
@@ -1078,7 +1086,7 @@ let EdvironPgController = class EdvironPgController {
             console.timeEnd('aggregating transaction');
             res
                 .status(201)
-                .send({ transactions, totalTransactions: transactionsCount });
+                .send({ transactions, totalTransactions: transactionsCount.length });
         }
         catch (error) {
             throw new Error(error.message);

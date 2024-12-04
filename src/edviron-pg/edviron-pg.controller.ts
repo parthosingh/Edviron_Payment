@@ -1386,6 +1386,7 @@ export class EdvironPgController {
       const endOfDay = new Date(endDate);
       // Set hours, minutes, seconds, and milliseconds to the last moment of the day
       endOfDay.setHours(23, 59, 59, 999);
+
       const collectQuery: any = {
         trustee_id: trustee_id,
         createdAt: {
@@ -1451,10 +1452,16 @@ export class EdvironPgController {
       }
 
       console.time('counting all transaction');
-      const transactionsCount =
-        await this.databaseService.CollectRequestStatusModel.countDocuments(
-          query,
-        );
+      const transactionsCount  = await this.databaseService.CollectRequestModel.find({
+        trustee_id: trustee_id,
+        createdAt: {
+          $gte: new Date(startDate),
+          $lt: endOfDay,
+        },
+      })
+        .select('_id')
+        console.log(transactionsCount);
+        
       console.timeEnd('counting all transaction');
       console.time('aggregating transaction');
       transactions =
@@ -1560,7 +1567,7 @@ export class EdvironPgController {
       console.timeEnd('aggregating transaction');
       res
         .status(201)
-        .send({ transactions, totalTransactions: transactionsCount });
+        .send({ transactions, totalTransactions: transactionsCount.length });
     } catch (error) {
       throw new Error(error.message);
     }
