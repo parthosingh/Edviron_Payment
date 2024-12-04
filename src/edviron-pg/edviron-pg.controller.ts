@@ -1938,7 +1938,7 @@ export class EdvironPgController {
     if(request.deepLink){
       return await this.easebuzzService.getQrBase64(collect_id);
     }
-
+ 
     return await this.cashfreeService.getUpiPaymentInfoUrl(collect_id);
   }
 }
