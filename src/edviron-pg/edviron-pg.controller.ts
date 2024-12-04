@@ -1379,7 +1379,6 @@ export class EdvironPgController {
     try {
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 10;
-
       const startDate = req.query.startDate || null;
       const endDate = req.query.endDate || null;
       const status = req.query.status || null;
@@ -1387,7 +1386,16 @@ export class EdvironPgController {
       const endOfDay = new Date(endDate);
       // Set hours, minutes, seconds, and milliseconds to the last moment of the day
       endOfDay.setHours(23, 59, 59, 999);
-
+      const collectQuery: any = {
+        trustee_id: trustee_id,
+        createdAt: {
+          $gte: new Date(startDate),
+          $lt: endOfDay,
+        },
+      };
+      if (req.query.school_id) {
+        collectQuery['school_id'] = req.query.school_id;
+      }
       let decrypted = jwt.verify(token, process.env.KEY!) as any;
       if (
         JSON.stringify({
@@ -1401,6 +1409,8 @@ export class EdvironPgController {
       ) {
         throw new ForbiddenException('Request forged');
       }
+      console.log(collectQuery);
+
       console.time('fetching all transaction');
       const orders = await this.databaseService.CollectRequestModel.find({
         trustee_id: trustee_id,
@@ -1408,10 +1418,12 @@ export class EdvironPgController {
           $gte: new Date(startDate),
           $lt: endOfDay,
         },
-      }).select('_id');
+      })
+        .select('_id')
+        .skip(page)
+        .limit(limit);
 
       let transactions: any[] = [];
-
       const orderIds = orders.map((order: any) => order._id);
       console.log(orderIds.length);
 
@@ -1444,6 +1456,7 @@ export class EdvironPgController {
           query,
         );
       console.timeEnd('counting all transaction');
+      console.time('aggregating transaction');
       transactions =
         await this.databaseService.CollectRequestStatusModel.aggregate([
           {
@@ -1544,7 +1557,7 @@ export class EdvironPgController {
             $limit: Number(limit),
           },
         ]);
-
+      console.timeEnd('aggregating transaction');
       res
         .status(201)
         .send({ transactions, totalTransactions: transactionsCount });
@@ -1943,4 +1956,22 @@ export class EdvironPgController {
       console.log(e);
     }
   }
+
+  @Get('/get-transaction-report-batched')
+  async getTransactionReportBatched(
+    @Query('start_date') start_date: string,
+    @Query('end_date') end_date: string,
+    @Query('trustee_id') trustee_id: string,
+    @Query('school_id') school_id: string,
+    @Query('status') status: string,
+  ) {
+    return await this.edvironPgService.getTransactionReportBatched(
+      trustee_id,
+      start_date,
+      end_date,
+      status,
+      school_id
+    )
+  }
+
 }

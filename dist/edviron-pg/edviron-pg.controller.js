@@ -915,6 +915,16 @@ let EdvironPgController = class EdvironPgController {
             const status = req.query.status || null;
             const endOfDay = new Date(endDate);
             endOfDay.setHours(23, 59, 59, 999);
+            const collectQuery = {
+                trustee_id: trustee_id,
+                createdAt: {
+                    $gte: new Date(startDate),
+                    $lt: endOfDay,
+                },
+            };
+            if (req.query.school_id) {
+                collectQuery['school_id'] = req.query.school_id;
+            }
             let decrypted = jwt.verify(token, process.env.KEY);
             if (JSON.stringify({
                 ...JSON.parse(JSON.stringify(decrypted)),
@@ -926,6 +936,7 @@ let EdvironPgController = class EdvironPgController {
                 })) {
                 throw new common_1.ForbiddenException('Request forged');
             }
+            console.log(collectQuery);
             console.time('fetching all transaction');
             const orders = await this.databaseService.CollectRequestModel.find({
                 trustee_id: trustee_id,
@@ -933,7 +944,10 @@ let EdvironPgController = class EdvironPgController {
                     $gte: new Date(startDate),
                     $lt: endOfDay,
                 },
-            }).select('_id');
+            })
+                .select('_id')
+                .skip(page)
+                .limit(limit);
             let transactions = [];
             const orderIds = orders.map((order) => order._id);
             console.log(orderIds.length);
@@ -960,6 +974,7 @@ let EdvironPgController = class EdvironPgController {
             console.time('counting all transaction');
             const transactionsCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
             console.timeEnd('counting all transaction');
+            console.time('aggregating transaction');
             transactions =
                 await this.databaseService.CollectRequestStatusModel.aggregate([
                     {
@@ -1060,6 +1075,7 @@ let EdvironPgController = class EdvironPgController {
                         $limit: Number(limit),
                     },
                 ]);
+            console.timeEnd('aggregating transaction');
             res
                 .status(201)
                 .send({ transactions, totalTransactions: transactionsCount });
@@ -1303,6 +1319,9 @@ let EdvironPgController = class EdvironPgController {
             console.log(e);
         }
     }
+    async getTransactionReportBatched(start_date, end_date, trustee_id, school_id, status) {
+        return await this.edvironPgService.getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id);
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -1491,6 +1510,17 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getQRData", null);
+__decorate([
+    (0, common_1.Get)('/get-transaction-report-batched'),
+    __param(0, (0, common_1.Query)('start_date')),
+    __param(1, (0, common_1.Query)('end_date')),
+    __param(2, (0, common_1.Query)('trustee_id')),
+    __param(3, (0, common_1.Query)('school_id')),
+    __param(4, (0, common_1.Query)('status')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, String, String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getTransactionReportBatched", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

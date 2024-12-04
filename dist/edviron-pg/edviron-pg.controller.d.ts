@@ -125,4 +125,7 @@ export declare class EdvironPgController {
         qrCodeBase64: any;
         collect_id: string;
     } | undefined>;
+    getTransactionReportBatched(start_date: string, end_date: string, trustee_id: string, school_id: string, status: string): Promise<{
+        transactions: any[];
+    }>;
 }
