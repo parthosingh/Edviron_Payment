@@ -11,5 +11,5 @@ export declare class EasebuzzService {
         intentUrl: string;
         qrCodeBase64: any;
         collect_id: string;
-    }>;
+    } | undefined>;
 }

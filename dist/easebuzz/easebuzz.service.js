@@ -143,19 +143,24 @@ let EasebuzzService = class EasebuzzService {
         }
     }
     async getQrBase64(collect_id) {
-        const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
-        if (!collectRequest) {
-            throw new common_1.BadRequestException('Collect Request not found');
+        try {
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest) {
+                throw new common_1.BadRequestException('Collect Request not found');
+            }
+            collectRequest.gateway = collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ;
+            await collectRequest.save();
+            const upiIntentUrl = collectRequest.deepLink;
+            var QRCode = require('qrcode');
+            const qrCodeBase64 = await QRCode.toDataURL(upiIntentUrl, {
+                margin: 2,
+                width: 300,
+            });
+            return { intentUrl: upiIntentUrl, qrCodeBase64: qrCodeBase64, collect_id };
         }
-        collectRequest.gateway = collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ;
-        await collectRequest.save();
-        const upiIntentUrl = collectRequest.deepLink;
-        var QRCode = require('qrcode');
-        const qrCodeBase64 = await QRCode.toDataURL(upiIntentUrl, {
-            margin: 2,
-            width: 300,
-        });
-        return { intentUrl: upiIntentUrl, qrCodeBase64: qrCodeBase64, collect_id };
+        catch (e) {
+            console.log(e.message);
+        }
     }
 };
 exports.EasebuzzService = EasebuzzService;

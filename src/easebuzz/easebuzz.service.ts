@@ -175,19 +175,24 @@ export class EasebuzzService {
   }
 
   async getQrBase64(collect_id: string){
-    const collectRequest=await this.databaseService.CollectRequestModel.findById(collect_id)
-    if (!collectRequest) {
-      throw new BadRequestException('Collect Request not found');
+    try{
+
+      const collectRequest=await this.databaseService.CollectRequestModel.findById(collect_id)
+      if (!collectRequest) {
+        throw new BadRequestException('Collect Request not found');
+      }
+      collectRequest.gateway=Gateway.EDVIRON_EASEBUZZ
+      await collectRequest.save();
+      const upiIntentUrl = collectRequest.deepLink
+      var QRCode = require('qrcode')
+      const qrCodeBase64 = await QRCode.toDataURL(upiIntentUrl, {
+        margin: 2, 
+        width: 300,
+      });
+      return { intentUrl: upiIntentUrl, qrCodeBase64: qrCodeBase64, collect_id }
+    }catch(e){
+      console.log(e.message)
     }
-    collectRequest.gateway=Gateway.EDVIRON_EASEBUZZ
-    await collectRequest.save();
-    const upiIntentUrl = collectRequest.deepLink
-    var QRCode = require('qrcode')
-    const qrCodeBase64 = await QRCode.toDataURL(upiIntentUrl, {
-      margin: 2, 
-      width: 300,
-    });
-    return { intentUrl: upiIntentUrl, qrCodeBase64: qrCodeBase64, collect_id }
 
   }
 } 
