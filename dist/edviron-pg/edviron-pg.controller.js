@@ -939,13 +939,7 @@ let EdvironPgController = class EdvironPgController {
             }
             console.log(collectQuery);
             console.time('fetching all transaction');
-            const orders = await this.databaseService.CollectRequestModel.find({
-                trustee_id: trustee_id,
-                createdAt: {
-                    $gte: new Date(startDate),
-                    $lt: endOfDay,
-                },
-            }).select('_id');
+            const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
             console.log(orders, 'order');
             let transactions = [];
             const orderIds = orders.map((order) => order._id);
@@ -1091,7 +1085,6 @@ let EdvironPgController = class EdvironPgController {
                     },
                 ]);
             console.timeEnd('aggregating transaction');
-            console.log(query);
             const tnxCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
             console.log(tnxCount);
             res
