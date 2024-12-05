@@ -970,7 +970,13 @@ let EdvironPgController = class EdvironPgController {
             if (status === 'SUCCESS' || status === 'PENDING') {
                 query = {
                     ...query,
-                    status,
+                    status: { $in: [status] },
+                };
+            }
+            else if (status === 'FAILED') {
+                query = {
+                    ...query,
+                    status: { $in: ['FAILED', 'FAILURE'] },
                 };
             }
             console.time('counting all transaction');
