@@ -945,10 +945,7 @@ let EdvironPgController = class EdvironPgController {
                     $gte: new Date(startDate),
                     $lt: endOfDay,
                 },
-            })
-                .select('_id')
-                .skip(page)
-                .limit(limit);
+            }).select('_id');
             console.log(orders, 'order');
             let transactions = [];
             const orderIds = orders.map((order) => order._id);
@@ -986,8 +983,7 @@ let EdvironPgController = class EdvironPgController {
                     $gte: new Date(startDate),
                     $lt: endOfDay,
                 },
-            })
-                .select('_id');
+            }).select('_id');
             console.timeEnd('counting all transaction');
             console.time('aggregating transaction');
             transactions =
@@ -995,6 +991,10 @@ let EdvironPgController = class EdvironPgController {
                     {
                         $match: query,
                     },
+                    {
+                        $skip: (page - 1) * limit,
+                    },
+                    { $limit: Number(limit) },
                     {
                         $lookup: {
                             from: 'collectrequests',
@@ -1091,9 +1091,12 @@ let EdvironPgController = class EdvironPgController {
                     },
                 ]);
             console.timeEnd('aggregating transaction');
+            console.log(query);
+            const tnxCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
+            console.log(tnxCount);
             res
                 .status(201)
-                .send({ transactions, totalTransactions: transactionsCount.length });
+                .send({ transactions, totalTransactions: tnxCount });
         }
         catch (error) {
             throw new Error(error.message);

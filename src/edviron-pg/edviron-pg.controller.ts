@@ -24,6 +24,7 @@ import { TransactionStatus } from 'src/types/transactionStatus';
 import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
+import { skip } from 'node:test';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -1397,8 +1398,8 @@ export class EdvironPgController {
       if (req.query.school_id) {
         collectQuery['school_id'] = req.query.school_id;
       }
-      console.log(collectQuery,'collectQuery');
-      
+      console.log(collectQuery, 'collectQuery');
+
       let decrypted = jwt.verify(token, process.env.KEY!) as any;
       if (
         JSON.stringify({
@@ -1421,11 +1422,9 @@ export class EdvironPgController {
           $gte: new Date(startDate),
           $lt: endOfDay,
         },
-      })
-        .select('_id')
-        .skip(page)
-        .limit(limit);
-console.log(orders,'order');
+      }).select('_id');
+
+      console.log(orders, 'order');
 
       let transactions: any[] = [];
       const orderIds = orders.map((order: any) => order._id);
@@ -1450,26 +1449,25 @@ console.log(orders,'order');
       if (status === 'SUCCESS' || status === 'PENDING') {
         query = {
           ...query,
-          status:{$in:[status]},
+          status: { $in: [status] },
         };
-      }else if (status === 'FAILED'){
+      } else if (status === 'FAILED') {
         query = {
           ...query,
-          status:{$in:['FAILED','FAILURE']},
+          status: { $in: ['FAILED', 'FAILURE'] },
         };
       }
 
       console.time('counting all transaction');
-      const transactionsCount  = await this.databaseService.CollectRequestModel.find({
-        trustee_id: trustee_id,
-        createdAt: {
-          $gte: new Date(startDate),
-          $lt: endOfDay,
-        },
-      })
-        .select('_id')
-      
-        
+      const transactionsCount =
+        await this.databaseService.CollectRequestModel.find({
+          trustee_id: trustee_id,
+          createdAt: {
+            $gte: new Date(startDate),
+            $lt: endOfDay,
+          },
+        }).select('_id');
+
       console.timeEnd('counting all transaction');
       console.time('aggregating transaction');
       transactions =
@@ -1477,6 +1475,11 @@ console.log(orders,'order');
           {
             $match: query,
           },
+          {
+            $skip: (page - 1) * limit,
+          },
+
+          { $limit: Number(limit) },
           {
             $lookup: {
               from: 'collectrequests',
@@ -1573,9 +1576,18 @@ console.log(orders,'order');
           },
         ]);
       console.timeEnd('aggregating transaction');
+      console.log(query);
+
+      const tnxCount =
+        await this.databaseService.CollectRequestStatusModel.countDocuments(
+          query,
+        );
+
+      console.log(tnxCount);
+
       res
         .status(201)
-        .send({ transactions, totalTransactions: transactionsCount.length });
+        .send({ transactions, totalTransactions: tnxCount });
     } catch (error) {
       throw new Error(error.message);
     }
@@ -1985,8 +1997,7 @@ console.log(orders,'order');
       start_date,
       end_date,
       status,
-      school_id
-    )
+      school_id,
+    );
   }
-
 }
