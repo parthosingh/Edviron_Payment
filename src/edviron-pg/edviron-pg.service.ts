@@ -969,7 +969,7 @@ export class EdvironPgService implements GatewayService {
             $group: {
               _id: '$collect_request.trustee_id', // Group by `trustee_id`
               totalTransactionAmount: { $sum: '$transaction_amount' },
-              // totalOrderAmount: { $sum: '$order_amount' },
+              totalOrderAmount: { $sum: '$order_amount' },
               // totalTransactions: { $sum: 1 }, // Count total transactions
             },
           },
@@ -978,7 +978,7 @@ export class EdvironPgService implements GatewayService {
               _id: 0, // Remove the `_id` field
               // trustee_id: '$_id', // Rename `_id` to `trustee_id`
               totalTransactionAmount: 1,
-              // totalOrderAmount: 1,
+              totalOrderAmount: 1,
               // totalTransactions: 1,
             },
           },
