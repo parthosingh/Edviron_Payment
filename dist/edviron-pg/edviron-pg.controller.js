@@ -1084,7 +1084,7 @@ let EdvironPgController = class EdvironPgController {
                         $sort: { createdAt: -1 },
                     },
                     {
-                        $skip: (page - 1) * limit,
+                        $skip: page,
                     },
                     {
                         $limit: Number(limit),
