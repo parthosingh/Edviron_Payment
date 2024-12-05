@@ -913,17 +913,22 @@ let EdvironPgController = class EdvironPgController {
             const startDate = req.query.startDate || null;
             const endDate = req.query.endDate || null;
             const status = req.query.status || null;
+            const school_id = req.query.school_id || null;
+            console.log(school_id, 'school');
             const endOfDay = new Date(endDate);
             endOfDay.setHours(23, 59, 59, 999);
-            const collectQuery = {
+            let collectQuery = {
                 trustee_id: trustee_id,
                 createdAt: {
                     $gte: new Date(startDate),
                     $lt: endOfDay,
                 },
             };
-            if (req.query.school_id) {
-                collectQuery['school_id'] = req.query.school_id;
+            if (school_id != 'null') {
+                collectQuery = {
+                    ...collectQuery,
+                    school_id: school_id,
+                };
             }
             console.log(collectQuery, 'collectQuery');
             let decrypted = jwt.verify(token, process.env.KEY);
