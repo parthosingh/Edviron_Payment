@@ -904,7 +904,7 @@ let EdvironPgController = class EdvironPgController {
         }
     }
     async bulkTransactions(body, res, req) {
-        const { trustee_id, token } = body;
+        const { trustee_id, token, searchParams, isCustomSearch, seachFilter } = body;
         if (!token)
             throw new Error('Token not provided');
         try {
@@ -914,7 +914,6 @@ let EdvironPgController = class EdvironPgController {
             const endDate = req.query.endDate || null;
             const status = req.query.status || null;
             const school_id = req.query.school_id || null;
-            console.log(school_id, 'school');
             const endOfDay = new Date(endDate);
             endOfDay.setHours(23, 59, 59, 999);
             let collectQuery = {
@@ -930,7 +929,6 @@ let EdvironPgController = class EdvironPgController {
                     school_id: school_id,
                 };
             }
-            console.log(collectQuery, 'collectQuery');
             let decrypted = jwt.verify(token, process.env.KEY);
             if (JSON.stringify({
                 ...JSON.parse(JSON.stringify(decrypted)),
@@ -942,7 +940,6 @@ let EdvironPgController = class EdvironPgController {
                 })) {
                 throw new common_1.ForbiddenException('Request forged');
             }
-            console.log(collectQuery);
             console.time('fetching all transaction');
             const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
             console.log(orders, 'order');
@@ -985,116 +982,233 @@ let EdvironPgController = class EdvironPgController {
             }).select('_id');
             console.timeEnd('counting all transaction');
             console.time('aggregating transaction');
-            transactions =
-                await this.databaseService.CollectRequestStatusModel.aggregate([
-                    {
-                        $match: query,
-                    },
-                    {
-                        $skip: (page - 1) * limit,
-                    },
-                    { $limit: Number(limit) },
-                    {
-                        $lookup: {
-                            from: 'collectrequests',
-                            localField: 'collect_id',
-                            foreignField: '_id',
-                            as: 'collect_request',
+            if (isCustomSearch) {
+                console.log('Serching custom');
+                let searchIfo = {};
+                if (seachFilter === 'order_id') {
+                    console.log('Serching Order_id');
+                    searchIfo = {
+                        collect_id: new mongoose_1.Types.ObjectId(searchParams),
+                    };
+                }
+                else if (seachFilter === 'custom_order_id') {
+                    console.log('Serching custom_order_id');
+                    const requestInfo = await this.databaseService.CollectRequestModel.findOne({
+                        custom_order_id: searchParams
+                    });
+                    if (!requestInfo)
+                        throw new common_1.NotFoundException('No record found');
+                    searchIfo = {
+                        collect_id: requestInfo._id,
+                    };
+                }
+                console.log(searchIfo, 'search info');
+                transactions =
+                    await this.databaseService.CollectRequestStatusModel.aggregate([
+                        {
+                            $match: searchIfo,
                         },
-                    },
-                    {
-                        $unwind: '$collect_request',
-                    },
-                    {
-                        $project: {
-                            _id: 0,
-                            __v: 0,
-                            'collect_request._id': 0,
-                            'collect_request.__v': 0,
-                            'collect_request.createdAt': 0,
-                            'collect_request.updatedAt': 0,
-                            'collect_request.callbackUrl': 0,
-                            'collect_request.clientId': 0,
-                            'collect_request.clientSecret': 0,
-                            'collect_request.webHookUrl': 0,
-                            'collect_request.disabled_modes': 0,
-                            'collect_request.gateway': 0,
-                            'collect_request.amount': 0,
-                            'collect_request.trustee_id': 0,
-                            'collect_request.sdkPayment': 0,
-                            'collect_request.payment_data': 0,
-                            'collect_request.ccavenue_merchant_id': 0,
-                            'collect_request.ccavenue_access_code': 0,
-                            'collect_request.ccavenue_working_key': 0,
-                            'collect_request.easebuzz_sub_merchant_id': 0,
-                            'collect_request.paymentIds': 0,
-                            'collect_request.deepLink': 0,
-                        },
-                    },
-                    {
-                        $project: {
-                            collect_id: 1,
-                            collect_request: 1,
-                            status: 1,
-                            transaction_amount: 1,
-                            order_amount: 1,
-                            payment_method: 1,
-                            details: 1,
-                            bank_reference: 1,
-                            createdAt: 1,
-                            updatedAt: 1,
-                        },
-                    },
-                    {
-                        $addFields: {
-                            collect_request: {
-                                $mergeObjects: [
-                                    '$collect_request',
-                                    {
-                                        status: '$status',
-                                        transaction_amount: '$transaction_amount',
-                                        payment_method: '$payment_method',
-                                        details: '$details',
-                                        bank_reference: '$bank_reference',
-                                        collect_id: '$collect_id',
-                                        order_amount: '$order_amount',
-                                        merchant_id: '$collect_request.school_id',
-                                        currency: 'INR',
-                                        createdAt: '$createdAt',
-                                        updatedAt: '$updatedAt',
-                                        transaction_time: '$updatedAt',
-                                        custom_order_id: '$collect_request.custom_order_id',
-                                        isSplitPayments: '$collect_request.isSplitPayments',
-                                        vendors_info: '$collect_request.vendors_info',
-                                    },
-                                ],
+                        {
+                            $lookup: {
+                                from: 'collectrequests',
+                                localField: 'collect_id',
+                                foreignField: '_id',
+                                as: 'collect_request',
                             },
                         },
-                    },
-                    {
-                        $replaceRoot: { newRoot: '$collect_request' },
-                    },
-                    {
-                        $project: {
-                            school_id: 0,
+                        {
+                            $unwind: '$collect_request',
                         },
-                    },
-                    {
-                        $sort: { createdAt: -1 },
-                    },
-                    {
-                        $skip: page,
-                    },
-                    {
-                        $limit: Number(limit),
-                    },
-                ]);
+                        {
+                            $project: {
+                                _id: 0,
+                                __v: 0,
+                                'collect_request._id': 0,
+                                'collect_request.__v': 0,
+                                'collect_request.createdAt': 0,
+                                'collect_request.updatedAt': 0,
+                                'collect_request.callbackUrl': 0,
+                                'collect_request.clientId': 0,
+                                'collect_request.clientSecret': 0,
+                                'collect_request.webHookUrl': 0,
+                                'collect_request.disabled_modes': 0,
+                                'collect_request.gateway': 0,
+                                'collect_request.amount': 0,
+                                'collect_request.trustee_id': 0,
+                                'collect_request.sdkPayment': 0,
+                                'collect_request.payment_data': 0,
+                                'collect_request.ccavenue_merchant_id': 0,
+                                'collect_request.ccavenue_access_code': 0,
+                                'collect_request.ccavenue_working_key': 0,
+                                'collect_request.easebuzz_sub_merchant_id': 0,
+                                'collect_request.paymentIds': 0,
+                                'collect_request.deepLink': 0,
+                            },
+                        },
+                        {
+                            $project: {
+                                collect_id: 1,
+                                collect_request: 1,
+                                status: 1,
+                                transaction_amount: 1,
+                                order_amount: 1,
+                                payment_method: 1,
+                                details: 1,
+                                bank_reference: 1,
+                                createdAt: 1,
+                                updatedAt: 1,
+                            },
+                        },
+                        {
+                            $addFields: {
+                                collect_request: {
+                                    $mergeObjects: [
+                                        '$collect_request',
+                                        {
+                                            status: '$status',
+                                            transaction_amount: '$transaction_amount',
+                                            payment_method: '$payment_method',
+                                            details: '$details',
+                                            bank_reference: '$bank_reference',
+                                            collect_id: '$collect_id',
+                                            order_amount: '$order_amount',
+                                            merchant_id: '$collect_request.school_id',
+                                            currency: 'INR',
+                                            createdAt: '$createdAt',
+                                            updatedAt: '$updatedAt',
+                                            transaction_time: '$updatedAt',
+                                            custom_order_id: '$collect_request.custom_order_id',
+                                            isSplitPayments: '$collect_request.isSplitPayments',
+                                            vendors_info: '$collect_request.vendors_info',
+                                        },
+                                    ],
+                                },
+                            },
+                        },
+                        {
+                            $replaceRoot: { newRoot: '$collect_request' },
+                        },
+                        {
+                            $project: {
+                                school_id: 0,
+                            },
+                        },
+                        {
+                            $sort: { createdAt: -1 },
+                        },
+                    ]);
+                console.log(transactions, 'transactions');
+            }
+            else {
+                transactions =
+                    await this.databaseService.CollectRequestStatusModel.aggregate([
+                        {
+                            $match: query,
+                        },
+                        {
+                            $skip: (page - 1) * limit,
+                        },
+                        { $limit: Number(limit) },
+                        {
+                            $lookup: {
+                                from: 'collectrequests',
+                                localField: 'collect_id',
+                                foreignField: '_id',
+                                as: 'collect_request',
+                            },
+                        },
+                        {
+                            $unwind: '$collect_request',
+                        },
+                        {
+                            $project: {
+                                _id: 0,
+                                __v: 0,
+                                'collect_request._id': 0,
+                                'collect_request.__v': 0,
+                                'collect_request.createdAt': 0,
+                                'collect_request.updatedAt': 0,
+                                'collect_request.callbackUrl': 0,
+                                'collect_request.clientId': 0,
+                                'collect_request.clientSecret': 0,
+                                'collect_request.webHookUrl': 0,
+                                'collect_request.disabled_modes': 0,
+                                'collect_request.gateway': 0,
+                                'collect_request.amount': 0,
+                                'collect_request.trustee_id': 0,
+                                'collect_request.sdkPayment': 0,
+                                'collect_request.payment_data': 0,
+                                'collect_request.ccavenue_merchant_id': 0,
+                                'collect_request.ccavenue_access_code': 0,
+                                'collect_request.ccavenue_working_key': 0,
+                                'collect_request.easebuzz_sub_merchant_id': 0,
+                                'collect_request.paymentIds': 0,
+                                'collect_request.deepLink': 0,
+                            },
+                        },
+                        {
+                            $project: {
+                                collect_id: 1,
+                                collect_request: 1,
+                                status: 1,
+                                transaction_amount: 1,
+                                order_amount: 1,
+                                payment_method: 1,
+                                details: 1,
+                                bank_reference: 1,
+                                createdAt: 1,
+                                updatedAt: 1,
+                            },
+                        },
+                        {
+                            $addFields: {
+                                collect_request: {
+                                    $mergeObjects: [
+                                        '$collect_request',
+                                        {
+                                            status: '$status',
+                                            transaction_amount: '$transaction_amount',
+                                            payment_method: '$payment_method',
+                                            details: '$details',
+                                            bank_reference: '$bank_reference',
+                                            collect_id: '$collect_id',
+                                            order_amount: '$order_amount',
+                                            merchant_id: '$collect_request.school_id',
+                                            currency: 'INR',
+                                            createdAt: '$createdAt',
+                                            updatedAt: '$updatedAt',
+                                            transaction_time: '$updatedAt',
+                                            custom_order_id: '$collect_request.custom_order_id',
+                                            isSplitPayments: '$collect_request.isSplitPayments',
+                                            vendors_info: '$collect_request.vendors_info',
+                                        },
+                                    ],
+                                },
+                            },
+                        },
+                        {
+                            $replaceRoot: { newRoot: '$collect_request' },
+                        },
+                        {
+                            $project: {
+                                school_id: 0,
+                            },
+                        },
+                        {
+                            $sort: { createdAt: -1 },
+                        },
+                        {
+                            $skip: page,
+                        },
+                        {
+                            $limit: Number(limit),
+                        },
+                    ]);
+            }
             console.timeEnd('aggregating transaction');
             const tnxCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
             console.log(tnxCount);
-            res
-                .status(201)
-                .send({ transactions, totalTransactions: tnxCount });
+            res.status(201).send({ transactions, totalTransactions: tnxCount });
         }
         catch (error) {
             throw new Error(error.message);
