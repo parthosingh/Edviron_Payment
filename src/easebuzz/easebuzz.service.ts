@@ -157,7 +157,7 @@ export class EasebuzzService {
         Accept: 'application/json',
       },
       data: data,
-    };
+    }; 
     try {
       console.log('checking refund status with easebuzz');
       

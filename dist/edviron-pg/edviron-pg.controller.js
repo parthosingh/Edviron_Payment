@@ -986,6 +986,9 @@ let EdvironPgController = class EdvironPgController {
                 console.log('Serching custom');
                 let searchIfo = {};
                 if (seachFilter === 'order_id') {
+                    const checkReq = await this.databaseService.CollectRequestModel.findById(searchParams);
+                    if (!checkReq)
+                        throw new common_1.NotFoundException('No record found for Input');
                     console.log('Serching Order_id');
                     searchIfo = {
                         collect_id: new mongoose_1.Types.ObjectId(searchParams),
@@ -997,7 +1000,7 @@ let EdvironPgController = class EdvironPgController {
                         custom_order_id: searchParams
                     });
                     if (!requestInfo)
-                        throw new common_1.NotFoundException('No record found');
+                        throw new common_1.NotFoundException('No record found for Input');
                     searchIfo = {
                         collect_id: requestInfo._id,
                     };
@@ -1211,7 +1214,8 @@ let EdvironPgController = class EdvironPgController {
             res.status(201).send({ transactions, totalTransactions: tnxCount });
         }
         catch (error) {
-            throw new Error(error.message);
+            console.log(error.message);
+            throw new common_1.BadRequestException(error.message);
         }
     }
     async getErpLogo(collect_id) {

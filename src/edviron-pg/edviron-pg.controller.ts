@@ -1477,6 +1477,9 @@ export class EdvironPgController {
         
         let searchIfo: any = {};
         if (seachFilter === 'order_id') {
+          
+          const checkReq=await this.databaseService.CollectRequestModel.findById(searchParams)
+          if(!checkReq) throw new NotFoundException('No record found for Input');
           console.log('Serching Order_id');
           searchIfo = {
             collect_id: new Types.ObjectId(searchParams),
@@ -1486,7 +1489,7 @@ export class EdvironPgController {
           const requestInfo=await this.databaseService.CollectRequestModel.findOne({
             custom_order_id: searchParams
           })
-          if(!requestInfo) throw new NotFoundException('No record found');
+          if(!requestInfo) throw new NotFoundException('No record found for Input');
           searchIfo = {
             collect_id: requestInfo._id,
           };
@@ -1710,7 +1713,9 @@ export class EdvironPgController {
 
       res.status(201).send({ transactions, totalTransactions: tnxCount });
     } catch (error) {
-      throw new Error(error.message);
+      console.log(error.message);
+      
+      throw new BadRequestException(error.message);
     }
   }
 

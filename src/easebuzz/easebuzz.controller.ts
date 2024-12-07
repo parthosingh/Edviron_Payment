@@ -19,10 +19,12 @@ import {
   merchantKeySHA256,
 } from 'src/utils/sign';
 import { encryptCard } from 'src/utils/sign';
+import { get } from 'http';
+import { EasebuzzService } from './easebuzz.service';
 @Controller('easebuzz')
 export class EasebuzzController {
   constructor(
-    //private readonly easebuzzService: EasebuzzService,
+    private readonly easebuzzService: EasebuzzService,
     private readonly databaseService: DatabaseService,
   ) {}
   @Get('/upiqr')
@@ -137,5 +139,12 @@ export class EasebuzzController {
 
       throw new BadRequestException(e.message);
     }
+  }
+
+  @Get('/refund-status')
+  async checkRefund(
+    @Req() req: any,
+  ){
+    return await this.easebuzzService.checkRefundSttaus(req.query.collect_id);
   }
 }
