@@ -52,6 +52,12 @@ export class EdvironPgController {
     if (pay_later) disable_modes += `&pay_later=${pay_later}`;
     if (upi) disable_modes += `&upi=${upi}`;
     if (card) disable_modes += `&card=${card}`;
+
+    const collectReq=await this.databaseService.CollectRequestModel.findById(req.query.collect_request_id);
+    if (!collectReq) {
+      throw new NotFoundException('Collect request not found');
+    }
+    const school_id=collectReq.school_id;
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
@@ -63,7 +69,7 @@ export class EdvironPgController {
                       req.query.amount
                     }${disable_modes}&platform_charges=${encodeURIComponent(
                       req.query.platform_charges,
-                    )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}";
+                    )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}&school_id=${school_id}";
                 }
             </script>`,
     );
