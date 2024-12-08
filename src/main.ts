@@ -8,7 +8,8 @@ async function bootstrap() {
     'http://localhost:3000',
     'https://dev.pg.edviron.com',
     'https://pg.edviron.com',
-    'https://qa.pg.edviron.com'
+    'https://qa.pg.edviron.com',
+    'https://partner.edviron.com'
     
   ];
   app.enableCors({
