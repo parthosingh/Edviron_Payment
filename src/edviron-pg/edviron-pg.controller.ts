@@ -1425,14 +1425,15 @@ export class EdvironPgController {
         throw new ForbiddenException('Request forged');
       }
   
+console.log(collectQuery);
 
       console.time('fetching all transaction');
       const orders =
         await this.databaseService.CollectRequestModel.find(
           collectQuery,
-        ).select('_id');
+        ).sort({ createdAt: -1 }).select('_id');
 
-      console.log(orders, 'order');
+      // console.log(orders, 'order');
 
       let transactions: any[] = [];
       const orderIds = orders.map((order: any) => order._id);
@@ -1607,6 +1608,7 @@ export class EdvironPgController {
             {
               $match: query,
             },
+            {$sort:{ createdAt: -1 }},
             {
               $skip: (page - 1) * limit,
             },
