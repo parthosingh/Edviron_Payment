@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   CollectRequest,
   Gateway,
@@ -33,7 +37,14 @@ export class EdvironPgService implements GatewayService {
     platform_charges: platformChange[],
     school_name: any,
     splitPayments: boolean,
-    vendor?: [{ vendor_id: string; percentage?: number; amount?: number,name?: string}],
+    vendor?: [
+      {
+        vendor_id: string;
+        percentage?: number;
+        amount?: number;
+        name?: string;
+      },
+    ],
   ): Promise<Transaction | undefined> {
     try {
       let paymentInfo: PaymentIds = {
@@ -69,7 +80,11 @@ export class EdvironPgService implements GatewayService {
       console.log(splitPayments, 'split pay');
 
       if (splitPayments && vendor && vendor.length > 0) {
-        const vendor_data= vendor.map(({ vendor_id,percentage,amount, }) => ({ vendor_id,percentage,amount, }));
+        const vendor_data = vendor.map(({ vendor_id, percentage, amount }) => ({
+          vendor_id,
+          percentage,
+          amount,
+        }));
         data = JSON.stringify({
           customer_details: {
             customer_id: '7112AAA812234',
@@ -92,7 +107,7 @@ export class EdvironPgService implements GatewayService {
         await collectReq.save();
 
         vendor.map(async (info) => {
-          const { vendor_id, percentage, amount,name } = info;
+          const { vendor_id, percentage, amount, name } = info;
           let split_amount = amount;
           if (percentage) {
             split_amount = (request.amount * percentage) / 100;
@@ -106,7 +121,7 @@ export class EdvironPgService implements GatewayService {
             trustee_id: request.trustee_id,
             school_id: request.school_id,
             custom_order_id: request.custom_order_id || '',
-            name
+            name,
           }).save();
         });
       }
@@ -279,8 +294,7 @@ export class EdvironPgService implements GatewayService {
         TERMINATED: TransactionStatus.FAILURE,
         TERMINATION_REQUESTED: TransactionStatus.FAILURE,
       };
-      console.log(cashfreeRes,'res');
-      
+      console.log(cashfreeRes, 'res');
 
       const collect_status =
         await this.databaseService.CollectRequestStatusModel.findOne({
@@ -309,8 +323,8 @@ export class EdvironPgService implements GatewayService {
         status_code = 400;
       }
       const date = new Date(transaction_time);
-      const uptDate=moment(date)
-     const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
+      const uptDate = moment(date);
+      const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
 
       return {
         status:
@@ -840,7 +854,6 @@ export class EdvironPgService implements GatewayService {
 
   async getVendorTransactions(query: any, limit: number, page: number) {
     console.log(query);
-    
 
     const totalCount =
       await this.databaseService.VendorTransactionModel.countDocuments(query);
@@ -860,5 +873,123 @@ export class EdvironPgService implements GatewayService {
       limit,
       totalPages,
     };
+  }
+
+  async getTransactionReportBatched(
+    trustee_id: string,
+    start_date: string,
+    end_date: string,
+    status?: string | null,
+    school_id?: string | null,
+  ) {
+    try {
+      const endOfDay = new Date(end_date);
+      // Set hours, minutes, seconds, and milliseconds to the last moment of the day
+      endOfDay.setHours(23, 59, 59, 999);
+      let collectQuery: any = {
+        trustee_id: trustee_id,
+        createdAt: {
+          $gte: new Date(start_date),
+          $lt: endOfDay,
+        },
+      };
+
+      if (school_id) {
+        collectQuery = {
+          ...collectQuery,
+          school_id: school_id,
+        };
+      }
+      const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
+
+      let transactions: any[] = [];
+
+      const orderIds = orders.map((order: any) => order._id);
+
+      let query: any = {
+        collect_id: { $in: orderIds },
+        // status: { $regex: new RegExp(`^${status}$`, 'i') }
+      };
+
+      const startDate = new Date(start_date);
+      const endDate = end_date;
+
+      console.log(new Date(endDate), 'End date before adding hr');
+
+      console.log(endOfDay, 'end date after adding hr');
+
+      if (startDate && endDate) {
+        query = {
+          ...query,
+          createdAt: {
+            $gte: startDate,
+            $lt: endOfDay,
+          },
+        };
+      }
+      // console.log(`getting transaction`);
+      if ((status && status === 'SUCCESS') || status === 'PENDING') {
+        console.log('adding status to transaction');
+
+        query = {
+          ...query,
+          status: { $regex: new RegExp(`^${status}$`, 'i') },
+        };
+      }
+
+      if (school_id) {
+      }
+
+      transactions =
+        await this.databaseService.CollectRequestStatusModel.aggregate([
+          {
+            $match: query, // Apply your filters
+          },
+          {
+            $project: {
+              collect_id: 1,
+              transaction_amount: 1,
+              order_amount: 1,
+              status: 1,
+              createdAt: 1,
+            },
+          },
+          {
+            $lookup: {
+              from: 'collectrequests',
+              localField: 'collect_id',
+              foreignField: '_id',
+              as: 'collect_request',
+            },
+          },
+          {
+            $unwind: '$collect_request', // Flatten the joined data
+          },
+          {
+            $group: {
+              _id: '$collect_request.trustee_id', // Group by `trustee_id`
+              totalTransactionAmount: { $sum: '$transaction_amount' },
+              totalOrderAmount: { $sum: '$order_amount' },
+              // totalTransactions: { $sum: 1 }, // Count total transactions
+            },
+          },
+          {
+            $project: {
+              _id: 0, // Remove the `_id` field
+              // trustee_id: '$_id', // Rename `_id` to `trustee_id`
+              totalTransactionAmount: 1,
+              totalOrderAmount: 1,
+              // totalTransactions: 1,
+            },
+          },
+        ]);
+
+      console.timeEnd('transactionsCount');
+      return {
+        transactions,
+      };
+    } catch (error) {
+      throw new Error(error.message);
+    }
   }
 }

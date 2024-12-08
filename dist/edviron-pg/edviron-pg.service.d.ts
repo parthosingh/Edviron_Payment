@@ -34,12 +34,14 @@ export declare class EdvironPgService implements GatewayService {
     private readonly databaseService;
     private readonly cashfreeService;
     constructor(databaseService: DatabaseService, cashfreeService: CashfreeService);
-    collect(request: CollectRequest, platform_charges: platformChange[], school_name: any, splitPayments: boolean, vendor?: [{
-        vendor_id: string;
-        percentage?: number;
-        amount?: number;
-        name?: string;
-    }]): Promise<Transaction | undefined>;
+    collect(request: CollectRequest, platform_charges: platformChange[], school_name: any, splitPayments: boolean, vendor?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
+    ]): Promise<Transaction | undefined>;
     checkStatus(collect_request_id: String, collect_request: CollectRequest): Promise<{
         status: TransactionStatus;
         amount: number;
@@ -87,5 +89,8 @@ export declare class EdvironPgService implements GatewayService {
         page: number;
         limit: number;
         totalPages: number;
+    }>;
+    getTransactionReportBatched(trustee_id: string, start_date: string, end_date: string, status?: string | null, school_id?: string | null): Promise<{
+        transactions: any[];
     }>;
 }

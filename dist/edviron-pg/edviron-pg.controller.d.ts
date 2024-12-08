@@ -53,6 +53,9 @@ export declare class EdvironPgController {
     bulkTransactions(body: {
         trustee_id: string;
         token: string;
+        searchParams: string;
+        isCustomSearch: boolean;
+        seachFilter: string;
     }, res: any, req: any): Promise<void>;
     getErpLogo(collect_id: string): Promise<any>;
     getSchoolId(collect_id: string): Promise<string>;
@@ -125,4 +128,7 @@ export declare class EdvironPgController {
         qrCodeBase64: any;
         collect_id: string;
     } | undefined>;
+    getTransactionReportBatched(start_date: string, end_date: string, trustee_id: string, school_id: string, status: string): Promise<{
+        transactions: any[];
+    }>;
 }

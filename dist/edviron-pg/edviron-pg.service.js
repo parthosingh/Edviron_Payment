@@ -62,7 +62,11 @@ let EdvironPgService = class EdvironPgService {
             });
             console.log(splitPayments, 'split pay');
             if (splitPayments && vendor && vendor.length > 0) {
-                const vendor_data = vendor.map(({ vendor_id, percentage, amount, }) => ({ vendor_id, percentage, amount, }));
+                const vendor_data = vendor.map(({ vendor_id, percentage, amount }) => ({
+                    vendor_id,
+                    percentage,
+                    amount,
+                }));
                 data = JSON.stringify({
                     customer_details: {
                         customer_id: '7112AAA812234',
@@ -96,7 +100,7 @@ let EdvironPgService = class EdvironPgService {
                         trustee_id: request.trustee_id,
                         school_id: request.school_id,
                         custom_order_id: request.custom_order_id || '',
-                        name
+                        name,
                     }).save();
                 });
             }
@@ -703,6 +707,100 @@ let EdvironPgService = class EdvironPgService {
             limit,
             totalPages,
         };
+    }
+    async getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id) {
+        try {
+            const endOfDay = new Date(end_date);
+            endOfDay.setHours(23, 59, 59, 999);
+            let collectQuery = {
+                trustee_id: trustee_id,
+                createdAt: {
+                    $gte: new Date(start_date),
+                    $lt: endOfDay,
+                },
+            };
+            if (school_id) {
+                collectQuery = {
+                    ...collectQuery,
+                    school_id: school_id,
+                };
+            }
+            const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
+            let transactions = [];
+            const orderIds = orders.map((order) => order._id);
+            let query = {
+                collect_id: { $in: orderIds },
+            };
+            const startDate = new Date(start_date);
+            const endDate = end_date;
+            console.log(new Date(endDate), 'End date before adding hr');
+            console.log(endOfDay, 'end date after adding hr');
+            if (startDate && endDate) {
+                query = {
+                    ...query,
+                    createdAt: {
+                        $gte: startDate,
+                        $lt: endOfDay,
+                    },
+                };
+            }
+            if ((status && status === 'SUCCESS') || status === 'PENDING') {
+                console.log('adding status to transaction');
+                query = {
+                    ...query,
+                    status: { $regex: new RegExp(`^${status}$`, 'i') },
+                };
+            }
+            if (school_id) {
+            }
+            transactions =
+                await this.databaseService.CollectRequestStatusModel.aggregate([
+                    {
+                        $match: query,
+                    },
+                    {
+                        $project: {
+                            collect_id: 1,
+                            transaction_amount: 1,
+                            order_amount: 1,
+                            status: 1,
+                            createdAt: 1,
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: 'collectrequests',
+                            localField: 'collect_id',
+                            foreignField: '_id',
+                            as: 'collect_request',
+                        },
+                    },
+                    {
+                        $unwind: '$collect_request',
+                    },
+                    {
+                        $group: {
+                            _id: '$collect_request.trustee_id',
+                            totalTransactionAmount: { $sum: '$transaction_amount' },
+                            totalOrderAmount: { $sum: '$order_amount' },
+                        },
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            totalTransactionAmount: 1,
+                            totalOrderAmount: 1,
+                        },
+                    },
+                ]);
+            console.timeEnd('transactionsCount');
+            return {
+                transactions,
+            };
+        }
+        catch (error) {
+            throw new Error(error.message);
+        }
     }
 };
 exports.EdvironPgService = EdvironPgService;

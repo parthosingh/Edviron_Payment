@@ -18,8 +18,10 @@ const database_service_1 = require("../database/database.service");
 const axios_1 = require("axios");
 const sign_1 = require("../utils/sign");
 const sign_2 = require("../utils/sign");
+const easebuzz_service_1 = require("./easebuzz.service");
 let EasebuzzController = class EasebuzzController {
-    constructor(databaseService) {
+    constructor(easebuzzService, databaseService) {
+        this.easebuzzService = easebuzzService;
         this.databaseService = databaseService;
     }
     async getQr(res, req) {
@@ -102,6 +104,9 @@ let EasebuzzController = class EasebuzzController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async checkRefund(req) {
+        return await this.easebuzzService.checkRefundSttaus(req.query.collect_id);
+    }
 };
 exports.EasebuzzController = EasebuzzController;
 __decorate([
@@ -128,8 +133,16 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EasebuzzController.prototype, "getRefundhash", null);
+__decorate([
+    (0, common_1.Get)('/refund-status'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EasebuzzController.prototype, "checkRefund", null);
 exports.EasebuzzController = EasebuzzController = __decorate([
     (0, common_1.Controller)('easebuzz'),
-    __metadata("design:paramtypes", [database_service_1.DatabaseService])
+    __metadata("design:paramtypes", [easebuzz_service_1.EasebuzzService,
+        database_service_1.DatabaseService])
 ], EasebuzzController);
 //# sourceMappingURL=easebuzz.controller.js.map
