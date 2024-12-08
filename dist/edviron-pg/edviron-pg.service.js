@@ -711,12 +711,13 @@ let EdvironPgService = class EdvironPgService {
     async getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id) {
         try {
             const endOfDay = new Date(end_date);
+            const startDates = new Date(start_date);
             endOfDay.setHours(23, 59, 59, 999);
             let collectQuery = {
                 trustee_id: trustee_id,
                 createdAt: {
-                    $gte: new Date(start_date),
-                    $lt: endOfDay,
+                    $gte: new Date(startDates.getTime() - 24 * 60 * 60 * 1000),
+                    $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
                 },
             };
             if (school_id) {

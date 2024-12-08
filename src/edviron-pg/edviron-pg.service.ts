@@ -884,13 +884,16 @@ export class EdvironPgService implements GatewayService {
   ) {
     try {
       const endOfDay = new Date(end_date);
+      const startDates = new Date(start_date)
       // Set hours, minutes, seconds, and milliseconds to the last moment of the day
       endOfDay.setHours(23, 59, 59, 999);
       let collectQuery: any = {
         trustee_id: trustee_id,
         createdAt: {
-          $gte: new Date(start_date),
-          $lt: endOfDay,
+          // $gte: new Date(start_date),
+          // $lt: endOfDay,
+          $gte: new Date(startDates.getTime()- 24 * 60 * 60 * 1000),
+          $lt: new Date(endOfDay.getTime()+ 24 * 60 * 60 * 1000),
         },
       };
 
