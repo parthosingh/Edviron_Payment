@@ -275,7 +275,7 @@ let EdvironPgService = class EdvironPgService {
                     order_status: cashfreeRes.order_status,
                     isSettlementComplete: settlementInfo.isSettlementComplete,
                     transfer_utr: settlementInfo.transfer_utr,
-                    service_charge: settlementInfo.service_charge
+                    service_charge: settlementInfo.service_charge,
                 },
             };
         }
@@ -683,6 +683,19 @@ let EdvironPgService = class EdvironPgService {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async convertISTStartToUTC(dateStr) {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const istStartDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+        const utcStartTime = new Date(istStartDate.getTime() - 5 * 60 * 60 * 1000 - 30 * 60 * 1000);
+        console.log('Converted date to UTC:', utcStartTime.toISOString());
+        return utcStartTime.toISOString();
+    }
+    async convertISTEndToUTC(dateStr) {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const istEndDate = new Date(Date.UTC(year, month - 1, day, 18, 30, 9, 979));
+        console.log('Converted end date to UTC:', istEndDate.toISOString());
+        return istEndDate.toISOString();
+    }
     async getVendorTransactions(query, limit, page) {
         console.log(query);
         const totalCount = await this.databaseService.VendorTransactionModel.countDocuments(query);
@@ -703,6 +716,8 @@ let EdvironPgService = class EdvironPgService {
         try {
             const endOfDay = new Date(end_date);
             const startDates = new Date(start_date);
+            const startOfDayUTC = new Date(await this.convertISTStartToUTC(start_date));
+            const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
             endOfDay.setHours(23, 59, 59, 999);
             let collectQuery = {
                 trustee_id: trustee_id,
@@ -730,9 +745,9 @@ let EdvironPgService = class EdvironPgService {
             if (startDate && endDate) {
                 query = {
                     ...query,
-                    createdAt: {
-                        $gte: startDate,
-                        $lt: endOfDay,
+                    updatedAt: {
+                        $gte: startOfDayUTC,
+                        $lt: endOfDayUTC,
                     },
                 };
             }
@@ -740,7 +755,7 @@ let EdvironPgService = class EdvironPgService {
                 console.log('adding status to transaction');
                 query = {
                     ...query,
-                    status: { $regex: new RegExp(`^${status}$`, 'i') },
+                    status: { $in: [status.toUpperCase(), status.toLowerCase()] },
                 };
             }
             if (school_id) {

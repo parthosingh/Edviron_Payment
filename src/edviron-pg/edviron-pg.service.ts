@@ -335,10 +335,10 @@ export class EdvironPgService implements GatewayService {
       const uptDate = moment(date);
       const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
 
-      const settlementInfo=await this.cashfreeService.settlementStatus(
+      const settlementInfo = await this.cashfreeService.settlementStatus(
         collect_request._id.toString(),
-        collect_request.clientId
-      )
+        collect_request.clientId,
+      );
 
       return {
         status:
@@ -356,10 +356,9 @@ export class EdvironPgService implements GatewayService {
           transaction_time,
           formattedTransactionDate: istDate,
           order_status: cashfreeRes.order_status,
-          isSettlementComplete:settlementInfo.isSettlementComplete,
-          transfer_utr:settlementInfo.transfer_utr,
-          service_charge:settlementInfo.service_charge
-          
+          isSettlementComplete: settlementInfo.isSettlementComplete,
+          transfer_utr: settlementInfo.transfer_utr,
+          service_charge: settlementInfo.service_charge,
         },
       };
     } catch (e) {
@@ -856,6 +855,33 @@ export class EdvironPgService implements GatewayService {
     }
   }
 
+  async convertISTStartToUTC(dateStr: string) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+
+    // Create the date at 00:00 IST (start of the given day in IST)
+    const istStartDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+
+    // Subtract the 5 hours 30 minutes offset to convert IST to UTC
+    const utcStartTime = new Date(
+      istStartDate.getTime() - 5 * 60 * 60 * 1000 - 30 * 60 * 1000,
+    );
+
+    console.log('Converted date to UTC:', utcStartTime.toISOString());
+
+    return utcStartTime.toISOString();
+  }
+
+  async convertISTEndToUTC(dateStr: string) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+
+    // Create the date at 23:59:59.999 IST (end of the given day in IST)
+    const istEndDate = new Date(Date.UTC(year, month - 1, day, 18, 30, 9, 979));
+
+    console.log('Converted end date to UTC:', istEndDate.toISOString());
+
+    return istEndDate.toISOString();
+  }
+
   async getVendorTransactions(query: any, limit: number, page: number) {
     console.log(query);
 
@@ -889,6 +915,10 @@ export class EdvironPgService implements GatewayService {
     try {
       const endOfDay = new Date(end_date);
       const startDates = new Date(start_date);
+      const startOfDayUTC = new Date(
+        await this.convertISTStartToUTC(start_date),
+      ); // Start of December 6 in IST
+      const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
       // Set hours, minutes, seconds, and milliseconds to the last moment of the day
       endOfDay.setHours(23, 59, 59, 999);
       let collectQuery: any = {
@@ -931,22 +961,24 @@ export class EdvironPgService implements GatewayService {
       if (startDate && endDate) {
         query = {
           ...query,
-          createdAt: {
-            $gte: startDate,
-            $lt: endOfDay,
+          updatedAt: {
+            $gte: startOfDayUTC,
+            $lt: endOfDayUTC,
+            // $gte: new Date('2024-12-05T18:31:00.979+00:00'),
+            // $lte: new Date(istEndDate),
           },
         };
       }
       // console.log(`getting transaction`);
+
       if ((status && status === 'SUCCESS') || status === 'PENDING') {
         console.log('adding status to transaction');
 
         query = {
           ...query,
-          status: { $regex: new RegExp(`^${status}$`, 'i') },
+          status: { $in: [status.toUpperCase(), status.toLowerCase()] },
         };
       }
-
       if (school_id) {
       }
 

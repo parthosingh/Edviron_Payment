@@ -81,6 +81,8 @@ export declare class EdvironPgService implements GatewayService {
             passport_number?: string;
         };
     }): Promise<any>;
+    convertISTStartToUTC(dateStr: string): Promise<string>;
+    convertISTEndToUTC(dateStr: string): Promise<string>;
     getVendorTransactions(query: any, limit: number, page: number): Promise<{
         vendorsTransaction: (import("mongoose").Document<unknown, {}, import("../database/schemas/vendor.Transaction.schema").VendorTransactionDocument> & import("../database/schemas/vendor.Transaction.schema").VendorTransaction & Document & Required<{
             _id: import("mongoose").Schema.Types.ObjectId;
