@@ -53,11 +53,13 @@ export class EdvironPgController {
     if (upi) disable_modes += `&upi=${upi}`;
     if (card) disable_modes += `&card=${card}`;
 
-    const collectReq=await this.databaseService.CollectRequestModel.findById(req.query.collect_request_id);
+    const collectReq = await this.databaseService.CollectRequestModel.findById(
+      req.query.collect_request_id,
+    );
     if (!collectReq) {
       throw new NotFoundException('Collect request not found');
     }
-    const school_id=collectReq.school_id;
+    const school_id = collectReq.school_id;
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
@@ -1376,14 +1378,15 @@ export class EdvironPgController {
     body: {
       trustee_id: string;
       token: string;
-      searchParams:string;
-      isCustomSearch:boolean;
-      seachFilter:string;
+      searchParams?: string;
+      isCustomSearch?: boolean;
+      seachFilter?: string;
     },
     @Res() res: any,
     @Req() req: any,
   ) {
-    const { trustee_id, token,searchParams,isCustomSearch,seachFilter } = body;
+    const { trustee_id, token, searchParams, isCustomSearch, seachFilter } =
+      body;
     if (!token) throw new Error('Token not provided');
 
     try {
@@ -1424,14 +1427,15 @@ export class EdvironPgController {
       ) {
         throw new ForbiddenException('Request forged');
       }
-  
-console.log(collectQuery);
+
+      console.log(collectQuery);
 
       console.time('fetching all transaction');
-      const orders =
-        await this.databaseService.CollectRequestModel.find(
-          collectQuery,
-        ).sort({ createdAt: -1 }).select('_id');
+      const orders = await this.databaseService.CollectRequestModel.find(
+        collectQuery,
+      )
+        .sort({ createdAt: -1 })
+        .select('_id');
 
       // console.log(orders, 'order');
 
@@ -1481,34 +1485,68 @@ console.log(collectQuery);
       console.time('aggregating transaction');
       if (isCustomSearch) {
         console.log('Serching custom');
-        
+
         let searchIfo: any = {};
         if (seachFilter === 'order_id') {
-          
-          const checkReq=await this.databaseService.CollectRequestModel.findById(searchParams)
-          if(!checkReq) throw new NotFoundException('No record found for Input');
+          const checkReq =
+            await this.databaseService.CollectRequestModel.findById(
+              searchParams,
+            );
+          if (!checkReq)
+            throw new NotFoundException('No record found for Input');
           console.log('Serching Order_id');
           searchIfo = {
             collect_id: new Types.ObjectId(searchParams),
           };
-        }else if(seachFilter === 'custom_order_id'){
+        } else if (seachFilter === 'custom_order_id') {
           console.log('Serching custom_order_id');
-          const requestInfo=await this.databaseService.CollectRequestModel.findOne({
-            custom_order_id: searchParams
-          })
-          if(!requestInfo) throw new NotFoundException('No record found for Input');
+          const requestInfo =
+            await this.databaseService.CollectRequestModel.findOne({
+              custom_order_id: searchParams,
+            });
+          if (!requestInfo)
+            throw new NotFoundException('No record found for Input');
           searchIfo = {
             collect_id: requestInfo._id,
           };
+        } else if (seachFilter === 'student_info') {
+          console.log('Serching student_info');
+          const studentRegex = {
+            $regex: searchParams,
+            $options: 'i',
+          };
+          console.log(studentRegex);
+          console.log(trustee_id,'trustee');
           
+          const requestInfo =
+            await this.databaseService.CollectRequestModel.find({
+              trustee_id: trustee_id,
+              additional_data: { $regex: searchParams, $options: 'i' }, 
+            })
+              .sort({ createdAt: -1 })
+              .select('_id');
+          console.log(requestInfo, 'Regex');
+
+          if (!requestInfo)
+            throw new NotFoundException(`No record found for ${searchParams}`);
+          const requestId = requestInfo.map((order: any) => order._id);
+          searchIfo = {
+            collect_id: { $in: requestId },
+          };
         }
-        console.log(searchIfo,'search info');
-        
+        // console.log(searchIfo.collect_id, 'custom q');
+
         transactions =
           await this.databaseService.CollectRequestStatusModel.aggregate([
             {
               $match: searchIfo,
             },
+            { $sort: { createdAt: -1 } },
+            {
+              $skip: (page - 1) * limit,
+            },
+
+            { $limit: Number(limit) },
             {
               $lookup: {
                 from: 'collectrequests',
@@ -1594,21 +1632,18 @@ console.log(collectQuery);
                 school_id: 0,
               },
             },
-            {
-              $sort: { createdAt: -1 },
-            },
-            
+            // {
+            //   $sort: { createdAt: -1 },
+            // },
           ]);
-          console.log(transactions,'transactions');
-          
-
+        // console.log(transactions, 'transactions');
       } else {
         transactions =
           await this.databaseService.CollectRequestStatusModel.aggregate([
             {
               $match: query,
             },
-            {$sort:{ createdAt: -1 }},
+            { $sort: { createdAt: -1 } },
             {
               $skip: (page - 1) * limit,
             },
@@ -1722,7 +1757,7 @@ console.log(collectQuery);
       res.status(201).send({ transactions, totalTransactions: tnxCount });
     } catch (error) {
       console.log(error.message);
-      
+
       throw new BadRequestException(error.message);
     }
   }

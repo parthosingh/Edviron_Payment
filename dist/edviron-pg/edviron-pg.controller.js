@@ -947,7 +947,9 @@ let EdvironPgController = class EdvironPgController {
             }
             console.log(collectQuery);
             console.time('fetching all transaction');
-            const orders = await this.databaseService.CollectRequestModel.find(collectQuery).sort({ createdAt: -1 }).select('_id');
+            const orders = await this.databaseService.CollectRequestModel.find(collectQuery)
+                .sort({ createdAt: -1 })
+                .select('_id');
             let transactions = [];
             const orderIds = orders.map((order) => order._id);
             console.log(orderIds.length);
@@ -1002,7 +1004,7 @@ let EdvironPgController = class EdvironPgController {
                 else if (seachFilter === 'custom_order_id') {
                     console.log('Serching custom_order_id');
                     const requestInfo = await this.databaseService.CollectRequestModel.findOne({
-                        custom_order_id: searchParams
+                        custom_order_id: searchParams,
                     });
                     if (!requestInfo)
                         throw new common_1.NotFoundException('No record found for Input');
@@ -1010,12 +1012,38 @@ let EdvironPgController = class EdvironPgController {
                         collect_id: requestInfo._id,
                     };
                 }
-                console.log(searchIfo, 'search info');
+                else if (seachFilter === 'student_info') {
+                    console.log('Serching student_info');
+                    const studentRegex = {
+                        $regex: searchParams,
+                        $options: 'i',
+                    };
+                    console.log(studentRegex);
+                    console.log(trustee_id, 'trustee');
+                    const requestInfo = await this.databaseService.CollectRequestModel.find({
+                        trustee_id: trustee_id,
+                        additional_data: { $regex: searchParams, $options: 'i' },
+                    })
+                        .sort({ createdAt: -1 })
+                        .select('_id');
+                    console.log(requestInfo, 'Regex');
+                    if (!requestInfo)
+                        throw new common_1.NotFoundException(`No record found for ${searchParams}`);
+                    const requestId = requestInfo.map((order) => order._id);
+                    searchIfo = {
+                        collect_id: { $in: requestId },
+                    };
+                }
                 transactions =
                     await this.databaseService.CollectRequestStatusModel.aggregate([
                         {
                             $match: searchIfo,
                         },
+                        { $sort: { createdAt: -1 } },
+                        {
+                            $skip: (page - 1) * limit,
+                        },
+                        { $limit: Number(limit) },
                         {
                             $lookup: {
                                 from: 'collectrequests',
@@ -1101,11 +1129,7 @@ let EdvironPgController = class EdvironPgController {
                                 school_id: 0,
                             },
                         },
-                        {
-                            $sort: { createdAt: -1 },
-                        },
                     ]);
-                console.log(transactions, 'transactions');
             }
             else {
                 transactions =
