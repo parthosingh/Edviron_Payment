@@ -1206,12 +1206,6 @@ let EdvironPgController = class EdvironPgController {
                         {
                             $sort: { createdAt: -1 },
                         },
-                        {
-                            $skip: page,
-                        },
-                        {
-                            $limit: Number(limit),
-                        },
                     ]);
             }
             console.timeEnd('aggregating transaction');

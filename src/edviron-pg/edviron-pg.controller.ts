@@ -1702,12 +1702,12 @@ console.log(collectQuery);
             {
               $sort: { createdAt: -1 },
             },
-            {
-              $skip: page,
-            },
-            {
-              $limit: Number(limit),
-            },
+            // {
+            //   $skip: page,
+            // },
+            // {
+            //   $limit: Number(limit),
+            // },
           ]);
       }
       console.timeEnd('aggregating transaction');
