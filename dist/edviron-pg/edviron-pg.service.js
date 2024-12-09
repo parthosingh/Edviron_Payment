@@ -23,7 +23,6 @@ const fs = require("fs");
 const handlebars = require("handlebars");
 const moment = require("moment-timezone");
 const sign_2 = require("../utils/sign");
-const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
 let EdvironPgService = class EdvironPgService {
     constructor(databaseService, cashfreeService) {
@@ -46,6 +45,9 @@ let EdvironPgService = class EdvironPgService {
             }
             const schoolName = school_name.replace(/ /g, '-');
             const axios = require('axios');
+            const currentTime = new Date();
+            const expiryTime = new Date(currentTime.getTime() + 20 * 60000);
+            const isoExpiryTime = expiryTime.toISOString();
             let data = JSON.stringify({
                 customer_details: {
                     customer_id: '7112AAA812234',
@@ -59,6 +61,7 @@ let EdvironPgService = class EdvironPgService {
                         '/edviron-pg/callback?collect_request_id=' +
                         request._id,
                 },
+                order_expiry_time: isoExpiryTime,
             });
             console.log(splitPayments, 'split pay');
             if (splitPayments && vendor && vendor.length > 0) {
@@ -258,6 +261,7 @@ let EdvironPgService = class EdvironPgService {
             const date = new Date(transaction_time);
             const uptDate = moment(date);
             const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
+            const settlementInfo = await this.cashfreeService.settlementStatus(collect_request._id.toString(), collect_request.clientId);
             return {
                 status: order_status_to_transaction_status_map[cashfreeRes.order_status],
                 amount: cashfreeRes.order_amount,
@@ -269,6 +273,9 @@ let EdvironPgService = class EdvironPgService {
                     transaction_time,
                     formattedTransactionDate: istDate,
                     order_status: cashfreeRes.order_status,
+                    isSettlementComplete: settlementInfo.isSettlementComplete,
+                    transfer_utr: settlementInfo.transfer_utr,
+                    service_charge: settlementInfo.service_charge
                 },
             };
         }
@@ -282,30 +289,14 @@ let EdvironPgService = class EdvironPgService {
         if (!request) {
             throw new Error('Collect Request not found');
         }
-        if (request.gateway !== collect_request_schema_1.Gateway.EDVIRON_PG) {
-            if (request.gateway === collect_request_schema_1.Gateway.PENDING) {
-                request.gateway = collect_request_schema_1.Gateway.EXPIRED;
-                await request.save();
-            }
-            return true;
+        console.log('Terminating Order');
+        if (request.gateway !== collect_request_schema_1.Gateway.PENDING) {
+            console.log(request.gateway, 'not Terminating');
+            return;
         }
-        const edvironPgResponse = await this.checkStatus(collect_id, request);
-        if (edvironPgResponse.status !== transactionStatus_1.TransactionStatus.PENDING) {
-            const collectReqStatus = await this.databaseService.CollectRequestStatusModel.findOne({
-                collect_id: request._id,
-            });
-            if (collectReqStatus) {
-                collectReqStatus.status = collect_req_status_schema_1.PaymentStatus.EXPIRED;
-                await collectReqStatus.save();
-                try {
-                    await this.cashfreeService.terminateOrder(collect_id);
-                }
-                catch (e) {
-                    console.log(e.message);
-                }
-                return true;
-            }
-        }
+        request.gateway = collect_request_schema_1.Gateway.EXPIRED;
+        await request.save();
+        console.log(`Order terminated: ${request.gateway}`);
         return true;
     }
     async easebuzzCheckStatus(collect_request_id, collect_request) {
@@ -810,4 +801,45 @@ exports.EdvironPgService = EdvironPgService = __decorate([
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
         cashfree_service_1.CashfreeService])
 ], EdvironPgService);
+const data = {
+    customer_details: {
+        customer_email: null,
+        customer_id: '7112AAA812234',
+        customer_name: null,
+        customer_phone: '9898989898',
+    },
+    order: {
+        order_amount: 13325,
+        order_currency: 'INR',
+        order_id: '674e0c01a45512f790c0861c',
+        order_tags: null,
+    },
+    payment: {
+        auth_id: null,
+        bank_reference: '113803122011051',
+        cf_payment_id: 3280679229,
+        payment_amount: 13345.06,
+        payment_currency: 'INR',
+        payment_group: 'net_banking',
+        payment_message: 'Transaction Success',
+        payment_method: {
+            netbanking: {
+                channel: null,
+                netbanking_bank_code: '3009',
+                netbanking_bank_name: 'Canara Bank',
+            },
+        },
+        payment_status: 'SUCCESS',
+        payment_time: '2024-12-03T01:09:27+05:30',
+    },
+    payment_gateway_details: {
+        gateway_name: 'CASHFREE',
+        gateway_order_id: '3542149850',
+        gateway_order_reference_id: 'null',
+        gateway_payment_id: '3280679229',
+        gateway_settlement: 'CASHFREE',
+        gateway_status_code: null,
+    },
+    payment_offers: null,
+};
 //# sourceMappingURL=edviron-pg.service.js.map

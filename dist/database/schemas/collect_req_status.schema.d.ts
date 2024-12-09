@@ -18,6 +18,7 @@ export declare class CollectRequestStatus {
     details: String;
     status_details: String;
     bank_reference: string;
+    payment_time: Date;
     _id: ObjectId;
 }
 export type CollectRequestStatusDocument = CollectRequestStatus & Document;

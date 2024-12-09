@@ -25,4 +25,9 @@ export declare class CashfreeService {
         qrCodeBase64: any;
         collect_id: string;
     }>;
+    settlementStatus(collect_id: string, client_id: string): Promise<{
+        isSettlementComplete: boolean;
+        transfer_utr: any;
+        service_charge: Number;
+    }>;
 }

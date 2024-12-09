@@ -46,6 +46,9 @@ export class CollectRequestStatus {
   @Prop({ required: false, default: '' })
   bank_reference: string;
 
+  @Prop({ required: false, default: '' })
+  payment_time: Date;
+
   _id: ObjectId;
 }
 

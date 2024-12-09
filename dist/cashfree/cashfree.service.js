@@ -296,6 +296,50 @@ let CashfreeService = class CashfreeService {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async settlementStatus(collect_id, client_id) {
+        try {
+            const CollectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id,
+            });
+            if (!CollectRequestStatus) {
+                throw new common_1.BadRequestException('Settlement status not found');
+            }
+            const { transaction_amount, order_amount } = CollectRequestStatus;
+            const taxes = Number(transaction_amount) - Number(order_amount);
+            const config = {
+                method: 'get',
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/${collect_id}/settlements`,
+                headers: {
+                    accept: 'application/json',
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': client_id,
+                    'x-partner-apikey': process.env.CASHFREE_API_KEY,
+                },
+            };
+            try {
+                const response = await (0, axios_1.default)(config);
+                const settlement_info = response.data;
+                if (settlement_info.transfer_utr) {
+                    return {
+                        isSettlementComplete: true,
+                        transfer_utr: settlement_info.transfer_utr,
+                        service_charge: taxes,
+                    };
+                }
+            }
+            catch (e) {
+                console.log(e.message);
+            }
+            return {
+                isSettlementComplete: false,
+                transfer_utr: null,
+                service_charge: taxes,
+            };
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.CashfreeService = CashfreeService;
 exports.CashfreeService = CashfreeService = __decorate([

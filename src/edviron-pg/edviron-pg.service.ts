@@ -62,6 +62,14 @@ export class EdvironPgService implements GatewayService {
       }
       const schoolName = school_name.replace(/ /g, '-'); //replace spaces because url dosent support spaces
       const axios = require('axios');
+      const currentTime = new Date();
+
+      // Add 20 minutes to the current time
+      const expiryTime = new Date(currentTime.getTime() + 20 * 60000);
+
+      // Format the expiry time in ISO 8601 format with the timezone offset
+      const isoExpiryTime = expiryTime.toISOString();
+
       let data = JSON.stringify({
         customer_details: {
           customer_id: '7112AAA812234',
@@ -76,6 +84,7 @@ export class EdvironPgService implements GatewayService {
             '/edviron-pg/callback?collect_request_id=' +
             request._id,
         },
+        order_expiry_time: isoExpiryTime,
       });
       console.log(splitPayments, 'split pay');
 
@@ -326,6 +335,11 @@ export class EdvironPgService implements GatewayService {
       const uptDate = moment(date);
       const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
 
+      const settlementInfo=await this.cashfreeService.settlementStatus(
+        collect_request._id.toString(),
+        collect_request.clientId
+      )
+
       return {
         status:
           order_status_to_transaction_status_map[
@@ -342,6 +356,10 @@ export class EdvironPgService implements GatewayService {
           transaction_time,
           formattedTransactionDate: istDate,
           order_status: cashfreeRes.order_status,
+          isSettlementComplete:settlementInfo.isSettlementComplete,
+          transfer_utr:settlementInfo.transfer_utr,
+          service_charge:settlementInfo.service_charge
+          
         },
       };
     } catch (e) {
@@ -357,31 +375,17 @@ export class EdvironPgService implements GatewayService {
       throw new Error('Collect Request not found');
     }
 
-    if (request.gateway !== Gateway.EDVIRON_PG) {
-      if (request.gateway === Gateway.PENDING) {
-        request.gateway = Gateway.EXPIRED;
-        await request.save();
-      }
-      return true;
-    }
+    console.log('Terminating Order');
 
-    const edvironPgResponse = await this.checkStatus(collect_id, request);
-    if (edvironPgResponse.status !== TransactionStatus.PENDING) {
-      const collectReqStatus =
-        await this.databaseService.CollectRequestStatusModel.findOne({
-          collect_id: request._id,
-        });
-      if (collectReqStatus) {
-        collectReqStatus.status = PaymentStatus.EXPIRED;
-        await collectReqStatus.save();
-        try {
-          await this.cashfreeService.terminateOrder(collect_id);
-        } catch (e) {
-          console.log(e.message);
-        }
-        return true;
-      }
+    if (request.gateway !== Gateway.PENDING) {
+      console.log(request.gateway, 'not Terminating');
+
+      return;
     }
+    request.gateway = Gateway.EXPIRED;
+    await request.save();
+    console.log(`Order terminated: ${request.gateway}`);
+
     return true;
   }
 
@@ -884,7 +888,7 @@ export class EdvironPgService implements GatewayService {
   ) {
     try {
       const endOfDay = new Date(end_date);
-      const startDates = new Date(start_date)
+      const startDates = new Date(start_date);
       // Set hours, minutes, seconds, and milliseconds to the last moment of the day
       endOfDay.setHours(23, 59, 59, 999);
       let collectQuery: any = {
@@ -892,8 +896,8 @@ export class EdvironPgService implements GatewayService {
         createdAt: {
           // $gte: new Date(start_date),
           // $lt: endOfDay,
-          $gte: new Date(startDates.getTime()- 24 * 60 * 60 * 1000),
-          $lt: new Date(endOfDay.getTime()+ 24 * 60 * 60 * 1000),
+          $gte: new Date(startDates.getTime() - 24 * 60 * 60 * 1000),
+          $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
         },
       };
 
@@ -903,7 +907,10 @@ export class EdvironPgService implements GatewayService {
           school_id: school_id,
         };
       }
-      const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
+      const orders =
+        await this.databaseService.CollectRequestModel.find(
+          collectQuery,
+        ).select('_id');
 
       let transactions: any[] = [];
 
@@ -996,3 +1003,45 @@ export class EdvironPgService implements GatewayService {
     }
   }
 }
+
+const data = {
+  customer_details: {
+    customer_email: null,
+    customer_id: '7112AAA812234',
+    customer_name: null,
+    customer_phone: '9898989898',
+  },
+  order: {
+    order_amount: 13325,
+    order_currency: 'INR',
+    order_id: '674e0c01a45512f790c0861c',
+    order_tags: null,
+  },
+  payment: {
+    auth_id: null,
+    bank_reference: '113803122011051',
+    cf_payment_id: 3280679229,
+    payment_amount: 13345.06,
+    payment_currency: 'INR',
+    payment_group: 'net_banking',
+    payment_message: 'Transaction Success',
+    payment_method: {
+      netbanking: {
+        channel: null,
+        netbanking_bank_code: '3009',
+        netbanking_bank_name: 'Canara Bank',
+      },
+    },
+    payment_status: 'SUCCESS',
+    payment_time: '2024-12-03T01:09:27+05:30',
+  },
+  payment_gateway_details: {
+    gateway_name: 'CASHFREE',
+    gateway_order_id: '3542149850',
+    gateway_order_reference_id: 'null',
+    gateway_payment_id: '3280679229',
+    gateway_settlement: 'CASHFREE',
+    gateway_status_code: null,
+  },
+  payment_offers: null,
+};
