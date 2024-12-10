@@ -35,7 +35,7 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
-], Webhooks.prototype, "type", void 0);
+], Webhooks.prototype, "webhooktype", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)

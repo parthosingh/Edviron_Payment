@@ -4,7 +4,7 @@ export declare class Webhooks {
     collect_id: CollectRequest;
     createdAt?: Date;
     updatedAt?: Date;
-    type: string;
+    webhooktype: string;
     body: string;
     _id: ObjectId;
 }

@@ -17,10 +17,9 @@ export class Webhooks {
   @Prop()
   updatedAt?: Date;
 
-  
   @Prop({ required: false })
-  type: string;
-
+  webhooktype: string;
+ 
   @Prop({ required: true })
   body: string;
 
