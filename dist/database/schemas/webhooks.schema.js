@@ -33,6 +33,10 @@ __decorate([
     __metadata("design:type", Date)
 ], Webhooks.prototype, "updatedAt", void 0);
 __decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], Webhooks.prototype, "type", void 0);
+__decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
 ], Webhooks.prototype, "body", void 0);

@@ -361,6 +361,10 @@ export class EdvironPgController {
   @Post('/webhook')
   async handleWebhook(@Body() body: any, @Res() res: any) {
     const { data: webHookData } = JSON.parse(JSON.stringify(body));
+      await new this.databaseService.WebhooksModel({
+      body: JSON.stringify(webHookData),
+      type:"test"
+    }).save();
     console.log(webHookData.payment.payment_status);
 
     // console.log('webhook received with data', { body });
