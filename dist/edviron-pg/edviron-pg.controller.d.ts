@@ -129,6 +129,7 @@ export declare class EdvironPgController {
         collect_id: string;
     } | undefined>;
     getTransactionReportBatched(start_date: string, end_date: string, trustee_id: string, school_id: string, status: string): Promise<{
+        length: number;
         transactions: any[];
     }>;
 }

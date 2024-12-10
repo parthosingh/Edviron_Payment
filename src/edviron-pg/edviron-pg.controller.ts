@@ -1397,6 +1397,13 @@ export class EdvironPgController {
       const status = req.query.status || null;
       const school_id = req.query.school_id || null;
 
+      const startOfDayUTC = new Date(
+        await this.edvironPgService.convertISTStartToUTC(startDate),
+      ); // Start of December 6 in IST
+      const endOfDayUTC = new Date(await this.edvironPgService.convertISTEndToUTC(endDate));
+      // Set hours, minutes, seconds, and milliseconds to the last moment of the day
+      // endOfDay.setHours(23, 59, 59, 999);
+
       const endOfDay = new Date(endDate);
       // Set hours, minutes, seconds, and milliseconds to the last moment of the day
       endOfDay.setHours(23, 59, 59, 999);
@@ -1404,8 +1411,8 @@ export class EdvironPgController {
       let collectQuery: any = {
         trustee_id: trustee_id,
         createdAt: {
-          $gte: new Date(startDate),
-          $lt: endOfDay,
+          $gte: startOfDayUTC,
+          $lt: endOfDayUTC,
         },
       };
       if (school_id != 'null') {
@@ -1451,9 +1458,9 @@ export class EdvironPgController {
       if (startDate && endDate) {
         query = {
           ...query,
-          createdAt: {
-            $gte: new Date(startDate),
-            $lt: new Date(endOfDay),
+          updatedAt: {
+            $gte: startOfDayUTC,
+            $lt: endOfDayUTC,
           },
         };
       }
@@ -1462,7 +1469,7 @@ export class EdvironPgController {
       if (status === 'SUCCESS' || status === 'PENDING') {
         query = {
           ...query,
-          status: { $in: [status] },
+          status: { $in: [status.toLowerCase(), status.toUpperCase()] },
         };
       } else if (status === 'FAILED') {
         query = {

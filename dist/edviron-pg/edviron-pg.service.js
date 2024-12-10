@@ -802,6 +802,7 @@ let EdvironPgService = class EdvironPgService {
                 ]);
             console.timeEnd('transactionsCount');
             return {
+                length: transactions.length,
                 transactions,
             };
         }

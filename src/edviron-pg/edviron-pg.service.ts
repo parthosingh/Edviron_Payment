@@ -1007,6 +1007,15 @@ export class EdvironPgService implements GatewayService {
           {
             $unwind: '$collect_request', // Flatten the joined data
           },
+          // {
+          //   $project:{
+          //     collect_id:'$collect_id',
+          //     transaction_amount: 1,
+          //     order_amount: 1,
+          //     custom_id:'$collect_request.custom_order_id'
+
+          //   }
+          // },
           {
             $group: {
               _id: '$collect_request.trustee_id', // Group by `trustee_id`
@@ -1028,6 +1037,7 @@ export class EdvironPgService implements GatewayService {
 
       console.timeEnd('transactionsCount');
       return {
+        length:transactions.length,
         transactions,
       };
     } catch (error) {
