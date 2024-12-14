@@ -18,4 +18,6 @@ export declare class CashfreeController {
         limit: any;
         settlements_transactions: any;
     }>;
+    testWebhook(req: any, res: any): Promise<any>;
+    testWebhook2(req: any, res: any): Promise<any>;
 }

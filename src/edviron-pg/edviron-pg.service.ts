@@ -704,16 +704,57 @@ export class EdvironPgService implements GatewayService {
       });
       try {
         try {
-          const sendWebhook = (url: string) => {
-            axios
-              .request(createConfig(url))
-              .then(() => console.log(`Webhook sent to ${url}`))
-              .catch((error) =>
-                console.error(
-                  `Error sending webhook to ${url}:`,
-                  error.message,
-                ),
+          const sendWebhook = async (url: string) => {
+            try {
+              const res = await axios.request(createConfig(url));
+              const currentIST = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+              console.log('saving webhook logs to Database');
+              console.log(res.status, 'response');
+              console.log(res.data);
+              const resDataString =
+                typeof res.data === 'string'
+                  ? res.data
+                  : JSON.stringify(res.data) || 'undefined';
+              try{
+
+                await this.databaseService.ErpWebhooksLogsModel.create({
+                  collect_id: webHookData.collect_id,
+                  webhooktype: 'Transaction Webhook',
+                  payload: JSON.stringify(webhookData),
+                  webhook_url: url,
+                  school_id: webHookData.school_id,
+                  trustee_id: webHookData.trustee_id,
+                  isSuccess: true,
+                  response: resDataString,
+                  status_code: res.status.toString() || 'undefined',
+                  triggered_time:currentIST
+                });
+              }catch(e){
+                console.log('Error in saving webhook');
+                
+              }
+            } catch (e) {
+              console.log(
+                `Error in sending Webhook to ${url}`,
+                e.response.data,
+                e.response.status
               );
+              if (e.response.data) {
+                const currentIST = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+                await this.databaseService.ErpWebhooksLogsModel.create({
+                  collect_id: webHookData.collect_id,
+                  webhooktype: 'Transaction Webhook',
+                  payload: JSON.stringify(webhookData),
+                  webhook_url: url,
+                  school_id:webHookData.school_id,
+                  trustee_id:webHookData.trustee_id,
+                  isSuccess:false,
+                  response:JSON.stringify(e.response.data) || 'undefined',
+                  status_code:e.response.status || 'undefined',
+                  triggered_time:currentIST
+                });
+              }
+            }
           };
 
           webHookUrl.forEach(sendWebhook);
@@ -1037,7 +1078,7 @@ export class EdvironPgService implements GatewayService {
 
       console.timeEnd('transactionsCount');
       return {
-        length:transactions.length,
+        length: transactions.length,
         transactions,
       };
     } catch (error) {

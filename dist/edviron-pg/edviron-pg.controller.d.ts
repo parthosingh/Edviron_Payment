@@ -132,4 +132,17 @@ export declare class EdvironPgController {
         length: number;
         transactions: any[];
     }>;
+    getErpWebhookLogs(body: {
+        token: string;
+        startDate: string;
+        endDate: string;
+        limit: number;
+        page: number;
+        trustee_id: string;
+        school_id?: string;
+        status?: string;
+        collect_id?: string;
+    }): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/erp.webhooks.logs.schema").ErpWebhooksLogs> & import("../database/schemas/erp.webhooks.logs.schema").ErpWebhooksLogs & Required<{
+        _id: import("mongoose").Schema.Types.ObjectId;
+    }>)[]>;
 }
