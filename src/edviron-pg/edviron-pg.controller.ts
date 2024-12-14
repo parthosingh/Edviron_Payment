@@ -403,8 +403,8 @@ export class EdvironPgController {
     ) {
       console.log('No pending request found for', collect_id);
 
-      // res.status(200).send('OK');
-      // return;
+      res.status(200).send('OK');
+      return;
     }
 
     const reqToCheck = await this.edvironPgService.checkStatus(
@@ -2237,12 +2237,21 @@ export class EdvironPgController {
       };
     }
     console.log(query,'search results');
-    
-    return await this.databaseService.ErpWebhooksLogsModel.find(query)
+    const totalRecords = await this.databaseService.ErpWebhooksLogsModel.countDocuments(
+      query,
+    );
+    const logs= await this.databaseService.ErpWebhooksLogsModel.find(query)
       .sort({
         createdAt: -1,
       })
       .skip(page)
       .limit(limit);
+
+    return{
+      erp_webhooks_logs:logs,
+      totalRecords,
+      page
+
+    }
   }
 }
