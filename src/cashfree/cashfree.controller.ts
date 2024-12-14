@@ -6,6 +6,7 @@ import {
   Post,
   Query,
   Req,
+  Res,
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import * as jwt from 'jsonwebtoken';
@@ -167,4 +168,30 @@ export class CashfreeController {
       throw new BadRequestException(e.message)
     }
   }
-}
+
+  @Post('/webhook-test')
+  async testWebhook(req: any, @Res() res: any){
+    try{
+      // const { data } = req.body;
+      console.log('test webhook called');
+      
+      return res.status(200).json({ message: 'Webhook test successful' });
+    }catch(e){
+      console.log(e) 
+
+    }
+  }
+  @Post('/webhook-test-2')
+  async testWebhook2(req: any, @Res() res: any){
+    try{
+      // const { data } = req.body;
+      console.log('test webhook called');
+      
+      return res.status(200).json({ message: 'Webhook test successful' });
+    }catch(e){
+      console.log(e) 
+
+    }
+  }
+}  
+ 

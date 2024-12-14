@@ -361,18 +361,9 @@ export class EdvironPgController {
   @Post('/webhook')
   async handleWebhook(@Body() body: any, @Res() res: any) {
     const { data: webHookData } = JSON.parse(JSON.stringify(body));
-    console.log(body);
-    // try{
+    // console.log(body,'webghook received with');
 
-    //   await new this.databaseService.WebhooksModel({
-    //   body: JSON.stringify(body),
-    //   webhooktype:"test"
-    // }).save();
-    // }catch(e){
-    //   console.log('error insaving webhook');
-      
-    // }
-    console.log(webHookData.payment.payment_status);
+    // console.log(webHookData.payment.payment_status);
 
     // console.log('webhook received with data', { body });
 
@@ -1067,6 +1058,9 @@ export class EdvironPgController {
         await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
       }
     }
+
+    res.status(200).send('OK');
+    return;
   }
   @Get('transactions-report')
   async transactionsReport(
@@ -1411,7 +1405,9 @@ export class EdvironPgController {
       const startOfDayUTC = new Date(
         await this.edvironPgService.convertISTStartToUTC(startDate),
       ); // Start of December 6 in IST
-      const endOfDayUTC = new Date(await this.edvironPgService.convertISTEndToUTC(endDate));
+      const endOfDayUTC = new Date(
+        await this.edvironPgService.convertISTEndToUTC(endDate),
+      );
       // Set hours, minutes, seconds, and milliseconds to the last moment of the day
       // endOfDay.setHours(23, 59, 59, 999);
 
@@ -1534,12 +1530,12 @@ export class EdvironPgController {
             $options: 'i',
           };
           console.log(studentRegex);
-          console.log(trustee_id,'trustee');
-          
+          console.log(trustee_id, 'trustee');
+
           const requestInfo =
             await this.databaseService.CollectRequestModel.find({
               trustee_id: trustee_id,
-              additional_data: { $regex: searchParams, $options: 'i' }, 
+              additional_data: { $regex: searchParams, $options: 'i' },
             })
               .sort({ createdAt: -1 })
               .select('_id');
@@ -2186,5 +2182,76 @@ export class EdvironPgController {
       status,
       school_id,
     );
+  }
+
+  @Post('/erp-webhook-logs')
+  async getErpWebhookLogs(
+    @Body()
+    body: {
+      token: string;
+      startDate: string;
+      endDate: string;
+      limit: number;
+      page: number;
+      trustee_id: string;
+      school_id?: string;
+      status?: string;
+      collect_id?: string;
+    },
+  ) {
+    const {
+      token,
+      startDate,
+      endDate,
+      limit,
+      page,
+      trustee_id,
+      school_id,
+      status,
+      collect_id,
+    } = body;
+    const startOfDayUTC = new Date(
+      await this.edvironPgService.convertISTStartToUTC(startDate),
+    ); // Start of December 6 in IST
+    const endOfDayUTC = new Date(
+      await this.edvironPgService.convertISTEndToUTC(endDate),
+    );
+    let query: any = {
+      trustee_id,
+      createdAt: {
+        $gte: startOfDayUTC,
+        $lt: endOfDayUTC,
+      },
+    };
+
+    if (school_id) {
+      query = {
+        ...query,
+        school_id: school_id,
+      };
+    }
+    if (collect_id) {
+      query = {
+        ...query,
+        collect_id: new Types.ObjectId(collect_id),
+      };
+    }
+    console.log(query,'search results');
+    const totalRecords = await this.databaseService.ErpWebhooksLogsModel.countDocuments(
+      query,
+    );
+    const logs= await this.databaseService.ErpWebhooksLogsModel.find(query)
+      .sort({
+        createdAt: -1,
+      })
+      .skip(page)
+      .limit(limit);
+
+    return{
+      erp_webhooks_logs:logs,
+      totalRecords,
+      page
+
+    }
   }
 }

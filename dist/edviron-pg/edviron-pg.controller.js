@@ -243,8 +243,6 @@ let EdvironPgController = class EdvironPgController {
     }
     async handleWebhook(body, res) {
         const { data: webHookData } = JSON.parse(JSON.stringify(body));
-        console.log(body);
-        console.log(webHookData.payment.payment_status);
         if (!webHookData)
             throw new Error('Invalid webhook data');
         const collect_id = webHookData.order.order_id || body.order.order_id;
@@ -633,6 +631,8 @@ let EdvironPgController = class EdvironPgController {
                 await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
             }
         }
+        res.status(200).send('OK');
+        return;
     }
     async transactionsReport(body, res, req) {
         const { school_id, token } = body;
@@ -1483,6 +1483,43 @@ let EdvironPgController = class EdvironPgController {
     async getTransactionReportBatched(start_date, end_date, trustee_id, school_id, status) {
         return await this.edvironPgService.getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id);
     }
+    async getErpWebhookLogs(body) {
+        const { token, startDate, endDate, limit, page, trustee_id, school_id, status, collect_id, } = body;
+        const startOfDayUTC = new Date(await this.edvironPgService.convertISTStartToUTC(startDate));
+        const endOfDayUTC = new Date(await this.edvironPgService.convertISTEndToUTC(endDate));
+        let query = {
+            trustee_id,
+            createdAt: {
+                $gte: startOfDayUTC,
+                $lt: endOfDayUTC,
+            },
+        };
+        if (school_id) {
+            query = {
+                ...query,
+                school_id: school_id,
+            };
+        }
+        if (collect_id) {
+            query = {
+                ...query,
+                collect_id: new mongoose_1.Types.ObjectId(collect_id),
+            };
+        }
+        console.log(query, 'search results');
+        const totalRecords = await this.databaseService.ErpWebhooksLogsModel.countDocuments(query);
+        const logs = await this.databaseService.ErpWebhooksLogsModel.find(query)
+            .sort({
+            createdAt: -1,
+        })
+            .skip(page)
+            .limit(limit);
+        return {
+            erp_webhooks_logs: logs,
+            totalRecords,
+            page
+        };
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -1682,6 +1719,13 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getTransactionReportBatched", null);
+__decorate([
+    (0, common_1.Post)('/erp-webhook-logs'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getErpWebhookLogs", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

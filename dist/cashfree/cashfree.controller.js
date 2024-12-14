@@ -152,6 +152,24 @@ let CashfreeController = class CashfreeController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async testWebhook(req, res) {
+        try {
+            console.log('test webhook called');
+            return res.status(200).json({ message: 'Webhook test successful' });
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
+    async testWebhook2(req, res) {
+        try {
+            console.log('test webhook called');
+            return res.status(200).json({ message: 'Webhook test successful' });
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
 };
 exports.CashfreeController = CashfreeController;
 __decorate([
@@ -176,6 +194,20 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], CashfreeController.prototype, "getSettlementsTransactions", null);
+__decorate([
+    (0, common_1.Post)('/webhook-test'),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "testWebhook", null);
+__decorate([
+    (0, common_1.Post)('/webhook-test-2'),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "testWebhook2", null);
 exports.CashfreeController = CashfreeController = __decorate([
     (0, common_1.Controller)('cashfree'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
