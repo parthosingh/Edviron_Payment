@@ -2236,22 +2236,20 @@ export class EdvironPgController {
         collect_id: new Types.ObjectId(collect_id),
       };
     }
-    console.log(query,'search results');
-    const totalRecords = await this.databaseService.ErpWebhooksLogsModel.countDocuments(
-      query,
-    );
-    const logs= await this.databaseService.ErpWebhooksLogsModel.find(query)
+    console.log(query, 'search results');
+    const totalRecords =
+      await this.databaseService.ErpWebhooksLogsModel.countDocuments(query);
+    const logs = await this.databaseService.ErpWebhooksLogsModel.find(query)
       .sort({
         createdAt: -1,
       })
       .skip(page)
       .limit(limit);
 
-    return{
-      erp_webhooks_logs:logs,
-      totalRecords,
-      page
-
-    }
+    return {
+      erp_webhooks_logs: logs,
+      totalRecords: totalRecords / limit,
+      page,
+    };
   }
 }
