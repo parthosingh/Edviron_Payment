@@ -1516,8 +1516,8 @@ let EdvironPgController = class EdvironPgController {
             .limit(limit);
         return {
             erp_webhooks_logs: logs,
-            totalRecords,
-            page
+            totalRecords: totalRecords / limit,
+            page,
         };
     }
 };
