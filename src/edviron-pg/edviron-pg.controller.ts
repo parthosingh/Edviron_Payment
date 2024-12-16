@@ -2252,4 +2252,49 @@ export class EdvironPgController {
       page,
     };
   }
+
+  @Post('/save-transactions')
+  async saveBatchTransactions(
+    @Body()
+    body: {
+      trustee_id: string;
+      start_date: string;
+      end_date: string;
+      status?: string;
+    },
+  ) {
+    const status = body.status || null;
+    return await this.edvironPgService.generateBacthTransactions(
+      body.trustee_id,
+      body.start_date,
+      body.end_date,
+      status,
+    );
+  }
+
+  @Get('/get-batch-transactions')
+  async getBatchTransactions(
+    @Query()
+    query: {
+      trustee_id: string;
+      year: string;
+      token: string;
+    },
+  ) {
+    try {
+      const { trustee_id, year, token } = query;
+      console.log(process.env.KEY);
+
+      const decoded = jwt.verify(token, process.env.KEY!) as any;
+      if (decoded.trustee_id !== trustee_id) {
+        throw new UnauthorizedException('Invalid token');
+      }
+      return await this.edvironPgService.getBatchTransactions(
+        query.trustee_id,
+        query.year,
+      );
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
 }

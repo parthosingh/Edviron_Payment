@@ -13,6 +13,8 @@ import {
 import { Webhooks, WebhooksSchema } from './schemas/webhooks.schema';
 import { VendorTransaction, VendorTransactionSchema } from './schemas/vendor.Transaction.schema';
 import { ErpWebhooksLogs, ErpWebhooksLogsSchema } from './schemas/erp.webhooks.logs.schema';
+import { BatchTransactions, BatchTransactionsSchema } from './schemas/batch.transactions.schema';
+import { ErrorLogs, ErrorLogsSchema } from './schemas/error.logs.schema';
 dotenv.config();
 
 @Module({
@@ -33,6 +35,12 @@ dotenv.config();
     MongooseModule.forFeature([
       { name: ErpWebhooksLogs.name, schema: ErpWebhooksLogsSchema },
     ]),
+    MongooseModule.forFeature([
+      { name: BatchTransactions.name, schema: BatchTransactionsSchema },
+    ]),
+    MongooseModule.forFeature([
+      { name: ErrorLogs.name, schema: ErrorLogsSchema },
+    ]),
   ],
   providers: [DatabaseService],
   exports: [
@@ -52,6 +60,12 @@ dotenv.config();
     ]),
     MongooseModule.forFeature([
       { name: ErpWebhooksLogs.name, schema: ErpWebhooksLogsSchema },
+    ]),
+    MongooseModule.forFeature([
+      { name: BatchTransactions.name, schema: BatchTransactionsSchema },
+    ]),
+    MongooseModule.forFeature([
+      { name: ErrorLogs.name, schema: ErrorLogsSchema },
     ]),
   ],
 })

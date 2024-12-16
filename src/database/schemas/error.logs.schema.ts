@@ -11,6 +11,9 @@ export class ErrorLogs {
   des: string;
 
   @Prop({})
+  identifier: string;
+
+  @Prop({})
   body: string;
 }
 

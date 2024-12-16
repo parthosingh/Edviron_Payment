@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 export declare class ErrorLogs {
     type: string;
     des: string;
+    identifier: string;
     body: string;
 }
 export type ErrorLogsDocument = ErrorLogs & Document;

@@ -1520,6 +1520,24 @@ let EdvironPgController = class EdvironPgController {
             page,
         };
     }
+    async saveBatchTransactions(body) {
+        const status = body.status || null;
+        return await this.edvironPgService.generateBacthTransactions(body.trustee_id, body.start_date, body.end_date, status);
+    }
+    async getBatchTransactions(query) {
+        try {
+            const { trustee_id, year, token } = query;
+            console.log(process.env.KEY);
+            const decoded = jwt.verify(token, process.env.KEY);
+            if (decoded.trustee_id !== trustee_id) {
+                throw new common_1.UnauthorizedException('Invalid token');
+            }
+            return await this.edvironPgService.getBatchTransactions(query.trustee_id, query.year);
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -1726,6 +1744,20 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getErpWebhookLogs", null);
+__decorate([
+    (0, common_1.Post)('/save-transactions'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "saveBatchTransactions", null);
+__decorate([
+    (0, common_1.Get)('/get-batch-transactions'),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getBatchTransactions", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
