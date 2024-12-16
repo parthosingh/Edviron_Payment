@@ -1071,7 +1071,7 @@ export class EdvironPgService implements GatewayService {
               // trustee_id: '$_id', // Rename `_id` to `trustee_id`
               totalTransactionAmount: 1,
               totalOrderAmount: 1,
-              // totalTransactions: 1,
+              totalTransactions: 1,
             },
           },
         ]);

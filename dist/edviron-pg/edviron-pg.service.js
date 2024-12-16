@@ -838,6 +838,7 @@ let EdvironPgService = class EdvironPgService {
                             _id: 0,
                             totalTransactionAmount: 1,
                             totalOrderAmount: 1,
+                            totalTransactions: 1,
                         },
                     },
                 ]);
