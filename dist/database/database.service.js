@@ -21,13 +21,17 @@ const webhooks_schema_1 = require("./schemas/webhooks.schema");
 const collect_req_status_schema_1 = require("./schemas/collect_req_status.schema");
 const vendor_Transaction_schema_1 = require("./schemas/vendor.Transaction.schema");
 const erp_webhooks_logs_schema_1 = require("./schemas/erp.webhooks.logs.schema");
+const batch_transactions_schema_1 = require("./schemas/batch.transactions.schema");
+const error_logs_schema_1 = require("./schemas/error.logs.schema");
 let DatabaseService = class DatabaseService {
-    constructor(CollectRequestModel, WebhooksModel, CollectRequestStatusModel, VendorTransactionModel, ErpWebhooksLogsModel) {
+    constructor(CollectRequestModel, WebhooksModel, CollectRequestStatusModel, VendorTransactionModel, ErpWebhooksLogsModel, BatchTransactionModel, ErrorLogsModel) {
         this.CollectRequestModel = CollectRequestModel;
         this.WebhooksModel = WebhooksModel;
         this.CollectRequestStatusModel = CollectRequestStatusModel;
         this.VendorTransactionModel = VendorTransactionModel;
         this.ErpWebhooksLogsModel = ErpWebhooksLogsModel;
+        this.BatchTransactionModel = BatchTransactionModel;
+        this.ErrorLogsModel = ErrorLogsModel;
     }
 };
 exports.DatabaseService = DatabaseService;
@@ -38,7 +42,11 @@ exports.DatabaseService = DatabaseService = __decorate([
     __param(2, (0, mongoose_1.InjectModel)(collect_req_status_schema_1.CollectRequestStatus.name)),
     __param(3, (0, mongoose_1.InjectModel)(vendor_Transaction_schema_1.VendorTransaction.name)),
     __param(4, (0, mongoose_1.InjectModel)(erp_webhooks_logs_schema_1.ErpWebhooksLogs.name)),
+    __param(5, (0, mongoose_1.InjectModel)(batch_transactions_schema_1.BatchTransactions.name)),
+    __param(6, (0, mongoose_1.InjectModel)(error_logs_schema_1.ErrorLogs.name)),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,

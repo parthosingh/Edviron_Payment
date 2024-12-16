@@ -16,6 +16,8 @@ const collect_req_status_schema_1 = require("./schemas/collect_req_status.schema
 const webhooks_schema_1 = require("./schemas/webhooks.schema");
 const vendor_Transaction_schema_1 = require("./schemas/vendor.Transaction.schema");
 const erp_webhooks_logs_schema_1 = require("./schemas/erp.webhooks.logs.schema");
+const batch_transactions_schema_1 = require("./schemas/batch.transactions.schema");
+const error_logs_schema_1 = require("./schemas/error.logs.schema");
 dotenv.config();
 let DatabaseModule = class DatabaseModule {
 };
@@ -39,6 +41,12 @@ exports.DatabaseModule = DatabaseModule = __decorate([
             mongoose_1.MongooseModule.forFeature([
                 { name: erp_webhooks_logs_schema_1.ErpWebhooksLogs.name, schema: erp_webhooks_logs_schema_1.ErpWebhooksLogsSchema },
             ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: batch_transactions_schema_1.BatchTransactions.name, schema: batch_transactions_schema_1.BatchTransactionsSchema },
+            ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: error_logs_schema_1.ErrorLogs.name, schema: error_logs_schema_1.ErrorLogsSchema },
+            ]),
         ],
         providers: [database_service_1.DatabaseService],
         exports: [
@@ -58,6 +66,12 @@ exports.DatabaseModule = DatabaseModule = __decorate([
             ]),
             mongoose_1.MongooseModule.forFeature([
                 { name: erp_webhooks_logs_schema_1.ErpWebhooksLogs.name, schema: erp_webhooks_logs_schema_1.ErpWebhooksLogsSchema },
+            ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: batch_transactions_schema_1.BatchTransactions.name, schema: batch_transactions_schema_1.BatchTransactionsSchema },
+            ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: error_logs_schema_1.ErrorLogs.name, schema: error_logs_schema_1.ErrorLogsSchema },
             ]),
         ],
     })

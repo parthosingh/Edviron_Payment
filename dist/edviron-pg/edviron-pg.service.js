@@ -851,6 +851,140 @@ let EdvironPgService = class EdvironPgService {
             throw new Error(error.message);
         }
     }
+    async generateBacthTransactions(trustee_id, start_date, end_date, status) {
+        try {
+            const monthsFull = [
+                'January',
+                'February',
+                'March',
+                'April',
+                'May',
+                'June',
+                'July',
+                'August',
+                'September',
+                'October',
+                'November',
+                'December',
+            ];
+            const orders = await this.databaseService.CollectRequestModel.find({
+                trustee_id: trustee_id,
+            }).select('_id');
+            let transactions = [];
+            const orderIds = orders.map((order) => order._id);
+            let query = {
+                collect_id: { $in: orderIds },
+            };
+            const startDate = new Date(start_date);
+            const endDate = end_date;
+            const endOfDay = new Date(endDate);
+            endOfDay.setHours(23, 59, 59, 999);
+            console.log(end_date);
+            console.log(new Date(endDate), 'End date before adding hr');
+            console.log(endOfDay, 'end date after adding hr');
+            if (startDate && endDate) {
+                query = {
+                    ...query,
+                    createdAt: {
+                        $gte: startDate,
+                        $lt: endOfDay,
+                    },
+                };
+            }
+            console.log(`getting transaction`);
+            if ((status && status === 'SUCCESS') || status === 'PENDING') {
+                console.log('adding status to transaction');
+                query = {
+                    ...query,
+                    status: { $regex: new RegExp(`^${status}$`, 'i') },
+                };
+            }
+            const checkbatch = await this.databaseService.BatchTransactionModel.findOne({
+                trustee_id: trustee_id,
+                month: monthsFull[new Date(endDate).getMonth()],
+                year: new Date(endDate).getFullYear().toString(),
+            });
+            if (checkbatch) {
+                await this.databaseService.ErrorLogsModel.create({
+                    type: 'BATCH TRANSACTION CORN',
+                    des: `Batch transaction already exists for trustee_id ${transactions[0].trustee_id}`,
+                    identifier: trustee_id,
+                    body: `${JSON.stringify({ startDate, endDate, status })}`,
+                });
+                throw new Error(`Batch transaction`);
+            }
+            const transactionsCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
+            transactions =
+                await this.databaseService.CollectRequestStatusModel.aggregate([
+                    {
+                        $match: query,
+                    },
+                    {
+                        $lookup: {
+                            from: 'collectrequests',
+                            localField: 'collect_id',
+                            foreignField: '_id',
+                            as: 'collect_request',
+                        },
+                    },
+                    {
+                        $unwind: '$collect_request',
+                    },
+                    {
+                        $group: {
+                            _id: '$collect_request.trustee_id',
+                            totalTransactionAmount: { $sum: '$transaction_amount' },
+                            totalOrderAmount: { $sum: '$order_amount' },
+                            totalTransactions: { $sum: 1 },
+                        },
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            trustee_id: '$_id',
+                            totalTransactionAmount: 1,
+                            totalOrderAmount: 1,
+                            totalTransactions: 1,
+                        },
+                    },
+                ]);
+            if (transactions.length > 0) {
+                await new this.databaseService.BatchTransactionModel({
+                    trustee_id: transactions[0].trustee_id,
+                    total_order_amount: transactions[0].totalOrderAmount,
+                    total_transaction_amount: transactions[0].totalTransactionAmount,
+                    total_transactions: transactions[0].totalTransactions,
+                    month: monthsFull[new Date(endDate).getMonth()],
+                    year: new Date(endDate).getFullYear().toString(),
+                    status,
+                }).save();
+            }
+            return {
+                transactions,
+                totalTransactions: transactionsCount,
+                month: monthsFull[new Date(endDate).getMonth()],
+                year: new Date(endDate).getFullYear().toString(),
+            };
+        }
+        catch (error) {
+            throw new Error(error.message);
+        }
+    }
+    async getBatchTransactions(trustee_id, year) {
+        try {
+            const batch = await this.databaseService.BatchTransactionModel.find({
+                trustee_id,
+                year,
+            });
+            if (!batch) {
+                throw new Error('Batch not found');
+            }
+            return batch;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgService = EdvironPgService;
 exports.EdvironPgService = EdvironPgService = __decorate([

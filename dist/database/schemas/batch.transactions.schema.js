@@ -9,29 +9,45 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ErrorLogsSchema = exports.ErrorLogs = void 0;
+exports.BatchTransactionsSchema = exports.BatchTransactions = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
-let ErrorLogs = class ErrorLogs {
+let BatchTransactions = class BatchTransactions {
 };
-exports.ErrorLogs = ErrorLogs;
+exports.BatchTransactions = BatchTransactions;
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
-], ErrorLogs.prototype, "type", void 0);
+], BatchTransactions.prototype, "trustee_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({}),
+    __metadata("design:type", Number)
+], BatchTransactions.prototype, "total_order_amount", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({}),
+    __metadata("design:type", Number)
+], BatchTransactions.prototype, "total_transaction_amount", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({}),
+    __metadata("design:type", Number)
+], BatchTransactions.prototype, "total_transactions", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
-], ErrorLogs.prototype, "des", void 0);
+], BatchTransactions.prototype, "month", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
-], ErrorLogs.prototype, "identifier", void 0);
+], BatchTransactions.prototype, "year", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Date)
+], BatchTransactions.prototype, "updatedAt", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
-], ErrorLogs.prototype, "body", void 0);
-exports.ErrorLogs = ErrorLogs = __decorate([
+], BatchTransactions.prototype, "status", void 0);
+exports.BatchTransactions = BatchTransactions = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
-], ErrorLogs);
-exports.ErrorLogsSchema = mongoose_1.SchemaFactory.createForClass(ErrorLogs);
-//# sourceMappingURL=error.logs.schema.js.map
+], BatchTransactions);
+exports.BatchTransactionsSchema = mongoose_1.SchemaFactory.createForClass(BatchTransactions);
+//# sourceMappingURL=batch.transactions.schema.js.map
