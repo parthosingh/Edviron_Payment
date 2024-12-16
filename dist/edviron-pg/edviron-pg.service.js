@@ -831,6 +831,7 @@ let EdvironPgService = class EdvironPgService {
                             _id: '$collect_request.trustee_id',
                             totalTransactionAmount: { $sum: '$transaction_amount' },
                             totalOrderAmount: { $sum: '$order_amount' },
+                            totalTransactions: { $sum: 1 },
                         },
                     },
                     {

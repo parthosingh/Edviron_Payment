@@ -1062,7 +1062,7 @@ export class EdvironPgService implements GatewayService {
               _id: '$collect_request.trustee_id', // Group by `trustee_id`
               totalTransactionAmount: { $sum: '$transaction_amount' },
               totalOrderAmount: { $sum: '$order_amount' },
-              // totalTransactions: { $sum: 1 }, // Count total transactions
+              totalTransactions: { $sum: 1 }, // Count total transactions
             },
           },
           {
