@@ -1528,7 +1528,7 @@ let EdvironPgController = class EdvironPgController {
             .sort({
             createdAt: -1,
         })
-            .skip(page)
+            .skip((page - 1) * limit)
             .limit(limit);
         return {
             erp_webhooks_logs: logs,

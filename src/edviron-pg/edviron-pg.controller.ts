@@ -2215,6 +2215,8 @@ export class EdvironPgController {
     let query: any = {
       trustee_id,
     };
+   
+    
     if (startDate && endDate) {
       const startOfDayUTC = new Date(
         await this.edvironPgService.convertISTStartToUTC(startDate),
@@ -2263,7 +2265,7 @@ export class EdvironPgController {
       .sort({
         createdAt: -1,
       })
-      .skip(page)
+      .skip((page - 1) * limit)
       .limit(limit);
 
     return {
