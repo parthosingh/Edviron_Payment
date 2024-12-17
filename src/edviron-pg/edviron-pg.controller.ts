@@ -2197,6 +2197,7 @@ export class EdvironPgController {
       school_id?: string;
       status?: string;
       collect_id?: string;
+      custom_id?: string;
     },
   ) {
     const {
@@ -2209,6 +2210,7 @@ export class EdvironPgController {
       school_id,
       status,
       collect_id,
+      custom_id
     } = body;
     const startOfDayUTC = new Date(
       await this.edvironPgService.convertISTStartToUTC(startDate),
@@ -2236,7 +2238,19 @@ export class EdvironPgController {
         collect_id: new Types.ObjectId(collect_id),
       };
     }
-    console.log(query, 'search results');
+
+    if(custom_id){
+      const request =
+        await this.databaseService.CollectRequestModel.findOne({custom_order_id: custom_id});
+      if (!request) {
+        throw new NotFoundException('Collect Request not found');
+      }
+      query = {
+        ...query,
+        collect_id:request._id,
+      };
+    }
+  
     const totalRecords =
       await this.databaseService.ErpWebhooksLogsModel.countDocuments(query);
     const logs = await this.databaseService.ErpWebhooksLogsModel.find(query)

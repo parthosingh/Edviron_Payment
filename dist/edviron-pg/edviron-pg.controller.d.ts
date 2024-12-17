@@ -142,6 +142,7 @@ export declare class EdvironPgController {
         school_id?: string;
         status?: string;
         collect_id?: string;
+        custom_id?: string;
     }): Promise<{
         erp_webhooks_logs: (import("mongoose").Document<unknown, {}, import("../database/schemas/erp.webhooks.logs.schema").ErpWebhooksLogs> & import("../database/schemas/erp.webhooks.logs.schema").ErpWebhooksLogs & Required<{
             _id: import("mongoose").Schema.Types.ObjectId;

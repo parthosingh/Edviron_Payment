@@ -1484,7 +1484,7 @@ let EdvironPgController = class EdvironPgController {
         return await this.edvironPgService.getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id);
     }
     async getErpWebhookLogs(body) {
-        const { token, startDate, endDate, limit, page, trustee_id, school_id, status, collect_id, } = body;
+        const { token, startDate, endDate, limit, page, trustee_id, school_id, status, collect_id, custom_id } = body;
         const startOfDayUTC = new Date(await this.edvironPgService.convertISTStartToUTC(startDate));
         const endOfDayUTC = new Date(await this.edvironPgService.convertISTEndToUTC(endDate));
         let query = {
@@ -1506,7 +1506,16 @@ let EdvironPgController = class EdvironPgController {
                 collect_id: new mongoose_1.Types.ObjectId(collect_id),
             };
         }
-        console.log(query, 'search results');
+        if (custom_id) {
+            const request = await this.databaseService.CollectRequestModel.findOne({ custom_order_id: custom_id });
+            if (!request) {
+                throw new common_1.NotFoundException('Collect Request not found');
+            }
+            query = {
+                ...query,
+                collect_id: request._id,
+            };
+        }
         const totalRecords = await this.databaseService.ErpWebhooksLogsModel.countDocuments(query);
         const logs = await this.databaseService.ErpWebhooksLogsModel.find(query)
             .sort({
