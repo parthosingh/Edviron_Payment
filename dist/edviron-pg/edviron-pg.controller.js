@@ -1484,16 +1484,21 @@ let EdvironPgController = class EdvironPgController {
         return await this.edvironPgService.getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id);
     }
     async getErpWebhookLogs(body) {
-        const { token, startDate, endDate, limit, page, trustee_id, school_id, status, collect_id, custom_id } = body;
-        const startOfDayUTC = new Date(await this.edvironPgService.convertISTStartToUTC(startDate));
-        const endOfDayUTC = new Date(await this.edvironPgService.convertISTEndToUTC(endDate));
+        const { token, startDate, endDate, limit, page, trustee_id, school_id, status, collect_id, custom_id, } = body;
         let query = {
             trustee_id,
-            createdAt: {
-                $gte: startOfDayUTC,
-                $lt: endOfDayUTC,
-            },
         };
+        if (startDate && endDate) {
+            const startOfDayUTC = new Date(await this.edvironPgService.convertISTStartToUTC(startDate));
+            const endOfDayUTC = new Date(await this.edvironPgService.convertISTEndToUTC(endDate));
+            query = {
+                trustee_id,
+                createdAt: {
+                    $gte: startOfDayUTC,
+                    $lt: endOfDayUTC,
+                },
+            };
+        }
         if (school_id) {
             query = {
                 ...query,
@@ -1507,7 +1512,9 @@ let EdvironPgController = class EdvironPgController {
             };
         }
         if (custom_id) {
-            const request = await this.databaseService.CollectRequestModel.findOne({ custom_order_id: custom_id });
+            const request = await this.databaseService.CollectRequestModel.findOne({
+                custom_order_id: custom_id,
+            });
             if (!request) {
                 throw new common_1.NotFoundException('Collect Request not found');
             }

@@ -2189,10 +2189,10 @@ export class EdvironPgController {
     @Body()
     body: {
       token: string;
-      startDate: string;
-      endDate: string;
       limit: number;
       page: number;
+      startDate?: string;
+      endDate?: string;
       trustee_id: string;
       school_id?: string;
       status?: string;
@@ -2210,21 +2210,26 @@ export class EdvironPgController {
       school_id,
       status,
       collect_id,
-      custom_id
+      custom_id,
     } = body;
-    const startOfDayUTC = new Date(
-      await this.edvironPgService.convertISTStartToUTC(startDate),
-    ); // Start of December 6 in IST
-    const endOfDayUTC = new Date(
-      await this.edvironPgService.convertISTEndToUTC(endDate),
-    );
     let query: any = {
       trustee_id,
-      createdAt: {
-        $gte: startOfDayUTC,
-        $lt: endOfDayUTC,
-      },
     };
+    if (startDate && endDate) {
+      const startOfDayUTC = new Date(
+        await this.edvironPgService.convertISTStartToUTC(startDate),
+      ); // Start of December 6 in IST
+      const endOfDayUTC = new Date(
+        await this.edvironPgService.convertISTEndToUTC(endDate),
+      );
+      query = {
+        trustee_id,
+        createdAt: {
+          $gte: startOfDayUTC,
+          $lt: endOfDayUTC,
+        },
+      };
+    }
 
     if (school_id) {
       query = {
@@ -2239,18 +2244,19 @@ export class EdvironPgController {
       };
     }
 
-    if(custom_id){
-      const request =
-        await this.databaseService.CollectRequestModel.findOne({custom_order_id: custom_id});
+    if (custom_id) {
+      const request = await this.databaseService.CollectRequestModel.findOne({
+        custom_order_id: custom_id,
+      });
       if (!request) {
         throw new NotFoundException('Collect Request not found');
       }
       query = {
         ...query,
-        collect_id:request._id,
+        collect_id: request._id,
       };
     }
-  
+
     const totalRecords =
       await this.databaseService.ErpWebhooksLogsModel.countDocuments(query);
     const logs = await this.databaseService.ErpWebhooksLogsModel.find(query)

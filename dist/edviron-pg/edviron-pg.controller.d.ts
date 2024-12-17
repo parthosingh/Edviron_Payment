@@ -134,10 +134,10 @@ export declare class EdvironPgController {
     }>;
     getErpWebhookLogs(body: {
         token: string;
-        startDate: string;
-        endDate: string;
         limit: number;
         page: number;
+        startDate?: string;
+        endDate?: string;
         trustee_id: string;
         school_id?: string;
         status?: string;
