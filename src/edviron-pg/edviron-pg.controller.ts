@@ -1386,11 +1386,12 @@ export class EdvironPgController {
       searchParams?: string;
       isCustomSearch?: boolean;
       seachFilter?: string;
+      payment_modes?: string[]
     },
     @Res() res: any,
     @Req() req: any,
   ) {
-    const { trustee_id, token, searchParams, isCustomSearch, seachFilter } =
+    const { trustee_id, token, searchParams, isCustomSearch, seachFilter,payment_modes } =
       body;
     if (!token) throw new Error('Token not provided');
 
@@ -1484,6 +1485,13 @@ export class EdvironPgController {
           status: { $in: ['FAILED', 'FAILURE'] },
         };
       }
+
+     if(payment_modes){
+      query = {
+        ...query,
+        payment_method: { $in: payment_modes }
+      }
+     }
 
       console.time('counting all transaction');
       const transactionsCount =

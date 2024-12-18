@@ -56,6 +56,7 @@ export declare class EdvironPgController {
         searchParams?: string;
         isCustomSearch?: boolean;
         seachFilter?: string;
+        payment_modes?: string[];
     }, res: any, req: any): Promise<void>;
     getErpLogo(collect_id: string): Promise<any>;
     getSchoolId(collect_id: string): Promise<string>;

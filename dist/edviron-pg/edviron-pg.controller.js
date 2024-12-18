@@ -910,7 +910,7 @@ let EdvironPgController = class EdvironPgController {
         }
     }
     async bulkTransactions(body, res, req) {
-        const { trustee_id, token, searchParams, isCustomSearch, seachFilter } = body;
+        const { trustee_id, token, searchParams, isCustomSearch, seachFilter, payment_modes } = body;
         if (!token)
             throw new Error('Token not provided');
         try {
@@ -980,6 +980,12 @@ let EdvironPgController = class EdvironPgController {
                 query = {
                     ...query,
                     status: { $in: ['FAILED', 'FAILURE'] },
+                };
+            }
+            if (payment_modes) {
+                query = {
+                    ...query,
+                    payment_method: { $in: payment_modes }
                 };
             }
             console.time('counting all transaction');
