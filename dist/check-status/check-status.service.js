@@ -105,12 +105,7 @@ let CheckStatusService = class CheckStatusService {
                 };
                 return status_response;
             case collect_request_schema_1.Gateway.PENDING:
-                return {
-                    status: 'NOT INITIATED',
-                    custom_order_id,
-                    amount: collectRequest.amount,
-                    status_code: 202,
-                };
+                return await this.checkExpiry(collectRequest);
             case collect_request_schema_1.Gateway.EXPIRED:
                 return {
                     status: collect_req_status_schema_1.PaymentStatus.EXPIRED,
@@ -199,12 +194,7 @@ let CheckStatusService = class CheckStatusService {
                 };
                 return status_response;
             case collect_request_schema_1.Gateway.PENDING:
-                return {
-                    status: 'NOT INITIATED',
-                    amount: collectRequest.amount,
-                    edviron_order_id: collectRequest._id.toString(),
-                    status_code: 202,
-                };
+                return await this.checkExpiry(collectRequest);
             case collect_request_schema_1.Gateway.EXPIRED:
                 return {
                     status: collect_req_status_schema_1.PaymentStatus.EXPIRED,
@@ -212,6 +202,31 @@ let CheckStatusService = class CheckStatusService {
                     amount: collectRequest.amount,
                     status_code: 202,
                 };
+        }
+    }
+    async checkExpiry(request) {
+        const createdAt = request.createdAt;
+        const currentTime = new Date();
+        if (!createdAt) {
+            return 'Invalid request';
+        }
+        const timeDifference = currentTime.getTime() - createdAt.getTime();
+        const differenceInMinutes = timeDifference / (1000 * 60);
+        if (differenceInMinutes > 20) {
+            return {
+                status: 'EXPIRED',
+                custom_order_id: request.custom_order_id || 'NA',
+                amount: request.amount,
+                status_code: 202,
+            };
+        }
+        else {
+            return {
+                status: 'NOT INITIATED',
+                custom_order_id: request.custom_order_id || 'NA',
+                amount: request.amount,
+                status_code: 202,
+            };
         }
     }
 };

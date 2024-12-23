@@ -51,6 +51,8 @@ export class EasebuzzService {
     };
 
     const { data: statusRes } = await axios.request(config);
+    console.log(statusRes);;
+    
     
     return statusRes;
   }
@@ -60,7 +62,7 @@ export class EasebuzzService {
     if (statusResponse.msg.mode === 'NA') {
       console.log(`Status 0 for ${requestId}, retrying with 'upi_' suffix`);
       statusResponse = await this.easebuzzCheckStatus(`upi_${requestId}`,collectReq);
-    }
+    } 
 
     return statusResponse;
   }

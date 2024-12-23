@@ -1,10 +1,12 @@
 import { DatabaseService } from 'src/database/database.service';
+import { CollectRequest } from 'src/database/schemas/collect_request.schema';
 import { HdfcService } from 'src/hdfc/hdfc.service';
 import { PhonepeService } from 'src/phonepe/phonepe.service';
 import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
+import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 export declare class CheckStatusService {
     private readonly databaseService;
     private readonly hdfcService;
@@ -16,7 +18,7 @@ export declare class CheckStatusService {
     checkStatus(collect_request_id: String): Promise<{
         status: TransactionStatus;
         amount: number;
-    } | {
+    } | "Invalid request" | {
         status: any;
         status_code: number;
         custom_order_id: string | null;
@@ -31,13 +33,18 @@ export declare class CheckStatusService {
             order_status: any;
         };
     } | {
+        status: string;
+        custom_order_id: string;
+        amount: number;
+        status_code: number;
+    } | {
         custom_order_id: string | null;
         status: TransactionStatus;
         amount: number;
         status_code?: number | undefined;
         details?: any;
     } | {
-        status: string;
+        status: PaymentStatus;
         custom_order_id: string | null;
         amount: number;
         status_code: number;
@@ -45,6 +52,11 @@ export declare class CheckStatusService {
     checkStatusByOrderId(order_id: String, school_id: string): Promise<{
         status: TransactionStatus;
         amount: number;
+    } | "Invalid request" | {
+        status: string;
+        custom_order_id: string;
+        amount: number;
+        status_code: number;
     } | {
         status: any;
         status_code: number;
@@ -67,9 +79,15 @@ export declare class CheckStatusService {
         details?: any;
         custom_order_id?: string | undefined;
     } | {
-        status: string;
-        amount: number;
+        status: PaymentStatus;
         edviron_order_id: string;
+        amount: number;
         status_code: number;
     } | undefined>;
+    checkExpiry(request: CollectRequest): Promise<"Invalid request" | {
+        status: string;
+        custom_order_id: string;
+        amount: number;
+        status_code: number;
+    }>;
 }

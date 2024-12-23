@@ -20,6 +20,7 @@ var PaymentStatus;
     PaymentStatus["PENDING"] = "PENDING";
     PaymentStatus["EXPIRED"] = "EXPIRED";
     PaymentStatus["FAILURE"] = "FAILURE";
+    PaymentStatus["AUTO_REFUND"] = "AUTO_REFUND";
 })(PaymentStatus || (exports.PaymentStatus = PaymentStatus = {}));
 let CollectRequestStatus = class CollectRequestStatus {
 };
@@ -72,6 +73,14 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false, default: '' }),
     __metadata("design:type", Date)
 ], CollectRequestStatus.prototype, "payment_time", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], CollectRequestStatus.prototype, "isAttempted", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], CollectRequestStatus.prototype, "isAutoRefund", void 0);
 exports.CollectRequestStatus = CollectRequestStatus = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequestStatus);
