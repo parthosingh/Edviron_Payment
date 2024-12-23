@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { Gateway } from 'src/database/schemas/collect_request.schema';
+import { CollectRequest, Gateway } from 'src/database/schemas/collect_request.schema';
 import { HdfcService } from 'src/hdfc/hdfc.service';
 import { PhonepeService } from 'src/phonepe/phonepe.service';
 import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
@@ -114,12 +114,7 @@ export class CheckStatusService {
         };
         return status_response;
       case Gateway.PENDING:
-        return {
-          status: 'NOT INITIATED',
-          custom_order_id,
-          amount: collectRequest.amount,
-          status_code: 202,
-        };
+        return await this.checkExpiry(collectRequest)
       case Gateway.EXPIRED:
         return {
           status: PaymentStatus.EXPIRED,
@@ -232,12 +227,7 @@ export class CheckStatusService {
         return status_response;
 
       case Gateway.PENDING:
-        return {
-          status: 'NOT INITIATED',
-          amount: collectRequest.amount,
-          edviron_order_id:collectRequest._id.toString(),
-          status_code: 202,
-        };
+        return await this.checkExpiry(collectRequest)
       case Gateway.EXPIRED:
           return {
             status: PaymentStatus.EXPIRED,
@@ -245,6 +235,37 @@ export class CheckStatusService {
             amount: collectRequest.amount,
             status_code: 202,
           };
+    }
+  }
+
+
+  async checkExpiry(request:CollectRequest){
+    const createdAt =request.createdAt; // Convert createdAt to a Date object
+    const currentTime = new Date(); // Get the current time
+    if(!createdAt){
+      return 'Invalid request';
+    }
+    // Calculate the time difference in milliseconds
+    const timeDifference = currentTime.getTime() - createdAt.getTime();
+  
+    // Convert milliseconds to minutes
+    const differenceInMinutes = timeDifference / (1000 * 60);
+  
+    // Check if the difference is more than 20 minutes
+    if (differenceInMinutes > 20) {
+      return {
+        status: 'EXPIRED',
+        custom_order_id:request.custom_order_id || 'NA',
+        amount: request.amount,
+        status_code: 202,
+      };
+    } else {
+      return {
+        status: 'NOT INITIATED',
+        custom_order_id:request.custom_order_id || 'NA',
+        amount: request.amount,
+        status_code: 202,
+      };
     }
   }
 }

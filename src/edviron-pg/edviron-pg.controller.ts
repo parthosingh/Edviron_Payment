@@ -361,18 +361,8 @@ export class EdvironPgController {
   @Post('/webhook')
   async handleWebhook(@Body() body: any, @Res() res: any) {
     const { data: webHookData } = JSON.parse(JSON.stringify(body));
-    // console.log(body,'webghook received with');
-
-    // console.log(webHookData.payment.payment_status);
-
-    // console.log('webhook received with data', { body });
-
     if (!webHookData) throw new Error('Invalid webhook data');
-
-    // console.log('webHookData', webHookData);
     const collect_id = webHookData.order.order_id || body.order.order_id;
-    // console.log('collect_id', collect_id);
-
     if (!Types.ObjectId.isValid(collect_id)) {
       throw new Error('collect_id is not valid');
     }
@@ -407,6 +397,62 @@ export class EdvironPgController {
       return;
     }
 
+    // Auto Refund Code Replicate on easebuzz
+    if (collectReq.school_id === '65d443168b8aa46fcb5af3e4') {
+      try {
+        if (
+          pendingCollectReq &&
+          pendingCollectReq.status !== PaymentStatus.PENDING &&
+          pendingCollectReq.status !== PaymentStatus.SUCCESS
+        ) {
+          const tokenData = {
+            school_id: collectReq?.school_id,
+            trustee_id: collectReq?.trustee_id,
+          };
+
+          const token = jwt.sign(tokenData, process.env.KEY!, {
+            noTimestamp: true,
+          });
+          console.log('Refunding Duplicate Payment request');
+          const autoRefundConfig = {
+            method: 'POST',
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/initiate-auto-refund`,
+            headers: {
+              accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            data: {
+              token,
+              refund_amount: collectReq.amount,
+              collect_id,
+              school_id: collectReq.school_id,
+              trustee_id: collectReq?.trustee_id,
+              custom_id: collectReq.custom_order_id || 'NA',
+              gateway: 'CASHFREE',
+              reason: 'Auto Refund due to dual payment',
+            },
+          };
+
+          const autoRefundResponse = await axios.request(autoRefundConfig);
+          const refund_id = autoRefundResponse.data._id.toString();
+          const refund_amount = autoRefundResponse.data._amount;
+          console.log('Auto Refund Initiated');
+          await this.cashfreeService.initiateRefund(
+            refund_id,
+            refund_amount,
+            collect_id,
+          );
+
+          pendingCollectReq.isAutoRefund = true;
+          pendingCollectReq.status = PaymentStatus.FAILURE;
+          await pendingCollectReq.save();
+          return res.status(200).send('OK');
+        }
+      } catch (e) {
+        console.log(e.message);
+      }
+    }
+
     const reqToCheck = await this.edvironPgService.checkStatus(
       collect_id,
       collectReq,
@@ -416,9 +462,10 @@ export class EdvironPgController {
 
     // const { status } = reqToCheck;
     const status = webHookData.payment.payment_status;
+    const payment_time = new Date(webHookData.payment.payment_time);
     // if (status == TransactionStatus.SUCCESS) {
     //   try {
-    //     const schoolInfo = await this.edvironPgService.getSchoolInfo(
+    //     con st schoolInfo = await this.edvironPgService.getSchoolInfo(
     //       collectReq.school_id,
     //     );
     //     const email = schoolInfo.email;
@@ -513,83 +560,6 @@ export class EdvironPgController {
         try {
           const { data: commissionRes } = await axios.request(config);
           console.log('Commission calculation response:', commissionRes);
-
-          //   // call cashfree split payment api
-
-          //   let easySplitData = JSON.stringify({
-          //     split: [
-          //       {
-          //         vendor_id: commissionRes.trustee_vendor_id,
-          //         amount: commissionRes.erpCommission,
-          //       },
-          //       {
-          //         vendor_id: commissionRes.school_vendor_id,
-          //         amount: commissionRes.school_fees,
-          //       },
-          //     ],
-          // });
-
-          // let cashfreeConfig = {
-          //   method: 'post',
-          //   maxBodyLength: Infinity,
-          //   url: `${process.env.CASHFREE_ENDPOINT}/pg/easy-split/orders/${collectReq._id}/split`,
-          //   headers: {
-          //     accept: 'application/json',
-          //     'content-type': 'application/json',
-          //     'x-api-version': '2023-08-01',
-          //     'x-client-id': process.env.CASHFREE_CLIENT_ID,
-          //     'x-client-secret': process.env.CASHFREE_CLIENT_SECRET,
-          //   },
-          //   data: easySplitData,
-          // };
-          // try {
-          //   const { data: cashfreeRes } = await axios.request(cashfreeConfig);
-          //   console.log('Easy Split Response ', cashfreeRes);
-
-          //   let tokenData = {
-          //     school_id: collectReq?.school_id,
-          //     trustee_id: collectReq?.trustee_id,
-          //     commission_amount: commissionRes.erpCommission,
-          //     payment_mode: platform_type,
-          //     earnings_amount: commissionRes.edvCommission,
-          //     transaction_id: collectReq._id,
-          //   };
-
-          //   let _jwt = jwt.sign(tokenData, process.env.KEY!, {
-          //     noTimestamp: true,
-          //   });
-
-          //   let data = JSON.stringify({
-          //     token: _jwt,
-          //     school_id: collectReq?.school_id,
-          //     trustee_id: collectReq?.trustee_id,
-          //     commission_amount: commissionRes.erpCommission,
-          //     payment_mode: platform_type,
-          //     earnings_amount: commissionRes.edvCommission,
-          //     transaction_id: collectReq._id,
-          //   });
-
-          //   let config = {
-          //     method: 'get',
-          //     maxBodyLength: Infinity,
-          //     url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-split-calculation`,
-          //     headers: {
-          //       accept: 'application/json',
-          //       'content-type': 'application/json',
-          //       'x-api-version': '2023-08-01',
-          //     },
-          //     data: data,
-          //   };
-
-          //   try {
-          //     const { data: addCommisionRes } = await axios.request(config);
-          //     console.log('Add Commision Response ', addCommisionRes);
-          //   } catch (error) {
-          //     console.error('Error adding commision:', error);
-          //   }
-          // } catch (error) {
-          //   console.error('Error spliting payment:', error);
-          // }
         } catch (error) {
           console.error('Error calculating commission:', error.message);
         }
@@ -609,6 +579,7 @@ export class EdvironPgController {
             payment_method,
             details: JSON.stringify(webHookData.payment.payment_method),
             bank_reference: webHookData.payment.bank_reference,
+            payment_time,
           },
         },
         {
@@ -793,6 +764,58 @@ export class EdvironPgController {
       res.status(200).send('OK');
       return;
     }
+    // Auto Refund for Duplicate Payment
+    if (collectReq.school_id === '65d443168b8aa46fcb5af3e4') {
+      try {
+        if (
+          pendingCollectReq &&
+          pendingCollectReq.status !== PaymentStatus.PENDING &&
+          pendingCollectReq.status !== PaymentStatus.SUCCESS
+        ) {
+          console.log('Auto Refund for Duplicate Payment ', collect_id);
+          const tokenData = {
+            school_id: collectReq?.school_id,
+            trustee_id: collectReq?.trustee_id,
+          };
+          const token = jwt.sign(tokenData, process.env.KEY!, {
+            noTimestamp: true,
+          });
+          const autoRefundConfig = {
+            method: 'POST',
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/initiate-auto-refund`,
+            headers: {
+              accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            data: {
+              token,
+              refund_amount: collectReq.amount,
+              collect_id,
+              school_id: collectReq.school_id,
+              trustee_id: collectReq?.trustee_id,
+              custom_id: collectReq.custom_order_id || 'NA',
+              gateway: 'EASEBUZZ',
+              reason: 'Auto Refund due to dual payment',
+            },
+          };
+          const autoRefundResponse = await axios.request(autoRefundConfig);
+          const refund_id = autoRefundResponse.data._id.toString();
+          const refund_amount = autoRefundResponse.data._amount;
+          const refund_process = await this.easebuzzService.initiateRefund(
+            collect_id,
+            refund_amount,
+            refund_id,
+          );
+          console.log('Auto refund Initiated', refund_process);
+          pendingCollectReq.isAutoRefund = true;
+          pendingCollectReq.status = PaymentStatus.FAILURE;
+          await pendingCollectReq.save();
+          return res.status(200).send('OK');
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    }
 
     const statusResponse = await this.edvironPgService.easebuzzCheckStatus(
       body.txnid,
@@ -881,7 +904,7 @@ export class EdvironPgController {
       default:
         payment_method = 'Unknown';
     }
-
+    // Commission adding
     if (statusResponse.msg.status.toUpperCase() === 'SUCCESS') {
       try {
         const schoolInfo = await this.edvironPgService.getSchoolInfo(
@@ -1386,13 +1409,19 @@ export class EdvironPgController {
       searchParams?: string;
       isCustomSearch?: boolean;
       seachFilter?: string;
-      payment_modes?: string[]
+      payment_modes?: string[];
     },
     @Res() res: any,
     @Req() req: any,
   ) {
-    const { trustee_id, token, searchParams, isCustomSearch, seachFilter,payment_modes } =
-      body;
+    const {
+      trustee_id,
+      token,
+      searchParams,
+      isCustomSearch,
+      seachFilter,
+      payment_modes,
+    } = body;
     if (!token) throw new Error('Token not provided');
 
     try {
@@ -1486,12 +1515,12 @@ export class EdvironPgController {
         };
       }
 
-     if(payment_modes){
-      query = {
-        ...query,
-        payment_method: { $in: payment_modes }
+      if (payment_modes) {
+        query = {
+          ...query,
+          payment_method: { $in: payment_modes },
+        };
       }
-     }
 
       console.time('counting all transaction');
       const transactionsCount =
@@ -2223,8 +2252,7 @@ export class EdvironPgController {
     let query: any = {
       trustee_id,
     };
-   
-    
+
     if (startDate && endDate) {
       const startOfDayUTC = new Date(
         await this.edvironPgService.convertISTStartToUTC(startDate),

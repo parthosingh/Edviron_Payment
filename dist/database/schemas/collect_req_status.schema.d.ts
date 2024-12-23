@@ -5,13 +5,14 @@ export declare enum PaymentStatus {
     FAIL = "FAIL",
     PENDING = "PENDING",
     EXPIRED = "EXPIRED",
-    FAILURE = "FAILURE"
+    FAILURE = "FAILURE",
+    AUTO_REFUND = "AUTO_REFUND"
 }
 export declare class CollectRequestStatus {
     createdAt?: Date;
     updatedAt?: Date;
     collect_id: CollectRequest;
-    status: PaymentStatus;
+    status: String;
     order_amount: Number;
     transaction_amount: Number;
     payment_method: String;
@@ -19,6 +20,8 @@ export declare class CollectRequestStatus {
     status_details: String;
     bank_reference: string;
     payment_time: Date;
+    isAttempted: boolean;
+    isAutoRefund: boolean;
     _id: ObjectId;
 }
 export type CollectRequestStatusDocument = CollectRequestStatus & Document;

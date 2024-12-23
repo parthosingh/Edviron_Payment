@@ -841,8 +841,7 @@ export class EdvironPgService implements GatewayService {
     };
   }
 
-  /*************  ✨ Codeium Command ⭐  *************/
-  /******  ec0ac6bf-aa20-4d78-8de8-0b19d7c37dc6  *******/ async createVendor(
+async createVendor(
     client_id: string,
     vendor_info: {
       vendor_id: string;

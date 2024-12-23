@@ -270,8 +270,55 @@ let EdvironPgController = class EdvironPgController {
             res.status(200).send('OK');
             return;
         }
+        if (collectReq.school_id === '65d443168b8aa46fcb5af3e4') {
+            try {
+                if (pendingCollectReq &&
+                    pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.PENDING &&
+                    pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.SUCCESS) {
+                    const tokenData = {
+                        school_id: collectReq?.school_id,
+                        trustee_id: collectReq?.trustee_id,
+                    };
+                    const token = jwt.sign(tokenData, process.env.KEY, {
+                        noTimestamp: true,
+                    });
+                    console.log('Refunding Duplicate Payment request');
+                    const autoRefundConfig = {
+                        method: 'POST',
+                        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/initiate-auto-refund`,
+                        headers: {
+                            accept: 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                        data: {
+                            token,
+                            refund_amount: collectReq.amount,
+                            collect_id,
+                            school_id: collectReq.school_id,
+                            trustee_id: collectReq?.trustee_id,
+                            custom_id: collectReq.custom_order_id || 'NA',
+                            gateway: 'CASHFREE',
+                            reason: 'Auto Refund due to dual payment',
+                        },
+                    };
+                    const autoRefundResponse = await axios_1.default.request(autoRefundConfig);
+                    const refund_id = autoRefundResponse.data._id.toString();
+                    const refund_amount = autoRefundResponse.data._amount;
+                    console.log('Auto Refund Initiated');
+                    await this.cashfreeService.initiateRefund(refund_id, refund_amount, collect_id);
+                    pendingCollectReq.isAutoRefund = true;
+                    pendingCollectReq.status = collect_req_status_schema_1.PaymentStatus.FAILURE;
+                    await pendingCollectReq.save();
+                    return res.status(200).send('OK');
+                }
+            }
+            catch (e) {
+                console.log(e.message);
+            }
+        }
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
         const status = webHookData.payment.payment_status;
+        const payment_time = new Date(webHookData.payment.payment_time);
         try {
             if (status == transactionStatus_1.TransactionStatus.SUCCESS) {
                 let platform_type = null;
@@ -353,6 +400,7 @@ let EdvironPgController = class EdvironPgController {
                 payment_method,
                 details: JSON.stringify(webHookData.payment.payment_method),
                 bank_reference: webHookData.payment.bank_reference,
+                payment_time,
             },
         }, {
             upsert: true,
@@ -445,6 +493,52 @@ let EdvironPgController = class EdvironPgController {
             console.log('No pending request found for', collect_id);
             res.status(200).send('OK');
             return;
+        }
+        if (collectReq.school_id === '65d443168b8aa46fcb5af3e4') {
+            try {
+                if (pendingCollectReq &&
+                    pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.PENDING &&
+                    pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.SUCCESS) {
+                    console.log('Auto Refund for Duplicate Payment ', collect_id);
+                    const tokenData = {
+                        school_id: collectReq?.school_id,
+                        trustee_id: collectReq?.trustee_id,
+                    };
+                    const token = jwt.sign(tokenData, process.env.KEY, {
+                        noTimestamp: true,
+                    });
+                    const autoRefundConfig = {
+                        method: 'POST',
+                        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/initiate-auto-refund`,
+                        headers: {
+                            accept: 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                        data: {
+                            token,
+                            refund_amount: collectReq.amount,
+                            collect_id,
+                            school_id: collectReq.school_id,
+                            trustee_id: collectReq?.trustee_id,
+                            custom_id: collectReq.custom_order_id || 'NA',
+                            gateway: 'EASEBUZZ',
+                            reason: 'Auto Refund due to dual payment',
+                        },
+                    };
+                    const autoRefundResponse = await axios_1.default.request(autoRefundConfig);
+                    const refund_id = autoRefundResponse.data._id.toString();
+                    const refund_amount = autoRefundResponse.data._amount;
+                    const refund_process = await this.easebuzzService.initiateRefund(collect_id, refund_amount, refund_id);
+                    console.log('Auto refund Initiated', refund_process);
+                    pendingCollectReq.isAutoRefund = true;
+                    pendingCollectReq.status = collect_req_status_schema_1.PaymentStatus.FAILURE;
+                    await pendingCollectReq.save();
+                    return res.status(200).send('OK');
+                }
+            }
+            catch (e) {
+                console.log(e);
+            }
         }
         const statusResponse = await this.edvironPgService.easebuzzCheckStatus(body.txnid, collectReq);
         const reqToCheck = statusResponse;
@@ -910,7 +1004,7 @@ let EdvironPgController = class EdvironPgController {
         }
     }
     async bulkTransactions(body, res, req) {
-        const { trustee_id, token, searchParams, isCustomSearch, seachFilter, payment_modes } = body;
+        const { trustee_id, token, searchParams, isCustomSearch, seachFilter, payment_modes, } = body;
         if (!token)
             throw new Error('Token not provided');
         try {
@@ -985,7 +1079,7 @@ let EdvironPgController = class EdvironPgController {
             if (payment_modes) {
                 query = {
                     ...query,
-                    payment_method: { $in: payment_modes }
+                    payment_method: { $in: payment_modes },
                 };
             }
             console.time('counting all transaction');

@@ -53,6 +53,8 @@ let EasebuzzService = class EasebuzzService {
             data: data,
         };
         const { data: statusRes } = await axios.request(config);
+        console.log(statusRes);
+        ;
         return statusRes;
     }
     async statusResponse(requestId, collectReq) {

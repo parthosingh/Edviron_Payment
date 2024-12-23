@@ -8,6 +8,7 @@ export enum PaymentStatus {
   PENDING = 'PENDING',
   EXPIRED = 'EXPIRED',
   FAILURE = 'FAILURE',
+  AUTO_REFUND = 'AUTO_REFUND',
 }
 
 @Schema({ timestamps: true })
@@ -26,7 +27,7 @@ export class CollectRequestStatus {
   collect_id: CollectRequest;
 
   @Prop({ required: true })
-  status: PaymentStatus;
+  status: String;
 
   @Prop({ required: true })
   order_amount: Number;
@@ -48,6 +49,12 @@ export class CollectRequestStatus {
 
   @Prop({ required: false, default: '' })
   payment_time: Date;
+
+  @Prop({ required: false, default: false })
+  isAttempted: boolean;
+
+  @Prop({ required: false, default: false })
+  isAutoRefund: boolean;
 
   _id: ObjectId;
 }
