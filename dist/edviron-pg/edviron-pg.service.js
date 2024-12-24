@@ -853,6 +853,113 @@ let EdvironPgService = class EdvironPgService {
             throw new Error(error.message);
         }
     }
+    async getTransactionReportBatchedFilterd(trustee_id, start_date, end_date, status, school_id, mode) {
+        try {
+            const endOfDay = new Date(end_date);
+            const startDates = new Date(start_date);
+            const startOfDayUTC = new Date(await this.convertISTStartToUTC(start_date));
+            const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
+            endOfDay.setHours(23, 59, 59, 999);
+            let collectQuery = {
+                trustee_id: trustee_id,
+                createdAt: {
+                    $gte: new Date(startDates.getTime() - 24 * 60 * 60 * 1000),
+                    $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
+                },
+            };
+            if (school_id) {
+                collectQuery = {
+                    ...collectQuery,
+                    school_id: school_id,
+                };
+            }
+            const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
+            let transactions = [];
+            const orderIds = orders.map((order) => order._id);
+            let query = {
+                collect_id: { $in: orderIds },
+            };
+            const startDate = new Date(start_date);
+            const endDate = end_date;
+            console.log(new Date(endDate), 'End date before adding hr');
+            console.log(endOfDay, 'end date after adding hr');
+            if (startDate && endDate) {
+                query = {
+                    ...query,
+                    updatedAt: {
+                        $gte: startOfDayUTC,
+                        $lt: endOfDayUTC,
+                    },
+                };
+            }
+            if ((status && status === 'SUCCESS') || status === 'PENDING') {
+                console.log('adding status to transaction');
+                query = {
+                    ...query,
+                    status: { $in: [status.toUpperCase(), status.toLowerCase()] },
+                };
+            }
+            if (school_id) {
+            }
+            if (mode) {
+                query = {
+                    ...query,
+                    payment_method: { $in: mode }
+                };
+            }
+            console.log(query, 'qqq');
+            transactions =
+                await this.databaseService.CollectRequestStatusModel.aggregate([
+                    {
+                        $match: query,
+                    },
+                    {
+                        $project: {
+                            collect_id: 1,
+                            transaction_amount: 1,
+                            order_amount: 1,
+                            status: 1,
+                            createdAt: 1,
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: 'collectrequests',
+                            localField: 'collect_id',
+                            foreignField: '_id',
+                            as: 'collect_request',
+                        },
+                    },
+                    {
+                        $unwind: '$collect_request',
+                    },
+                    {
+                        $group: {
+                            _id: '$collect_request.trustee_id',
+                            totalTransactionAmount: { $sum: '$transaction_amount' },
+                            totalOrderAmount: { $sum: '$order_amount' },
+                            totalTransactions: { $sum: 1 },
+                        },
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            totalTransactionAmount: 1,
+                            totalOrderAmount: 1,
+                            totalTransactions: 1,
+                        },
+                    },
+                ]);
+            console.timeEnd('transactionsCount');
+            return {
+                length: transactions.length,
+                transactions,
+            };
+        }
+        catch (error) {
+            throw new Error(error.message);
+        }
+    }
     async generateBacthTransactions(trustee_id, start_date, end_date, status) {
         try {
             const monthsFull = [

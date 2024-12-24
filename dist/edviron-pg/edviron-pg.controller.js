@@ -1583,6 +1583,10 @@ let EdvironPgController = class EdvironPgController {
     async getTransactionReportBatched(start_date, end_date, trustee_id, school_id, status) {
         return await this.edvironPgService.getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id);
     }
+    async getTransactionReportBatchedFiltered(body) {
+        const { start_date, end_date, trustee_id, school_id, mode, status } = body;
+        return await this.edvironPgService.getTransactionReportBatchedFilterd(trustee_id, start_date, end_date, status, school_id, mode);
+    }
     async getErpWebhookLogs(body) {
         const { token, startDate, endDate, limit, page, trustee_id, school_id, status, collect_id, custom_id, } = body;
         let query = {
@@ -1853,6 +1857,13 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getTransactionReportBatched", null);
+__decorate([
+    (0, common_1.Post)('/get-transaction-report-batched'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getTransactionReportBatchedFiltered", null);
 __decorate([
     (0, common_1.Post)('/erp-webhook-logs'),
     __param(0, (0, common_1.Body)()),

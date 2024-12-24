@@ -2221,6 +2221,30 @@ export class EdvironPgController {
     );
   }
 
+
+  @Post('/get-transaction-report-batched')
+  async getTransactionReportBatchedFiltered(
+    @Body() body:{
+      start_date: string,
+      end_date: string,
+      trustee_id: string,
+      status: string,
+      school_id?: string | null,
+      mode?: string[] | null,
+    }
+  ) {
+    const {start_date, end_date, trustee_id, school_id, mode,status} = body
+    return await this.edvironPgService.getTransactionReportBatchedFilterd(
+      trustee_id,
+      start_date,
+      end_date,
+      status,
+      school_id,
+      mode
+    );
+  }
+
+
   @Post('/erp-webhook-logs')
   async getErpWebhookLogs(
     @Body()
@@ -2355,4 +2379,5 @@ export class EdvironPgController {
       throw new BadRequestException(e.message);
     }
   }
+
 }

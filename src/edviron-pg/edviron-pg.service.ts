@@ -1085,6 +1085,159 @@ async createVendor(
     }
   }
 
+  async getTransactionReportBatchedFilterd(
+    trustee_id: string,
+    start_date: string,
+    end_date: string,
+    status?: string | null,
+    school_id?: string | null,
+    mode?:string[] | null,
+  ) {
+    try {
+      const endOfDay = new Date(end_date);
+      const startDates = new Date(start_date);
+      const startOfDayUTC = new Date(
+        await this.convertISTStartToUTC(start_date),
+      ); // Start of December 6 in IST
+      const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
+      // Set hours, minutes, seconds, and milliseconds to the last moment of the day
+      endOfDay.setHours(23, 59, 59, 999);
+      let collectQuery: any = {
+        trustee_id: trustee_id,
+        createdAt: {
+          // $gte: new Date(start_date),
+          // $lt: endOfDay,
+          $gte: new Date(startDates.getTime() - 24 * 60 * 60 * 1000),
+          $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
+        },
+      };
+
+      if (school_id) {
+        collectQuery = {
+          ...collectQuery,
+          school_id: school_id,
+        };
+      }
+
+      
+      const orders =
+        await this.databaseService.CollectRequestModel.find(
+          collectQuery,
+        ).select('_id');
+
+      let transactions: any[] = [];
+
+      const orderIds = orders.map((order: any) => order._id);
+
+      let query: any = {
+        collect_id: { $in: orderIds },
+        // status: { $regex: new RegExp(`^${status}$`, 'i') }
+      };
+
+      const startDate = new Date(start_date);
+      const endDate = end_date;
+
+      console.log(new Date(endDate), 'End date before adding hr');
+
+      console.log(endOfDay, 'end date after adding hr');
+
+      if (startDate && endDate) {
+        query = {
+          ...query,
+          updatedAt: {
+            $gte: startOfDayUTC,
+            $lt: endOfDayUTC,
+            // $gte: new Date('2024-12-05T18:31:00.979+00:00'),
+            // $lte: new Date(istEndDate),
+          },
+        };
+      }
+      // console.log(`getting transaction`);
+
+      if ((status && status === 'SUCCESS') || status === 'PENDING') {
+        console.log('adding status to transaction');
+
+        query = {
+          ...query,
+          status: { $in: [status.toUpperCase(), status.toLowerCase()] },
+        };
+      }
+      if (school_id) {
+      }
+
+      if(mode){
+        query = {
+          ...query,
+          payment_method: {$in:mode}
+        }
+      }
+   
+      console.log(query,'qqq');
+      
+      
+      transactions =
+        await this.databaseService.CollectRequestStatusModel.aggregate([
+          {
+            $match: query, // Apply your filters
+          },
+          {
+            $project: {
+              collect_id: 1,
+              transaction_amount: 1,
+              order_amount: 1,
+              status: 1,
+              createdAt: 1,
+            },
+          },
+          {
+            $lookup: {
+              from: 'collectrequests',
+              localField: 'collect_id',
+              foreignField: '_id',
+              as: 'collect_request',
+            },
+          },
+          {
+            $unwind: '$collect_request', // Flatten the joined data
+          },
+          // {
+          //   $project:{
+          //     collect_id:'$collect_id',
+          //     transaction_amount: 1,
+          //     order_amount: 1,
+          //     custom_id:'$collect_request.custom_order_id'
+
+          //   }
+          // },
+          {
+            $group: {
+              _id: '$collect_request.trustee_id', // Group by `trustee_id`
+              totalTransactionAmount: { $sum: '$transaction_amount' },
+              totalOrderAmount: { $sum: '$order_amount' },
+              totalTransactions: { $sum: 1 }, // Count total transactions
+            },
+          },
+          {
+            $project: {
+              _id: 0, // Remove the `_id` field
+              // trustee_id: '$_id', // Rename `_id` to `trustee_id`
+              totalTransactionAmount: 1,
+              totalOrderAmount: 1,
+              totalTransactions: 1,
+            },
+          },
+        ]);
+
+      console.timeEnd('transactionsCount');
+      return {
+        length: transactions.length,
+        transactions,
+      };
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
   async generateBacthTransactions(
     trustee_id: string,
     start_date: string,

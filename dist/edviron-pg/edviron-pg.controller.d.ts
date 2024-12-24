@@ -133,6 +133,17 @@ export declare class EdvironPgController {
         length: number;
         transactions: any[];
     }>;
+    getTransactionReportBatchedFiltered(body: {
+        start_date: string;
+        end_date: string;
+        trustee_id: string;
+        status: string;
+        school_id?: string | null;
+        mode?: string[] | null;
+    }): Promise<{
+        length: number;
+        transactions: any[];
+    }>;
     getErpWebhookLogs(body: {
         token: string;
         limit: number;
