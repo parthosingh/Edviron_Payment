@@ -1653,6 +1653,7 @@ export class EdvironPgController {
                 bank_reference: 1,
                 createdAt: 1,
                 updatedAt: 1,
+                isAutoRefund:1
               },
             },
             {
@@ -1676,6 +1677,7 @@ export class EdvironPgController {
                       custom_order_id: '$collect_request.custom_order_id',
                       isSplitPayments: '$collect_request.isSplitPayments',
                       vendors_info: '$collect_request.vendors_info',
+                      isAutoRefund: '$isAutoRefund',
                     },
                   ],
                 },
@@ -1755,6 +1757,7 @@ export class EdvironPgController {
                 bank_reference: 1,
                 createdAt: 1,
                 updatedAt: 1,
+                isAutoRefund:1
               },
             },
             {
@@ -1778,6 +1781,7 @@ export class EdvironPgController {
                       custom_order_id: '$collect_request.custom_order_id',
                       isSplitPayments: '$collect_request.isSplitPayments',
                       vendors_info: '$collect_request.vendors_info',
+                      isAutoRefund: '$isAutoRefund',
                     },
                   ],
                 },
