@@ -399,6 +399,8 @@ export class EdvironPgController {
 
     // Auto Refund Code Replicate on easebuzz
     if (collectReq.school_id === '65d443168b8aa46fcb5af3e4') {
+      console.log('edv schoool',pendingCollectReq);
+      
       try {
         if (
           pendingCollectReq &&
@@ -434,8 +436,9 @@ export class EdvironPgController {
           };
 
           const autoRefundResponse = await axios.request(autoRefundConfig);
-          const refund_id = autoRefundResponse.data._id.toString();
-          const refund_amount = autoRefundResponse.data._amount;
+           const refund_id = autoRefundResponse.data._id.toString();
+
+          const refund_amount = autoRefundResponse.data.refund_amount;
           console.log('Auto Refund Initiated');
           await this.cashfreeService.initiateRefund(
             refund_id,
@@ -450,6 +453,7 @@ export class EdvironPgController {
         }
       } catch (e) {
         console.log(e.message);
+        return
       }
     }
 
@@ -799,8 +803,10 @@ export class EdvironPgController {
             },
           };
           const autoRefundResponse = await axios.request(autoRefundConfig);
+          console.log(autoRefundResponse.data,'refund');
+          
           const refund_id = autoRefundResponse.data._id.toString();
-          const refund_amount = autoRefundResponse.data._amount;
+          const refund_amount = autoRefundResponse.data.refund_amount;
           const refund_process = await this.easebuzzService.initiateRefund(
             collect_id,
             refund_amount,

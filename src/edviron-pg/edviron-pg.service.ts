@@ -734,12 +734,12 @@ export class EdvironPgService implements GatewayService {
                 
               }
             } catch (e) {
-              console.log(
-                `Error in sending Webhook to ${url}`,
-                e.response.data,
-                e.response.status
-              );
-              if (e.response.data) {
+              // console.log(
+              //   `Error in sending Webhook to ${url}`,
+              //   e.response.data,
+              //   e.response.status
+              // );
+              if (e.response?.data) {
                 const currentIST = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
                 await this.databaseService.ErpWebhooksLogsModel.create({
                   collect_id: webHookData.collect_id,

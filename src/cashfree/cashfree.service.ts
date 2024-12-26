@@ -21,6 +21,7 @@ export class CashfreeService {
     private readonly edvironPgService: EdvironPgService,
   ) {}
   async initiateRefund(refund_id: string, amount: number, collect_id: string) {
+
     const request =
       await this.databaseService.CollectRequestModel.findById(collect_id);
     if (!request) {
@@ -50,11 +51,9 @@ export class CashfreeService {
     try {
       const response = await axios.request(config);
       console.log(response.data);
-
       return response.data;
     } catch (e) {
       console.log(e);
-
       throw new BadRequestException(e.message);
     }
   }

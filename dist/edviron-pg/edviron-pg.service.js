@@ -594,8 +594,7 @@ let EdvironPgService = class EdvironPgService {
                             }
                         }
                         catch (e) {
-                            console.log(`Error in sending Webhook to ${url}`, e.response.data, e.response.status);
-                            if (e.response.data) {
+                            if (e.response?.data) {
                                 const currentIST = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
                                 await this.databaseService.ErpWebhooksLogsModel.create({
                                     collect_id: webHookData.collect_id,

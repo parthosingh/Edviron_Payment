@@ -271,6 +271,7 @@ let EdvironPgController = class EdvironPgController {
             return;
         }
         if (collectReq.school_id === '65d443168b8aa46fcb5af3e4') {
+            console.log('edv schoool', pendingCollectReq);
             try {
                 if (pendingCollectReq &&
                     pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.PENDING &&
@@ -303,7 +304,7 @@ let EdvironPgController = class EdvironPgController {
                     };
                     const autoRefundResponse = await axios_1.default.request(autoRefundConfig);
                     const refund_id = autoRefundResponse.data._id.toString();
-                    const refund_amount = autoRefundResponse.data._amount;
+                    const refund_amount = autoRefundResponse.data.refund_amount;
                     console.log('Auto Refund Initiated');
                     await this.cashfreeService.initiateRefund(refund_id, refund_amount, collect_id);
                     pendingCollectReq.isAutoRefund = true;
@@ -314,6 +315,7 @@ let EdvironPgController = class EdvironPgController {
             }
             catch (e) {
                 console.log(e.message);
+                return;
             }
         }
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
@@ -526,8 +528,9 @@ let EdvironPgController = class EdvironPgController {
                         },
                     };
                     const autoRefundResponse = await axios_1.default.request(autoRefundConfig);
+                    console.log(autoRefundResponse.data, 'refund');
                     const refund_id = autoRefundResponse.data._id.toString();
-                    const refund_amount = autoRefundResponse.data._amount;
+                    const refund_amount = autoRefundResponse.data.refund_amount;
                     const refund_process = await this.easebuzzService.initiateRefund(collect_id, refund_amount, refund_id);
                     console.log('Auto refund Initiated', refund_process);
                     pendingCollectReq.isAutoRefund = true;
