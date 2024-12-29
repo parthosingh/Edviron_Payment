@@ -885,10 +885,26 @@ let EdvironPgService = class EdvironPgService {
             if (startDate && endDate) {
                 query = {
                     ...query,
-                    updatedAt: {
-                        $gte: startOfDayUTC,
-                        $lt: endOfDayUTC,
-                    },
+                    $or: [
+                        {
+                            payment_time: {
+                                $exists: true,
+                                $gte: startOfDayUTC,
+                                $lt: endOfDayUTC,
+                            },
+                        },
+                        {
+                            $and: [
+                                { payment_time: { $exists: false } },
+                                {
+                                    updatedAt: {
+                                        $gte: startOfDayUTC,
+                                        $lt: endOfDayUTC,
+                                    },
+                                },
+                            ],
+                        },
+                    ],
                 };
             }
             if ((status && status === 'SUCCESS') || status === 'PENDING') {
@@ -950,6 +966,7 @@ let EdvironPgService = class EdvironPgService {
                     },
                 ]);
             console.timeEnd('transactionsCount');
+            console.log(transactions, 'sum of aggreagations');
             return {
                 length: transactions.length,
                 transactions,

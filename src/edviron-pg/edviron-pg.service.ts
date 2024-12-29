@@ -1144,13 +1144,27 @@ async createVendor(
       if (startDate && endDate) {
         query = {
           ...query,
-          updatedAt: {
-            $gte: startOfDayUTC,
-            $lt: endOfDayUTC,
-            // $gte: new Date('2024-12-05T18:31:00.979+00:00'),
-            // $lte: new Date(istEndDate),
-          },
-        };
+          $or: [
+            {
+              payment_time: {
+                $exists: true,
+                $gte: startOfDayUTC,
+                $lt: endOfDayUTC,
+              },
+            },
+            {
+              $and: [
+                { payment_time: { $exists: false } },
+                {
+                  updatedAt: {
+                    $gte: startOfDayUTC,
+                    $lt: endOfDayUTC,
+                  },
+                },
+              ],
+            },
+          ],
+        }
       }
       // console.log(`getting transaction`);
 
@@ -1229,6 +1243,8 @@ async createVendor(
         ]);
 
       console.timeEnd('transactionsCount');
+      console.log(transactions,'sum of aggreagations');
+      
       return {
         length: transactions.length,
         transactions,

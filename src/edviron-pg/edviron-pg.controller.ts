@@ -1301,7 +1301,7 @@ export class EdvironPgController {
 
       if (decrypted.collect_request_id != collect_request_id) {
         throw new ForbiddenException('Request forged');
-      }
+      } 
 
       const transactions =
         await this.databaseService.CollectRequestStatusModel.aggregate([
@@ -1453,10 +1453,10 @@ export class EdvironPgController {
 
       let collectQuery: any = {
         trustee_id: trustee_id,
-        createdAt: {
-          $gte: startOfDayUTC,
-          $lt: endOfDayUTC,
-        },
+        // createdAt: {
+        //   $gte: startOfDayUTC,
+        //   $lt: endOfDayUTC,
+        // },
       };
       if (school_id != 'null') {
         collectQuery = {
@@ -1501,12 +1501,29 @@ export class EdvironPgController {
       if (startDate && endDate) {
         query = {
           ...query,
-          updatedAt: {
-            $gte: startOfDayUTC,
-            $lt: endOfDayUTC,
-          },
+          $or: [
+            {
+              payment_time: {
+                $exists: true,
+                $gte: startOfDayUTC,
+                $lt: endOfDayUTC,
+              },
+            },
+            {
+              $and: [
+                { payment_time: { $exists: false } },
+                {
+                  updatedAt: {
+                    $gte: startOfDayUTC,
+                    $lt: endOfDayUTC,
+                  },
+                },
+              ],
+            },
+          ],
         };
       }
+      
       console.log(`getting transaction`);
 
       if (status === 'SUCCESS' || status === 'PENDING') {
@@ -2244,10 +2261,12 @@ export class EdvironPgController {
     }
   ) {
     const {start_date, end_date, trustee_id, school_id, mode,status} = body
+    console.log('getting transaction sum');
+    
     return await this.edvironPgService.getTransactionReportBatchedFilterd(
       trustee_id,
       start_date,
-      end_date,
+      end_date, 
       status,
       school_id,
       mode
