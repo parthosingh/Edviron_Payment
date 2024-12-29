@@ -399,8 +399,8 @@ export class EdvironPgController {
 
     // Auto Refund Code Replicate on easebuzz
     if (collectReq.school_id === '65d443168b8aa46fcb5af3e4') {
-      console.log('edv schoool',pendingCollectReq);
-      
+      console.log('edv schoool', pendingCollectReq);
+
       try {
         if (
           pendingCollectReq &&
@@ -436,7 +436,7 @@ export class EdvironPgController {
           };
 
           const autoRefundResponse = await axios.request(autoRefundConfig);
-           const refund_id = autoRefundResponse.data._id.toString();
+          const refund_id = autoRefundResponse.data._id.toString();
 
           const refund_amount = autoRefundResponse.data.refund_amount;
           console.log('Auto Refund Initiated');
@@ -453,7 +453,7 @@ export class EdvironPgController {
         }
       } catch (e) {
         console.log(e.message);
-        return
+        return;
       }
     }
 
@@ -803,8 +803,8 @@ export class EdvironPgController {
             },
           };
           const autoRefundResponse = await axios.request(autoRefundConfig);
-          console.log(autoRefundResponse.data,'refund');
-          
+          console.log(autoRefundResponse.data, 'refund');
+
           const refund_id = autoRefundResponse.data._id.toString();
           const refund_amount = autoRefundResponse.data.refund_amount;
           const refund_process = await this.easebuzzService.initiateRefund(
@@ -962,7 +962,7 @@ export class EdvironPgController {
         console.log(`failed to save commision ${e.message}`);
       }
     }
-
+    const payment_time = new Date(body.addedon) 
     const updateReq =
       await this.databaseService.CollectRequestStatusModel.updateOne(
         {
@@ -975,6 +975,7 @@ export class EdvironPgController {
             payment_method,
             details: JSON.stringify(details),
             bank_reference: body.bank_ref_num,
+            payment_time
           },
         },
         {
@@ -990,55 +991,7 @@ export class EdvironPgController {
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: collectIdObject,
       });
-    // const custom_order_id = collectRequest?.custom_order_id || '';
-    // const additional_data = collectRequest?.additional_data || '';
-    // if (webHookUrl !== null) {
-    //   const amount = reqToCheck?.amount;
-    //   const webHookData = await sign({
-    //     collect_id,
-    //     amount,
-    //     status,
-    //     trustee_id: collectReq.trustee_id,
-    //     school_id: collectReq.school_id,
-    //     req_webhook_urls: collectReq?.req_webhook_urls,
-    //     custom_order_id,
-    //     createdAt: collectRequestStatus?.createdAt,
-    //     transaction_time: collectRequestStatus?.updatedAt,
-    //     additional_data,
-    //   });
-    //   const createConfig = (url: string) => ({
-    //     method: 'post',
-    //     maxBodyLength: Infinity,
-    //     url: url,
-    //     headers: {
-    //       accept: 'application/json',
-    //       'content-type': 'application/json',
-    //     },
-    //     data: webHookData,
-    //   });
-    //   try {
-    //     try {
-    //       const sendWebhook = (url: string) => {
-    //         axios
-    //           .request(createConfig(url))
-    //           .then(() => console.log(`Webhook sent to ${url}`))
-    //           .catch((error) =>
-    //             console.error(
-    //               `Error sending webhook to ${url}:`,
-    //               error.message,
-    //             ),
-    //           );
-    //       };
 
-    //       webHookUrl.forEach(sendWebhook);
-    //     } catch (error) {
-    //       console.error('Error in webhook sending process:', error);
-    //     }
-    //   } catch (error) {
-    //     console.error('Error sending webhooks:', error);
-    //   }
-    //   res.status(200).send('OK');
-    // }
     if (!collectRequestStatus) {
       throw new Error('Collect Request Not Found');
     }
@@ -1301,7 +1254,7 @@ export class EdvironPgController {
 
       if (decrypted.collect_request_id != collect_request_id) {
         throw new ForbiddenException('Request forged');
-      } 
+      }
 
       const transactions =
         await this.databaseService.CollectRequestStatusModel.aggregate([
@@ -1523,7 +1476,7 @@ export class EdvironPgController {
           ],
         };
       }
-      
+
       console.log(`getting transaction`);
 
       if (status === 'SUCCESS' || status === 'PENDING') {
@@ -1670,7 +1623,7 @@ export class EdvironPgController {
                 bank_reference: 1,
                 createdAt: 1,
                 updatedAt: 1,
-                isAutoRefund:1
+                isAutoRefund: 1,
               },
             },
             {
@@ -1774,7 +1727,7 @@ export class EdvironPgController {
                 bank_reference: 1,
                 createdAt: 1,
                 updatedAt: 1,
-                isAutoRefund:1
+                isAutoRefund: 1,
               },
             },
             {
@@ -2248,31 +2201,30 @@ export class EdvironPgController {
     );
   }
 
-
   @Post('/get-transaction-report-batched')
   async getTransactionReportBatchedFiltered(
-    @Body() body:{
-      start_date: string,
-      end_date: string,
-      trustee_id: string,
-      status: string,
-      school_id?: string | null,
-      mode?: string[] | null,
-    }
+    @Body()
+    body: {
+      start_date: string;
+      end_date: string;
+      trustee_id: string;
+      status: string;
+      school_id?: string | null;
+      mode?: string[] | null;
+    },
   ) {
-    const {start_date, end_date, trustee_id, school_id, mode,status} = body
+    const { start_date, end_date, trustee_id, school_id, mode, status } = body;
     console.log('getting transaction sum');
-    
+
     return await this.edvironPgService.getTransactionReportBatchedFilterd(
       trustee_id,
       start_date,
-      end_date, 
+      end_date,
       status,
       school_id,
-      mode
+      mode,
     );
   }
-
 
   @Post('/erp-webhook-logs')
   async getErpWebhookLogs(
@@ -2408,5 +2360,6 @@ export class EdvironPgController {
       throw new BadRequestException(e.message);
     }
   }
-
 }
+
+

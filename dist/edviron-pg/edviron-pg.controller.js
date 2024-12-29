@@ -673,6 +673,7 @@ let EdvironPgController = class EdvironPgController {
                 console.log(`failed to save commision ${e.message}`);
             }
         }
+        const payment_time = new Date(body.addedon);
         const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
             collect_id: collectIdObject,
         }, {
@@ -682,6 +683,7 @@ let EdvironPgController = class EdvironPgController {
                 payment_method,
                 details: JSON.stringify(details),
                 bank_reference: body.bank_ref_num,
+                payment_time
             },
         }, {
             upsert: true,
@@ -1211,7 +1213,7 @@ let EdvironPgController = class EdvironPgController {
                                 bank_reference: 1,
                                 createdAt: 1,
                                 updatedAt: 1,
-                                isAutoRefund: 1
+                                isAutoRefund: 1,
                             },
                         },
                         {
@@ -1311,7 +1313,7 @@ let EdvironPgController = class EdvironPgController {
                                 bank_reference: 1,
                                 createdAt: 1,
                                 updatedAt: 1,
-                                isAutoRefund: 1
+                                isAutoRefund: 1,
                             },
                         },
                         {
