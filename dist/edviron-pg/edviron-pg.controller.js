@@ -1061,14 +1061,14 @@ let EdvironPgController = class EdvironPgController {
                     $or: [
                         {
                             payment_time: {
-                                $exists: true,
+                                $ne: null,
                                 $gte: startOfDayUTC,
                                 $lt: endOfDayUTC,
                             },
                         },
                         {
                             $and: [
-                                { payment_time: { $exists: false } },
+                                { payment_time: { $eq: null } },
                                 {
                                     updatedAt: {
                                         $gte: startOfDayUTC,

@@ -1457,14 +1457,14 @@ export class EdvironPgController {
           $or: [
             {
               payment_time: {
-                $exists: true,
+                $ne: null, // Matches documents where payment_time exists and is not null
                 $gte: startOfDayUTC,
                 $lt: endOfDayUTC,
               },
             },
             {
               $and: [
-                { payment_time: { $exists: false } },
+                { payment_time: { $eq: null } }, // Matches documents where payment_time is null or doesn't exist
                 {
                   updatedAt: {
                     $gte: startOfDayUTC,
@@ -1475,6 +1475,7 @@ export class EdvironPgController {
             },
           ],
         };
+        
       }
 
       console.log(`getting transaction`);
