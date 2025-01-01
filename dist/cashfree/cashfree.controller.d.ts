@@ -5,6 +5,22 @@ export declare class CashfreeController {
     private readonly cashfreeService;
     constructor(databaseService: DatabaseService, cashfreeService: CashfreeService);
     initiateRefund(body: any): Promise<any>;
+    initiateSplitRefund(body: {
+        token: string;
+        refund_amount: number;
+        refund_id: string;
+        refund_note: string;
+        collect_id: string;
+        refund_splits: [
+            {
+                vendor_id: string;
+                amount: number;
+                tags: {
+                    reason: string;
+                };
+            }
+        ];
+    }): Promise<any>;
     getUpiPaymentInfoUrl(req: any): Promise<{
         intentUrl: any;
         qrCodeBase64: any;

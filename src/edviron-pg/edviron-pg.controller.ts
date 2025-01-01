@@ -2357,7 +2357,7 @@ export class EdvironPgController {
         query.trustee_id,
         query.year,
       );
-    } catch (e) {
+    } catch (e) { 
       throw new BadRequestException(e.message);
     }
   }

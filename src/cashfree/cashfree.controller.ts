@@ -59,6 +59,72 @@ export class CashfreeController {
     }
   }
 
+  @Post('/split-refund')
+  async initiateSplitRefund(
+    @Body()
+    body: {
+      token: string;
+      refund_amount: number;
+      refund_id: string;
+      refund_note: string;
+      collect_id: string;
+      refund_splits: [
+        {
+          vendor_id: string;
+          amount: number;
+          tags: {
+            reason: string;
+          };
+        },
+      ];
+    },
+  ) {
+    const {
+      token,
+      refund_amount,
+      refund_note,
+      collect_id,
+      refund_id,
+      refund_splits,
+    } = body;
+    const data = {
+      refund_amount: refund_amount,
+      refund_id: refund_id,
+      refund_note: refund_note,
+      refund_splits,
+      refund_speed: 'STANDARD',
+    };
+    try {
+      let decrypted = jwt.verify(token, process.env.KEY!) as any;
+      if (decrypted.collect_id != collect_id) {
+        throw new BadRequestException('Invalid token');
+      }
+      const request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!request) {
+        throw new BadRequestException('Collect Request not found');
+      }
+      const config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/${collect_id}/refunds`,
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-api-version': '2023-08-01',
+          'x-partner-merchantid': request.clientId || null,
+          'x-partner-apikey': process.env.CASHFREE_API_KEY,
+        },
+        data: data,
+      };
+      const axios = require('axios');
+      const response = await axios.request(config);
+      return response.data;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
   @Get('/upi-payment')
   async getUpiPaymentInfoUrl(@Req() req: any) {
     const { token, collect_id } = req.query;
@@ -73,7 +139,7 @@ export class CashfreeController {
     }
 
     // request.gateway=Gateway.EDVIRON_PG
-    await request.save()
+    await request.save();
     const cashfreeId = request.paymentIds.cashfree_id;
     if (!cashfreeId) {
       throw new BadRequestException('Error in Getting QR Code');
@@ -145,11 +211,14 @@ export class CashfreeController {
       return { intentUrl: intent, qrCodeBase64: qrBase64, collect_id };
     } catch (e) {
       console.log(e);
-      if(e.response?.data?.message && e.response?.data?.code){
-        if(e.response?.data?.message && e.response?.data?.code === 'order_inactive'){
-          throw new BadRequestException('Order expired')
+      if (e.response?.data?.message && e.response?.data?.code) {
+        if (
+          e.response?.data?.message &&
+          e.response?.data?.code === 'order_inactive'
+        ) {
+          throw new BadRequestException('Order expired');
         }
-        throw new BadRequestException(e.response.data.message)
+        throw new BadRequestException(e.response.data.message);
       }
       throw new BadRequestException(e.message);
     }
@@ -157,41 +226,44 @@ export class CashfreeController {
 
   @Post('/settlements-transactions')
   async getSettlementsTransactions(
-    @Body() body:{limit:number,cursor:string | null},
-    @Req() req: any) {
-    const {utr,client_id,token}=req.query
-    try{
-      const limit = body.limit || 40
-      return await this.cashfreeService.getTransactionForSettlements(utr,client_id,limit,body.cursor);
-    }catch(e){
+    @Body() body: { limit: number; cursor: string | null },
+    @Req() req: any,
+  ) {
+    const { utr, client_id, token } = req.query;
+    try {
+      const limit = body.limit || 40;
+      return await this.cashfreeService.getTransactionForSettlements(
+        utr,
+        client_id,
+        limit,
+        body.cursor,
+      );
+    } catch (e) {
       // console.log(e)
-      throw new BadRequestException(e.message)
+      throw new BadRequestException(e.message);
     }
   }
 
   @Post('/webhook-test')
-  async testWebhook(req: any, @Res() res: any){
-    try{
+  async testWebhook(req: any, @Res() res: any) {
+    try {
       // const { data } = req.body;
       console.log('test webhook called');
-      
-      return res.status(200).json({ message: 'Webhook test successful' });
-    }catch(e){
-      console.log(e) 
 
+      return res.status(200).json({ message: 'Webhook test successful' });
+    } catch (e) {
+      console.log(e);
     }
   }
   @Post('/webhook-test-2')
-  async testWebhook2(req: any, @Res() res: any){
-    try{
+  async testWebhook2(req: any, @Res() res: any) {
+    try {
       // const { data } = req.body;
       console.log('test webhook called');
-      
-      return res.status(200).json({ message: 'Webhook test successful' });
-    }catch(e){
-      console.log(e) 
 
+      return res.status(200).json({ message: 'Webhook test successful' });
+    } catch (e) {
+      console.log(e);
     }
   }
-}  
- 
+}
