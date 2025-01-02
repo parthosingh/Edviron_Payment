@@ -1345,7 +1345,7 @@ async createVendor(
         await this.databaseService.BatchTransactionModel.findOne({
           trustee_id: trustee_id,
           month: monthsFull[new Date(endDate).getMonth()],
-          year: new Date(endDate).getFullYear().toString(),
+          year: new Date(endDate).getFullYear().toString(), 
         });
       if (checkbatch) {
         await this.databaseService.ErrorLogsModel.create({
