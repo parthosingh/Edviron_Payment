@@ -953,6 +953,8 @@ async createVendor(
     school_id?: string | null,
   ) {
     try {
+      console.log(start_date,end_date);
+      
       const endOfDay = new Date(end_date);
       const startDates = new Date(start_date);
       const startOfDayUTC = new Date(

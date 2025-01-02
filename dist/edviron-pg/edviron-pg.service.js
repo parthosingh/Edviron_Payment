@@ -754,6 +754,7 @@ let EdvironPgService = class EdvironPgService {
     }
     async getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id) {
         try {
+            console.log(start_date, end_date);
             const endOfDay = new Date(end_date);
             const startDates = new Date(start_date);
             const startOfDayUTC = new Date(await this.convertISTStartToUTC(start_date));
