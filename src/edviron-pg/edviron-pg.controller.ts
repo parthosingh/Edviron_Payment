@@ -1625,6 +1625,7 @@ export class EdvironPgController {
                 createdAt: 1,
                 updatedAt: 1,
                 isAutoRefund: 1,
+                payment_time: 1,
               },
             },
             {
@@ -1649,6 +1650,7 @@ export class EdvironPgController {
                       isSplitPayments: '$collect_request.isSplitPayments',
                       vendors_info: '$collect_request.vendors_info',
                       isAutoRefund: '$isAutoRefund',
+                      payment_time: '$payment_time',
                     },
                   ],
                 },
@@ -1729,6 +1731,7 @@ export class EdvironPgController {
                 createdAt: 1,
                 updatedAt: 1,
                 isAutoRefund: 1,
+                payment_time: 1,
               },
             },
             {
@@ -1753,6 +1756,7 @@ export class EdvironPgController {
                       isSplitPayments: '$collect_request.isSplitPayments',
                       vendors_info: '$collect_request.vendors_info',
                       isAutoRefund: '$isAutoRefund',
+                      payment_time: '$payment_time',
                     },
                   ],
                 },
