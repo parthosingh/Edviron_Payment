@@ -26,12 +26,29 @@ let CashfreeService = class CashfreeService {
         this.edvironPgService = edvironPgService;
     }
     async initiateRefund(refund_id, amount, collect_id) {
+        const axios = require('axios');
+        const refundInfoConfig = {
+            method: 'get',
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-refund-info?refund_id=${refund_id}`,
+            headers: {
+                'Content-Type': 'application/json',
+                accept: 'application/json',
+            },
+        };
+        const res = await axios.request(refundInfoConfig);
+        if (res.data.isSplitRedund) {
+            try {
+                return this.initiateSplitRefund(amount, refund_id, 'inititating refund', collect_id, res.data.split_refund_details);
+            }
+            catch (e) {
+                console.log(e.message);
+            }
+        }
         const request = await this.databaseService.CollectRequestModel.findById(collect_id);
         if (!request) {
             throw new Error('Collect Request not found');
         }
         console.log('initiating refund with cashfree');
-        const axios = require('axios');
         const data = {
             refund_speed: 'STANDARD',
             refund_amount: amount,
@@ -57,6 +74,40 @@ let CashfreeService = class CashfreeService {
         }
         catch (e) {
             console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async initiateSplitRefund(refund_amount, refund_id, refund_note, collect_id, refund_splits) {
+        const data = {
+            refund_amount: refund_amount,
+            refund_id: refund_id,
+            refund_note: refund_note,
+            refund_splits,
+            refund_speed: 'STANDARD',
+        };
+        try {
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request) {
+                throw new common_1.BadRequestException('Collect Request not found');
+            }
+            const config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/${collect_id}/refunds`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': request.clientId || null,
+                    'x-partner-apikey': process.env.CASHFREE_API_KEY,
+                },
+                data: data,
+            };
+            const axios = require('axios');
+            const response = await axios.request(config);
+            return response.data;
+        }
+        catch (e) {
             throw new common_1.BadRequestException(e.message);
         }
     }

@@ -7,6 +7,15 @@ export declare class CashfreeService {
     private readonly edvironPgService;
     constructor(databaseService: DatabaseService, edvironPgService: EdvironPgService);
     initiateRefund(refund_id: string, amount: number, collect_id: string): Promise<any>;
+    initiateSplitRefund(refund_amount: number, refund_id: string, refund_note: string, collect_id: string, refund_splits: [
+        {
+            vendor_id: string;
+            amount: number;
+            tags: {
+                reason: string;
+            };
+        }
+    ]): Promise<any>;
     terminateOrder(collect_id: string): Promise<any>;
     checkStatus(collect_request_id: String, collect_request: CollectRequest): Promise<{
         status: TransactionStatus;

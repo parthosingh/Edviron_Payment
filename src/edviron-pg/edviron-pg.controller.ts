@@ -1980,7 +1980,6 @@ export class EdvironPgController {
     },
   ) {
     const { collect_id, amount, refund_id, token } = body;
-
     let decrypted = jwt.verify(token, process.env.KEY!) as any;
     if (
       collect_id !== decrypted.collect_id ||
@@ -2000,7 +1999,7 @@ export class EdvironPgController {
       console.log(gateway);
 
       if (gateway === Gateway.EDVIRON_PG) {
-        console.log('refunding fromcashgree');
+        console.log('refunding fromcashfree');
 
         const refunds = await this.cashfreeService.initiateRefund(
           refund_id,

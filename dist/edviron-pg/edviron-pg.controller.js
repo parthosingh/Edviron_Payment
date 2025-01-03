@@ -1496,7 +1496,7 @@ let EdvironPgController = class EdvironPgController {
             const gateway = request.gateway;
             console.log(gateway);
             if (gateway === collect_request_schema_1.Gateway.EDVIRON_PG) {
-                console.log('refunding fromcashgree');
+                console.log('refunding fromcashfree');
                 const refunds = await this.cashfreeService.initiateRefund(refund_id, amount, collect_id);
                 console.log(refunds);
                 const response = {
