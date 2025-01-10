@@ -962,7 +962,7 @@ export class EdvironPgController {
         console.log(`failed to save commision ${e.message}`);
       }
     }
-    const payment_time = new Date(body.addedon) 
+    const payment_time = new Date(body.addedon);
     const updateReq =
       await this.databaseService.CollectRequestStatusModel.updateOne(
         {
@@ -975,7 +975,7 @@ export class EdvironPgController {
             payment_method,
             details: JSON.stringify(details),
             bank_reference: body.bank_ref_num,
-            payment_time
+            payment_time,
           },
         },
         {
@@ -1475,7 +1475,6 @@ export class EdvironPgController {
             },
           ],
         };
-        
       }
 
       console.log(`getting transaction`);
@@ -2360,10 +2359,177 @@ export class EdvironPgController {
         query.trustee_id,
         query.year,
       );
-    } catch (e) { 
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Post('/vendor-transactions-settlement')
+  async vendorTransactionsSettlement(
+    @Body()
+    body: {
+      collect_id: string;
+      token: string;
+    },
+  ) {
+    try {
+      const { collect_id, token } = body;
+      const decoded = jwt.verify(token, process.env.KEY!) as any;
+      if (decoded.collect_id !== collect_id) {
+        throw new UnauthorizedException('Invalid token');
+      }
+      const request = await this.databaseService.CollectRequestModel.findById(
+        body.collect_id,
+      );
+      if (!request) {
+        throw new NotFoundException('Collect Request not found');
+      }
+      const client_id = request.clientId;
+      const config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: `https://api.cashfree.com/pg/split/order/vendor/recon`,
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-api-version': '2023-08-01',
+          'x-partner-merchantid': client_id,
+          'x-partner-apikey': process.env.CASHFREE_API_KEY,
+        },
+        data: {
+          filters: {
+            start_date: null,
+            end_date: null,
+            order_ids: [body.collect_id],
+          },
+          pagination: {
+            limit: 1000,
+          },
+        },
+      };
+
+      const { data } = await axios.request(config);
+      return data;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Get('erp-transaction-info')
+  async getErpTransactionInfo(@Req() req: any) {
+    const { collect_request_id, token } = req.query;
+    try {
+      if (!collect_request_id) {
+        throw new Error('Collect request id not provided');
+      }
+      if (!token) throw new Error('Token not provided');
+      let decrypted = jwt.verify(token, process.env.KEY!) as any;
+
+      if (decrypted.collect_request_id != collect_request_id) {
+        throw new ForbiddenException('Request forged');
+      }
+
+      const transactions =
+        await this.databaseService.CollectRequestStatusModel.aggregate([
+          {
+            $match: {
+              collect_id: new Types.ObjectId(collect_request_id),
+            },
+          },
+          {
+            $lookup: {
+              from: 'collectrequests',
+              localField: 'collect_id',
+              foreignField: '_id',
+              as: 'collect_request',
+            },
+          },
+          {
+            $unwind: '$collect_request',
+          },
+          {
+            $project: {
+              _id: 0,
+              __v: 0,
+              'collect_request._id': 0,
+              'collect_request.__v': 0,
+              'collect_request.createdAt': 0,
+              'collect_request.updatedAt': 0,
+              'collect_request.callbackUrl': 0,
+              'collect_request.clientId': 0,
+              'collect_request.clientSecret': 0,
+              'collect_request.webHookUrl': 0,
+              'collect_request.disabled_modes': 0,
+              'collect_request.gateway': 0,
+              'collect_request.amount': 0,
+              'collect_request.trustee_id': 0,
+              'collect_request.sdkPayment': 0,
+              'collect_request.payment_data': 0,
+              'collect_request.ccavenue_merchant_id': 0,
+              'collect_request.ccavenue_access_code': 0,
+              'collect_request.ccavenue_working_key': 0,
+              'collect_request.easebuzz_sub_merchant_id': 0,
+              'collect_request.paymentIds': 0,
+              'collect_request.deepLink': 0,
+            },
+          },
+
+          {
+            $project: {
+              collect_id: 1,
+              collect_request: 1,
+              status: 1,
+              transaction_amount: 1,
+              order_amount: 1,
+              payment_method: 1,
+              details: 1,
+              bank_reference: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              isAutoRefund: 1,
+              payment_time: 1,
+            },
+          },
+          {
+            $addFields: {
+              collect_request: {
+                $mergeObjects: [
+                  '$collect_request',
+                  {
+                    status: '$status',
+                    transaction_amount: '$transaction_amount',
+                    payment_method: '$payment_method',
+                    details: '$details',
+                    bank_reference: '$bank_reference',
+                    collect_id: '$collect_id',
+                    order_amount: '$order_amount',
+                    merchant_id: '$collect_request.school_id',
+                    currency: 'INR',
+                    createdAt: '$createdAt',
+                    updatedAt: '$updatedAt',
+                    transaction_time: '$updatedAt',
+                    custom_order_id: '$collect_request.custom_order_id',
+                    isSplitPayments: '$collect_request.isSplitPayments',
+                    vendors_info: '$collect_request.vendors_info',
+                    isAutoRefund: '$isAutoRefund',
+                    payment_time: '$payment_time',
+                  },
+                ],
+              },
+            },
+          },
+          {
+            $replaceRoot: { newRoot: '$collect_request' },
+          },
+          {
+            $sort: { createdAt: -1 },
+          },
+        ]);
+
+      return transactions;
+    } catch (e) {
+      console.log(e);
       throw new BadRequestException(e.message);
     }
   }
 }
-
-
