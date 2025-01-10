@@ -391,6 +391,35 @@ let CashfreeService = class CashfreeService {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async initiateCapture(client_id, collect_id, capture, amount) {
+        try {
+            const config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/${collect_id}/authorization`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': client_id,
+                    'x-partner-apikey': process.env.CASHFREE_API_KEY,
+                },
+                data: {
+                    action: capture,
+                    amount: amount,
+                },
+            };
+            const response = await (0, axios_1.default)(config);
+            return response.data;
+        }
+        catch (e) {
+            if (e.response?.data.message) {
+                console.log(e.response.data);
+                throw new common_1.BadRequestException(e.response.data.message);
+            }
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.CashfreeService = CashfreeService;
 exports.CashfreeService = CashfreeService = __decorate([

@@ -33,16 +33,15 @@ export class CashfreeService {
 
     const res = await axios.request(refundInfoConfig);
     if (res.data.isSplitRedund) {
-      try{
-       return this.initiateSplitRefund(
+      try {
+        return this.initiateSplitRefund(
           amount,
           refund_id,
           'inititating refund',
           collect_id,
-          res.data.split_refund_details
-        )
-
-      }catch(e){
+          res.data.split_refund_details,
+        );
+      } catch (e) {
         console.log(e.message);
       }
     }
@@ -481,6 +480,41 @@ export class CashfreeService {
         service_charge: taxes,
       };
     } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  async initiateCapture(
+    client_id: string,
+    collect_id: string,
+    capture: string,
+    amount: number,
+  ) {
+    try {
+      const config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/${collect_id}/authorization`,
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-api-version': '2023-08-01',
+          'x-partner-merchantid': client_id,
+          'x-partner-apikey': process.env.CASHFREE_API_KEY,
+        },
+        data: {
+          action: capture,
+          amount: amount,
+        },
+      };
+      const response = await axios(config);
+      return response.data;
+    } catch (e) {
+      if (e.response?.data.message) {
+        console.log(e.response.data);
+        throw new BadRequestException(e.response.data.message);
+      }
+
       throw new BadRequestException(e.message);
     }
   }

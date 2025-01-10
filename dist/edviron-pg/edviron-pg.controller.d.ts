@@ -185,4 +185,10 @@ export declare class EdvironPgController {
         token: string;
     }): Promise<any>;
     getErpTransactionInfo(req: any): Promise<any[]>;
+    mannualCapture(body: {
+        collect_id: string;
+        amount: number;
+        capture: string;
+        token: string;
+    }): Promise<any>;
 }

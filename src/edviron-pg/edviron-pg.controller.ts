@@ -2532,4 +2532,46 @@ export class EdvironPgController {
       throw new BadRequestException(e.message);
     }
   }
+
+  @Post('/payment-capture')
+  async mannualCapture(
+    @Body()
+    body: {
+      collect_id: string;
+      amount: number;
+      capture: string;
+      token: string;
+    },
+  ): Promise<any> {
+    try {
+      const { collect_id, amount, capture, token } = body;
+      const decoded = jwt.verify(token, process.env.KEY!) as any;
+      if (decoded.collect_id !== collect_id) {
+        throw new UnauthorizedException('Invalid token');
+      }
+      const collectRequest =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collectRequest) {
+        throw new BadRequestException('Collect request not found');
+      }
+
+      const gateway = collectRequest.gateway;
+      if (gateway === Gateway.EDVIRON_PG) {
+        return await this.cashfreeService.initiateCapture(
+          collectRequest.clientId,
+          collect_id,
+          capture,
+          amount,
+        );
+      }
+
+      throw new BadRequestException('Capture Not Available');
+    } catch (e) {
+      if (e.response?.message) {
+        console.log(e.response);
+        throw new BadRequestException(e.response.message);
+      }
+      throw new BadRequestException(e.message);
+    }
+  }
 }

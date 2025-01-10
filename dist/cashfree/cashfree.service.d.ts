@@ -39,4 +39,5 @@ export declare class CashfreeService {
         transfer_utr: any;
         service_charge: Number;
     }>;
+    initiateCapture(client_id: string, collect_id: string, capture: string, amount: number): Promise<any>;
 }

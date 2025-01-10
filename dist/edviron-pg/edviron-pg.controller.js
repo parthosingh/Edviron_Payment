@@ -1838,6 +1838,31 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async mannualCapture(body) {
+        try {
+            const { collect_id, amount, capture, token } = body;
+            const decoded = jwt.verify(token, process.env.KEY);
+            if (decoded.collect_id !== collect_id) {
+                throw new common_1.UnauthorizedException('Invalid token');
+            }
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest) {
+                throw new common_1.BadRequestException('Collect request not found');
+            }
+            const gateway = collectRequest.gateway;
+            if (gateway === collect_request_schema_1.Gateway.EDVIRON_PG) {
+                return await this.cashfreeService.initiateCapture(collectRequest.clientId, collect_id, capture, amount);
+            }
+            throw new common_1.BadRequestException('Capture Not Available');
+        }
+        catch (e) {
+            if (e.response?.message) {
+                console.log(e.response);
+                throw new common_1.BadRequestException(e.response.message);
+            }
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -2079,6 +2104,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getErpTransactionInfo", null);
+__decorate([
+    (0, common_1.Post)('/payment-capture'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "mannualCapture", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
