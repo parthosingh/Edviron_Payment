@@ -1650,6 +1650,7 @@ export class EdvironPgController {
                       vendors_info: '$collect_request.vendors_info',
                       isAutoRefund: '$isAutoRefund',
                       payment_time: '$payment_time',
+                      isQRPayment:'$collect_request.isQRPayment'
                     },
                   ],
                 },
