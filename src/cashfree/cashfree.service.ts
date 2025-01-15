@@ -312,27 +312,30 @@ export class CashfreeService {
       //   // student_id: customOrderMap.get(JSON.parse(order.additional_data.student_details.student_id)) || null,
       // }));
 
-      const enrichedOrders = response.data.map((order: any) => {
-        const customData: any = customOrderMap.get(order.order_id) || {};
+      const enrichedOrders = response.data
+        .filter((order: any) => order.order_id) 
+        .map((order: any) => {
+          const customData: any = customOrderMap.get(order.order_id) || {};
+          return {
+            ...order,
+            custom_order_id: customData.custom_order_id || null,
+            school_id: customData.school_id || null,
+            student_id:
+              JSON.parse(customData.additional_data)?.student_details
+                ?.student_id || null,
+            student_name:
+              JSON.parse(customData.additional_data)?.student_details
+                ?.student_name || null,
+            student_email:
+              JSON.parse(customData.additional_data)?.student_details
+                ?.student_email || null,
+            student_phone_no:
+              JSON.parse(customData.additional_data)?.student_details
+                ?.student_phone_no || null,
+          };
+        });
 
-        return {
-          ...order,
-          custom_order_id: customData.custom_order_id || null,
-          school_id: customData.school_id || null,
-          student_id:
-            JSON.parse(customData.additional_data).student_details.student_id ||
-            null,
-          student_name:
-            JSON.parse(customData.additional_data).student_details
-              .student_name || null,
-          student_email:
-            JSON.parse(customData.additional_data).student_details
-              .student_email || null,
-          student_phone_no:
-            JSON.parse(customData.additional_data).student_details
-              .student_phone_no || null,
-        };
-      });
+      console.log(enrichedOrders, 'plplp');
 
       return {
         cursor: response.cursor,
@@ -345,6 +348,7 @@ export class CashfreeService {
       throw new BadRequestException(e.message);
     }
   }
+
 
   async getUpiPaymentInfoUrl(collect_id: string) {
     const request =

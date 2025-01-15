@@ -57,6 +57,7 @@ export declare class EdvironPgController {
         isCustomSearch?: boolean;
         seachFilter?: string;
         payment_modes?: string[];
+        isQRCode?: boolean;
     }, res: any, req: any): Promise<void>;
     getErpLogo(collect_id: string): Promise<any>;
     getSchoolId(collect_id: string): Promise<string>;

@@ -1009,7 +1009,7 @@ let EdvironPgController = class EdvironPgController {
         }
     }
     async bulkTransactions(body, res, req) {
-        const { trustee_id, token, searchParams, isCustomSearch, seachFilter, payment_modes, } = body;
+        const { trustee_id, token, searchParams, isCustomSearch, seachFilter, payment_modes, isQRCode, } = body;
         if (!token)
             throw new Error('Token not provided');
         try {
@@ -1030,6 +1030,12 @@ let EdvironPgController = class EdvironPgController {
                 collectQuery = {
                     ...collectQuery,
                     school_id: school_id,
+                };
+            }
+            if (isQRCode) {
+                collectQuery = {
+                    ...collectQuery,
+                    isQRPayment: true,
                 };
             }
             let decrypted = jwt.verify(token, process.env.KEY);

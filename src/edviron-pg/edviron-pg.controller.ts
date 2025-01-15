@@ -1369,6 +1369,7 @@ export class EdvironPgController {
       isCustomSearch?: boolean;
       seachFilter?: string;
       payment_modes?: string[];
+      isQRCode?: boolean;
     },
     @Res() res: any,
     @Req() req: any,
@@ -1380,6 +1381,7 @@ export class EdvironPgController {
       isCustomSearch,
       seachFilter,
       payment_modes,
+      isQRCode,
     } = body;
     if (!token) throw new Error('Token not provided');
 
@@ -1415,6 +1417,13 @@ export class EdvironPgController {
         collectQuery = {
           ...collectQuery,
           school_id: school_id,
+        };
+      }
+
+      if(isQRCode){
+        collectQuery = {
+          ...collectQuery,
+          isQRPayment: true,
         };
       }
       let decrypted = jwt.verify(token, process.env.KEY!) as any;

@@ -240,22 +240,25 @@ let CashfreeService = class CashfreeService {
                     additional_data: doc.additional_data,
                 },
             ]));
-            const enrichedOrders = response.data.map((order) => {
+            const enrichedOrders = response.data
+                .filter((order) => order.order_id)
+                .map((order) => {
                 const customData = customOrderMap.get(order.order_id) || {};
                 return {
                     ...order,
                     custom_order_id: customData.custom_order_id || null,
                     school_id: customData.school_id || null,
-                    student_id: JSON.parse(customData.additional_data).student_details.student_id ||
-                        null,
-                    student_name: JSON.parse(customData.additional_data).student_details
-                        .student_name || null,
-                    student_email: JSON.parse(customData.additional_data).student_details
-                        .student_email || null,
-                    student_phone_no: JSON.parse(customData.additional_data).student_details
-                        .student_phone_no || null,
+                    student_id: JSON.parse(customData.additional_data)?.student_details
+                        ?.student_id || null,
+                    student_name: JSON.parse(customData.additional_data)?.student_details
+                        ?.student_name || null,
+                    student_email: JSON.parse(customData.additional_data)?.student_details
+                        ?.student_email || null,
+                    student_phone_no: JSON.parse(customData.additional_data)?.student_details
+                        ?.student_phone_no || null,
                 };
             });
+            console.log(enrichedOrders, 'plplp');
             return {
                 cursor: response.cursor,
                 limit: response.limit,
