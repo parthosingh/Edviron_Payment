@@ -1246,7 +1246,7 @@ let EdvironPgController = class EdvironPgController {
                                             vendors_info: '$collect_request.vendors_info',
                                             isAutoRefund: '$isAutoRefund',
                                             payment_time: '$payment_time',
-                                            isQRPayment: '$collect_request.isQRPayment'
+                                            isQRPayment: '$collect_request.isQRPayment',
                                         },
                                     ],
                                 },
@@ -1593,6 +1593,43 @@ let EdvironPgController = class EdvironPgController {
         }
         else {
             throw new common_1.BadRequestException('Invalid request');
+        }
+        return await this.edvironPgService.getVendorTransactions(query, dataLimit, dataPage);
+    }
+    async getVendorTransactions(body) {
+        const { vendor_id, trustee_id, school_id, collect_id, token, limit, page, custom_id, } = body;
+        const dataLimit = Number(limit) || 100;
+        const dataPage = Number(page) || 1;
+        const decrypted = jwt.verify(token, process.env.KEY);
+        if (decrypted.validate_trustee !== trustee_id) {
+            throw new common_1.ForbiddenException('Request forged');
+        }
+        let query = {
+            trustee_id: trustee_id,
+        };
+        if (vendor_id) {
+            query = {
+                ...query,
+                vendor_id,
+            };
+        }
+        if (school_id) {
+            query = {
+                ...query,
+                school_id,
+            };
+        }
+        if (collect_id) {
+            query = {
+                ...query,
+                collect_id: new mongoose_1.Types.ObjectId(collect_id),
+            };
+        }
+        if (custom_id) {
+            query = {
+                ...query,
+                custom_order_id: custom_id,
+            };
         }
         return await this.edvironPgService.getVendorTransactions(query, dataLimit, dataPage);
     }
@@ -2051,6 +2088,13 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "vendorTransactions", null);
+__decorate([
+    (0, common_1.Post)('get-vendor-transaction'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getVendorTransactions", null);
 __decorate([
     (0, common_1.Get)('upi-pay-qr'),
     __param(0, (0, common_1.Req)()),

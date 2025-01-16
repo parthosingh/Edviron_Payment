@@ -737,7 +737,6 @@ let EdvironPgService = class EdvironPgService {
         return istEndDate.toISOString();
     }
     async getVendorTransactions(query, limit, page) {
-        console.log(query);
         const totalCount = await this.databaseService.VendorTransactionModel.countDocuments(query);
         const totalPages = Math.ceil(totalCount / limit);
         const vendorsTransaction = await this.databaseService.VendorTransactionModel.find(query)

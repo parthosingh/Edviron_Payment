@@ -125,6 +125,27 @@ export declare class EdvironPgController {
         limit: number;
         totalPages: number;
     }>;
+    getVendorTransactions(body: {
+        token: string;
+        page: number;
+        limit: number;
+        trustee_id: string;
+        status?: string;
+        vendor_id?: string;
+        school_id?: string;
+        start_date?: string;
+        end_date?: string;
+        custom_id?: string;
+        collect_id?: string;
+    }): Promise<{
+        vendorsTransaction: (import("mongoose").Document<unknown, {}, import("../database/schemas/vendor.Transaction.schema").VendorTransactionDocument> & import("../database/schemas/vendor.Transaction.schema").VendorTransaction & Document & Required<{
+            _id: import("mongoose").Schema.Types.ObjectId;
+        }>)[];
+        totalCount: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }>;
     getQRData(req: any): Promise<{
         intentUrl: any;
         qrCodeBase64: any;

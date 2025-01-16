@@ -1420,7 +1420,7 @@ export class EdvironPgController {
         };
       }
 
-      if(isQRCode){
+      if (isQRCode) {
         collectQuery = {
           ...collectQuery,
           isQRPayment: true,
@@ -1659,7 +1659,7 @@ export class EdvironPgController {
                       vendors_info: '$collect_request.vendors_info',
                       isAutoRefund: '$isAutoRefund',
                       payment_time: '$payment_time',
-                      isQRPayment:'$collect_request.isQRPayment'
+                      isQRPayment: '$collect_request.isQRPayment',
                     },
                   ],
                 },
@@ -2168,6 +2168,74 @@ export class EdvironPgController {
       throw new BadRequestException('Invalid request');
     }
 
+    return await this.edvironPgService.getVendorTransactions(
+      query,
+      dataLimit,
+      dataPage,
+    );
+  }
+
+  @Post('get-vendor-transaction')
+  async getVendorTransactions(
+    @Body()
+    body: {
+      token: string;
+      page: number;
+      limit: number;
+      trustee_id: string;
+      status?: string;
+      vendor_id?: string;
+      school_id?: string;
+      start_date?: string;
+      end_date?: string;
+      custom_id?: string;
+      collect_id?: string;
+    },
+  ) {
+    const {
+      vendor_id,
+      trustee_id,
+      school_id,
+      collect_id,
+      token,
+      limit,
+      page,
+      custom_id,
+    } = body;
+    const dataLimit = Number(limit) || 100;
+    const dataPage = Number(page) || 1;
+    const decrypted = jwt.verify(token, process.env.KEY!) as any;
+    if (decrypted.validate_trustee !== trustee_id) {
+      throw new ForbiddenException('Request forged');
+    }
+    let query = {
+      trustee_id: trustee_id,
+    } as any;
+
+    if (vendor_id) {
+      query = {
+        ...query,
+        vendor_id,
+      };
+    }
+    if (school_id) {
+      query = {
+        ...query,
+        school_id,
+      };
+    }
+    if (collect_id) {
+      query = {
+        ...query,
+        collect_id: new Types.ObjectId(collect_id),
+      };
+    }
+    if (custom_id) {
+      query = {
+        ...query,
+        custom_order_id: custom_id,
+      };
+    }
     return await this.edvironPgService.getVendorTransactions(
       query,
       dataLimit,

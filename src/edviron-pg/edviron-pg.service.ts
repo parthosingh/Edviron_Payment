@@ -923,9 +923,7 @@ async createVendor(
   }
 
   async getVendorTransactions(query: any, limit: number, page: number) {
-    console.log(query);
-
-    const totalCount =
+     const totalCount =
       await this.databaseService.VendorTransactionModel.countDocuments(query);
 
     const totalPages = Math.ceil(totalCount / limit);
