@@ -2192,6 +2192,8 @@ export class EdvironPgController {
       collect_id?: string;
     },
   ) {
+    console.log('post req');
+
     const {
       vendor_id,
       trustee_id,
@@ -2201,6 +2203,9 @@ export class EdvironPgController {
       limit,
       page,
       custom_id,
+      start_date,
+      end_date,
+      status,
     } = body;
     const dataLimit = Number(limit) || 100;
     const dataPage = Number(page) || 1;
@@ -2208,34 +2213,22 @@ export class EdvironPgController {
     if (decrypted.validate_trustee !== trustee_id) {
       throw new ForbiddenException('Request forged');
     }
-    let query = {
-      trustee_id: trustee_id,
-    } as any;
+    const query = {
+      trustee_id,
+      ...(vendor_id && { vendor_id }),
+      ...(school_id && { school_id }),
+      ...(status && { status: { $regex: new RegExp(`^${status}$`, 'i') } }), // Case-insensitive comparison
+      ...(collect_id && { collect_id: new Types.ObjectId(collect_id) }),
+      ...(custom_id && { custom_order_id: custom_id }),
+      ...(start_date &&
+        end_date && {
+          updatedAt: {
+            $gte: new Date(start_date),
+            $lte: new Date(new Date(end_date).setHours(23, 59, 59, 999)),
+          },
+        }),
+    };
 
-    if (vendor_id) {
-      query = {
-        ...query,
-        vendor_id,
-      };
-    }
-    if (school_id) {
-      query = {
-        ...query,
-        school_id,
-      };
-    }
-    if (collect_id) {
-      query = {
-        ...query,
-        collect_id: new Types.ObjectId(collect_id),
-      };
-    }
-    if (custom_id) {
-      query = {
-        ...query,
-        custom_order_id: custom_id,
-      };
-    }
     return await this.edvironPgService.getVendorTransactions(
       query,
       dataLimit,
