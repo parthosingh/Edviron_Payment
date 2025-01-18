@@ -389,7 +389,8 @@ export class EdvironPgController {
       });
     if (
       pendingCollectReq &&
-      pendingCollectReq.status === PaymentStatus.SUCCESS
+      (pendingCollectReq.status === PaymentStatus.SUCCESS ||
+        pendingCollectReq.status === 'success')
     ) {
       console.log('No pending request found for', collect_id);
 

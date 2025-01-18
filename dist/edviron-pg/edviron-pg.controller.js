@@ -265,7 +265,8 @@ let EdvironPgController = class EdvironPgController {
             collect_id: collectIdObject,
         });
         if (pendingCollectReq &&
-            pendingCollectReq.status === collect_req_status_schema_1.PaymentStatus.SUCCESS) {
+            (pendingCollectReq.status === collect_req_status_schema_1.PaymentStatus.SUCCESS ||
+                pendingCollectReq.status === 'success')) {
             console.log('No pending request found for', collect_id);
             res.status(200).send('OK');
             return;
