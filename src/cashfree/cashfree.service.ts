@@ -313,24 +313,29 @@ export class CashfreeService {
       // }));
 
       const enrichedOrders = response.data
-        .filter((order: any) => order.order_id) 
+        // .filter((order: any) => order.order_id)
         .map((order: any) => {
-          const customData: any = customOrderMap.get(order.order_id) || {};
+          let customData: any = {};
+          let additionalData: any = {}
+          if (order.order_id) {
+            customData = customOrderMap.get(order.order_id) || {};
+            additionalData=JSON.parse(customData?.additional_data)
+          }
           return {
             ...order,
             custom_order_id: customData.custom_order_id || null,
             school_id: customData.school_id || null,
             student_id:
-              JSON.parse(customData.additional_data)?.student_details
+            additionalData?.student_details
                 ?.student_id || null,
             student_name:
-              JSON.parse(customData.additional_data)?.student_details
+              additionalData.student_details
                 ?.student_name || null,
             student_email:
-              JSON.parse(customData.additional_data)?.student_details
+              additionalData.student_details
                 ?.student_email || null,
             student_phone_no:
-              JSON.parse(customData.additional_data)?.student_details
+              additionalData.student_details
                 ?.student_phone_no || null,
           };
         });
@@ -348,7 +353,6 @@ export class CashfreeService {
       throw new BadRequestException(e.message);
     }
   }
-
 
   async getUpiPaymentInfoUrl(collect_id: string) {
     const request =

@@ -241,20 +241,24 @@ let CashfreeService = class CashfreeService {
                 },
             ]));
             const enrichedOrders = response.data
-                .filter((order) => order.order_id)
                 .map((order) => {
-                const customData = customOrderMap.get(order.order_id) || {};
+                let customData = {};
+                let additionalData = {};
+                if (order.order_id) {
+                    customData = customOrderMap.get(order.order_id) || {};
+                    additionalData = JSON.parse(customData?.additional_data);
+                }
                 return {
                     ...order,
                     custom_order_id: customData.custom_order_id || null,
                     school_id: customData.school_id || null,
-                    student_id: JSON.parse(customData.additional_data)?.student_details
+                    student_id: additionalData?.student_details
                         ?.student_id || null,
-                    student_name: JSON.parse(customData.additional_data)?.student_details
+                    student_name: additionalData.student_details
                         ?.student_name || null,
-                    student_email: JSON.parse(customData.additional_data)?.student_details
+                    student_email: additionalData.student_details
                         ?.student_email || null,
-                    student_phone_no: JSON.parse(customData.additional_data)?.student_details
+                    student_phone_no: additionalData.student_details
                         ?.student_phone_no || null,
                 };
             });
