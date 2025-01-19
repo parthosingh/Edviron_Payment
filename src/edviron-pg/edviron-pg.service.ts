@@ -89,11 +89,16 @@ export class EdvironPgService implements GatewayService {
       console.log(splitPayments, 'split pay');
 
       if (splitPayments && vendor && vendor.length > 0) {
-        const vendor_data = vendor.map(({ vendor_id, percentage, amount }) => ({
+        const vendor_data = vendor
+        .filter(({ amount }) => amount && amount > 0) // Filter out vendors with amount <= 0
+        .map(({ vendor_id, percentage, amount }) => ({
           vendor_id,
           percentage,
           amount,
         }));
+      
+        console.log(vendor_data,'ven');
+        
         data = JSON.stringify({
           customer_details: {
             customer_id: '7112AAA812234',
