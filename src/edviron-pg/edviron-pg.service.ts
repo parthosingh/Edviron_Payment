@@ -90,15 +90,13 @@ export class EdvironPgService implements GatewayService {
 
       if (splitPayments && vendor && vendor.length > 0) {
         const vendor_data = vendor
-        .filter(({ amount }) => amount && amount > 0) // Filter out vendors with amount <= 0
-        .map(({ vendor_id, percentage, amount }) => ({
-          vendor_id,
-          percentage,
-          amount,
-        }));
-      
-        console.log(vendor_data,'ven');
-        
+          .filter(({ amount }) => amount && amount > 0) // Filter out vendors with amount <= 0
+          .map(({ vendor_id, percentage, amount }) => ({
+            vendor_id,
+            percentage,
+            amount,
+          }));
+
         data = JSON.stringify({
           customer_details: {
             customer_id: '7112AAA812234',
@@ -712,7 +710,9 @@ export class EdvironPgService implements GatewayService {
           const sendWebhook = async (url: string) => {
             try {
               const res = await axios.request(createConfig(url));
-              const currentIST = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+              const currentIST = new Date().toLocaleString('en-US', {
+                timeZone: 'Asia/Kolkata',
+              });
               console.log('saving webhook logs to Database');
               console.log(res.status, 'response');
               console.log(res.data);
@@ -720,8 +720,7 @@ export class EdvironPgService implements GatewayService {
                 typeof res.data === 'string'
                   ? res.data
                   : JSON.stringify(res.data) || 'undefined';
-              try{
-
+              try {
                 await this.databaseService.ErpWebhooksLogsModel.create({
                   collect_id: webHookData.collect_id,
                   webhooktype: 'Transaction Webhook',
@@ -732,11 +731,10 @@ export class EdvironPgService implements GatewayService {
                   isSuccess: true,
                   response: resDataString,
                   status_code: res.status.toString() || 'undefined',
-                  triggered_time:currentIST
+                  triggered_time: currentIST,
                 });
-              }catch(e){
+              } catch (e) {
                 console.log('Error in saving webhook');
-                
               }
             } catch (e) {
               // console.log(
@@ -745,18 +743,20 @@ export class EdvironPgService implements GatewayService {
               //   e.response.status
               // );
               if (e.response?.data) {
-                const currentIST = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+                const currentIST = new Date().toLocaleString('en-US', {
+                  timeZone: 'Asia/Kolkata',
+                });
                 await this.databaseService.ErpWebhooksLogsModel.create({
                   collect_id: webHookData.collect_id,
                   webhooktype: 'Transaction Webhook',
                   payload: JSON.stringify(webhookData),
                   webhook_url: url,
-                  school_id:webHookData.school_id,
-                  trustee_id:webHookData.trustee_id,
-                  isSuccess:false,
-                  response:JSON.stringify(e.response.data) || 'undefined',
-                  status_code:e.response.status || 'undefined',
-                  triggered_time:currentIST
+                  school_id: webHookData.school_id,
+                  trustee_id: webHookData.trustee_id,
+                  isSuccess: false,
+                  response: JSON.stringify(e.response.data) || 'undefined',
+                  status_code: e.response.status || 'undefined',
+                  triggered_time: currentIST,
                 });
               }
             }
@@ -846,7 +846,7 @@ export class EdvironPgService implements GatewayService {
     };
   }
 
-async createVendor(
+  async createVendor(
     client_id: string,
     vendor_info: {
       vendor_id: string;
@@ -928,7 +928,7 @@ async createVendor(
   }
 
   async getVendorTransactions(query: any, limit: number, page: number) {
-     const totalCount =
+    const totalCount =
       await this.databaseService.VendorTransactionModel.countDocuments(query);
 
     const totalPages = Math.ceil(totalCount / limit);
@@ -956,8 +956,8 @@ async createVendor(
     school_id?: string | null,
   ) {
     try {
-      console.log(start_date,end_date);
-      
+      console.log(start_date, end_date);
+
       const endOfDay = new Date(end_date);
       const startDates = new Date(start_date);
       const startOfDayUTC = new Date(
@@ -1096,7 +1096,8 @@ async createVendor(
     end_date: string,
     status?: string | null,
     school_id?: string | null,
-    mode?:string[] | null,
+    mode?: string[] | null,
+    isQRPayment?: boolean | null,
   ) {
     try {
       const endOfDay = new Date(end_date);
@@ -1124,7 +1125,13 @@ async createVendor(
         };
       }
 
-      
+      if (isQRPayment) {
+        collectQuery = {
+          ...collectQuery,
+          isQRPayment: true,
+        };
+      }
+
       const orders =
         await this.databaseService.CollectRequestModel.find(
           collectQuery,
@@ -1170,7 +1177,6 @@ async createVendor(
             },
           ],
         };
-        
       }
       // console.log(`getting transaction`);
 
@@ -1185,16 +1191,15 @@ async createVendor(
       if (school_id) {
       }
 
-      if(mode){
+      if (mode) {
         query = {
           ...query,
-          payment_method: {$in:mode}
-        }
+          payment_method: { $in: mode },
+        };
       }
-   
-      console.log(query,'qqq');
-      
-      
+
+      console.log(query, 'qqq');
+
       transactions =
         await this.databaseService.CollectRequestStatusModel.aggregate([
           {
@@ -1249,8 +1254,8 @@ async createVendor(
         ]);
 
       console.timeEnd('transactionsCount');
-      console.log(transactions,'sum of aggreagations');
-      
+      console.log(transactions, 'sum of aggreagations');
+
       return {
         length: transactions.length,
         transactions,
@@ -1348,7 +1353,7 @@ async createVendor(
         await this.databaseService.BatchTransactionModel.findOne({
           trustee_id: trustee_id,
           month: monthsFull[new Date(endDate).getMonth()],
-          year: new Date(endDate).getFullYear().toString(), 
+          year: new Date(endDate).getFullYear().toString(),
         });
       if (checkbatch) {
         await this.databaseService.ErrorLogsModel.create({
@@ -1447,35 +1452,67 @@ const data = {
     customer_phone: '9898989898',
   },
   order: {
-    order_amount: 13325,
+    order_amount: 8700,
     order_currency: 'INR',
-    order_id: '674e0c01a45512f790c0861c',
+    order_id: '678ccb5b12a7c6cd1b64e320',
     order_tags: null,
   },
   payment: {
     auth_id: null,
-    bank_reference: '113803122011051',
-    cf_payment_id: 3280679229,
-    payment_amount: 13345.06,
+    bank_reference: null,
+    cf_payment_id: 3425695002,
+    payment_amount: 8900.19,
     payment_currency: 'INR',
-    payment_group: 'net_banking',
-    payment_message: 'Transaction Success',
-    payment_method: {
-      netbanking: {
-        channel: null,
-        netbanking_bank_code: '3009',
-        netbanking_bank_name: 'Canara Bank',
-      },
-    },
-    payment_status: 'SUCCESS',
-    payment_time: '2024-12-03T01:09:27+05:30',
+    payment_group: 'upi',
+    payment_message:
+      'User dropped and did not complete the two factor authentication',
+    payment_method: { upi: { channel: null, upi_id: null } },
+    payment_status: 'USER_DROPPED',
+    payment_time: '2025-01-19T15:22:31+05:30',
   },
   payment_gateway_details: {
     gateway_name: 'CASHFREE',
-    gateway_order_id: '3542149850',
+    gateway_order_id: '3694981450',
     gateway_order_reference_id: 'null',
-    gateway_payment_id: '3280679229',
-    gateway_settlement: 'CASHFREE',
+    gateway_payment_id: '3425695002',
+    gateway_settlement: null,
+    gateway_status_code: null,
+  },
+  payment_offers: null,
+};
+
+const de = {
+  customer_details: {
+    customer_email: null,
+    customer_id: '7112AAA812234',
+    customer_name: null,
+    customer_phone: '9898989898',
+  },
+  order: {
+    order_amount: 8700,
+    order_currency: 'INR',
+    order_id: '678ccb5b12a7c6cd1b64e320',
+    order_tags: null,
+  },
+  payment: {
+    auth_id: null,
+    bank_reference: null,
+    cf_payment_id: 3425695419,
+    payment_amount: 8900.19,
+    payment_currency: 'INR',
+    payment_group: 'upi',
+    payment_message:
+      'User dropped and did not complete the two factor authentication',
+    payment_method: { upi: { channel: null, upi_id: null } },
+    payment_status: 'USER_DROPPED',
+    payment_time: '2025-01-19T15:22:40+05:30',
+  },
+  payment_gateway_details: {
+    gateway_name: 'CASHFREE',
+    gateway_order_id: '3694981450',
+    gateway_order_reference_id: 'null',
+    gateway_payment_id: '3425695419',
+    gateway_settlement: null,
     gateway_status_code: null,
   },
   payment_offers: null,

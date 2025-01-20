@@ -72,7 +72,6 @@ let EdvironPgService = class EdvironPgService {
                     percentage,
                     amount,
                 }));
-                console.log(vendor_data, 'ven');
                 data = JSON.stringify({
                     customer_details: {
                         customer_id: '7112AAA812234',
@@ -571,7 +570,9 @@ let EdvironPgService = class EdvironPgService {
                     const sendWebhook = async (url) => {
                         try {
                             const res = await axios_1.default.request(createConfig(url));
-                            const currentIST = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+                            const currentIST = new Date().toLocaleString('en-US', {
+                                timeZone: 'Asia/Kolkata',
+                            });
                             console.log('saving webhook logs to Database');
                             console.log(res.status, 'response');
                             console.log(res.data);
@@ -589,7 +590,7 @@ let EdvironPgService = class EdvironPgService {
                                     isSuccess: true,
                                     response: resDataString,
                                     status_code: res.status.toString() || 'undefined',
-                                    triggered_time: currentIST
+                                    triggered_time: currentIST,
                                 });
                             }
                             catch (e) {
@@ -598,7 +599,9 @@ let EdvironPgService = class EdvironPgService {
                         }
                         catch (e) {
                             if (e.response?.data) {
-                                const currentIST = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+                                const currentIST = new Date().toLocaleString('en-US', {
+                                    timeZone: 'Asia/Kolkata',
+                                });
                                 await this.databaseService.ErpWebhooksLogsModel.create({
                                     collect_id: webHookData.collect_id,
                                     webhooktype: 'Transaction Webhook',
@@ -609,7 +612,7 @@ let EdvironPgService = class EdvironPgService {
                                     isSuccess: false,
                                     response: JSON.stringify(e.response.data) || 'undefined',
                                     status_code: e.response.status || 'undefined',
-                                    triggered_time: currentIST
+                                    triggered_time: currentIST,
                                 });
                             }
                         }
@@ -855,7 +858,7 @@ let EdvironPgService = class EdvironPgService {
             throw new Error(error.message);
         }
     }
-    async getTransactionReportBatchedFilterd(trustee_id, start_date, end_date, status, school_id, mode) {
+    async getTransactionReportBatchedFilterd(trustee_id, start_date, end_date, status, school_id, mode, isQRPayment) {
         try {
             const endOfDay = new Date(end_date);
             const startDates = new Date(start_date);
@@ -873,6 +876,12 @@ let EdvironPgService = class EdvironPgService {
                 collectQuery = {
                     ...collectQuery,
                     school_id: school_id,
+                };
+            }
+            if (isQRPayment) {
+                collectQuery = {
+                    ...collectQuery,
+                    isQRPayment: true,
                 };
             }
             const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
@@ -922,7 +931,7 @@ let EdvironPgService = class EdvironPgService {
             if (mode) {
                 query = {
                     ...query,
-                    payment_method: { $in: mode }
+                    payment_method: { $in: mode },
                 };
             }
             console.log(query, 'qqq');
@@ -1128,35 +1137,64 @@ const data = {
         customer_phone: '9898989898',
     },
     order: {
-        order_amount: 13325,
+        order_amount: 8700,
         order_currency: 'INR',
-        order_id: '674e0c01a45512f790c0861c',
+        order_id: '678ccb5b12a7c6cd1b64e320',
         order_tags: null,
     },
     payment: {
         auth_id: null,
-        bank_reference: '113803122011051',
-        cf_payment_id: 3280679229,
-        payment_amount: 13345.06,
+        bank_reference: null,
+        cf_payment_id: 3425695002,
+        payment_amount: 8900.19,
         payment_currency: 'INR',
-        payment_group: 'net_banking',
-        payment_message: 'Transaction Success',
-        payment_method: {
-            netbanking: {
-                channel: null,
-                netbanking_bank_code: '3009',
-                netbanking_bank_name: 'Canara Bank',
-            },
-        },
-        payment_status: 'SUCCESS',
-        payment_time: '2024-12-03T01:09:27+05:30',
+        payment_group: 'upi',
+        payment_message: 'User dropped and did not complete the two factor authentication',
+        payment_method: { upi: { channel: null, upi_id: null } },
+        payment_status: 'USER_DROPPED',
+        payment_time: '2025-01-19T15:22:31+05:30',
     },
     payment_gateway_details: {
         gateway_name: 'CASHFREE',
-        gateway_order_id: '3542149850',
+        gateway_order_id: '3694981450',
         gateway_order_reference_id: 'null',
-        gateway_payment_id: '3280679229',
-        gateway_settlement: 'CASHFREE',
+        gateway_payment_id: '3425695002',
+        gateway_settlement: null,
+        gateway_status_code: null,
+    },
+    payment_offers: null,
+};
+const de = {
+    customer_details: {
+        customer_email: null,
+        customer_id: '7112AAA812234',
+        customer_name: null,
+        customer_phone: '9898989898',
+    },
+    order: {
+        order_amount: 8700,
+        order_currency: 'INR',
+        order_id: '678ccb5b12a7c6cd1b64e320',
+        order_tags: null,
+    },
+    payment: {
+        auth_id: null,
+        bank_reference: null,
+        cf_payment_id: 3425695419,
+        payment_amount: 8900.19,
+        payment_currency: 'INR',
+        payment_group: 'upi',
+        payment_message: 'User dropped and did not complete the two factor authentication',
+        payment_method: { upi: { channel: null, upi_id: null } },
+        payment_status: 'USER_DROPPED',
+        payment_time: '2025-01-19T15:22:40+05:30',
+    },
+    payment_gateway_details: {
+        gateway_name: 'CASHFREE',
+        gateway_order_id: '3694981450',
+        gateway_order_reference_id: 'null',
+        gateway_payment_id: '3425695419',
+        gateway_settlement: null,
         gateway_status_code: null,
     },
     payment_offers: null,

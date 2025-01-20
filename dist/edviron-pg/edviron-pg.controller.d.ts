@@ -162,6 +162,7 @@ export declare class EdvironPgController {
         status: string;
         school_id?: string | null;
         mode?: string[] | null;
+        isQRPayment?: boolean | null;
     }): Promise<{
         length: number;
         transactions: any[];
@@ -213,4 +214,12 @@ export declare class EdvironPgController {
         capture: string;
         token: string;
     }): Promise<any>;
+    resolveDisputes(body: {
+        collect_id: string;
+        token: string;
+        note: string;
+        file: string;
+        doc_type: string;
+        dispute_id: string;
+    }): Promise<void>;
 }

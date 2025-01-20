@@ -276,7 +276,8 @@ let EdvironPgController = class EdvironPgController {
             try {
                 if (pendingCollectReq &&
                     pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.PENDING &&
-                    pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.SUCCESS) {
+                    pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.SUCCESS &&
+                    webHookData.payment.payment_status === 'SUCCESS') {
                     const tokenData = {
                         school_id: collectReq?.school_id,
                         trustee_id: collectReq?.trustee_id,
@@ -322,6 +323,10 @@ let EdvironPgController = class EdvironPgController {
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
         const status = webHookData.payment.payment_status;
         const payment_time = new Date(webHookData.payment.payment_time);
+        let webhookStatus = status;
+        if (pendingCollectReq?.status === 'FAILED' && webhookStatus === 'USER_DROPPED') {
+            webhookStatus = 'FAILED';
+        }
         try {
             if (status == transactionStatus_1.TransactionStatus.SUCCESS) {
                 let platform_type = null;
@@ -398,7 +403,7 @@ let EdvironPgController = class EdvironPgController {
             collect_id: collectIdObject,
         }, {
             $set: {
-                status,
+                status: webhookStatus,
                 transaction_amount,
                 payment_method,
                 details: JSON.stringify(webHookData.payment.payment_method),
@@ -435,7 +440,7 @@ let EdvironPgController = class EdvironPgController {
             createdAt: collectRequestStatus?.createdAt,
             transaction_time: collectRequestStatus?.updatedAt,
             additional_data,
-            formattedDate: `${transactionTime.getFullYear()}-${String(transactionTime.getMonth() + 1).padStart(2, '0')}-${String(transactionTime.getDate()).padStart(2, '0')}`,
+            formattedDate: `${payment_time.getFullYear()}-${String(payment_time.getMonth() + 1).padStart(2, '0')}-${String(payment_time.getDate()).padStart(2, '0')}`,
         };
         if (webHookUrl !== null) {
             console.log('calling webhook');
@@ -1643,9 +1648,9 @@ let EdvironPgController = class EdvironPgController {
         return await this.edvironPgService.getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id);
     }
     async getTransactionReportBatchedFiltered(body) {
-        const { start_date, end_date, trustee_id, school_id, mode, status } = body;
+        const { start_date, end_date, trustee_id, school_id, mode, status, isQRPayment } = body;
         console.log('getting transaction sum');
-        return await this.edvironPgService.getTransactionReportBatchedFilterd(trustee_id, start_date, end_date, status, school_id, mode);
+        return await this.edvironPgService.getTransactionReportBatchedFilterd(trustee_id, start_date, end_date, status, school_id, mode, isQRPayment);
     }
     async getErpWebhookLogs(body) {
         const { token, startDate, endDate, limit, page, trustee_id, school_id, status, collect_id, custom_id, } = body;
@@ -1896,6 +1901,20 @@ let EdvironPgController = class EdvironPgController {
             }
             throw new common_1.BadRequestException(e.message);
         }
+    }
+    async resolveDisputes(body) {
+        try {
+            const { collect_id, token, note, file, doc_type, dispute_id } = body;
+            const decoded = jwt.verify(token, process.env.KEY);
+            if (decoded.collect_id !== collect_id) {
+                throw new common_1.UnauthorizedException('Invalid token');
+            }
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest) {
+                throw new common_1.BadRequestException('Collect request not found');
+            }
+        }
+        catch (e) { }
     }
 };
 exports.EdvironPgController = EdvironPgController;
@@ -2152,6 +2171,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "mannualCapture", null);
+__decorate([
+    (0, common_1.Post)(),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "resolveDisputes", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

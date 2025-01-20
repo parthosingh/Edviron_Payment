@@ -393,11 +393,10 @@ export class EdvironPgController {
         pendingCollectReq.status === 'success')
     ) {
       console.log('No pending request found for', collect_id);
-
       res.status(200).send('OK');
       return;
     }
-
+  
     // Auto Refund Code Replicate on easebuzz
     if (collectReq.school_id === '65d443168b8aa46fcb5af3e4') {
       console.log('edv schoool', pendingCollectReq);
@@ -406,7 +405,8 @@ export class EdvironPgController {
         if (
           pendingCollectReq &&
           pendingCollectReq.status !== PaymentStatus.PENDING &&
-          pendingCollectReq.status !== PaymentStatus.SUCCESS
+          pendingCollectReq.status !== PaymentStatus.SUCCESS &&
+          webHookData.payment.payment_status === 'SUCCESS'
         ) {
           const tokenData = {
             school_id: collectReq?.school_id,
@@ -468,6 +468,10 @@ export class EdvironPgController {
     // const { status } = reqToCheck;
     const status = webHookData.payment.payment_status;
     const payment_time = new Date(webHookData.payment.payment_time);
+    let webhookStatus=status
+    if(pendingCollectReq?.status==='FAILED' && webhookStatus ==='USER_DROPPED'){
+      webhookStatus = 'FAILED'
+    }
     // if (status == TransactionStatus.SUCCESS) {
     //   try {
     //     con st schoolInfo = await this.edvironPgService.getSchoolInfo(
@@ -579,7 +583,7 @@ export class EdvironPgController {
         },
         {
           $set: {
-            status,
+            status:webhookStatus,
             transaction_amount,
             payment_method,
             details: JSON.stringify(webHookData.payment.payment_method),
@@ -625,9 +629,9 @@ export class EdvironPgController {
       transaction_time: collectRequestStatus?.updatedAt,
       additional_data,
       // formattedTransaction_time: transactionTime.toLocaleDateString('en-GB') || null,
-      formattedDate: `${transactionTime.getFullYear()}-${String(
-        transactionTime.getMonth() + 1,
-      ).padStart(2, '0')}-${String(transactionTime.getDate()).padStart(
+      formattedDate: `${payment_time.getFullYear()}-${String(
+        payment_time.getMonth() + 1,
+      ).padStart(2, '0')}-${String(payment_time.getDate()).padStart(
         2,
         '0',
       )}`,
@@ -2286,9 +2290,10 @@ export class EdvironPgController {
       status: string;
       school_id?: string | null;
       mode?: string[] | null;
+      isQRPayment?: boolean | null;
     },
   ) {
-    const { start_date, end_date, trustee_id, school_id, mode, status } = body;
+    const { start_date, end_date, trustee_id, school_id, mode, status,isQRPayment } = body;
     console.log('getting transaction sum');
 
     return await this.edvironPgService.getTransactionReportBatchedFilterd(
@@ -2298,6 +2303,7 @@ export class EdvironPgController {
       status,
       school_id,
       mode,
+      isQRPayment
     );
   }
 
@@ -2645,5 +2651,43 @@ export class EdvironPgController {
       }
       throw new BadRequestException(e.message);
     }
+  }
+
+  @Post()
+  async resolveDisputes(
+    @Body()
+    body: {
+      collect_id: string;
+      token: string;
+      note: string;
+      file: string;
+      doc_type: string;
+      dispute_id: string;
+    }
+  ){
+    try{
+      const { collect_id, token, note, file, doc_type,dispute_id } = body;
+      const decoded = jwt.verify(token, process.env.KEY!) as any;
+      if(decoded.collect_id!== collect_id){
+        throw new UnauthorizedException('Invalid token');
+      }
+      const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+      if(!collectRequest){
+        throw new BadRequestException('Collect request not found');
+      }
+
+      // if(collectRequest.gateway===Gateway.EDVIRON_PG){
+      //   return await this.cashfreeService.resolveDisputeCashfree(
+      //     collectRequest.clientId,
+      //     collect_id,
+      //     dispute_id,
+      //     file,
+      //     doc_type,
+      //     note,
+      //   )
+      // }
+      
+
+    }catch(e){}
   }
 }
