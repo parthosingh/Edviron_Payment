@@ -324,7 +324,8 @@ let EdvironPgController = class EdvironPgController {
         const status = webHookData.payment.payment_status;
         const payment_time = new Date(webHookData.payment.payment_time);
         let webhookStatus = status;
-        if (pendingCollectReq?.status === 'FAILED' && webhookStatus === 'USER_DROPPED') {
+        if (pendingCollectReq?.status === 'FAILED' &&
+            webhookStatus === 'USER_DROPPED') {
             webhookStatus = 'FAILED';
         }
         try {
@@ -398,6 +399,20 @@ let EdvironPgController = class EdvironPgController {
         }
         catch (e) {
             console.log('Error in saving Commission');
+        }
+        if (collectReq.isSplitPayments) {
+            try {
+                const vendor = await this.databaseService.VendorTransactionModel.updateMany({
+                    collect_id: collectReq._id,
+                }, {
+                    $set: {
+                        payment_time: payment_time,
+                    }
+                });
+            }
+            catch (e) {
+                console.log('Error in updating vendor transactions');
+            }
         }
         const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
             collect_id: collectIdObject,
@@ -1648,7 +1663,7 @@ let EdvironPgController = class EdvironPgController {
         return await this.edvironPgService.getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id);
     }
     async getTransactionReportBatchedFiltered(body) {
-        const { start_date, end_date, trustee_id, school_id, mode, status, isQRPayment } = body;
+        const { start_date, end_date, trustee_id, school_id, mode, status, isQRPayment, } = body;
         console.log('getting transaction sum');
         return await this.edvironPgService.getTransactionReportBatchedFilterd(trustee_id, start_date, end_date, status, school_id, mode, isQRPayment);
     }

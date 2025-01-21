@@ -24,6 +24,7 @@ export declare class CheckStatusService {
         custom_order_id: string | null;
         amount: number;
         details: {
+            payment_mode: String;
             bank_ref: any;
             payment_method: {
                 mode: any;
@@ -39,8 +40,10 @@ export declare class CheckStatusService {
         status_code: number;
     } | {
         custom_order_id: string | null;
+        capture_status: string;
         status: TransactionStatus;
         amount: number;
+        transaction_amount?: number | undefined;
         status_code?: number | undefined;
         details?: any;
     } | {
@@ -75,6 +78,7 @@ export declare class CheckStatusService {
         edviron_order_id: string;
         status: TransactionStatus;
         amount: number;
+        transaction_amount?: number | undefined;
         status_code?: number | undefined;
         details?: any;
         custom_order_id?: string | undefined;

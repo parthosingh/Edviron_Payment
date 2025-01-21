@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { CollectRequest, Gateway } from 'src/database/schemas/collect_request.schema';
+import {
+  CollectRequest,
+  Gateway,
+} from 'src/database/schemas/collect_request.schema';
 import { HdfcService } from 'src/hdfc/hdfc.service';
 import { PhonepeService } from 'src/phonepe/phonepe.service';
 import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
@@ -18,7 +21,7 @@ export class CheckStatusService {
     private readonly phonePeService: PhonepeService,
     private readonly edvironPgService: EdvironPgService,
     private readonly ccavenueService: CcavenueService,
-    private readonly easebuzzService:EasebuzzService
+    private readonly easebuzzService: EasebuzzService,
   ) {}
   async checkStatus(collect_request_id: String) {
     console.log('checking status for', collect_request_id);
@@ -39,7 +42,7 @@ export class CheckStatusService {
       console.log('Collect request status not found', collect_request_id);
       throw new NotFoundException('Collect request status not found');
     }
-    
+
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
         return await this.hdfcService.checkStatus(collect_request_id);
@@ -50,10 +53,11 @@ export class CheckStatusService {
           collect_request_id,
           collectRequest,
         );
-        return{
+        return {
           ...edvironPgResponse,
           custom_order_id,
-        }
+          capture_status: 'PENDING',
+        };
 
       case Gateway.EDVIRON_EASEBUZZ:
         const easebuzzStatus = await this.easebuzzService.statusResponse(
@@ -66,8 +70,8 @@ export class CheckStatusService {
         } else {
           status_code = 400;
         }
-        const date =collect_req_status.updatedAt
-        if(!date) {
+        const date = collect_req_status.updatedAt;
+        if (!date) {
           throw new Error('No date found in the transaction status');
         }
         const ezb_status_response = {
@@ -76,6 +80,7 @@ export class CheckStatusService {
           custom_order_id,
           amount: parseInt(easebuzzStatus.msg.amount),
           details: {
+            payment_mode: collect_req_status.payment_method,
             bank_ref: easebuzzStatus.msg.bank_ref_num,
             payment_method: { mode: easebuzzStatus.msg.mode },
             transaction_time: collect_req_status?.updatedAt,
@@ -93,9 +98,7 @@ export class CheckStatusService {
           // collectRequest.ccavenue_access_code,
         );
         let status_codes;
-        if (
-          res.status.toUpperCase() === TransactionStatus.SUCCESS
-        ) {
+        if (res.status.toUpperCase() === TransactionStatus.SUCCESS) {
           status_codes = 200;
         } else {
           status_codes = 400;
@@ -114,7 +117,7 @@ export class CheckStatusService {
         };
         return status_response;
       case Gateway.PENDING:
-        return await this.checkExpiry(collectRequest)
+        return await this.checkExpiry(collectRequest);
       case Gateway.EXPIRED:
         return {
           status: PaymentStatus.EXPIRED,
@@ -140,14 +143,14 @@ export class CheckStatusService {
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: collectRequest._id,
       });
-    
-    if(!collect_req_status){
+
+    if (!collect_req_status) {
       console.log('No status found for custom order id', order_id);
       throw new NotFoundException('No status found for custom order id');
     }
 
     const collectidString = collectRequest._id.toString();
-   
+
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
         return await this.hdfcService.checkStatus(
@@ -158,14 +161,14 @@ export class CheckStatusService {
           collectRequest._id.toString(),
         );
       case Gateway.EDVIRON_PG:
-        const edv_response= await this.edvironPgService.checkStatus(
+        const edv_response = await this.edvironPgService.checkStatus(
           collectRequest._id.toString(),
           collectRequest,
         );
         return {
           ...edv_response,
-          edviron_order_id:collectRequest._id.toString(),
-        }
+          edviron_order_id: collectRequest._id.toString(),
+        };
 
       case Gateway.EDVIRON_EASEBUZZ:
         const easebuzzStatus = await this.easebuzzService.statusResponse(
@@ -178,14 +181,14 @@ export class CheckStatusService {
         } else {
           status_code = 400;
         }
-        const date =collect_req_status.updatedAt
-        if(!date) {
+        const date = collect_req_status.updatedAt;
+        if (!date) {
           throw new Error('No date found in the transaction status');
         }
         const ezb_status_response = {
           status: easebuzzStatus.msg.status.toUpperCase(),
           status_code,
-          edviron_order_id:collectRequest._id.toString(),
+          edviron_order_id: collectRequest._id.toString(),
           amount: parseInt(easebuzzStatus.msg.amount),
           details: {
             bank_ref: easebuzzStatus.msg.bank_ref_num,
@@ -206,16 +209,14 @@ export class CheckStatusService {
         );
         const order_info = JSON.parse(res.decrypt_res);
         let status_codes;
-        if (
-          res.status.toUpperCase() === TransactionStatus.SUCCESS
-        ) {
+        if (res.status.toUpperCase() === TransactionStatus.SUCCESS) {
           status_codes = 200;
         } else {
           status_codes = 400;
         }
         const status_response = {
           status: res.status,
-          edviron_order_id:collectRequest._id.toString(),
+          edviron_order_id: collectRequest._id.toString(),
           status_code: status_codes,
           amount: res.amount,
           details: {
@@ -227,42 +228,41 @@ export class CheckStatusService {
         return status_response;
 
       case Gateway.PENDING:
-        return await this.checkExpiry(collectRequest)
+        return await this.checkExpiry(collectRequest);
       case Gateway.EXPIRED:
-          return {
-            status: PaymentStatus.EXPIRED,
-            edviron_order_id:collectRequest._id.toString(),
-            amount: collectRequest.amount,
-            status_code: 202,
-          };
+        return {
+          status: PaymentStatus.EXPIRED,
+          edviron_order_id: collectRequest._id.toString(),
+          amount: collectRequest.amount,
+          status_code: 202,
+        };
     }
   }
 
-
-  async checkExpiry(request:CollectRequest){
-    const createdAt =request.createdAt; // Convert createdAt to a Date object
+  async checkExpiry(request: CollectRequest) {
+    const createdAt = request.createdAt; // Convert createdAt to a Date object
     const currentTime = new Date(); // Get the current time
-    if(!createdAt){
+    if (!createdAt) {
       return 'Invalid request';
     }
     // Calculate the time difference in milliseconds
     const timeDifference = currentTime.getTime() - createdAt.getTime();
-  
+
     // Convert milliseconds to minutes
     const differenceInMinutes = timeDifference / (1000 * 60);
-  
+
     // Check if the difference is more than 20 minutes
     if (differenceInMinutes > 20) {
       return {
         status: 'EXPIRED',
-        custom_order_id:request.custom_order_id || 'NA',
+        custom_order_id: request.custom_order_id || 'NA',
         amount: request.amount,
         status_code: 202,
       };
     } else {
       return {
         status: 'NOT INITIATED',
-        custom_order_id:request.custom_order_id || 'NA',
+        custom_order_id: request.custom_order_id || 'NA',
         amount: request.amount,
         status_code: 202,
       };

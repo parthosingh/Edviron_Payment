@@ -12,6 +12,7 @@ export declare class VendorTransaction {
     trustee_id: string;
     custom_order_id: string;
     name: string;
+    payment_time: Date;
     _id: ObjectId;
 }
 export type VendorTransactionDocument = VendorTransaction & Document;

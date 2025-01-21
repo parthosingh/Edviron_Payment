@@ -64,6 +64,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], VendorTransaction.prototype, "name", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: '' }),
+    __metadata("design:type", Date)
+], VendorTransaction.prototype, "payment_time", void 0);
 exports.VendorTransaction = VendorTransaction = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], VendorTransaction);

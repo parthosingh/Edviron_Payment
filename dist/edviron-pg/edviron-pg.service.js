@@ -240,7 +240,6 @@ let EdvironPgService = class EdvironPgService {
                 TERMINATED: transactionStatus_1.TransactionStatus.FAILURE,
                 TERMINATION_REQUESTED: transactionStatus_1.TransactionStatus.FAILURE,
             };
-            console.log(cashfreeRes, 'res');
             const collect_status = await this.databaseService.CollectRequestStatusModel.findOne({
                 collect_id: collect_request_id,
             });
@@ -264,11 +263,14 @@ let EdvironPgService = class EdvironPgService {
             const uptDate = moment(date);
             const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
             const settlementInfo = await this.cashfreeService.settlementStatus(collect_request._id.toString(), collect_request.clientId);
+            console.log(settlementInfo, 'opopo');
             return {
                 status: order_status_to_transaction_status_map[cashfreeRes.order_status],
                 amount: cashfreeRes.order_amount,
+                transaction_amount: Number(collect_status?.transaction_amount),
                 status_code,
                 details: {
+                    payment_mode: collect_status.payment_method,
                     bank_ref: collect_status?.bank_reference && collect_status?.bank_reference,
                     payment_methods: collect_status?.details &&
                         JSON.parse(collect_status.details),

@@ -45,6 +45,7 @@ export declare class EdvironPgService implements GatewayService {
     checkStatus(collect_request_id: String, collect_request: CollectRequest): Promise<{
         status: TransactionStatus;
         amount: number;
+        transaction_amount?: number;
         status_code?: number;
         details?: any;
         custom_order_id?: string;

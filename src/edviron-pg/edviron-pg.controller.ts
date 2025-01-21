@@ -396,7 +396,7 @@ export class EdvironPgController {
       res.status(200).send('OK');
       return;
     }
-  
+
     // Auto Refund Code Replicate on easebuzz
     if (collectReq.school_id === '65d443168b8aa46fcb5af3e4') {
       console.log('edv schoool', pendingCollectReq);
@@ -468,9 +468,12 @@ export class EdvironPgController {
     // const { status } = reqToCheck;
     const status = webHookData.payment.payment_status;
     const payment_time = new Date(webHookData.payment.payment_time);
-    let webhookStatus=status
-    if(pendingCollectReq?.status==='FAILED' && webhookStatus ==='USER_DROPPED'){
-      webhookStatus = 'FAILED'
+    let webhookStatus = status;
+    if (
+      pendingCollectReq?.status === 'FAILED' &&
+      webhookStatus === 'USER_DROPPED'
+    ) {
+      webhookStatus = 'FAILED';
     }
     // if (status == TransactionStatus.SUCCESS) {
     //   try {
@@ -576,6 +579,25 @@ export class EdvironPgController {
     } catch (e) {
       console.log('Error in saving Commission');
     }
+
+    if (collectReq.isSplitPayments) {
+      try{
+
+        const vendor =
+          await this.databaseService.VendorTransactionModel.updateMany({
+            collect_id: collectReq._id,
+          },
+          {
+            $set: {
+              payment_time: payment_time,
+            }
+          } 
+        
+        );
+      }catch(e){
+        console.log('Error in updating vendor transactions');
+      }
+    }
     const updateReq =
       await this.databaseService.CollectRequestStatusModel.updateOne(
         {
@@ -583,7 +605,7 @@ export class EdvironPgController {
         },
         {
           $set: {
-            status:webhookStatus,
+            status: webhookStatus,
             transaction_amount,
             payment_method,
             details: JSON.stringify(webHookData.payment.payment_method),
@@ -631,10 +653,7 @@ export class EdvironPgController {
       // formattedTransaction_time: transactionTime.toLocaleDateString('en-GB') || null,
       formattedDate: `${payment_time.getFullYear()}-${String(
         payment_time.getMonth() + 1,
-      ).padStart(2, '0')}-${String(payment_time.getDate()).padStart(
-        2,
-        '0',
-      )}`,
+      ).padStart(2, '0')}-${String(payment_time.getDate()).padStart(2, '0')}`,
     };
 
     if (webHookUrl !== null) {
@@ -2293,7 +2312,15 @@ export class EdvironPgController {
       isQRPayment?: boolean | null;
     },
   ) {
-    const { start_date, end_date, trustee_id, school_id, mode, status,isQRPayment } = body;
+    const {
+      start_date,
+      end_date,
+      trustee_id,
+      school_id,
+      mode,
+      status,
+      isQRPayment,
+    } = body;
     console.log('getting transaction sum');
 
     return await this.edvironPgService.getTransactionReportBatchedFilterd(
@@ -2303,7 +2330,7 @@ export class EdvironPgController {
       status,
       school_id,
       mode,
-      isQRPayment
+      isQRPayment,
     );
   }
 
@@ -2663,16 +2690,17 @@ export class EdvironPgController {
       file: string;
       doc_type: string;
       dispute_id: string;
-    }
-  ){
-    try{
-      const { collect_id, token, note, file, doc_type,dispute_id } = body;
+    },
+  ) {
+    try {
+      const { collect_id, token, note, file, doc_type, dispute_id } = body;
       const decoded = jwt.verify(token, process.env.KEY!) as any;
-      if(decoded.collect_id!== collect_id){
+      if (decoded.collect_id !== collect_id) {
         throw new UnauthorizedException('Invalid token');
       }
-      const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
-      if(!collectRequest){
+      const collectRequest =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collectRequest) {
         throw new BadRequestException('Collect request not found');
       }
 
@@ -2686,8 +2714,6 @@ export class EdvironPgController {
       //     note,
       //   )
       // }
-      
-
-    }catch(e){}
+    } catch (e) {}
   }
 }

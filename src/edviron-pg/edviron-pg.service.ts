@@ -277,6 +277,7 @@ export class EdvironPgService implements GatewayService {
   ): Promise<{
     status: TransactionStatus;
     amount: number;
+    transaction_amount?: number;
     status_code?: number;
     details?: any;
     custom_order_id?: string;
@@ -306,8 +307,6 @@ export class EdvironPgService implements GatewayService {
         TERMINATED: TransactionStatus.FAILURE,
         TERMINATION_REQUESTED: TransactionStatus.FAILURE,
       };
-      console.log(cashfreeRes, 'res');
-
       const collect_status =
         await this.databaseService.CollectRequestStatusModel.findOne({
           collect_id: collect_request_id,
@@ -342,15 +341,18 @@ export class EdvironPgService implements GatewayService {
         collect_request._id.toString(),
         collect_request.clientId,
       );
-
+      console.log(settlementInfo,'opopo');
+      
       return {
         status:
           order_status_to_transaction_status_map[
             cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
           ],
         amount: cashfreeRes.order_amount,
+        transaction_amount: Number(collect_status?.transaction_amount),
         status_code,
         details: {
+          payment_mode:collect_status.payment_method,
           bank_ref:
             collect_status?.bank_reference && collect_status?.bank_reference,
           payment_methods:

@@ -2,8 +2,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { ObjectId } from 'mongoose';
 import { CollectRequest, Gateway } from './collect_request.schema';
 
-
-
 @Schema({ timestamps: true })
 export class VendorTransaction {
   @Prop({ required: true })
@@ -14,7 +12,6 @@ export class VendorTransaction {
 
   @Prop()
   updatedAt?: Date;
-  
 
   @Prop({
     required: true,
@@ -29,20 +26,23 @@ export class VendorTransaction {
   @Prop({ required: false })
   status: string;
 
-  @Prop({ required: false})
+  @Prop({ required: false })
   vendor_id: string;
 
-  @Prop({ required: false})
+  @Prop({ required: false })
   school_id: string;
 
-  @Prop({ required: false})
+  @Prop({ required: false })
   trustee_id: string;
 
-  @Prop({ required: false})
+  @Prop({ required: false })
   custom_order_id: string;
 
-  @Prop({ required: false})
+  @Prop({ required: false })
   name: string;
+
+  @Prop({ required: false, default: '' })
+  payment_time: Date;
 
   _id: ObjectId;
 }
