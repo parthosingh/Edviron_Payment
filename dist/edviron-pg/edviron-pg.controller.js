@@ -1644,7 +1644,7 @@ let EdvironPgController = class EdvironPgController {
     }
     async vendorSettlementRecon(body) {
         try {
-            const { trustee_id, client_id, token, start_date, end_date, utrNumber, cursor } = body;
+            const { trustee_id, client_id, token, start_date, end_date, utrNumber, cursor, } = body;
             console.log('reconnn');
             const decoded = jwt.verify(token, process.env.KEY);
             console.log(utrNumber, 'uuuu');

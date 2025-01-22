@@ -120,7 +120,7 @@ export class CheckStatusService {
         return await this.checkExpiry(collectRequest);
       case Gateway.EXPIRED:
         return {
-          status: PaymentStatus.EXPIRED,
+          status: PaymentStatus.USER_DROPPED,
           custom_order_id,
           amount: collectRequest.amount,
           status_code: 202,

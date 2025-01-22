@@ -21,6 +21,7 @@ var PaymentStatus;
     PaymentStatus["EXPIRED"] = "EXPIRED";
     PaymentStatus["FAILURE"] = "FAILURE";
     PaymentStatus["AUTO_REFUND"] = "AUTO_REFUND";
+    PaymentStatus["USER_DROPPED"] = "USER_DROPPED";
 })(PaymentStatus || (exports.PaymentStatus = PaymentStatus = {}));
 let CollectRequestStatus = class CollectRequestStatus {
 };

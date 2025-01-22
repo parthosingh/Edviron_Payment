@@ -399,7 +399,6 @@ export class EdvironPgController {
 
     // Auto Refund Code Replicate on easebuzz
     if (collectReq.school_id === '65d443168b8aa46fcb5af3e4') {
-     
       try {
         if (
           pendingCollectReq &&
@@ -2272,15 +2271,22 @@ export class EdvironPgController {
     },
   ) {
     try {
-      const { trustee_id, client_id,token, start_date, end_date, utrNumber, cursor } =
-        body;
+      const {
+        trustee_id,
+        client_id,
+        token,
+        start_date,
+        end_date,
+        utrNumber,
+        cursor,
+      } = body;
       console.log('reconnn');
 
       const decoded = jwt.verify(token, process.env.KEY!) as any;
       // if (decoded.collect_id !== trustee_id) {
       //   throw new UnauthorizedException('Invalid token');
       // }
-     
+
       console.log(utrNumber, 'uuuu');
 
       return await this.cashfreeService.vendorSettlementRecon(
@@ -2753,6 +2759,4 @@ export class EdvironPgController {
       // }
     } catch (e) {}
   }
-
-
 }

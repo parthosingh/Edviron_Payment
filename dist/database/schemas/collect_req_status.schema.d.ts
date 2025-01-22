@@ -6,7 +6,8 @@ export declare enum PaymentStatus {
     PENDING = "PENDING",
     EXPIRED = "EXPIRED",
     FAILURE = "FAILURE",
-    AUTO_REFUND = "AUTO_REFUND"
+    AUTO_REFUND = "AUTO_REFUND",
+    USER_DROPPED = "USER_DROPPED"
 }
 export declare class CollectRequestStatus {
     createdAt?: Date;

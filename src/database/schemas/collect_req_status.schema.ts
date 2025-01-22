@@ -9,6 +9,7 @@ export enum PaymentStatus {
   EXPIRED = 'EXPIRED',
   FAILURE = 'FAILURE',
   AUTO_REFUND = 'AUTO_REFUND',
+  USER_DROPPED = 'USER_DROPPED', 
 }
 
 @Schema({ timestamps: true })
