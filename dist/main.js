@@ -10,7 +10,8 @@ async function bootstrap() {
         'https://dev.pg.edviron.com',
         'https://pg.edviron.com',
         'https://qa.pg.edviron.com',
-        'https://partner.edviron.com'
+        'https://partner.edviron.com',
+        'https://merchant.edviron.com'
     ];
     app.enableCors({
         origin: function (origin, callback) {
