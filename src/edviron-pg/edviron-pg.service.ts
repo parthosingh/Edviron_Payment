@@ -237,7 +237,7 @@ export class EdvironPgService implements GatewayService {
         //   },
         //   20 * 60 * 1000,
         // ); // 20 minutes in milliseconds
-      }
+      } 
       const disabled_modes_string = request.disabled_modes
         .map((mode) => `${mode}=false`)
         .join('&');
