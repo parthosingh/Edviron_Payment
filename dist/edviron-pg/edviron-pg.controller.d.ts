@@ -146,6 +146,15 @@ export declare class EdvironPgController {
         limit: number;
         totalPages: number;
     }>;
+    vendorSettlementRecon(body: {
+        trustee_id: string;
+        token: string;
+        client_id: string;
+        start_date: string;
+        end_date: string;
+        utrNumber: string[];
+        cursor?: string;
+    }): Promise<any>;
     getQRData(req: any): Promise<{
         intentUrl: any;
         qrCodeBase64: any;

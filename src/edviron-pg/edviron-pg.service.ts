@@ -90,7 +90,11 @@ export class EdvironPgService implements GatewayService {
 
       if (splitPayments && vendor && vendor.length > 0) {
         const vendor_data = vendor
-          .filter(({ amount }) => amount && amount > 0) // Filter out vendors with amount <= 0
+          .filter(({ amount, percentage }) => {
+            // Check if either amount is greater than 0 or percentage is greater than 0
+            return (amount && amount > 0) || (percentage && percentage > 0);
+          })
+
           .map(({ vendor_id, percentage, amount }) => ({
             vendor_id,
             percentage,
@@ -113,6 +117,7 @@ export class EdvironPgService implements GatewayService {
           },
           order_splits: vendor_data,
         });
+        console.log(data, 'checking for data');
 
         collectReq.isSplitPayments = true;
         collectReq.vendors_info = vendor;
@@ -341,8 +346,8 @@ export class EdvironPgService implements GatewayService {
         collect_request._id.toString(),
         collect_request.clientId,
       );
-      console.log(settlementInfo,'opopo');
-      
+      console.log(settlementInfo, 'opopo');
+
       return {
         status:
           order_status_to_transaction_status_map[
@@ -352,7 +357,7 @@ export class EdvironPgService implements GatewayService {
         transaction_amount: Number(collect_status?.transaction_amount),
         status_code,
         details: {
-          payment_mode:collect_status.payment_method,
+          payment_mode: collect_status.payment_method,
           bank_ref:
             collect_status?.bank_reference && collect_status?.bank_reference,
           payment_methods:
@@ -378,18 +383,23 @@ export class EdvironPgService implements GatewayService {
     if (!request) {
       throw new Error('Collect Request not found');
     }
-
+    const requestStatus =
+      await this.databaseService.CollectRequestStatusModel.findOne({
+        collect_id: request._id,
+      });
+    if (!requestStatus) {
+      throw new Error('Collect Request Status not found');
+    }
     console.log('Terminating Order');
-
     if (request.gateway !== Gateway.PENDING) {
       console.log(request.gateway, 'not Terminating');
-
-      return;
+      return true;
     }
     request.gateway = Gateway.EXPIRED;
+    requestStatus.status = TransactionStatus.USER_DROPPED;
+    await requestStatus.save();
     await request.save();
     console.log(`Order terminated: ${request.gateway}`);
-
     return true;
   }
 

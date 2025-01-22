@@ -66,7 +66,9 @@ let EdvironPgService = class EdvironPgService {
             console.log(splitPayments, 'split pay');
             if (splitPayments && vendor && vendor.length > 0) {
                 const vendor_data = vendor
-                    .filter(({ amount }) => amount && amount > 0)
+                    .filter(({ amount, percentage }) => {
+                    return (amount && amount > 0) || (percentage && percentage > 0);
+                })
                     .map(({ vendor_id, percentage, amount }) => ({
                     vendor_id,
                     percentage,
@@ -87,6 +89,7 @@ let EdvironPgService = class EdvironPgService {
                     },
                     order_splits: vendor_data,
                 });
+                console.log(data, 'checking for data');
                 collectReq.isSplitPayments = true;
                 collectReq.vendors_info = vendor;
                 await collectReq.save();
@@ -293,12 +296,20 @@ let EdvironPgService = class EdvironPgService {
         if (!request) {
             throw new Error('Collect Request not found');
         }
+        const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: request._id,
+        });
+        if (!requestStatus) {
+            throw new Error('Collect Request Status not found');
+        }
         console.log('Terminating Order');
         if (request.gateway !== collect_request_schema_1.Gateway.PENDING) {
             console.log(request.gateway, 'not Terminating');
-            return;
+            return true;
         }
         request.gateway = collect_request_schema_1.Gateway.EXPIRED;
+        requestStatus.status = transactionStatus_1.TransactionStatus.USER_DROPPED;
+        await requestStatus.save();
         await request.save();
         console.log(`Order terminated: ${request.gateway}`);
         return true;

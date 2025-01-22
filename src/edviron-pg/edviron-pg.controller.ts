@@ -399,8 +399,7 @@ export class EdvironPgController {
 
     // Auto Refund Code Replicate on easebuzz
     if (collectReq.school_id === '65d443168b8aa46fcb5af3e4') {
-      console.log('edv schoool', pendingCollectReq);
-
+     
       try {
         if (
           pendingCollectReq &&
@@ -581,20 +580,19 @@ export class EdvironPgController {
     }
 
     if (collectReq.isSplitPayments) {
-      try{
-
+      try {
         const vendor =
-          await this.databaseService.VendorTransactionModel.updateMany({
-            collect_id: collectReq._id,
-          },
-          {
-            $set: {
-              payment_time: payment_time,
-            }
-          } 
-        
-        );
-      }catch(e){
+          await this.databaseService.VendorTransactionModel.updateMany(
+            {
+              collect_id: collectReq._id,
+            },
+            {
+              $set: {
+                payment_time: payment_time,
+              },
+            },
+          );
+      } catch (e) {
         console.log('Error in updating vendor transactions');
       }
     }
@@ -2260,6 +2258,44 @@ export class EdvironPgController {
     );
   }
 
+  @Post('/vendors-settlement-recon')
+  async vendorSettlementRecon(
+    @Body()
+    body: {
+      trustee_id: string;
+      token: string;
+      client_id: string;
+      start_date: string;
+      end_date: string;
+      utrNumber: string[];
+      cursor?: string;
+    },
+  ) {
+    try {
+      const { trustee_id, client_id,token, start_date, end_date, utrNumber, cursor } =
+        body;
+      console.log('reconnn');
+
+      const decoded = jwt.verify(token, process.env.KEY!) as any;
+      // if (decoded.collect_id !== trustee_id) {
+      //   throw new UnauthorizedException('Invalid token');
+      // }
+     
+      console.log(utrNumber, 'uuuu');
+
+      return await this.cashfreeService.vendorSettlementRecon(
+        client_id,
+        // collectRequest.clientId,
+        start_date,
+        end_date,
+        utrNumber,
+        cursor,
+      );
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   @Get('upi-pay-qr')
   async getQRData(@Req() req: any) {
     const { token, collect_id } = req.query;
@@ -2514,6 +2550,7 @@ export class EdvironPgController {
       };
 
       const { data } = await axios.request(config);
+
       return data;
     } catch (e) {
       throw new BadRequestException(e.message);
@@ -2673,14 +2710,14 @@ export class EdvironPgController {
       throw new BadRequestException('Capture Not Available');
     } catch (e) {
       if (e.response?.message) {
-        console.log(e.response);
+        // console.log(e.response);
         throw new BadRequestException(e.response.message);
       }
       throw new BadRequestException(e.message);
     }
   }
 
-  @Post()
+  @Post('/resolve-disputes')
   async resolveDisputes(
     @Body()
     body: {
@@ -2716,4 +2753,6 @@ export class EdvironPgController {
       // }
     } catch (e) {}
   }
+
+
 }

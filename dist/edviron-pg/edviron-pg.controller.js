@@ -272,7 +272,6 @@ let EdvironPgController = class EdvironPgController {
             return;
         }
         if (collectReq.school_id === '65d443168b8aa46fcb5af3e4') {
-            console.log('edv schoool', pendingCollectReq);
             try {
                 if (pendingCollectReq &&
                     pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.PENDING &&
@@ -407,7 +406,7 @@ let EdvironPgController = class EdvironPgController {
                 }, {
                     $set: {
                         payment_time: payment_time,
-                    }
+                    },
                 });
             }
             catch (e) {
@@ -1643,6 +1642,18 @@ let EdvironPgController = class EdvironPgController {
         };
         return await this.edvironPgService.getVendorTransactions(query, dataLimit, dataPage);
     }
+    async vendorSettlementRecon(body) {
+        try {
+            const { trustee_id, client_id, token, start_date, end_date, utrNumber, cursor } = body;
+            console.log('reconnn');
+            const decoded = jwt.verify(token, process.env.KEY);
+            console.log(utrNumber, 'uuuu');
+            return await this.cashfreeService.vendorSettlementRecon(client_id, start_date, end_date, utrNumber, cursor);
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
     async getQRData(req) {
         const { token, collect_id } = req.query;
         const request = await this.databaseService.CollectRequestModel.findById(collect_id);
@@ -1911,7 +1922,6 @@ let EdvironPgController = class EdvironPgController {
         }
         catch (e) {
             if (e.response?.message) {
-                console.log(e.response);
                 throw new common_1.BadRequestException(e.response.message);
             }
             throw new common_1.BadRequestException(e.message);
@@ -2120,6 +2130,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getVendorTransactions", null);
 __decorate([
+    (0, common_1.Post)('/vendors-settlement-recon'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "vendorSettlementRecon", null);
+__decorate([
     (0, common_1.Get)('upi-pay-qr'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -2187,7 +2204,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "mannualCapture", null);
 __decorate([
-    (0, common_1.Post)(),
+    (0, common_1.Post)('/resolve-disputes'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

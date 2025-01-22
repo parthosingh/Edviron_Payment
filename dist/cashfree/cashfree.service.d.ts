@@ -40,4 +40,5 @@ export declare class CashfreeService {
         service_charge: Number;
     }>;
     initiateCapture(client_id: string, collect_id: string, capture: string, amount: number): Promise<any>;
+    vendorSettlementRecon(client_id: string, start_date: string, end_date: string, utrNumber: string[], cursor?: string): Promise<any>;
 }

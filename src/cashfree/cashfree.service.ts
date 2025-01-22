@@ -72,7 +72,6 @@ export class CashfreeService {
     };
     try {
       const response = await axios.request(config);
-      console.log(response.data);
       return response.data;
     } catch (e) {
       console.log(e);
@@ -316,31 +315,23 @@ export class CashfreeService {
         // .filter((order: any) => order.order_id)
         .map((order: any) => {
           let customData: any = {};
-          let additionalData: any = {}
+          let additionalData: any = {};
           if (order.order_id) {
             customData = customOrderMap.get(order.order_id) || {};
-            additionalData=JSON.parse(customData?.additional_data)
+            additionalData = JSON.parse(customData?.additional_data);
           }
           return {
             ...order,
             custom_order_id: customData.custom_order_id || null,
             school_id: customData.school_id || null,
-            student_id:
-            additionalData?.student_details
-                ?.student_id || null,
-            student_name:
-              additionalData.student_details
-                ?.student_name || null,
+            student_id: additionalData?.student_details?.student_id || null,
+            student_name: additionalData.student_details?.student_name || null,
             student_email:
-              additionalData.student_details
-                ?.student_email || null,
+              additionalData.student_details?.student_email || null,
             student_phone_no:
-              additionalData.student_details
-                ?.student_phone_no || null,
+              additionalData.student_details?.student_phone_no || null,
           };
         });
-
-      console.log(enrichedOrders, 'plplp');
 
       return {
         cursor: response.cursor,
@@ -349,7 +340,6 @@ export class CashfreeService {
       };
     } catch (e) {
       console.log(e);
-
       throw new BadRequestException(e.message);
     }
   }
@@ -527,5 +517,49 @@ export class CashfreeService {
     }
   }
 
-  
+  async vendorSettlementRecon(
+    client_id: string,
+    start_date: string,
+    end_date: string,
+    utrNumber: string[],
+    cursor?: string,
+  ) {
+    try {
+      const data = {
+        pagination: {
+          limit: 1000,
+          cursor: cursor,
+        },
+        filters: {
+          settlement_utrs: utrNumber,
+          start_date,
+          end_date,
+        },
+      };
+      console.log(data,'payload');
+      
+      const config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: `${process.env.CASHFREE_ENDPOINT}/pg/recon/vendor`,
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-api-version': '2023-08-01',
+          'x-partner-merchantid': client_id,
+          'x-partner-apikey': process.env.CASHFREE_API_KEY,
+        },
+        data: data,
+      };
+
+      const response = await axios(config);
+      console.log(response.data,'ooooooo',data);
+      
+      return response.data;
+    } catch (e) {
+      console.log(e);
+      
+      throw new BadRequestException(e.message);
+    }
+  }
 }

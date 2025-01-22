@@ -69,7 +69,6 @@ let CashfreeService = class CashfreeService {
         };
         try {
             const response = await axios.request(config);
-            console.log(response.data);
             return response.data;
         }
         catch (e) {
@@ -252,17 +251,12 @@ let CashfreeService = class CashfreeService {
                     ...order,
                     custom_order_id: customData.custom_order_id || null,
                     school_id: customData.school_id || null,
-                    student_id: additionalData?.student_details
-                        ?.student_id || null,
-                    student_name: additionalData.student_details
-                        ?.student_name || null,
-                    student_email: additionalData.student_details
-                        ?.student_email || null,
-                    student_phone_no: additionalData.student_details
-                        ?.student_phone_no || null,
+                    student_id: additionalData?.student_details?.student_id || null,
+                    student_name: additionalData.student_details?.student_name || null,
+                    student_email: additionalData.student_details?.student_email || null,
+                    student_phone_no: additionalData.student_details?.student_phone_no || null,
                 };
             });
-            console.log(enrichedOrders, 'plplp');
             return {
                 cursor: response.cursor,
                 limit: response.limit,
@@ -424,6 +418,42 @@ let CashfreeService = class CashfreeService {
                 console.log(e.response.data);
                 throw new common_1.BadRequestException(e.response.data.message);
             }
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async vendorSettlementRecon(client_id, start_date, end_date, utrNumber, cursor) {
+        try {
+            const data = {
+                pagination: {
+                    limit: 1000,
+                    cursor: cursor,
+                },
+                filters: {
+                    settlement_utrs: utrNumber,
+                    start_date,
+                    end_date,
+                },
+            };
+            console.log(data, 'payload');
+            const config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/recon/vendor`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': client_id,
+                    'x-partner-apikey': process.env.CASHFREE_API_KEY,
+                },
+                data: data,
+            };
+            const response = await (0, axios_1.default)(config);
+            console.log(response.data, 'ooooooo', data);
+            return response.data;
+        }
+        catch (e) {
+            console.log(e);
             throw new common_1.BadRequestException(e.message);
         }
     }

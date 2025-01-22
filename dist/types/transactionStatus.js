@@ -6,5 +6,6 @@ var TransactionStatus;
     TransactionStatus["PENDING"] = "PENDING";
     TransactionStatus["SUCCESS"] = "SUCCESS";
     TransactionStatus["FAILURE"] = "FAILURE";
+    TransactionStatus["USER_DROPPED"] = "USER_DROPPED";
 })(TransactionStatus || (exports.TransactionStatus = TransactionStatus = {}));
 //# sourceMappingURL=transactionStatus.js.map
