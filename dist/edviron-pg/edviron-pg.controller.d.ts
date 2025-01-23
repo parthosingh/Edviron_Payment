@@ -231,4 +231,5 @@ export declare class EdvironPgController {
         doc_type: string;
         dispute_id: string;
     }): Promise<void>;
+    getPaymentsForOrder(req: any): Promise<string>;
 }

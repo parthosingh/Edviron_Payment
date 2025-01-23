@@ -1941,6 +1941,29 @@ let EdvironPgController = class EdvironPgController {
         }
         catch (e) { }
     }
+    async getPaymentsForOrder(req) {
+        try {
+            const token = req.query.token;
+            if (!token) {
+                throw new common_1.UnauthorizedException('Token not provided');
+            }
+            const collect_id = req.query.collect_id;
+            const decrypted = jwt.verify(token, process.env.KEY);
+            if (decrypted.collect_id !== collect_id) {
+                throw new common_1.UnauthorizedException('Invalid token');
+            }
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest) {
+                throw new common_1.BadRequestException('Invalid Order ID');
+            }
+            const pgLink = collectRequest.payment_data;
+            const cleanedString = pgLink.slice(1, -1);
+            return cleanedString;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -2210,6 +2233,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "resolveDisputes", null);
+__decorate([
+    (0, common_1.Get)('get-order-payment-link'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getPaymentsForOrder", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

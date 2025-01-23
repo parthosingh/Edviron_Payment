@@ -2759,4 +2759,28 @@ export class EdvironPgController {
       // }
     } catch (e) {}
   }
+
+  @Get('get-order-payment-link')
+  async getPaymentsForOrder(@Req() req:any){
+    try{
+      const token = req.query.token;
+      if(!token){
+        throw new UnauthorizedException('Token not provided')
+      }
+      const collect_id=req.query.collect_id
+      const decrypted=jwt.verify(token, process.env.KEY!) as any
+      if(decrypted.collect_id !== collect_id){
+        throw new UnauthorizedException('Invalid token')
+      }
+      const collectRequest=await this.databaseService.CollectRequestModel.findById(collect_id)
+      if(!collectRequest){
+        throw new BadRequestException('Invalid Order ID')
+      }
+      const pgLink= collectRequest.payment_data
+      const cleanedString = pgLink.slice(1, -1);
+      return cleanedString
+    }catch(e){
+      throw new BadRequestException(e.message)
+    }
+  }
 }
