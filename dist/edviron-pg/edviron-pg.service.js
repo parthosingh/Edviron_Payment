@@ -186,6 +186,9 @@ let EdvironPgService = class EdvironPgService {
                 const { data: cashfreeRes } = await axios.request(config);
                 cf_payment_id = cashfreeRes.payment_session_id;
                 paymentInfo.cashfree_id = cf_payment_id || null;
+                setTimeout(() => {
+                    this.terminateOrder(request._id.toString());
+                }, 20 * 60 * 1000);
             }
             const disabled_modes_string = request.disabled_modes
                 .map((mode) => `${mode}=false`)
