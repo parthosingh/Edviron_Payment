@@ -64,7 +64,7 @@ export class EdvironPgService implements GatewayService {
       const axios = require('axios');
       const currentTime = new Date();
 
-      // Add 20 minutes to the current time
+      // Add 20 minutes to the current time test
       const expiryTime = new Date(currentTime.getTime() + 20 * 60000);
 
       // Format the expiry time in ISO 8601 format with the timezone offset
@@ -74,7 +74,7 @@ export class EdvironPgService implements GatewayService {
         customer_details: {
           customer_id: '7112AAA812234',
           customer_phone: '9898989898',
-        },
+        }, 
         order_currency: 'INR',
         order_amount: request.amount.toFixed(2),
         order_id: request._id,
