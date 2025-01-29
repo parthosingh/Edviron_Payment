@@ -1107,7 +1107,7 @@ let EdvironPgController = class EdvironPgController {
                 };
             }
             console.log(`getting transaction`);
-            if (status === 'SUCCESS' || status === 'PENDING') {
+            if (status === 'SUCCESS' || status === 'PENDING' || status === 'USER_DROPPED') {
                 query = {
                     ...query,
                     status: { $in: [status.toLowerCase(), status.toUpperCase()] },
