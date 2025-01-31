@@ -240,7 +240,7 @@ let EdvironPgService = class EdvironPgService {
         try {
             const { data: cashfreeRes } = await axios.request(config);
             const order_status_to_transaction_status_map = {
-                ACTIVE: transactionStatus_1.TransactionStatus.FAILURE,
+                ACTIVE: transactionStatus_1.TransactionStatus.PENDING,
                 PAID: transactionStatus_1.TransactionStatus.SUCCESS,
                 EXPIRED: transactionStatus_1.TransactionStatus.FAILURE,
                 TERMINATED: transactionStatus_1.TransactionStatus.FAILURE,

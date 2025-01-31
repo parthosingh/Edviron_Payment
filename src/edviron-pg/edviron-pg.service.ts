@@ -306,7 +306,7 @@ export class EdvironPgService implements GatewayService {
       // console.log(cashfreeRes, 'cashfree status response');
 
       const order_status_to_transaction_status_map = {
-        ACTIVE: TransactionStatus.FAILURE,
+        ACTIVE: TransactionStatus.PENDING,
         PAID: TransactionStatus.SUCCESS,
         EXPIRED: TransactionStatus.FAILURE,
         TERMINATED: TransactionStatus.FAILURE,
