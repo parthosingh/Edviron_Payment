@@ -23,6 +23,8 @@ export declare class CollectRequestStatus {
     payment_time: Date;
     isAttempted: boolean;
     isAutoRefund: boolean;
+    reason: string;
+    payment_message: string;
     _id: ObjectId;
 }
 export type CollectRequestStatusDocument = CollectRequestStatus & Document;

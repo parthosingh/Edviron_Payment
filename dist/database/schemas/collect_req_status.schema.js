@@ -82,6 +82,14 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false, default: false }),
     __metadata("design:type", Boolean)
 ], CollectRequestStatus.prototype, "isAutoRefund", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: '' }),
+    __metadata("design:type", String)
+], CollectRequestStatus.prototype, "reason", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: '' }),
+    __metadata("design:type", String)
+], CollectRequestStatus.prototype, "payment_message", void 0);
 exports.CollectRequestStatus = CollectRequestStatus = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequestStatus);

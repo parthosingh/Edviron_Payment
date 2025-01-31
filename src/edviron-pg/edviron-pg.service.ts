@@ -304,7 +304,6 @@ export class EdvironPgService implements GatewayService {
       const { data: cashfreeRes } = await axios.request(config);
 
       // console.log(cashfreeRes, 'cashfree status response');
-
       const order_status_to_transaction_status_map = {
         ACTIVE: TransactionStatus.PENDING,
         PAID: TransactionStatus.SUCCESS,

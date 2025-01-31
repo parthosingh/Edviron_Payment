@@ -255,6 +255,7 @@ let EdvironPgController = class EdvironPgController {
             throw new Error('Collect request not found');
         const transaction_amount = webHookData?.payment?.payment_amount || null;
         const payment_method = webHookData?.payment?.payment_group || null;
+        const payment_message = webHookData?.payment?.payment_message || 'NA';
         const saveWebhook = await new this.databaseService.WebhooksModel({
             collect_id: collectIdObject,
             body: JSON.stringify(webHookData),
@@ -423,6 +424,8 @@ let EdvironPgController = class EdvironPgController {
                 details: JSON.stringify(webHookData.payment.payment_method),
                 bank_reference: webHookData.payment.bank_reference,
                 payment_time,
+                reason: payment_message || 'NA',
+                payment_message: payment_message || 'NA'
             },
         }, {
             upsert: true,

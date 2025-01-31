@@ -9,7 +9,7 @@ export enum PaymentStatus {
   EXPIRED = 'EXPIRED',
   FAILURE = 'FAILURE',
   AUTO_REFUND = 'AUTO_REFUND',
-  USER_DROPPED = 'USER_DROPPED', 
+  USER_DROPPED = 'USER_DROPPED',
 }
 
 @Schema({ timestamps: true })
@@ -57,9 +57,16 @@ export class CollectRequestStatus {
   @Prop({ required: false, default: false })
   isAutoRefund: boolean;
 
+  @Prop({ required: false, default: '' })
+  reason: string;
+
+  @Prop({ required: false, default: '' })
+  payment_message: string;
+
   _id: ObjectId;
 }
 
 export type CollectRequestStatusDocument = CollectRequestStatus & Document;
 export const CollectRequestStatusSchema =
   SchemaFactory.createForClass(CollectRequestStatus);
+
