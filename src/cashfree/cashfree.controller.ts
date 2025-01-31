@@ -141,7 +141,7 @@ export class CashfreeController {
       throw new BadRequestException('Payment Expired');
     }
 
-    // request.gateway=Gateway.EDVIRON_PG
+    request.gateway=Gateway.EDVIRON_PG
     await request.save();
     const cashfreeId = request.paymentIds.cashfree_id;
     if (!cashfreeId) {
