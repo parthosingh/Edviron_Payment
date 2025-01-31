@@ -253,8 +253,6 @@ let EdvironPgController = class EdvironPgController {
         const collectReq = await this.databaseService.CollectRequestModel.findById(collectIdObject);
         if (!collectReq)
             throw new Error('Collect request not found');
-        collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
-        await collectReq.save();
         const transaction_amount = webHookData?.payment?.payment_amount || null;
         const payment_method = webHookData?.payment?.payment_group || null;
         const saveWebhook = await new this.databaseService.WebhooksModel({
@@ -308,6 +306,8 @@ let EdvironPgController = class EdvironPgController {
                     const refund_amount = autoRefundResponse.data.refund_amount;
                     console.log('Auto Refund Initiated');
                     await this.cashfreeService.initiateRefund(refund_id, refund_amount, collect_id);
+                    collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
+                    await collectReq.save();
                     pendingCollectReq.isAutoRefund = true;
                     pendingCollectReq.status = collect_req_status_schema_1.PaymentStatus.FAILURE;
                     await pendingCollectReq.save();
@@ -1107,7 +1107,9 @@ let EdvironPgController = class EdvironPgController {
                 };
             }
             console.log(`getting transaction`);
-            if (status === 'SUCCESS' || status === 'PENDING' || status === 'USER_DROPPED') {
+            if (status === 'SUCCESS' ||
+                status === 'PENDING' ||
+                status === 'USER_DROPPED') {
                 query = {
                     ...query,
                     status: { $in: [status.toLowerCase(), status.toUpperCase()] },

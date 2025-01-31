@@ -372,9 +372,6 @@ export class EdvironPgController {
       await this.databaseService.CollectRequestModel.findById(collectIdObject);
     if (!collectReq) throw new Error('Collect request not found');
 
-    collectReq.gateway = Gateway.EDVIRON_PG;
-    await collectReq.save();
-
     const transaction_amount = webHookData?.payment?.payment_amount || null;
     const payment_method = webHookData?.payment?.payment_group || null;
 
@@ -442,9 +439,10 @@ export class EdvironPgController {
           await this.cashfreeService.initiateRefund(
             refund_id,
             refund_amount,
-            collect_id,
+            collect_id, 
           );
-
+          collectReq.gateway = Gateway.EDVIRON_PG;
+          await collectReq.save();
           pendingCollectReq.isAutoRefund = true;
           pendingCollectReq.status = PaymentStatus.FAILURE;
           await pendingCollectReq.save();
@@ -1509,7 +1507,11 @@ export class EdvironPgController {
 
       console.log(`getting transaction`);
 
-      if (status === 'SUCCESS' || status === 'PENDING' || status === 'USER_DROPPED') {
+      if (
+        status === 'SUCCESS' ||
+        status === 'PENDING' ||
+        status === 'USER_DROPPED'
+      ) {
         query = {
           ...query,
           status: { $in: [status.toLowerCase(), status.toUpperCase()] },
@@ -2761,26 +2763,27 @@ export class EdvironPgController {
   }
 
   @Get('get-order-payment-link')
-  async getPaymentsForOrder(@Req() req:any){
-    try{
+  async getPaymentsForOrder(@Req() req: any) {
+    try {
       const token = req.query.token;
-      if(!token){
-        throw new UnauthorizedException('Token not provided')
+      if (!token) {
+        throw new UnauthorizedException('Token not provided');
       }
-      const collect_id=req.query.collect_id
-      const decrypted=jwt.verify(token, process.env.KEY!) as any
-      if(decrypted.collect_id !== collect_id){
-        throw new UnauthorizedException('Invalid token')
+      const collect_id = req.query.collect_id;
+      const decrypted = jwt.verify(token, process.env.KEY!) as any;
+      if (decrypted.collect_id !== collect_id) {
+        throw new UnauthorizedException('Invalid token');
       }
-      const collectRequest=await this.databaseService.CollectRequestModel.findById(collect_id)
-      if(!collectRequest){
-        throw new BadRequestException('Invalid Order ID')
+      const collectRequest =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collectRequest) {
+        throw new BadRequestException('Invalid Order ID');
       }
-      const pgLink= collectRequest.payment_data
+      const pgLink = collectRequest.payment_data;
       const cleanedString = pgLink.slice(1, -1);
-      return cleanedString
-    }catch(e){
-      throw new BadRequestException(e.message)
+      return cleanedString;
+    } catch (e) {
+      throw new BadRequestException(e.message);
     }
   }
 }

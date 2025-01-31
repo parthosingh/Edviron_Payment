@@ -137,6 +137,9 @@ export class CashfreeController {
     if (!request) {
       throw new BadRequestException('Collect Request not found');
     }
+    if(request.gateway === Gateway.EXPIRED){
+      throw new BadRequestException('Payment Expired');
+    }
 
     // request.gateway=Gateway.EDVIRON_PG
     await request.save();

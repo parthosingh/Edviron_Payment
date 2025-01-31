@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const jwt = require("jsonwebtoken");
 const cashfree_service_1 = require("./cashfree.service");
+const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 let CashfreeController = class CashfreeController {
     constructor(databaseService, cashfreeService) {
         this.databaseService = databaseService;
@@ -106,6 +107,9 @@ let CashfreeController = class CashfreeController {
         const request = await this.databaseService.CollectRequestModel.findById(collect_id);
         if (!request) {
             throw new common_1.BadRequestException('Collect Request not found');
+        }
+        if (request.gateway === collect_request_schema_1.Gateway.EXPIRED) {
+            throw new common_1.BadRequestException('Payment Expired');
         }
         await request.save();
         const cashfreeId = request.paymentIds.cashfree_id;

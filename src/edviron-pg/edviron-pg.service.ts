@@ -392,6 +392,10 @@ export class EdvironPgService implements GatewayService {
     }
     console.log('Terminating Order');
     if (request.gateway !== Gateway.PENDING) {
+      if(request.isQRPayment && requestStatus.status === 'PENDING'){
+        requestStatus.status = TransactionStatus.USER_DROPPED;
+        await requestStatus.save();
+      }
       console.log(request.gateway, 'not Terminating');
       return true;
     }

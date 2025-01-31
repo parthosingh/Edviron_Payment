@@ -307,6 +307,10 @@ let EdvironPgService = class EdvironPgService {
         }
         console.log('Terminating Order');
         if (request.gateway !== collect_request_schema_1.Gateway.PENDING) {
+            if (request.isQRPayment && requestStatus.status === 'PENDING') {
+                requestStatus.status = transactionStatus_1.TransactionStatus.USER_DROPPED;
+                await requestStatus.save();
+            }
             console.log(request.gateway, 'not Terminating');
             return true;
         }
