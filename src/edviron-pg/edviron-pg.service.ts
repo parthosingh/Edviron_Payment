@@ -74,7 +74,7 @@ export class EdvironPgService implements GatewayService {
         customer_details: {
           customer_id: '7112AAA812234',
           customer_phone: '9898989898',
-        }, 
+        },
         order_currency: 'INR',
         order_amount: request.amount.toFixed(2),
         order_id: request._id,
@@ -235,9 +235,9 @@ export class EdvironPgService implements GatewayService {
           () => {
             this.terminateOrder(request._id.toString());
           },
-          20 * 60 * 1000,
+          22 * 60 * 1000,
         ); // 20 minutes in milliseconds
-      } 
+      }
       const disabled_modes_string = request.disabled_modes
         .map((mode) => `${mode}=false`)
         .join('&');
@@ -391,18 +391,19 @@ export class EdvironPgService implements GatewayService {
     }
     console.log('Terminating Order');
     if (request.gateway !== Gateway.PENDING) {
-      if(request.isQRPayment && requestStatus.status === 'PENDING'){
+      if (request.isQRPayment && requestStatus.status === 'PENDING') {
         requestStatus.status = TransactionStatus.USER_DROPPED;
         await requestStatus.save();
       }
       console.log(request.gateway, 'not Terminating');
       return true;
     }
-    request.gateway = Gateway.EXPIRED;
-    requestStatus.status = TransactionStatus.USER_DROPPED;
-    await requestStatus.save();
-    await request.save();
-    console.log(`Order terminated: ${request.gateway}`);
+    if (requestStatus.status === TransactionStatus.PENDING) {
+      requestStatus.status = TransactionStatus.USER_DROPPED;
+      await requestStatus.save();
+      console.log(`Order terminated: ${request.gateway}`);
+    }
+
     return true;
   }
 

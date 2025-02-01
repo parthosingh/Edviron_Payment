@@ -188,7 +188,7 @@ let EdvironPgService = class EdvironPgService {
                 paymentInfo.cashfree_id = cf_payment_id || null;
                 setTimeout(() => {
                     this.terminateOrder(request._id.toString());
-                }, 20 * 60 * 1000);
+                }, 22 * 60 * 1000);
             }
             const disabled_modes_string = request.disabled_modes
                 .map((mode) => `${mode}=false`)
@@ -314,11 +314,11 @@ let EdvironPgService = class EdvironPgService {
             console.log(request.gateway, 'not Terminating');
             return true;
         }
-        request.gateway = collect_request_schema_1.Gateway.EXPIRED;
-        requestStatus.status = transactionStatus_1.TransactionStatus.USER_DROPPED;
-        await requestStatus.save();
-        await request.save();
-        console.log(`Order terminated: ${request.gateway}`);
+        if (requestStatus.status === transactionStatus_1.TransactionStatus.PENDING) {
+            requestStatus.status = transactionStatus_1.TransactionStatus.USER_DROPPED;
+            await requestStatus.save();
+            console.log(`Order terminated: ${request.gateway}`);
+        }
         return true;
     }
     async easebuzzCheckStatus(collect_request_id, collect_request) {
