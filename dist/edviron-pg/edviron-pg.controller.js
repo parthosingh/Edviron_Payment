@@ -1248,6 +1248,7 @@ let EdvironPgController = class EdvironPgController {
                                 updatedAt: 1,
                                 isAutoRefund: 1,
                                 payment_time: 1,
+                                reason: 1,
                             },
                         },
                         {
@@ -1274,6 +1275,7 @@ let EdvironPgController = class EdvironPgController {
                                             isAutoRefund: '$isAutoRefund',
                                             payment_time: '$payment_time',
                                             isQRPayment: '$collect_request.isQRPayment',
+                                            reason: '$reason',
                                         },
                                     ],
                                 },
@@ -1351,6 +1353,7 @@ let EdvironPgController = class EdvironPgController {
                                 updatedAt: 1,
                                 isAutoRefund: 1,
                                 payment_time: 1,
+                                reason: 1,
                             },
                         },
                         {
@@ -1376,6 +1379,7 @@ let EdvironPgController = class EdvironPgController {
                                             vendors_info: '$collect_request.vendors_info',
                                             isAutoRefund: '$isAutoRefund',
                                             payment_time: '$payment_time',
+                                            reason: '$reason',
                                         },
                                     ],
                                 },
@@ -1396,7 +1400,6 @@ let EdvironPgController = class EdvironPgController {
             }
             console.timeEnd('aggregating transaction');
             const tnxCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
-            console.log(tnxCount);
             res.status(201).send({ transactions, totalTransactions: tnxCount });
         }
         catch (error) {

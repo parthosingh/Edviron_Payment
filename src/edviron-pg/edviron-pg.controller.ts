@@ -1663,6 +1663,7 @@ export class EdvironPgController {
                 updatedAt: 1,
                 isAutoRefund: 1,
                 payment_time: 1,
+                reason: 1,
               },
             },
             {
@@ -1689,6 +1690,7 @@ export class EdvironPgController {
                       isAutoRefund: '$isAutoRefund',
                       payment_time: '$payment_time',
                       isQRPayment: '$collect_request.isQRPayment',
+                      reason: '$reason',
                     },
                   ],
                 },
@@ -1770,6 +1772,7 @@ export class EdvironPgController {
                 updatedAt: 1,
                 isAutoRefund: 1,
                 payment_time: 1,
+                reason: 1,
               },
             },
             {
@@ -1795,6 +1798,7 @@ export class EdvironPgController {
                       vendors_info: '$collect_request.vendors_info',
                       isAutoRefund: '$isAutoRefund',
                       payment_time: '$payment_time',
+                      reason: '$reason',
                     },
                   ],
                 },
@@ -1825,13 +1829,9 @@ export class EdvironPgController {
         await this.databaseService.CollectRequestStatusModel.countDocuments(
           query,
         );
-
-      console.log(tnxCount);
-
       res.status(201).send({ transactions, totalTransactions: tnxCount });
     } catch (error) {
       console.log(error.message);
-
       throw new BadRequestException(error.message);
     }
   }
