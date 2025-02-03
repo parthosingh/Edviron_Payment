@@ -188,7 +188,7 @@ let EdvironPgService = class EdvironPgService {
                 paymentInfo.cashfree_id = cf_payment_id || null;
                 setTimeout(() => {
                     this.terminateOrder(request._id.toString());
-                }, 22 * 60 * 1000);
+                }, 25 * 60 * 1000);
             }
             const disabled_modes_string = request.disabled_modes
                 .map((mode) => `${mode}=false`)

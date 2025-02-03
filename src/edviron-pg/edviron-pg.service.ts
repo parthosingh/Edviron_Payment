@@ -235,8 +235,8 @@ export class EdvironPgService implements GatewayService {
           () => {
             this.terminateOrder(request._id.toString());
           },
-          22 * 60 * 1000,
-        ); // 20 minutes in milliseconds
+          25 * 60 * 1000,
+        ); // 25 minutes in milliseconds
       }
       const disabled_modes_string = request.disabled_modes
         .map((mode) => `${mode}=false`)
