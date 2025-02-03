@@ -180,7 +180,7 @@ export class EdvironPgController {
             </script>`,
     );
   }
-
+ 
   @Get('/callback')
   async handleCallback(@Req() req: any, @Res() res: any) {
     const { collect_request_id } = req.query;

@@ -234,7 +234,7 @@ export class EdvironPgService implements GatewayService {
         setTimeout(
           () => {
             this.terminateOrder(request._id.toString());
-          },
+          }, 
           25 * 60 * 1000,
         ); // 25 minutes in milliseconds
       }
