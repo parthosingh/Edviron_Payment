@@ -180,7 +180,7 @@ export class EdvironPgController {
             </script>`,
     );
   }
- 
+
   @Get('/callback')
   async handleCallback(@Req() req: any, @Res() res: any) {
     const { collect_request_id } = req.query;
@@ -395,6 +395,9 @@ export class EdvironPgController {
       return;
     }
 
+    collectReq.gateway = Gateway.EDVIRON_PG;
+    await collectReq.save();
+
     // Auto Refund Code Replicate on easebuzz
     if (collectReq.school_id === '65d443168b8aa46fcb5af3e4') {
       try {
@@ -440,7 +443,7 @@ export class EdvironPgController {
           await this.cashfreeService.initiateRefund(
             refund_id,
             refund_amount,
-            collect_id, 
+            collect_id,
           );
           collectReq.gateway = Gateway.EDVIRON_PG;
           await collectReq.save();
@@ -607,8 +610,8 @@ export class EdvironPgController {
             details: JSON.stringify(webHookData.payment.payment_method),
             bank_reference: webHookData.payment.bank_reference,
             payment_time,
-            reason:payment_message || 'NA',
-            payment_message: payment_message || 'NA'
+            reason: payment_message || 'NA',
+            payment_message: payment_message || 'NA',
           },
         },
         {

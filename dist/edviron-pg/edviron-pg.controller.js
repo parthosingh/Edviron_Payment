@@ -270,6 +270,8 @@ let EdvironPgController = class EdvironPgController {
             res.status(200).send('OK');
             return;
         }
+        collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
+        await collectReq.save();
         if (collectReq.school_id === '65d443168b8aa46fcb5af3e4') {
             try {
                 if (pendingCollectReq &&
@@ -425,7 +427,7 @@ let EdvironPgController = class EdvironPgController {
                 bank_reference: webHookData.payment.bank_reference,
                 payment_time,
                 reason: payment_message || 'NA',
-                payment_message: payment_message || 'NA'
+                payment_message: payment_message || 'NA',
             },
         }, {
             upsert: true,
