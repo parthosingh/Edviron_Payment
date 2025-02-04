@@ -232,4 +232,25 @@ export declare class EdvironPgController {
         dispute_id: string;
     }): Promise<void>;
     getPaymentsForOrder(req: any): Promise<string>;
+    checkStatusV2(body: {
+        token: string;
+        trustee_id: string;
+        query: {
+            collect_id?: string;
+            custom_order_id?: string;
+        };
+    }): Promise<{
+        status: any;
+        order_amount: any;
+        custom_order_id: string;
+        bank_reference: any;
+        error_details: any;
+        order_id: any;
+        payment_completion_time: any;
+        payment_currency: any;
+        payment_group: any;
+        payment_message: any;
+        payment_method: any;
+        payment_time: any;
+    }>;
 }

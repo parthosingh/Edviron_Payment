@@ -47,10 +47,10 @@ export class CheckStatusController {
     const decrypted = _jwt.verify(jwt, process.env.KEY!) as {
       transactionId: string;
       trusteeId: string;
-      school_id:string;
+      school_id: string;
     };
     console.log(decrypted);
-    
+
     if (
       JSON.stringify({
         transactionId: decrypted.transactionId,
@@ -68,4 +68,6 @@ export class CheckStatusController {
       return sign(status);
     }
   }
+
+
 }

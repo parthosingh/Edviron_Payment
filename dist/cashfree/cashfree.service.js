@@ -457,6 +457,21 @@ let CashfreeService = class CashfreeService {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async getPaymentStatus(order_id, client_id) {
+        const config = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/${order_id}/payments`,
+            headers: {
+                accept: 'application/json',
+                'x-api-version': '2023-08-01',
+                'x-partner-merchantid': client_id,
+                'x-partner-apikey': process.env.CASHFREE_API_KEY,
+            },
+        };
+        const response = await (0, axios_1.default)(config);
+        return response.data;
+    }
 };
 exports.CashfreeService = CashfreeService;
 exports.CashfreeService = CashfreeService = __decorate([

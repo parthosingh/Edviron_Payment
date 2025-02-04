@@ -2792,4 +2792,63 @@ export class EdvironPgController {
       throw new BadRequestException(e.message);
     }
   }
+
+  @Get('/v2/orders')
+  async checkStatusV2(
+    @Body()
+    body: {
+      token: string;
+      trustee_id: string;
+      query: {
+        collect_id?: string;
+        custom_order_id?: string;
+      };
+    },
+  ) {
+    const { token, query, trustee_id } = body;
+    try {
+      if(query.custom_order_id && query.collect_id) {
+        throw new BadRequestException('Please provide either collect_id or custom_order_id');
+      }
+      if(!query.collect_id && !query.custom_order_id) {
+        throw new BadRequestException('Please provide either collect_id or custom_order_id');
+      }
+      if (!token) {
+        throw new UnauthorizedException('Token not provided');
+      }
+      const decoded = jwt.verify(token, process.env.KEY!) as any;
+      if (decoded.trustee_id !== trustee_id) {
+        throw new UnauthorizedException('Invalid token');
+      }
+
+      const request =
+        await this.databaseService.CollectRequestModel.findOne(query);
+      if (!request) {
+        throw new BadRequestException('Invalid Order ID');
+      }
+      const status = await this.cashfreeService.getPaymentStatus(
+        request._id.toString(),
+        request.clientId,
+      );
+      if (status.length > 0) {
+        return {
+          status: status[0].payment_status,
+          order_amount: status[0].order_amount,
+          custom_order_id: request.custom_order_id,
+          bank_reference: status[0].bank_reference,
+          error_details: status[0].error_details,
+          order_id: status[0].order_id,
+          payment_completion_time: status[0].payment_completion_time,
+          payment_currency: status[0].payment_currency,
+          payment_group: status[0].payment_group,
+          payment_message: status[0].payment_message,
+          payment_method: status[0].payment_method,
+          payment_time: status[0].payment_time,
+        };
+      }
+      throw new NotFoundException('Payment Status Not Found');
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
 }

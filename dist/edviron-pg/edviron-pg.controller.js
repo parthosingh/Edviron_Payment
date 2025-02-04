@@ -1974,6 +1974,49 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async checkStatusV2(body) {
+        const { token, query, trustee_id } = body;
+        try {
+            if (query.custom_order_id && query.collect_id) {
+                throw new common_1.BadRequestException('Please provide either collect_id or custom_order_id');
+            }
+            if (!query.collect_id && !query.custom_order_id) {
+                throw new common_1.BadRequestException('Please provide either collect_id or custom_order_id');
+            }
+            if (!token) {
+                throw new common_1.UnauthorizedException('Token not provided');
+            }
+            const decoded = jwt.verify(token, process.env.KEY);
+            if (decoded.trustee_id !== trustee_id) {
+                throw new common_1.UnauthorizedException('Invalid token');
+            }
+            const request = await this.databaseService.CollectRequestModel.findOne(query);
+            if (!request) {
+                throw new common_1.BadRequestException('Invalid Order ID');
+            }
+            const status = await this.cashfreeService.getPaymentStatus(request._id.toString(), request.clientId);
+            if (status.length > 0) {
+                return {
+                    status: status[0].payment_status,
+                    order_amount: status[0].order_amount,
+                    custom_order_id: request.custom_order_id,
+                    bank_reference: status[0].bank_reference,
+                    error_details: status[0].error_details,
+                    order_id: status[0].order_id,
+                    payment_completion_time: status[0].payment_completion_time,
+                    payment_currency: status[0].payment_currency,
+                    payment_group: status[0].payment_group,
+                    payment_message: status[0].payment_message,
+                    payment_method: status[0].payment_method,
+                    payment_time: status[0].payment_time,
+                };
+            }
+            throw new common_1.NotFoundException('Payment Status Not Found');
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -2250,6 +2293,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getPaymentsForOrder", null);
+__decorate([
+    (0, common_1.Get)('/v2/orders'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "checkStatusV2", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
