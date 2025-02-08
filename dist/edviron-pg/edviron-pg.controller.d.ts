@@ -253,4 +253,9 @@ export declare class EdvironPgController {
         payment_method: any;
         payment_time: any;
     }>;
+    getSettlementStatus(req: any): Promise<{
+        isSettlementComplete: boolean;
+        transfer_utr: any;
+        service_charge: Number;
+    }>;
 }

@@ -2851,4 +2851,20 @@ export class EdvironPgController {
       throw new BadRequestException(e.message);
     }
   }
+  
+  @Get('settlement-status')
+  async getSettlementStatus(
+    @Req() req: any,
+  ){
+    const request = await this.databaseService.CollectRequestModel.findById(req.query.collect_id)
+    if(!request) {
+      throw new NotFoundException('Transaction Not Found');
+    }
+    if(!request){
+      throw new NotFoundException('Transaction Not Found');
+    }
+    const status = await this.cashfreeService.settlementStatus(request._id.toString(), request.clientId);
+   
+    return status
+  }
 }

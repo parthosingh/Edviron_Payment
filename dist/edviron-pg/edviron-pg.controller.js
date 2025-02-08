@@ -2017,6 +2017,17 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async getSettlementStatus(req) {
+        const request = await this.databaseService.CollectRequestModel.findById(req.query.collect_id);
+        if (!request) {
+            throw new common_1.NotFoundException('Transaction Not Found');
+        }
+        if (!request) {
+            throw new common_1.NotFoundException('Transaction Not Found');
+        }
+        const status = await this.cashfreeService.settlementStatus(request._id.toString(), request.clientId);
+        return status;
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -2300,6 +2311,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "checkStatusV2", null);
+__decorate([
+    (0, common_1.Get)('settlement-status'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getSettlementStatus", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
