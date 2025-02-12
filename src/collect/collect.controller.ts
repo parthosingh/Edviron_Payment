@@ -145,7 +145,7 @@ export class CollectController {
     if (!collect_request) {
       throw new BadRequestException('tranaction missing');
     }
-    await this.collectService.sendCallbackEmail(collect_id);
+    // await this.collectService.sendCallbackEmail(collect_id); //enable later
     let callbackUrl = new URL(collect_request.callbackUrl);
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_id);
     callbackUrl.searchParams.set('status', 'cancelled');
@@ -153,5 +153,5 @@ export class CollectController {
     res.redirect(callbackUrl.toString());
     // const callback_url = `${collect_request?.callbackUrl}&status=cancelled&reason=dropped-by-user`;
     // res.redirect(callback_url);
-  }
+  } 
 }
