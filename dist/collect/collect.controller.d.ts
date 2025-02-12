@@ -34,12 +34,14 @@ export declare class CollectController {
         ccavenue_access_code?: string;
         ccavenue_working_key?: string;
         split_payments?: boolean;
-        vendors_info?: [{
-            vendor_id: string;
-            percentage?: number;
-            amount?: number;
-            name?: string;
-        }];
+        vendors_info?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+            }
+        ];
     }): Promise<any>;
     callbackUrl(res: any, collect_id: string): Promise<void>;
 }

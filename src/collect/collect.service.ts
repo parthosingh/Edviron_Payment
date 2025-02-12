@@ -11,7 +11,7 @@ import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { platformChange } from './collect.controller';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
-
+import * as nodemailer from 'nodemailer';
 @Injectable()
 export class CollectService {
   constructor(
@@ -40,7 +40,14 @@ export class CollectService {
     ccavenue_access_code?: string,
     ccavenue_working_key?: string,
     splitPayments?: boolean,
-    vendor?: [{ vendor_id: string; percentage?: number; amount?: number,name?: string;}],
+    vendor?: [
+      {
+        vendor_id: string;
+        percentage?: number;
+        amount?: number;
+        name?: string;
+      },
+    ],
   ): Promise<{ url: string; request: CollectRequest }> {
     console.log(req_webhook_urls, 'webhook url');
     console.log(webHook);
@@ -109,7 +116,7 @@ export class CollectService {
             platform_charges,
             school_name,
             splitPayments || false,
-            vendor, 
+            vendor,
           )
         : await this.hdfcService.collect(request)
     )!;
@@ -123,5 +130,80 @@ export class CollectService {
       { new: true },
     );
     return { url: transaction.url, request };
+  }
+
+  async sendCallbackEmail(collect_id: string) {
+    const htmlToSend = `
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+        }
+        .container {
+          padding: 20px;
+          background-color: #f8f9fa;
+          border-radius: 5px;
+        }
+        .header {
+          font-size: 20px;
+          font-weight: bold;
+          color: #333;
+        }
+        .content {
+          margin-top: 10px;
+          font-size: 16px;
+          color: #555;
+        }
+        .footer {
+          margin-top: 20px;
+          font-size: 14px;
+          color: #777;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">Order Dropped Notification</div>
+        <div class="content">
+          <p>The user has dropped the order.</p>
+          <p><strong>Order ID:</strong> ${collect_id}</p>
+        </div>
+        <div class="footer">
+          <p>Thank you,</p>
+          <p>Your Company Team</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+    const transporter = nodemailer.createTransport({
+      pool: true,
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        type: 'OAuth2',
+        user: process.env.EMAIL_USER,
+        clientId: process.env.OAUTH_CLIENT_ID,
+        clientSecret: process.env.OAUTH_CLIENT_SECRET,
+        refreshToken: process.env.OAUTH_REFRESH_TOKEN,
+      },
+    });
+
+    const mailOptions = {
+      from: 'noreply@edviron.com',
+      to: 'rpbarmaiya@gmail.com',
+      subject: `Edviron - User Dropped`,
+      html: htmlToSend,
+    };
+    try {
+      const info = await transporter.sendMail(mailOptions);
+
+      return 'mail sent successfully';
+    } catch (e) {
+      console.log(e.message);
+    }
   }
 }

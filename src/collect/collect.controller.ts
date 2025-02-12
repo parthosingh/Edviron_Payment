@@ -56,7 +56,14 @@ export class CollectController {
       ccavenue_access_code?: string;
       ccavenue_working_key?: string;
       split_payments?: boolean;
-      vendors_info?:[{ vendor_id: string; percentage?: number; amount?: number,name?:string }]
+      vendors_info?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+        },
+      ];
     },
   ) {
     const {
@@ -90,7 +97,7 @@ export class CollectController {
       console.log(disabled_modes);
       let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
       console.log(decrypted);
-      
+
       // if (
       //   decrypted.amount !== amount || decrypted.callbackUrl !== callbackUrl
       // ) {
@@ -114,9 +121,9 @@ export class CollectController {
           easebuzz_sub_merchant_id,
           ccavenue_merchant_id,
           ccavenue_access_code,
-          ccavenue_working_key, 
+          ccavenue_working_key,
           split_payments || false,
-          vendors_info, 
+          vendors_info,
         ),
       );
     } catch (e) {
@@ -135,18 +142,16 @@ export class CollectController {
   ) {
     const collect_request =
       await this.databaseService.CollectRequestModel.findById(collect_id);
-    if(!collect_request){
-      throw new BadRequestException('tranaction missing')
+    if (!collect_request) {
+      throw new BadRequestException('tranaction missing');
     }
-      let callbackUrl = new URL(collect_request.callbackUrl);
+    await this.collectService.sendCallbackEmail(collect_id);
+    let callbackUrl = new URL(collect_request.callbackUrl);
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_id);
     callbackUrl.searchParams.set('status', 'cancelled');
     callbackUrl.searchParams.set('reason', 'dropped-by-user');
     res.redirect(callbackUrl.toString());
-
     // const callback_url = `${collect_request?.callbackUrl}&status=cancelled&reason=dropped-by-user`;
     // res.redirect(callback_url);
   }
-
-  
 }

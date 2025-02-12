@@ -49,6 +49,7 @@ let CollectController = class CollectController {
         if (!collect_request) {
             throw new common_1.BadRequestException('tranaction missing');
         }
+        await this.collectService.sendCallbackEmail(collect_id);
         let callbackUrl = new URL(collect_request.callbackUrl);
         callbackUrl.searchParams.set('EdvironCollectRequestId', collect_id);
         callbackUrl.searchParams.set('status', 'cancelled');
