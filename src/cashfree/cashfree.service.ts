@@ -284,8 +284,12 @@ export class CashfreeService {
       };
 
       const { data: response } = await axios.request(config);
-      const orderIds = response.data.map((order: any) => order.order_id);
-
+      
+      const orderIds = response.data
+      .filter((order: any) => order.order_id !== null) // Filter out null order_id
+      .map((order: any) => order.order_id);
+      
+      console.log(response, 'response');
       const customOrders = await this.databaseService.CollectRequestModel.find({
         _id: { $in: orderIds },
       });
@@ -525,6 +529,7 @@ export class CashfreeService {
     cursor?: string,
   ) {
     try {
+      
       const data = {
         pagination: {
           limit: 1000,
@@ -532,12 +537,13 @@ export class CashfreeService {
         },
         filters: {
           settlement_utrs: utrNumber,
-          start_date,
-          end_date,
+          start_date: new Date(new Date(start_date).setHours(0, 0, 0, 0)).toISOString(),
+          end_date: new Date(new Date(end_date).setHours(23, 59, 59, 999)).toISOString(),
         },
+        
       };
-      console.log(data,'payload');
-      
+      console.log(data, 'payload');
+
       const config = {
         method: 'post',
         maxBodyLength: Infinity,
@@ -553,20 +559,17 @@ export class CashfreeService {
       };
 
       const response = await axios(config);
-      console.log(response.data,'ooooooo',data);
-      
+      console.log(response.data, 'ooooooo', data);
+
       return response.data;
     } catch (e) {
       console.log(e);
-      
+
       throw new BadRequestException(e.message);
     }
   }
 
-  async getPaymentStatus(
-    order_id: string,
-    client_id: string,
-  ){
+  async getPaymentStatus(order_id: string, client_id: string) {
     const config = {
       method: 'get',
       maxBodyLength: Infinity,

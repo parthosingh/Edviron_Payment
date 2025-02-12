@@ -235,6 +235,8 @@ export class CashfreeController {
     const { utr, client_id, token } = req.query;
     try {
       const limit = body.limit || 40;
+      console.log(limit, 'limit');
+      
       return await this.cashfreeService.getTransactionForSettlements(
         utr,
         client_id,

@@ -227,7 +227,10 @@ let CashfreeService = class CashfreeService {
                 data,
             };
             const { data: response } = await axios_1.default.request(config);
-            const orderIds = response.data.map((order) => order.order_id);
+            const orderIds = response.data
+                .filter((order) => order.order_id !== null)
+                .map((order) => order.order_id);
+            console.log(response, 'response');
             const customOrders = await this.databaseService.CollectRequestModel.find({
                 _id: { $in: orderIds },
             });
@@ -430,8 +433,8 @@ let CashfreeService = class CashfreeService {
                 },
                 filters: {
                     settlement_utrs: utrNumber,
-                    start_date,
-                    end_date,
+                    start_date: new Date(new Date(start_date).setHours(0, 0, 0, 0)).toISOString(),
+                    end_date: new Date(new Date(end_date).setHours(23, 59, 59, 999)).toISOString(),
                 },
             };
             console.log(data, 'payload');
