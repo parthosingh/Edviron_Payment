@@ -972,14 +972,6 @@ export class EdvironPgService implements GatewayService {
     school_id: string,
   ) {
     try {
-      console.log(
-        'collect_id: ',
-        new Types.ObjectId(collect_id),
-        'trustee_id:',
-        trustee_id,
-        'school_id: ',
-        school_id,
-      );
       const transaction =
         await this.databaseService.CollectRequestModel.aggregate([
           {
