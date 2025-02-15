@@ -1407,6 +1407,25 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(error.message);
         }
     }
+    async singleTransactionReport(body) {
+        try {
+            const { collect_id, trustee_id, token, school_id } = body;
+            if (!token)
+                throw new common_1.BadRequestException('Token required');
+            const decrypted = jwt.verify(token, process.env.KEY);
+            if (decrypted && decrypted?.trustee_id !== trustee_id)
+                throw new common_1.ForbiddenException('Request forged');
+            if (decrypted && decrypted?.collect_id !== collect_id)
+                throw new common_1.ForbiddenException('Request forged');
+            if (decrypted && decrypted?.school_id !== school_id)
+                throw new common_1.ForbiddenException('Request forged');
+            const paymentInfo = await this.edvironPgService.getSingleTransactionInfo(collect_id, trustee_id, school_id);
+            return paymentInfo;
+        }
+        catch (error) {
+            throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
+        }
+    }
     async getErpLogo(collect_id) {
         try {
             const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id);
@@ -2123,6 +2142,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "bulkTransactions", null);
+__decorate([
+    (0, common_1.Post)('single-transaction-report'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "singleTransactionReport", null);
 __decorate([
     (0, common_1.Get)('erp-logo'),
     __param(0, (0, common_1.Query)('collect_id')),

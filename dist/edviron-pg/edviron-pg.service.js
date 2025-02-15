@@ -778,6 +778,62 @@ let EdvironPgService = class EdvironPgService {
             totalPages,
         };
     }
+    async getSingleTransactionInfo(collect_id, trustee_id, school_id) {
+        try {
+            const transaction = await this.databaseService.CollectRequestModel.aggregate([
+                {
+                    $match: {
+                        _id: new mongoose_1.Types.ObjectId(collect_id),
+                    },
+                },
+                {
+                    $lookup: {
+                        from: 'collectrequeststatuses',
+                        localField: '_id',
+                        foreignField: 'collect_id',
+                        as: 'collect_req_status',
+                    },
+                },
+                {
+                    $unwind: {
+                        path: '$collect_req_status',
+                        preserveNullAndEmptyArrays: true,
+                    },
+                },
+                {
+                    $project: {
+                        collect_id: '$_id',
+                        amount: 1,
+                        gateway: 1,
+                        school_id: 1,
+                        trustee_id: 1,
+                        custom_order_id: 1,
+                        vendors_info: 1,
+                        additional_data: 1,
+                        isQRPayment: 1,
+                        status: '$collect_req_status.status',
+                        bank_reference: '$collect_req_status.bank_reference',
+                        details: '$collect_req_status.details',
+                        transactionAmount: '$collect_req_status.transaction_amount',
+                        transactionStatus: '$collect_req_status.status',
+                        transactionTime: '$collect_req_status.payment_time',
+                        payment_method: '$collect_req_status.payment_method',
+                        payment_time: '$collect_req_status.payment_time',
+                        transaction_amount: '$collect_req_status.transaction_amount',
+                        order_amount: '$collect_req_status.order_amount',
+                        isAutoRefund: '$collect_req_status.isAutoRefund',
+                        reason: '$collect_req_status.reason',
+                        createdAt: 1,
+                        updatedAt: 1,
+                    },
+                },
+            ]);
+            return transaction;
+        }
+        catch (error) {
+            throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
+        }
+    }
     async getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id) {
         try {
             console.log(start_date, end_date);
