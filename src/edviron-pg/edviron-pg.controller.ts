@@ -591,6 +591,7 @@ export class EdvironPgController {
             {
               $set: {
                 payment_time: payment_time,
+                status:status
               },
             },
           );
