@@ -11,6 +11,7 @@ import {
   UnauthorizedException,
   BadRequestException,
   NotFoundException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { EdvironPgService } from './edviron-pg.service';
@@ -1836,6 +1837,44 @@ export class EdvironPgController {
     }
   }
 
+  @Post('single-transaction-report')
+  async singleTransactionReport(
+    @Body()
+    body: {
+      collect_id: string;
+      trustee_id: string;
+      token: string;
+      school_id: string;
+    },
+  ) {
+    try {
+      const { collect_id, trustee_id, token, school_id } = body;
+      if (!token) throw new BadRequestException('Token required');
+      const decrypted = jwt.verify(token, process.env.KEY!) as {
+        trustee_id: string;
+        collect_id: string;
+        school_id: string;
+      };
+      if (decrypted && decrypted?.trustee_id !== trustee_id)
+        throw new ForbiddenException('Request forged');
+      if (decrypted && decrypted?.collect_id !== collect_id)
+        throw new ForbiddenException('Request forged');
+      if (decrypted && decrypted?.school_id !== school_id)
+        throw new ForbiddenException('Request forged');
+
+      const paymentInfo = await this.edvironPgService.getSingleTransactionInfo(
+        collect_id,
+        trustee_id,
+        school_id,
+      );
+      return paymentInfo;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        error.message || 'Something went wrong',
+      );
+    }
+  }
+
   @Get('erp-logo')
   async getErpLogo(@Query('collect_id') collect_id: string) {
     try {
@@ -2807,11 +2846,15 @@ export class EdvironPgController {
   ) {
     const { token, query, trustee_id } = body;
     try {
-      if(query.custom_order_id && query.collect_id) {
-        throw new BadRequestException('Please provide either collect_id or custom_order_id');
+      if (query.custom_order_id && query.collect_id) {
+        throw new BadRequestException(
+          'Please provide either collect_id or custom_order_id',
+        );
       }
-      if(!query.collect_id && !query.custom_order_id) {
-        throw new BadRequestException('Please provide either collect_id or custom_order_id');
+      if (!query.collect_id && !query.custom_order_id) {
+        throw new BadRequestException(
+          'Please provide either collect_id or custom_order_id',
+        );
       }
       if (!token) {
         throw new UnauthorizedException('Token not provided');
@@ -2851,21 +2894,24 @@ export class EdvironPgController {
       throw new BadRequestException(e.message);
     }
   }
-  
+
   @Get('settlement-status')
-  async getSettlementStatus(
-    @Req() req: any,
-  ){
-    const request = await this.databaseService.CollectRequestModel.findById(req.query.collect_id)
-    if(!request) {
+  async getSettlementStatus(@Req() req: any) {
+    const request = await this.databaseService.CollectRequestModel.findById(
+      req.query.collect_id,
+    );
+    if (!request) {
       throw new NotFoundException('Transaction Not Found');
     }
-    if(!request){
+    if (!request) {
       throw new NotFoundException('Transaction Not Found');
     }
-    const status = await this.cashfreeService.settlementStatus(request._id.toString(), request.clientId);
-   
-    return status
+    const status = await this.cashfreeService.settlementStatus(
+      request._id.toString(),
+      request.clientId,
+    );
+
+    return status;
   }
 
   @Post('get-vendor-single-transaction')
