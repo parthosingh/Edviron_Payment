@@ -1034,6 +1034,7 @@ let EdvironPgController = class EdvironPgController {
         }
     }
     async bulkTransactions(body, res, req) {
+        console.time('bulk-transactions-report');
         const { trustee_id, token, searchParams, isCustomSearch, seachFilter, payment_modes, isQRCode, } = body;
         if (!token)
             throw new Error('Token not provided');
@@ -1050,6 +1051,10 @@ let EdvironPgController = class EdvironPgController {
             endOfDay.setHours(23, 59, 59, 999);
             let collectQuery = {
                 trustee_id: trustee_id,
+                createdAt: {
+                    $gte: startOfDayUTC,
+                    $lt: endOfDayUTC,
+                },
             };
             if (school_id != 'null') {
                 collectQuery = {
@@ -1076,9 +1081,7 @@ let EdvironPgController = class EdvironPgController {
             }
             console.log(collectQuery);
             console.time('fetching all transaction');
-            const orders = await this.databaseService.CollectRequestModel.find(collectQuery)
-                .sort({ createdAt: -1 })
-                .select('_id');
+            const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
             let transactions = [];
             const orderIds = orders.map((order) => order._id);
             console.log(orderIds.length);
@@ -1132,15 +1135,6 @@ let EdvironPgController = class EdvironPgController {
                     payment_method: { $in: payment_modes },
                 };
             }
-            console.time('counting all transaction');
-            const transactionsCount = await this.databaseService.CollectRequestModel.find({
-                trustee_id: trustee_id,
-                createdAt: {
-                    $gte: new Date(startDate),
-                    $lt: endOfDay,
-                },
-            }).select('_id');
-            console.timeEnd('counting all transaction');
             console.time('aggregating transaction');
             if (isCustomSearch) {
                 console.log('Serching custom');
@@ -1399,7 +1393,10 @@ let EdvironPgController = class EdvironPgController {
                     ]);
             }
             console.timeEnd('aggregating transaction');
+            console.time('counting');
             const tnxCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
+            console.timeEnd('counting');
+            console.timeEnd('bulk-transactions-report');
             res.status(201).send({ transactions, totalTransactions: tnxCount });
         }
         catch (error) {

@@ -1400,6 +1400,7 @@ export class EdvironPgController {
     @Res() res: any,
     @Req() req: any,
   ) {
+    console.time('bulk-transactions-report');
     const {
       trustee_id,
       token,
@@ -1434,10 +1435,10 @@ export class EdvironPgController {
 
       let collectQuery: any = {
         trustee_id: trustee_id,
-        // createdAt: {
-        //   $gte: startOfDayUTC,
-        //   $lt: endOfDayUTC,
-        // },
+        createdAt: {
+          $gte: startOfDayUTC,
+          $lt: endOfDayUTC,
+        },
       };
       if (school_id != 'null') {
         collectQuery = {
@@ -1469,11 +1470,10 @@ export class EdvironPgController {
       console.log(collectQuery);
 
       console.time('fetching all transaction');
-      const orders = await this.databaseService.CollectRequestModel.find(
-        collectQuery,
-      )
-        .sort({ createdAt: -1 })
-        .select('_id');
+      const orders =
+        await this.databaseService.CollectRequestModel.find(
+          collectQuery,
+        ).select('_id');
 
       // console.log(orders, 'order');
 
@@ -1537,17 +1537,17 @@ export class EdvironPgController {
         };
       }
 
-      console.time('counting all transaction');
-      const transactionsCount =
-        await this.databaseService.CollectRequestModel.find({
-          trustee_id: trustee_id,
-          createdAt: {
-            $gte: new Date(startDate),
-            $lt: endOfDay,
-          },
-        }).select('_id');
+     
+      // const transactionsCount =
+      //   await this.databaseService.CollectRequestModel.find({
+      //     trustee_id: trustee_id,
+      //     createdAt: {
+      //       $gte: new Date(startDate),
+      //       $lt: endOfDay,
+      //     },
+      //   }).select('_id');
 
-      console.timeEnd('counting all transaction');
+   
       console.time('aggregating transaction');
       if (isCustomSearch) {
         console.log('Serching custom');
@@ -1825,11 +1825,13 @@ export class EdvironPgController {
           ]);
       }
       console.timeEnd('aggregating transaction');
-
+      console.time('counting')
       const tnxCount =
         await this.databaseService.CollectRequestStatusModel.countDocuments(
           query,
         );
+        console.timeEnd('counting')
+      console.timeEnd('bulk-transactions-report');
       res.status(201).send({ transactions, totalTransactions: tnxCount });
     } catch (error) {
       console.log(error.message);
@@ -2921,10 +2923,10 @@ export class EdvironPgController {
       order_id: string;
       trustee_id: string;
       token: string;
-    }
+    },
   ) {
-    const orderId = body.order_id
-    console.log(body.trustee_id)
+    const orderId = body.order_id;
+    console.log(body.trustee_id);
     if (!orderId) {
       throw new NotFoundException('Client ID is required');
     }
@@ -2935,8 +2937,6 @@ export class EdvironPgController {
     }
 
     // console.log(body.order_id)
-    return await this.edvironPgService.getSingleTransaction(
-      orderId
-    );
+    return await this.edvironPgService.getSingleTransaction(orderId);
   }
 }
