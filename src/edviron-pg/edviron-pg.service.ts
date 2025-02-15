@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -26,6 +27,7 @@ import * as moment from 'moment-timezone';
 import { sign } from '../utils/sign';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
+import { Types } from 'mongoose';
 @Injectable()
 export class EdvironPgService implements GatewayService {
   constructor(
@@ -234,7 +236,7 @@ export class EdvironPgService implements GatewayService {
         setTimeout(
           () => {
             this.terminateOrder(request._id.toString());
-          }, 
+          },
           25 * 60 * 1000,
         ); // 25 minutes in milliseconds
       }
@@ -964,6 +966,69 @@ export class EdvironPgService implements GatewayService {
     };
   }
 
+  async getSingleTransactionInfo(
+    collect_id: string,
+    trustee_id: string,
+    school_id: string,
+  ) {
+    try {
+      const transaction =
+        await this.databaseService.CollectRequestModel.aggregate([
+          {
+            $match: {
+              _id: new Types.ObjectId(collect_id),
+            },
+          },
+          {
+            $lookup: {
+              from: 'collectrequeststatuses',
+              localField: '_id',
+              foreignField: 'collect_id',
+              as: 'collect_req_status',
+            },
+          },
+          {
+            $unwind: {
+              path: '$collect_req_status',
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $project: {
+              collect_id: '$_id',
+              amount: 1,
+              gateway: 1,
+              school_id: 1,
+              trustee_id: 1,
+              custom_order_id: 1,
+              vendors_info: 1,
+              additional_data: 1,
+              isQRPayment: 1,
+              status: '$collect_req_status.status',
+              bank_reference: '$collect_req_status.bank_reference',
+              details: '$collect_req_status.details',
+              transactionAmount: '$collect_req_status.transaction_amount',
+              transactionStatus: '$collect_req_status.status',
+              transactionTime: '$collect_req_status.payment_time',
+              payment_method: '$collect_req_status.payment_method',
+              payment_time: '$collect_req_status.payment_time',
+              transaction_amount: '$collect_req_status.transaction_amount',
+              order_amount: '$collect_req_status.order_amount',
+              isAutoRefund: '$collect_req_status.isAutoRefund',
+              reason: '$collect_req_status.reason',
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          },
+        ]);
+      return transaction;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        error.message || 'Something went wrong',
+      );
+    }
+  }
+
   async getTransactionReportBatched(
     trustee_id: string,
     start_date: string,
@@ -1457,6 +1522,55 @@ export class EdvironPgService implements GatewayService {
     } catch (e) {
       throw new BadRequestException(e.message);
     }
+  }
+
+  async getSingleTransaction(collect_id:string){
+    const objId = new Types.ObjectId(collect_id);
+    const vendotTransaction = 
+    await this.databaseService.CollectRequestModel.aggregate([
+      {
+        $match : {_id: objId}
+      },
+      {
+        $lookup : {
+          from: "collectrequeststatuses",
+          localField: "_id",
+          foreignField: "collect_id",
+          as: "collect_request_status"
+        },
+      },
+      {
+        $unwind: {
+          path: "$collect_request_status",
+          preserveNullAndEmptyArrays: true
+        },
+      },
+      {
+       $project : {
+        _id: 1,
+        amount: 1,
+        collect_id: '$collect_request_status.collect_id',
+        gateway: 1,
+        vendor_id: 1,
+        school_id: 1,
+        trustee_id: 1,
+        custom_order_id: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        name: 1,
+        payment_method: '$collect_request_status.payment_method',
+        bank_reference: '$collect_request_status.bank_reference',
+        details: '$collect_request_status.details',
+        transaction_amount: '$collect_request_status.transaction_amount',
+        additional_data: 1,
+        vendors_info: '$collect_request_status.vendors_info',
+        reason: '$collect_request_status.reason',
+        status: '$collect_request_status.status'
+       }
+      }
+    ])
+    
+    return vendotTransaction[0]
   }
 }
 

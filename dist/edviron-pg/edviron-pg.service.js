@@ -24,6 +24,7 @@ const handlebars = require("handlebars");
 const moment = require("moment-timezone");
 const sign_2 = require("../utils/sign");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
+const mongoose_1 = require("mongoose");
 let EdvironPgService = class EdvironPgService {
     constructor(databaseService, cashfreeService) {
         this.databaseService = databaseService;
@@ -777,6 +778,62 @@ let EdvironPgService = class EdvironPgService {
             totalPages,
         };
     }
+    async getSingleTransactionInfo(collect_id, trustee_id, school_id) {
+        try {
+            const transaction = await this.databaseService.CollectRequestModel.aggregate([
+                {
+                    $match: {
+                        _id: new mongoose_1.Types.ObjectId(collect_id),
+                    },
+                },
+                {
+                    $lookup: {
+                        from: 'collectrequeststatuses',
+                        localField: '_id',
+                        foreignField: 'collect_id',
+                        as: 'collect_req_status',
+                    },
+                },
+                {
+                    $unwind: {
+                        path: '$collect_req_status',
+                        preserveNullAndEmptyArrays: true,
+                    },
+                },
+                {
+                    $project: {
+                        collect_id: '$_id',
+                        amount: 1,
+                        gateway: 1,
+                        school_id: 1,
+                        trustee_id: 1,
+                        custom_order_id: 1,
+                        vendors_info: 1,
+                        additional_data: 1,
+                        isQRPayment: 1,
+                        status: '$collect_req_status.status',
+                        bank_reference: '$collect_req_status.bank_reference',
+                        details: '$collect_req_status.details',
+                        transactionAmount: '$collect_req_status.transaction_amount',
+                        transactionStatus: '$collect_req_status.status',
+                        transactionTime: '$collect_req_status.payment_time',
+                        payment_method: '$collect_req_status.payment_method',
+                        payment_time: '$collect_req_status.payment_time',
+                        transaction_amount: '$collect_req_status.transaction_amount',
+                        order_amount: '$collect_req_status.order_amount',
+                        isAutoRefund: '$collect_req_status.isAutoRefund',
+                        reason: '$collect_req_status.reason',
+                        createdAt: 1,
+                        updatedAt: 1,
+                    },
+                },
+            ]);
+            return transaction;
+        }
+        catch (error) {
+            throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
+        }
+    }
     async getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id) {
         try {
             console.log(start_date, end_date);
@@ -1141,6 +1198,52 @@ let EdvironPgService = class EdvironPgService {
         catch (e) {
             throw new common_1.BadRequestException(e.message);
         }
+    }
+    async getSingleTransaction(collect_id) {
+        const objId = new mongoose_1.Types.ObjectId(collect_id);
+        const vendotTransaction = await this.databaseService.CollectRequestModel.aggregate([
+            {
+                $match: { _id: objId }
+            },
+            {
+                $lookup: {
+                    from: "collectrequeststatuses",
+                    localField: "_id",
+                    foreignField: "collect_id",
+                    as: "collect_request_status"
+                },
+            },
+            {
+                $unwind: {
+                    path: "$collect_request_status",
+                    preserveNullAndEmptyArrays: true
+                },
+            },
+            {
+                $project: {
+                    _id: 1,
+                    amount: 1,
+                    collect_id: '$collect_request_status.collect_id',
+                    gateway: 1,
+                    vendor_id: 1,
+                    school_id: 1,
+                    trustee_id: 1,
+                    custom_order_id: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    name: 1,
+                    payment_method: '$collect_request_status.payment_method',
+                    bank_reference: '$collect_request_status.bank_reference',
+                    details: '$collect_request_status.details',
+                    transaction_amount: '$collect_request_status.transaction_amount',
+                    additional_data: 1,
+                    vendors_info: '$collect_request_status.vendors_info',
+                    reason: '$collect_request_status.reason',
+                    status: '$collect_request_status.status'
+                }
+            }
+        ]);
+        return vendotTransaction[0];
     }
 };
 exports.EdvironPgService = EdvironPgService;
