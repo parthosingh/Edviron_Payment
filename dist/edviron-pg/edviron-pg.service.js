@@ -24,6 +24,7 @@ const handlebars = require("handlebars");
 const moment = require("moment-timezone");
 const sign_2 = require("../utils/sign");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
+const mongoose_1 = require("mongoose");
 let EdvironPgService = class EdvironPgService {
     constructor(databaseService, cashfreeService) {
         this.databaseService = databaseService;
@@ -1141,6 +1142,52 @@ let EdvironPgService = class EdvironPgService {
         catch (e) {
             throw new common_1.BadRequestException(e.message);
         }
+    }
+    async getSingleTransaction(collect_id) {
+        const objId = new mongoose_1.Types.ObjectId(collect_id);
+        const vendotTransaction = await this.databaseService.CollectRequestModel.aggregate([
+            {
+                $match: { _id: objId }
+            },
+            {
+                $lookup: {
+                    from: "collectrequeststatuses",
+                    localField: "_id",
+                    foreignField: "collect_id",
+                    as: "collect_request_status"
+                },
+            },
+            {
+                $unwind: {
+                    path: "$collect_request_status",
+                    preserveNullAndEmptyArrays: true
+                },
+            },
+            {
+                $project: {
+                    _id: 1,
+                    amount: 1,
+                    collect_id: '$collect_request_status.collect_id',
+                    gateway: 1,
+                    vendor_id: 1,
+                    school_id: 1,
+                    trustee_id: 1,
+                    custom_order_id: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    name: 1,
+                    payment_method: '$collect_request_status.payment_method',
+                    bank_reference: '$collect_request_status.bank_reference',
+                    details: '$collect_request_status.details',
+                    transaction_amount: '$collect_request_status.transaction_amount',
+                    additional_data: 1,
+                    vendors_info: '$collect_request_status.vendors_info',
+                    reason: '$collect_request_status.reason',
+                    status: '$collect_request_status.status'
+                }
+            }
+        ]);
+        return vendotTransaction[0];
     }
 };
 exports.EdvironPgService = EdvironPgService;

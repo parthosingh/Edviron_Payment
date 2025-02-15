@@ -2867,4 +2867,30 @@ export class EdvironPgController {
    
     return status
   }
+
+  @Post('get-vendor-single-transaction')
+  async getVendonrSingleTransactions(
+    @Body()
+    body: {
+      order_id: string;
+      trustee_id: string;
+      token: string;
+    }
+  ) {
+    const orderId = body.order_id
+    console.log(body.trustee_id)
+    if (!orderId) {
+      throw new NotFoundException('Client ID is required');
+    }
+
+    const decrypted = jwt.verify(body.token, process.env.KEY!) as any;
+    if (decrypted.order_id !== orderId) {
+      throw new ForbiddenException('Request forged');
+    }
+
+    // console.log(body.order_id)
+    return await this.edvironPgService.getSingleTransaction(
+      orderId
+    );
+  }
 }

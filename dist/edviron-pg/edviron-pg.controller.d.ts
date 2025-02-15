@@ -258,4 +258,9 @@ export declare class EdvironPgController {
         transfer_utr: any;
         service_charge: Number;
     }>;
+    getVendonrSingleTransactions(body: {
+        order_id: string;
+        trustee_id: string;
+        token: string;
+    }): Promise<any>;
 }

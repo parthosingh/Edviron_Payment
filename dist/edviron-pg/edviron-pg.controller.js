@@ -2028,6 +2028,18 @@ let EdvironPgController = class EdvironPgController {
         const status = await this.cashfreeService.settlementStatus(request._id.toString(), request.clientId);
         return status;
     }
+    async getVendonrSingleTransactions(body) {
+        const orderId = body.order_id;
+        console.log(body.trustee_id);
+        if (!orderId) {
+            throw new common_1.NotFoundException('Client ID is required');
+        }
+        const decrypted = jwt.verify(body.token, process.env.KEY);
+        if (decrypted.order_id !== orderId) {
+            throw new common_1.ForbiddenException('Request forged');
+        }
+        return await this.edvironPgService.getSingleTransaction(orderId);
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -2318,6 +2330,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getSettlementStatus", null);
+__decorate([
+    (0, common_1.Post)('get-vendor-single-transaction'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getVendonrSingleTransactions", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

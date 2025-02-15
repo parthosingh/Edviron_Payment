@@ -26,6 +26,7 @@ import * as moment from 'moment-timezone';
 import { sign } from '../utils/sign';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
+import { Types } from 'mongoose';
 @Injectable()
 export class EdvironPgService implements GatewayService {
   constructor(
@@ -1457,6 +1458,55 @@ export class EdvironPgService implements GatewayService {
     } catch (e) {
       throw new BadRequestException(e.message);
     }
+  }
+
+  async getSingleTransaction(collect_id:string){
+    const objId = new Types.ObjectId(collect_id);
+    const vendotTransaction = 
+    await this.databaseService.CollectRequestModel.aggregate([
+      {
+        $match : {_id: objId}
+      },
+      {
+        $lookup : {
+          from: "collectrequeststatuses",
+          localField: "_id",
+          foreignField: "collect_id",
+          as: "collect_request_status"
+        },
+      },
+      {
+        $unwind: {
+          path: "$collect_request_status",
+          preserveNullAndEmptyArrays: true
+        },
+      },
+      {
+       $project : {
+        _id: 1,
+        amount: 1,
+        collect_id: '$collect_request_status.collect_id',
+        gateway: 1,
+        vendor_id: 1,
+        school_id: 1,
+        trustee_id: 1,
+        custom_order_id: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        name: 1,
+        payment_method: '$collect_request_status.payment_method',
+        bank_reference: '$collect_request_status.bank_reference',
+        details: '$collect_request_status.details',
+        transaction_amount: '$collect_request_status.transaction_amount',
+        additional_data: 1,
+        vendors_info: '$collect_request_status.vendors_info',
+        reason: '$collect_request_status.reason',
+        status: '$collect_request_status.status'
+       }
+      }
+    ])
+    
+    return vendotTransaction[0]
   }
 }
 
