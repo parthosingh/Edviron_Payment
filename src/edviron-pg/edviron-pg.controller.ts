@@ -470,11 +470,15 @@ export class EdvironPgController {
     const status = webHookData.payment.payment_status;
     const payment_time = new Date(webHookData.payment.payment_time);
     let webhookStatus = status;
+    let paymentMode=payment_method
+    let paymentdetails = JSON.stringify(webHookData.payment.payment_method)
     if (
       pendingCollectReq?.status === 'FAILED' &&
       webhookStatus === 'USER_DROPPED'
     ) {
       webhookStatus = 'FAILED';
+      // paymentMode=pendingCollectReq.payment_mode
+
     }
     // if (status == TransactionStatus.SUCCESS) {
     //   try {
