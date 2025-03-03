@@ -17,6 +17,7 @@ var PaymentStatus;
 (function (PaymentStatus) {
     PaymentStatus["SUCCESS"] = "SUCCESS";
     PaymentStatus["FAIL"] = "FAIL";
+    PaymentStatus["FAILED"] = "FAILED";
     PaymentStatus["PENDING"] = "PENDING";
     PaymentStatus["EXPIRED"] = "EXPIRED";
     PaymentStatus["FAILURE"] = "FAILURE";

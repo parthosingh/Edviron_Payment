@@ -272,63 +272,63 @@ let EdvironPgController = class EdvironPgController {
         }
         collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
         await collectReq.save();
-        if (collectReq.school_id === '65d443168b8aa46fcb5af3e4') {
-            try {
-                if (pendingCollectReq &&
-                    pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.PENDING &&
-                    pendingCollectReq.status !== collect_req_status_schema_1.PaymentStatus.SUCCESS &&
-                    webHookData.payment.payment_status === 'SUCCESS') {
-                    const tokenData = {
-                        school_id: collectReq?.school_id,
+        console.log('checking for autorefund', pendingCollectReq?.status);
+        try {
+            if (pendingCollectReq &&
+                pendingCollectReq.status === collect_req_status_schema_1.PaymentStatus.FAILED &&
+                webHookData.payment.payment_status === 'SUCCESS') {
+                const tokenData = {
+                    school_id: collectReq?.school_id,
+                    trustee_id: collectReq?.trustee_id,
+                };
+                const token = jwt.sign(tokenData, process.env.KEY, {
+                    noTimestamp: true,
+                });
+                console.log('Refunding Duplicate Payment request');
+                const autoRefundConfig = {
+                    method: 'POST',
+                    url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/initiate-auto-refund`,
+                    headers: {
+                        accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    data: {
+                        token,
+                        refund_amount: collectReq.amount,
+                        collect_id,
+                        school_id: collectReq.school_id,
                         trustee_id: collectReq?.trustee_id,
-                    };
-                    const token = jwt.sign(tokenData, process.env.KEY, {
-                        noTimestamp: true,
-                    });
-                    console.log('Refunding Duplicate Payment request');
-                    const autoRefundConfig = {
-                        method: 'POST',
-                        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/initiate-auto-refund`,
-                        headers: {
-                            accept: 'application/json',
-                            'Content-Type': 'application/json',
-                        },
-                        data: {
-                            token,
-                            refund_amount: collectReq.amount,
-                            collect_id,
-                            school_id: collectReq.school_id,
-                            trustee_id: collectReq?.trustee_id,
-                            custom_id: collectReq.custom_order_id || 'NA',
-                            gateway: 'CASHFREE',
-                            reason: 'Auto Refund due to dual payment',
-                        },
-                    };
-                    const autoRefundResponse = await axios_1.default.request(autoRefundConfig);
-                    const refund_id = autoRefundResponse.data._id.toString();
-                    const refund_amount = autoRefundResponse.data.refund_amount;
-                    console.log('Auto Refund Initiated');
-                    await this.cashfreeService.initiateRefund(refund_id, refund_amount, collect_id);
-                    collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
-                    await collectReq.save();
-                    pendingCollectReq.isAutoRefund = true;
-                    pendingCollectReq.status = collect_req_status_schema_1.PaymentStatus.FAILURE;
-                    await pendingCollectReq.save();
-                    return res.status(200).send('OK');
-                }
+                        custom_id: collectReq.custom_order_id || 'NA',
+                        gateway: 'CASHFREE',
+                        reason: 'Auto Refund due to dual payment',
+                    },
+                };
+                console.time('Refunding Duplicate Payment request');
+                const autoRefundResponse = await axios_1.default.request(autoRefundConfig);
+                console.timeEnd('Refunding Duplicate Payment request');
+                collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
+                pendingCollectReq.isAutoRefund = true;
+                pendingCollectReq.status = collect_req_status_schema_1.PaymentStatus.FAILED;
+                await pendingCollectReq.save();
+                await collectReq.save();
+                return res.status(200).send('OK');
             }
-            catch (e) {
-                console.log(e.message);
-                return;
-            }
+        }
+        catch (e) {
+            console.log(e.message, 'Error in AutoRefund');
+            return res.status(400).send('Error in AutoRefund');
         }
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
         const status = webHookData.payment.payment_status;
         const payment_time = new Date(webHookData.payment.payment_time);
         let webhookStatus = status;
+        let paymentMode = payment_method;
+        let paymentdetails = JSON.stringify(webHookData.payment.payment_method);
         if (pendingCollectReq?.status === 'FAILED' &&
             webhookStatus === 'USER_DROPPED') {
             webhookStatus = 'FAILED';
+            paymentMode = pendingCollectReq.payment_method;
+            paymentdetails = pendingCollectReq.details;
         }
         try {
             if (status == transactionStatus_1.TransactionStatus.SUCCESS) {
@@ -409,7 +409,7 @@ let EdvironPgController = class EdvironPgController {
                 }, {
                     $set: {
                         payment_time: payment_time,
-                        status: status
+                        status: webhookStatus,
                     },
                 });
             }
@@ -423,8 +423,8 @@ let EdvironPgController = class EdvironPgController {
             $set: {
                 status: webhookStatus,
                 transaction_amount,
-                payment_method,
-                details: JSON.stringify(webHookData.payment.payment_method),
+                payment_method: paymentMode,
+                details: paymentdetails,
                 bank_reference: webHookData.payment.bank_reference,
                 payment_time,
                 reason: payment_message || 'NA',

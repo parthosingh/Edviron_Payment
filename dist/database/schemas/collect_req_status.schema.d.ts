@@ -3,6 +3,7 @@ import { CollectRequest } from './collect_request.schema';
 export declare enum PaymentStatus {
     SUCCESS = "SUCCESS",
     FAIL = "FAIL",
+    FAILED = "FAILED",
     PENDING = "PENDING",
     EXPIRED = "EXPIRED",
     FAILURE = "FAILURE",

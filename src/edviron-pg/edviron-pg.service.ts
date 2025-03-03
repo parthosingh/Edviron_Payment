@@ -1401,10 +1401,14 @@ export class EdvironPgService implements GatewayService {
       };
 
       const startDate = new Date(start_date);
+      const startOfDayUTC = new Date(
+        await this.convertISTStartToUTC(start_date),
+      );
       const endDate = end_date;
       const endOfDay = new Date(endDate);
+      const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
       // Set hours, minutes, seconds, and milliseconds to the last moment of the day
-      endOfDay.setHours(23, 59, 59, 999);
+      // endOfDay.setHours(23, 59, 59, 999);
       console.log(end_date);
 
       console.log(new Date(endDate), 'End date before adding hr');
@@ -1415,8 +1419,8 @@ export class EdvironPgService implements GatewayService {
         query = {
           ...query,
           createdAt: {
-            $gte: startDate,
-            $lt: endOfDay,
+            $gte: startOfDayUTC,
+            $lt: endOfDayUTC,
           },
         };
       }

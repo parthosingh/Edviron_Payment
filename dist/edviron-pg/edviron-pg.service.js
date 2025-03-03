@@ -1090,9 +1090,10 @@ let EdvironPgService = class EdvironPgService {
                 collect_id: { $in: orderIds },
             };
             const startDate = new Date(start_date);
+            const startOfDayUTC = new Date(await this.convertISTStartToUTC(start_date));
             const endDate = end_date;
             const endOfDay = new Date(endDate);
-            endOfDay.setHours(23, 59, 59, 999);
+            const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
             console.log(end_date);
             console.log(new Date(endDate), 'End date before adding hr');
             console.log(endOfDay, 'end date after adding hr');
@@ -1100,8 +1101,8 @@ let EdvironPgService = class EdvironPgService {
                 query = {
                     ...query,
                     createdAt: {
-                        $gte: startDate,
-                        $lt: endOfDay,
+                        $gte: startOfDayUTC,
+                        $lt: endOfDayUTC,
                     },
                 };
             }
