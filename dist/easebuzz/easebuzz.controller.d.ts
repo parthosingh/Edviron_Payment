@@ -8,4 +8,15 @@ export declare class EasebuzzController {
     getEncryptedInfo(res: any, req: any, body: any): Promise<any>;
     getRefundhash(req: any): Promise<any>;
     checkRefund(req: any): Promise<any>;
+    settlementRecon(body: {
+        submerchant_id: string;
+        start_date: string;
+        end_date: string;
+        page_size: number;
+        token: string;
+    }): Promise<{
+        transactions: any;
+        split_payouts: any;
+        peb_refunds: any;
+    }>;
 }
