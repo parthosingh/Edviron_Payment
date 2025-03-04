@@ -402,53 +402,53 @@ export class EdvironPgController {
     // Auto Refund Code Replicate on easebuzz
 
     console.log('checking for autorefund', pendingCollectReq?.status);
-    try {
-      if (
-        pendingCollectReq &&
-        pendingCollectReq.status === PaymentStatus.FAILED &&
-        webHookData.payment.payment_status === 'SUCCESS'
-      ) {
-        const tokenData = {
-          school_id: collectReq?.school_id,
-          trustee_id: collectReq?.trustee_id,
-        };
+    // try {
+    //   if (
+    //     pendingCollectReq &&
+    //     pendingCollectReq.status === PaymentStatus.FAILED &&
+    //     webHookData.payment.payment_status === 'SUCCESS'
+    //   ) {
+    //     const tokenData = {
+    //       school_id: collectReq?.school_id,
+    //       trustee_id: collectReq?.trustee_id,
+    //     };
 
-        const token = jwt.sign(tokenData, process.env.KEY!, {
-          noTimestamp: true,
-        });
-        console.log('Refunding Duplicate Payment request');
-        const autoRefundConfig = {
-          method: 'POST',
-          url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/initiate-auto-refund`,
-          headers: {
-            accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          data: {
-            token,
-            refund_amount: collectReq.amount,
-            collect_id,
-            school_id: collectReq.school_id,
-            trustee_id: collectReq?.trustee_id,
-            custom_id: collectReq.custom_order_id || 'NA',
-            gateway: 'CASHFREE',
-            reason: 'Auto Refund due to dual payment',
-          },
-        };
-        console.time('Refunding Duplicate Payment request');
-        const autoRefundResponse = await axios.request(autoRefundConfig);
-        console.timeEnd('Refunding Duplicate Payment request');
-        collectReq.gateway = Gateway.EDVIRON_PG;
-        pendingCollectReq.isAutoRefund = true;
-        pendingCollectReq.status = PaymentStatus.FAILED;
-        await pendingCollectReq.save();
-        await collectReq.save();
-        return res.status(200).send('OK');
-      }
-    } catch (e) {
-      console.log(e.message, 'Error in AutoRefund');
-      return res.status(400).send('Error in AutoRefund');
-    }
+    //     const token = jwt.sign(tokenData, process.env.KEY!, {
+    //       noTimestamp: true,
+    //     });
+    //     console.log('Refunding Duplicate Payment request');
+    //     const autoRefundConfig = {
+    //       method: 'POST',
+    //       url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/initiate-auto-refund`,
+    //       headers: {
+    //         accept: 'application/json',
+    //         'Content-Type': 'application/json',
+    //       },
+    //       data: {
+    //         token,
+    //         refund_amount: collectReq.amount,
+    //         collect_id,
+    //         school_id: collectReq.school_id,
+    //         trustee_id: collectReq?.trustee_id,
+    //         custom_id: collectReq.custom_order_id || 'NA',
+    //         gateway: 'CASHFREE',
+    //         reason: 'Auto Refund due to dual payment',
+    //       },
+    //     };
+    //     console.time('Refunding Duplicate Payment request');
+    //     const autoRefundResponse = await axios.request(autoRefundConfig);
+    //     console.timeEnd('Refunding Duplicate Payment request');
+    //     collectReq.gateway = Gateway.EDVIRON_PG;
+    //     pendingCollectReq.isAutoRefund = true;
+    //     pendingCollectReq.status = PaymentStatus.FAILED;
+    //     await pendingCollectReq.save();
+    //     await collectReq.save();
+    //     return res.status(200).send('OK');
+    //   }
+    // } catch (e) {
+    //   console.log(e.message, 'Error in AutoRefund');
+    //   return res.status(400).send('Error in AutoRefund');
+    // }
 
     const reqToCheck = await this.edvironPgService.checkStatus(
       collect_id,

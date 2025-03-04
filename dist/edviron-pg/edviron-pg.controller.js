@@ -273,51 +273,6 @@ let EdvironPgController = class EdvironPgController {
         collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
         await collectReq.save();
         console.log('checking for autorefund', pendingCollectReq?.status);
-        try {
-            if (pendingCollectReq &&
-                pendingCollectReq.status === collect_req_status_schema_1.PaymentStatus.FAILED &&
-                webHookData.payment.payment_status === 'SUCCESS') {
-                const tokenData = {
-                    school_id: collectReq?.school_id,
-                    trustee_id: collectReq?.trustee_id,
-                };
-                const token = jwt.sign(tokenData, process.env.KEY, {
-                    noTimestamp: true,
-                });
-                console.log('Refunding Duplicate Payment request');
-                const autoRefundConfig = {
-                    method: 'POST',
-                    url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/initiate-auto-refund`,
-                    headers: {
-                        accept: 'application/json',
-                        'Content-Type': 'application/json',
-                    },
-                    data: {
-                        token,
-                        refund_amount: collectReq.amount,
-                        collect_id,
-                        school_id: collectReq.school_id,
-                        trustee_id: collectReq?.trustee_id,
-                        custom_id: collectReq.custom_order_id || 'NA',
-                        gateway: 'CASHFREE',
-                        reason: 'Auto Refund due to dual payment',
-                    },
-                };
-                console.time('Refunding Duplicate Payment request');
-                const autoRefundResponse = await axios_1.default.request(autoRefundConfig);
-                console.timeEnd('Refunding Duplicate Payment request');
-                collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
-                pendingCollectReq.isAutoRefund = true;
-                pendingCollectReq.status = collect_req_status_schema_1.PaymentStatus.FAILED;
-                await pendingCollectReq.save();
-                await collectReq.save();
-                return res.status(200).send('OK');
-            }
-        }
-        catch (e) {
-            console.log(e.message, 'Error in AutoRefund');
-            return res.status(400).send('Error in AutoRefund');
-        }
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
         const status = webHookData.payment.payment_status;
         const payment_time = new Date(webHookData.payment.payment_time);
