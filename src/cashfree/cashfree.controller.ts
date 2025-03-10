@@ -271,4 +271,14 @@ export class CashfreeController {
       console.log(e);
     }
   }
+
+  @Get('/status')
+  async checkStatus(@Req() req: any) {
+    const collect_id=req.query.collect_id
+    const collectReq=await this.databaseService.CollectRequestModel.findById(collect_id)
+    if(!collectReq){
+   throw new BadRequestException('Error while')
+    }
+    return this.cashfreeService.getPaymentStatus(collect_id, collectReq.clientId)
+  }
 }

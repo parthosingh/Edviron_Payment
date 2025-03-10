@@ -4,4 +4,5 @@ export declare class CheckStatusController {
     constructor(checkStatusService: CheckStatusService);
     checkStatus(transactionId: String, jwt: string): Promise<any>;
     checkCustomOrderStatus(transactionId: String, jwt: string): Promise<any>;
+    checkStatusv2(transactionId: String, jwt: string): Promise<any>;
 }

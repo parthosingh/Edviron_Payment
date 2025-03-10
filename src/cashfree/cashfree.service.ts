@@ -572,6 +572,8 @@ export class CashfreeService {
   }
 
   async getPaymentStatus(order_id: string, client_id: string) {
+    console.log(order_id, client_id);
+
     const config = {
       method: 'get',
       maxBodyLength: Infinity,
@@ -583,7 +585,14 @@ export class CashfreeService {
         'x-partner-apikey': process.env.CASHFREE_API_KEY,
       },
     };
-    const response = await axios(config);
-    return response.data;
+    try {
+      const {data:response} = await axios(config);
+      
+      return response.data;
+
+    } catch (e) {
+      console.log(e);
+      throw new BadRequestException(e.message);
+    }
   }
 }
