@@ -1656,9 +1656,9 @@ let EdvironPgController = class EdvironPgController {
         return await this.edvironPgService.getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id);
     }
     async getTransactionReportBatchedFiltered(body) {
-        const { start_date, end_date, trustee_id, school_id, mode, status, isQRPayment, } = body;
+        const { start_date, end_date, trustee_id, school_id, mode, status, isQRPayment, gateway, } = body;
         console.log('getting transaction sum');
-        return await this.edvironPgService.getTransactionReportBatchedFilterd(trustee_id, start_date, end_date, status, school_id, mode, isQRPayment);
+        return await this.edvironPgService.getTransactionReportBatchedFilterd(trustee_id, start_date, end_date, status, school_id, mode, isQRPayment, gateway);
     }
     async getErpWebhookLogs(body) {
         const { token, startDate, endDate, limit, page, trustee_id, school_id, status, collect_id, custom_id, } = body;

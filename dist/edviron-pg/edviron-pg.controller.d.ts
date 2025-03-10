@@ -178,6 +178,7 @@ export declare class EdvironPgController {
         school_id?: string | null;
         mode?: string[] | null;
         isQRPayment?: boolean | null;
+        gateway?: string[] | null;
     }): Promise<{
         length: number;
         transactions: any[];

@@ -935,7 +935,7 @@ let EdvironPgService = class EdvironPgService {
             throw new Error(error.message);
         }
     }
-    async getTransactionReportBatchedFilterd(trustee_id, start_date, end_date, status, school_id, mode, isQRPayment) {
+    async getTransactionReportBatchedFilterd(trustee_id, start_date, end_date, status, school_id, mode, isQRPayment, gateway) {
         try {
             const endOfDay = new Date(end_date);
             const startDates = new Date(start_date);
@@ -959,6 +959,12 @@ let EdvironPgService = class EdvironPgService {
                 collectQuery = {
                     ...collectQuery,
                     isQRPayment: true,
+                };
+            }
+            if (gateway) {
+                collectQuery = {
+                    ...collectQuery,
+                    gateway: { $in: gateway },
                 };
             }
             const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
@@ -1204,20 +1210,20 @@ let EdvironPgService = class EdvironPgService {
         const objId = new mongoose_1.Types.ObjectId(collect_id);
         const vendotTransaction = await this.databaseService.CollectRequestModel.aggregate([
             {
-                $match: { _id: objId }
+                $match: { _id: objId },
             },
             {
                 $lookup: {
-                    from: "collectrequeststatuses",
-                    localField: "_id",
-                    foreignField: "collect_id",
-                    as: "collect_request_status"
+                    from: 'collectrequeststatuses',
+                    localField: '_id',
+                    foreignField: 'collect_id',
+                    as: 'collect_request_status',
                 },
             },
             {
                 $unwind: {
-                    path: "$collect_request_status",
-                    preserveNullAndEmptyArrays: true
+                    path: '$collect_request_status',
+                    preserveNullAndEmptyArrays: true,
                 },
             },
             {
@@ -1240,9 +1246,9 @@ let EdvironPgService = class EdvironPgService {
                     additional_data: 1,
                     vendors_info: '$collect_request_status.vendors_info',
                     reason: '$collect_request_status.reason',
-                    status: '$collect_request_status.status'
-                }
-            }
+                    status: '$collect_request_status.status',
+                },
+            },
         ]);
         return vendotTransaction[0];
     }
