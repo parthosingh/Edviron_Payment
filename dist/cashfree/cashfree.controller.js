@@ -216,6 +216,14 @@ let CashfreeController = class CashfreeController {
             console.log(e);
         }
     }
+    async checkStatus(req) {
+        const collect_id = req.query.collect_id;
+        const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!collectReq) {
+            throw new common_1.BadRequestException('Error while');
+        }
+        return this.cashfreeService.getPaymentStatus(collect_id, collectReq.clientId);
+    }
 };
 exports.CashfreeController = CashfreeController;
 __decorate([
@@ -261,6 +269,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], CashfreeController.prototype, "testWebhook2", null);
+__decorate([
+    (0, common_1.Get)('/status'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "checkStatus", null);
 exports.CashfreeController = CashfreeController = __decorate([
     (0, common_1.Controller)('cashfree'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
