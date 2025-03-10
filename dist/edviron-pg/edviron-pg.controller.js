@@ -991,7 +991,7 @@ let EdvironPgController = class EdvironPgController {
     }
     async bulkTransactions(body, res, req) {
         console.time('bulk-transactions-report');
-        const { trustee_id, token, searchParams, isCustomSearch, seachFilter, payment_modes, isQRCode, } = body;
+        const { trustee_id, token, searchParams, isCustomSearch, seachFilter, payment_modes, isQRCode, gateway, } = body;
         if (!token)
             throw new Error('Token not provided');
         try {
@@ -1022,6 +1022,12 @@ let EdvironPgController = class EdvironPgController {
                 collectQuery = {
                     ...collectQuery,
                     isQRPayment: true,
+                };
+            }
+            if (gateway) {
+                collectQuery = {
+                    ...collectQuery,
+                    gateway: { $in: gateway },
                 };
             }
             let decrypted = jwt.verify(token, process.env.KEY);
@@ -1171,7 +1177,6 @@ let EdvironPgController = class EdvironPgController {
                                 'collect_request.clientSecret': 0,
                                 'collect_request.webHookUrl': 0,
                                 'collect_request.disabled_modes': 0,
-                                'collect_request.gateway': 0,
                                 'collect_request.amount': 0,
                                 'collect_request.trustee_id': 0,
                                 'collect_request.sdkPayment': 0,
@@ -1226,6 +1231,7 @@ let EdvironPgController = class EdvironPgController {
                                             payment_time: '$payment_time',
                                             isQRPayment: '$collect_request.isQRPayment',
                                             reason: '$reason',
+                                            gateway: '$gateway',
                                         },
                                     ],
                                 },
@@ -1242,6 +1248,7 @@ let EdvironPgController = class EdvironPgController {
                     ]);
             }
             else {
+                console.log(query, 'query');
                 transactions =
                     await this.databaseService.CollectRequestStatusModel.aggregate([
                         {
@@ -1276,7 +1283,6 @@ let EdvironPgController = class EdvironPgController {
                                 'collect_request.clientSecret': 0,
                                 'collect_request.webHookUrl': 0,
                                 'collect_request.disabled_modes': 0,
-                                'collect_request.gateway': 0,
                                 'collect_request.amount': 0,
                                 'collect_request.trustee_id': 0,
                                 'collect_request.sdkPayment': 0,
@@ -1330,6 +1336,7 @@ let EdvironPgController = class EdvironPgController {
                                             isAutoRefund: '$isAutoRefund',
                                             payment_time: '$payment_time',
                                             reason: '$reason',
+                                            gateway: '$gateway',
                                         },
                                     ],
                                 },

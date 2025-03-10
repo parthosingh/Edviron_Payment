@@ -58,6 +58,7 @@ export declare class EdvironPgController {
         seachFilter?: string;
         payment_modes?: string[];
         isQRCode?: boolean;
+        gateway?: string[];
     }, res: any, req: any): Promise<void>;
     singleTransactionReport(body: {
         collect_id: string;

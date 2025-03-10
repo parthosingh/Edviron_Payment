@@ -461,6 +461,7 @@ let CashfreeService = class CashfreeService {
         }
     }
     async getPaymentStatus(order_id, client_id) {
+        console.log(order_id, client_id);
         const config = {
             method: 'get',
             maxBodyLength: Infinity,
@@ -472,8 +473,14 @@ let CashfreeService = class CashfreeService {
                 'x-partner-apikey': process.env.CASHFREE_API_KEY,
             },
         };
-        const response = await (0, axios_1.default)(config);
-        return response.data;
+        try {
+            const { data: response } = await (0, axios_1.default)(config);
+            return response.data;
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
     }
 };
 exports.CashfreeService = CashfreeService;

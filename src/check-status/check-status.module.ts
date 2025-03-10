@@ -8,10 +8,11 @@ import { EdvironPgModule } from '../edviron-pg/edviron-pg.module';
 import { CcavenueModule } from 'src/ccavenue/ccavenue.module';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
+import { CashfreeModule } from 'src/cashfree/cashfree.module';
 
 @Module({
   controllers: [CheckStatusController],
   providers: [CheckStatusService,CcavenueService,EasebuzzService],
-  imports: [DatabaseModule, PhonepeModule, HdfcModule, EdvironPgModule],
+  imports: [DatabaseModule, PhonepeModule,CashfreeModule, HdfcModule, EdvironPgModule],
 })
 export class CheckStatusModule {}

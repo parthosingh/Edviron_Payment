@@ -43,6 +43,10 @@ let CheckStatusController = class CheckStatusController {
             return (0, sign_1.sign)(status);
         }
     }
+    async checkStatusv2(transactionId, jwt) {
+        const status = await this.checkStatusService.checkStatus(transactionId);
+        return (0, sign_1.sign)(status);
+    }
 };
 exports.CheckStatusController = CheckStatusController;
 __decorate([
@@ -61,6 +65,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], CheckStatusController.prototype, "checkCustomOrderStatus", null);
+__decorate([
+    (0, common_1.Get)('/v2'),
+    __param(0, (0, common_1.Query)('transactionId')),
+    __param(1, (0, common_1.Query)('jwt')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], CheckStatusController.prototype, "checkStatusv2", null);
 exports.CheckStatusController = CheckStatusController = __decorate([
     (0, common_1.Controller)('check-status'),
     __metadata("design:paramtypes", [check_status_service_1.CheckStatusService])
