@@ -2408,6 +2408,7 @@ export class EdvironPgController {
       school_id?: string | null;
       mode?: string[] | null;
       isQRPayment?: boolean | null;
+      gateway?: string[] | null;
     },
   ) {
     const {
@@ -2418,6 +2419,7 @@ export class EdvironPgController {
       mode,
       status,
       isQRPayment,
+      gateway,
     } = body;
     console.log('getting transaction sum');
 
@@ -2429,6 +2431,7 @@ export class EdvironPgController {
       school_id,
       mode,
       isQRPayment,
+      gateway,
     );
   }
 
