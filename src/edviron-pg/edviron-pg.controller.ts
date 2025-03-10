@@ -1393,6 +1393,7 @@ export class EdvironPgController {
       seachFilter?: string;
       payment_modes?: string[];
       isQRCode?: boolean;
+      gateway?: string[];
     },
     @Res() res: any,
     @Req() req: any,
@@ -1406,6 +1407,7 @@ export class EdvironPgController {
       seachFilter,
       payment_modes,
       isQRCode,
+      gateway,
     } = body;
     if (!token) throw new Error('Token not provided');
 
@@ -1448,6 +1450,12 @@ export class EdvironPgController {
         collectQuery = {
           ...collectQuery,
           isQRPayment: true,
+        };
+      }
+      if (gateway) {
+        collectQuery = {
+          ...collectQuery,
+          gateway: { $in: gateway },
         };
       }
       let decrypted = jwt.verify(token, process.env.KEY!) as any;
@@ -1632,7 +1640,7 @@ export class EdvironPgController {
                 'collect_request.clientSecret': 0,
                 'collect_request.webHookUrl': 0,
                 'collect_request.disabled_modes': 0,
-                'collect_request.gateway': 0,
+                // 'collect_request.gateway': 0,
                 'collect_request.amount': 0,
                 'collect_request.trustee_id': 0,
                 'collect_request.sdkPayment': 0,
@@ -1687,6 +1695,7 @@ export class EdvironPgController {
                       payment_time: '$payment_time',
                       isQRPayment: '$collect_request.isQRPayment',
                       reason: '$reason',
+                      gateway: '$gateway',
                     },
                   ],
                 },
@@ -1706,6 +1715,7 @@ export class EdvironPgController {
           ]);
         // console.log(transactions, 'transactions');
       } else {
+        console.log(query, 'query');
         transactions =
           await this.databaseService.CollectRequestStatusModel.aggregate([
             {
@@ -1728,6 +1738,7 @@ export class EdvironPgController {
             {
               $unwind: '$collect_request',
             },
+
             {
               $project: {
                 _id: 0,
@@ -1741,7 +1752,7 @@ export class EdvironPgController {
                 'collect_request.clientSecret': 0,
                 'collect_request.webHookUrl': 0,
                 'collect_request.disabled_modes': 0,
-                'collect_request.gateway': 0,
+                // 'collect_request.gateway': 0,
                 'collect_request.amount': 0,
                 'collect_request.trustee_id': 0,
                 'collect_request.sdkPayment': 0,
@@ -1795,6 +1806,7 @@ export class EdvironPgController {
                       isAutoRefund: '$isAutoRefund',
                       payment_time: '$payment_time',
                       reason: '$reason',
+                      gateway: '$gateway',
                     },
                   ],
                 },
