@@ -946,16 +946,83 @@ export class EdvironPgService implements GatewayService {
   }
 
   async getVendorTransactions(query: any, limit: number, page: number) {
+    const vendorsTransaction =
+      await this.databaseService.VendorTransactionModel.aggregate([
+        {
+          $match: query,
+        },
+        {
+          $lookup: {
+            from: 'collectrequeststatuses',
+            localField: 'collect_id',
+            foreignField: 'collect_id',
+            as: 'collect_req_status',
+          },
+        },
+        {
+          $lookup: {
+            from: 'collectrequests',
+            localField: 'collect_id',
+            foreignField: '_id',
+            as: 'collectRequest',
+          },
+        },
+        {
+          $unwind: {
+            path: '$collect_req_status',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $unwind: {
+            path: '$collectRequest',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            name: 1,
+            collect_id: '$_id',
+            amount: 1,
+            gateway: 1,
+            school_id: 1,
+            trustee_id: 1,
+            custom_order_id: 1,
+            vendors_info: 1,
+            additional_data: 1,
+            isQRPayment: 1,
+            studentDetail: '$collectRequest.additional_data',
+            status: '$collect_req_status.status',
+            bank_reference: '$collect_req_status.bank_reference',
+            details: '$collect_req_status.details',
+            transactionAmount: '$collect_req_status.transaction_amount',
+            transactionStatus: '$collect_req_status.status',
+            transactionTime: '$collect_req_status.payment_time',
+            payment_method: '$collect_req_status.payment_method',
+            payment_time: '$collect_req_status.payment_time',
+            transaction_amount: '$collect_req_status.transaction_amount',
+            order_amount: '$collect_req_status.order_amount',
+            isAutoRefund: '$collect_req_status.isAutoRefund',
+            reason: '$collect_req_status.reason',
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+        {
+          $skip: (page - 1) * limit,
+        },
+        {
+          $limit: limit,
+        },
+      ]);
+
     const totalCount =
       await this.databaseService.VendorTransactionModel.countDocuments(query);
 
     const totalPages = Math.ceil(totalCount / limit);
-
-    const vendorsTransaction =
-      await this.databaseService.VendorTransactionModel.find(query)
-        .sort({ createdAt: -1 })
-        .limit(limit)
-        .skip((page - 1) * limit);
 
     return {
       vendorsTransaction: vendorsTransaction,
