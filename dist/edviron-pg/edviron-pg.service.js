@@ -764,66 +764,15 @@ let EdvironPgService = class EdvironPgService {
         return istEndDate.toISOString();
     }
     async getVendorTransactions(query, limit, page) {
+        console.time('overallTransaction');
+        console.time('getting order ids...');
+        const orderId = await this.databaseService.VendorTransactionModel.find(query).select('collect_id -_id');
+        const orderIds = orderId.map((order) => order.collect_id);
+        console.timeEnd('getting order ids...');
+        console.time('Getting vendor transaction');
         const vendorsTransaction = await this.databaseService.VendorTransactionModel.aggregate([
             {
                 $match: query,
-            },
-            {
-                $lookup: {
-                    from: 'collectrequeststatuses',
-                    localField: 'collect_id',
-                    foreignField: 'collect_id',
-                    as: 'collect_req_status',
-                },
-            },
-            {
-                $lookup: {
-                    from: 'collectrequests',
-                    localField: 'collect_id',
-                    foreignField: '_id',
-                    as: 'collectRequest',
-                },
-            },
-            {
-                $unwind: {
-                    path: '$collect_req_status',
-                    preserveNullAndEmptyArrays: true,
-                },
-            },
-            {
-                $unwind: {
-                    path: '$collectRequest',
-                    preserveNullAndEmptyArrays: true,
-                },
-            },
-            {
-                $project: {
-                    name: 1,
-                    collect_id: '$_id',
-                    amount: 1,
-                    gateway: 1,
-                    school_id: 1,
-                    trustee_id: 1,
-                    custom_order_id: 1,
-                    vendors_info: 1,
-                    additional_data: 1,
-                    isQRPayment: 1,
-                    studentDetail: '$collectRequest.additional_data',
-                    status: '$collect_req_status.status',
-                    bank_reference: '$collect_req_status.bank_reference',
-                    details: '$collect_req_status.details',
-                    transactionAmount: '$collect_req_status.transaction_amount',
-                    transactionStatus: '$collect_req_status.status',
-                    transactionTime: '$collect_req_status.payment_time',
-                    payment_method: '$collect_req_status.payment_method',
-                    payment_time: '$collect_req_status.payment_time',
-                    transaction_amount: '$collect_req_status.transaction_amount',
-                    order_amount: '$collect_req_status.order_amount',
-                    isAutoRefund: '$collect_req_status.isAutoRefund',
-                    reason: '$collect_req_status.reason',
-                    createdAt: 1,
-                    updatedAt: 1,
-                },
             },
             {
                 $sort: { createdAt: -1 },
@@ -834,11 +783,61 @@ let EdvironPgService = class EdvironPgService {
             {
                 $limit: limit,
             },
+            {
+                $lookup: {
+                    from: 'collectrequests',
+                    localField: 'collect_id',
+                    foreignField: '_id',
+                    pipeline: [{ $project: { additional_data: 1 } }],
+                    as: 'collectRequest',
+                },
+            },
+            {
+                $set: {
+                    status: { $arrayElemAt: ['$collect_req_status.status', 0] },
+                    payment_method: {
+                        $arrayElemAt: ['$collect_req_status.payment_method', 0],
+                    },
+                    payment_time: {
+                        $arrayElemAt: ['$collect_req_status.payment_time', 0],
+                    },
+                    transaction_amount: {
+                        $arrayElemAt: ['$collect_req_status.transaction_amount', 0],
+                    },
+                    isAutoRefund: {
+                        $arrayElemAt: ['$collect_req_status.isAutoRefund', 0],
+                    },
+                },
+            },
+            {
+                $project: {
+                    collectRequest: 0,
+                    collect_req_status: 0,
+                    _id: 0,
+                },
+            },
         ]);
+        const collectRequestStatuses = await this.databaseService.CollectRequestStatusModel.find({
+            collect_id: { $in: orderIds },
+        }).select('collect_id status payment_method payment_time transaction_amount isAutoRefund');
+        console.timeEnd('Getting vendor transaction');
+        console.time('mapping...');
+        const collectRequestStatusMap = new Map(collectRequestStatuses.map((status) => [
+            status.collect_id.toString(),
+            status.toObject(),
+        ]));
+        const finalResult = vendorsTransaction.map((vendor) => ({
+            ...vendor,
+            ...(collectRequestStatusMap.get(vendor.collect_id.toString()) || {}),
+        }));
+        console.timeEnd('mapping...');
+        console.time('counting transactions');
         const totalCount = await this.databaseService.VendorTransactionModel.countDocuments(query);
+        console.timeEnd('counting transactions');
         const totalPages = Math.ceil(totalCount / limit);
+        console.timeEnd('overallTransaction');
         return {
-            vendorsTransaction: vendorsTransaction,
+            vendorsTransaction: finalResult,
             totalCount,
             page,
             limit,
