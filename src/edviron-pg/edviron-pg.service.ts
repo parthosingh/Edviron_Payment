@@ -33,7 +33,7 @@ export class EdvironPgService implements GatewayService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly cashfreeService: CashfreeService,
-  ) {}
+  ) { }
   async collect(
     request: CollectRequest,
     platform_charges: platformChange[],
@@ -273,7 +273,7 @@ export class EdvironPgService implements GatewayService {
       if (err.name === 'AxiosError')
         throw new BadRequestException(
           'Invalid client id or client secret ' +
-            JSON.stringify(err.response.data),
+          JSON.stringify(err.response.data),
         );
       console.log(err);
     }
@@ -324,14 +324,14 @@ export class EdvironPgService implements GatewayService {
       let transaction_time = '';
       if (
         order_status_to_transaction_status_map[
-          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ] === TransactionStatus.SUCCESS
       ) {
         transaction_time = collect_status?.updatedAt?.toISOString() as string;
       }
       const checkStatus =
         order_status_to_transaction_status_map[
-          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ];
       let status_code;
       if (checkStatus === TransactionStatus.SUCCESS) {
@@ -352,7 +352,7 @@ export class EdvironPgService implements GatewayService {
       return {
         status:
           order_status_to_transaction_status_map[
-            cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
           ],
         amount: cashfreeRes.order_amount,
         transaction_amount: Number(collect_status?.transaction_amount),
@@ -946,19 +946,116 @@ export class EdvironPgService implements GatewayService {
   }
 
   async getVendorTransactions(query: any, limit: number, page: number) {
+    console.time('overallTransaction');
+    console.time('getting order ids...');
+    const orderId =
+      await this.databaseService.VendorTransactionModel.find(query).select(
+        'collect_id -_id',
+      );
+    const orderIds = orderId.map((order: any) => order.collect_id);
+    console.timeEnd('getting order ids...');
+    console.time('Getting vendor transaction');
+    const vendorsTransaction =
+      await this.databaseService.VendorTransactionModel.aggregate([
+        {
+          $match: query,
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+        {
+          $skip: (page - 1) * limit,
+        },
+        {
+          $limit: limit,
+        },
+        // {
+        //   $lookup: {
+        //     from: 'collectrequeststatuses',
+        //     // localField: 'collect_id',
+        //     // foreignField: 'collect_id',
+        //     let: { collect_id: '$collect_id' },
+        //     pipeline: [
+        //       {
+        //         $project: {
+        //           // status: 1,
+        //           payment_method: 1,
+        //           // payment_time: 1,
+        //           transaction_amount: 1,
+        //           // isAutoRefund: 1,
+        //         },
+        //       },
+        //     ],
+        //     as: 'collect_req_status',
+        //   },
+        // },
+        {
+          $lookup: {
+            from: 'collectrequests',
+            localField: 'collect_id',
+            foreignField: '_id',
+            pipeline: [{ $project: { additional_data: 1, custom_order_id: 1 } }],
+            as: 'collectRequest',
+          },
+        },
+        {
+          $set: {
+            // studentDetail:{$arrayElemAt: ['$collectRequest.additional_data', 0]},
+            additional_data: { $arrayElemAt: ['$collectRequest.additional_data', 0] },
+            custom_order_id: { $arrayElemAt: ['$collectRequest.custom_order_id', 0] },
+            status: { $arrayElemAt: ['$collect_req_status.status', 0] },
+            payment_method: {
+              $arrayElemAt: ['$collect_req_status.payment_method', 0],
+            },
+            payment_time: {
+              $arrayElemAt: ['$collect_req_status.payment_time', 0],
+            },
+            transaction_amount: {
+              $arrayElemAt: ['$collect_req_status.transaction_amount', 0],
+            },
+            isAutoRefund: {
+              $arrayElemAt: ['$collect_req_status.isAutoRefund', 0],
+            },
+          },
+        },
+        {
+          $project: {
+            collectRequest: 0,
+            collect_req_status: 0,
+            _id: 0,
+          },
+        },
+      ]);
+    const collectRequestStatuses =
+      await this.databaseService.CollectRequestStatusModel.find({
+        collect_id: { $in: orderIds },
+      }).select(
+        'collect_id status payment_method payment_time transaction_amount isAutoRefund',
+      );
+    console.timeEnd('Getting vendor transaction');
+
+    console.time('mapping...');
+    // const collectRequestStatusMap = new Map();
+    const collectRequestStatusMap = new Map(
+      collectRequestStatuses.map((status) => [
+        status.collect_id.toString(),
+        status.toObject(),
+      ]),
+    );
+
+    const finalResult = vendorsTransaction.map((vendor) => ({
+      ...vendor,
+      ...(collectRequestStatusMap.get(vendor.collect_id.toString()) || {}),
+    }));
+    console.timeEnd('mapping...');
+    console.time('counting transactions');
     const totalCount =
       await this.databaseService.VendorTransactionModel.countDocuments(query);
-
+    console.timeEnd('counting transactions');
     const totalPages = Math.ceil(totalCount / limit);
-
-    const vendorsTransaction =
-      await this.databaseService.VendorTransactionModel.find(query)
-        .sort({ createdAt: -1 })
-        .limit(limit)
-        .skip((page - 1) * limit);
-
+    console.timeEnd('overallTransaction');
     return {
-      vendorsTransaction: vendorsTransaction,
+      vendorsTransaction: finalResult,
       totalCount,
       page,
       limit,
