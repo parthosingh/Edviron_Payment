@@ -85,9 +85,7 @@ export declare class EdvironPgService implements GatewayService {
     convertISTStartToUTC(dateStr: string): Promise<string>;
     convertISTEndToUTC(dateStr: string): Promise<string>;
     getVendorTransactions(query: any, limit: number, page: number): Promise<{
-        vendorsTransaction: (import("mongoose").Document<unknown, {}, import("../database/schemas/vendor.Transaction.schema").VendorTransactionDocument> & import("../database/schemas/vendor.Transaction.schema").VendorTransaction & Document & Required<{
-            _id: import("mongoose").Schema.Types.ObjectId;
-        }>)[];
+        vendorsTransaction: any[];
         totalCount: number;
         page: number;
         limit: number;

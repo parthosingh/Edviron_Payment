@@ -124,9 +124,7 @@ export declare class EdvironPgController {
         client_id: string;
     }): Promise<any>;
     vendorTransactions(vendor_id: string, trustee_id: string, validate_trustee: string, school_id: string, collect_id: string, token: string, limit: string, page: string): Promise<{
-        vendorsTransaction: (import("mongoose").Document<unknown, {}, import("../database/schemas/vendor.Transaction.schema").VendorTransactionDocument> & import("../database/schemas/vendor.Transaction.schema").VendorTransaction & Document & Required<{
-            _id: import("mongoose").Schema.Types.ObjectId;
-        }>)[];
+        vendorsTransaction: any[];
         totalCount: number;
         page: number;
         limit: number;
@@ -145,9 +143,7 @@ export declare class EdvironPgController {
         custom_id?: string;
         collect_id?: string;
     }): Promise<{
-        vendorsTransaction: (import("mongoose").Document<unknown, {}, import("../database/schemas/vendor.Transaction.schema").VendorTransactionDocument> & import("../database/schemas/vendor.Transaction.schema").VendorTransaction & Document & Required<{
-            _id: import("mongoose").Schema.Types.ObjectId;
-        }>)[];
+        vendorsTransaction: any[];
         totalCount: number;
         page: number;
         limit: number;

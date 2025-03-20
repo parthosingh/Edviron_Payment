@@ -1438,7 +1438,7 @@ export class EdvironPgController {
           $gte: startOfDayUTC,
           $lt: endOfDayUTC,
         },
-      };
+      }; 
       if (school_id != 'null') {
         collectQuery = {
           ...collectQuery,
