@@ -271,4 +271,8 @@ export declare class EdvironPgController {
         trustee_id: string;
         token: string;
     }): Promise<any>;
+    getMerchantVendonrSingleTransactions(body: {
+        order_id: string;
+        token: string;
+    }): Promise<any>;
 }

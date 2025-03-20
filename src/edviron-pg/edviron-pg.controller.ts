@@ -2949,4 +2949,28 @@ export class EdvironPgController {
     // console.log(body.order_id)
     return await this.edvironPgService.getSingleTransaction(orderId);
   }
+
+  @Post('get-Merchantvendor-single-transaction')
+  async getMerchantVendonrSingleTransactions(
+    @Body()
+    body: {
+      order_id: string;
+      // trustee_id: string;
+      token: string;
+    },
+  ) {
+    const orderId = body.order_id;
+    // console.log(body.trustee_id);
+    if (!orderId) {
+      throw new NotFoundException('Client ID is required');
+    }
+
+    const decrypted = jwt.verify(body.token, process.env.KEY!) as any;
+    if (decrypted.order_id !== orderId) {
+      throw new ForbiddenException('Request forged');
+    }
+
+    // console.log(body.order_id)
+    return await this.edvironPgService.getSingleTransaction(orderId);
+  }
 }
