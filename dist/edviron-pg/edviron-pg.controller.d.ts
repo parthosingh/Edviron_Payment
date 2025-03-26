@@ -28,6 +28,7 @@ import { EdvironPgService } from './edviron-pg.service';
 import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
+import { PlatformCharge, rangeCharge } from 'src/database/schemas/platform.charges.schema';
 export declare class EdvironPgController {
     private readonly edvironPgService;
     private readonly databaseService;
@@ -271,4 +272,34 @@ export declare class EdvironPgController {
         order_id: string;
         token: string;
     }): Promise<any>;
+    updateSchoolMdr(body: {
+        token: string;
+        trustee_id: string;
+        school_id: string;
+        platform_charges: PlatformCharge[];
+    }): Promise<{
+        message: string;
+    }>;
+    getPaymentMdr(collect_id: string, payment_mode: string, platform_type: string): Promise<{
+        range_charge: {
+            charge: number;
+            charge_type: string;
+            upto: number | null;
+        } | null;
+    }>;
+    getApplicableCharge(amount: number, rangeCharge: {
+        charge: number;
+        charge_type: string;
+        upto: number | null;
+    }[]): Promise<{
+        charge: number;
+        charge_type: string;
+        upto: number | null;
+    } | null>;
+    addCharge(body: {
+        school_id: String;
+        platform_type: String;
+        payment_mode: String;
+        range_charge: rangeCharge[];
+    }): Promise<void>;
 }

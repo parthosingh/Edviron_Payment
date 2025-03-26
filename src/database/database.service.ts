@@ -14,6 +14,7 @@ import { VendorTransaction, VendorTransactionDocument } from './schemas/vendor.T
 import { ErpWebhooksLogs } from './schemas/erp.webhooks.logs.schema';
 import { BatchTransactions, BatchTransactionsDocument } from './schemas/batch.transactions.schema';
 import { ErrorLogs, ErrorLogsDocument } from './schemas/error.logs.schema';
+import { PlatformCharge, SchoolMdr, SchoolMdrDocument } from './schemas/platform.charges.schema';
 
 @Injectable()
 export class DatabaseService {
@@ -32,5 +33,7 @@ export class DatabaseService {
     public BatchTransactionModel: Model<BatchTransactionsDocument>,
     @InjectModel(ErrorLogs.name)
     public ErrorLogsModel: Model<ErrorLogsDocument>,
+    @InjectModel(SchoolMdr.name)
+    public PlatformChargeModel: Model<SchoolMdrDocument>,
   ) {}
 }

@@ -2030,6 +2030,69 @@ let EdvironPgController = class EdvironPgController {
         }
         return await this.edvironPgService.getSingleTransaction(orderId);
     }
+    async updateSchoolMdr(body) {
+        const { token, trustee_id, school_id, platform_charges } = body;
+        try {
+            await this.databaseService.PlatformChargeModel.findOneAndUpdate({ school_id }, { platform_charges }, { upsert: true, new: true });
+            return { message: 'School MDR updated successfully' };
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.InternalServerErrorException(e.message);
+        }
+    }
+    async getPaymentMdr(collect_id, payment_mode, platform_type) {
+        try {
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest) {
+                throw new common_1.BadRequestException('Invalid collect_id provided');
+            }
+            const checkAmount = collectRequest.amount;
+            const school_id = collectRequest.school_id;
+            const schoolMdr = await this.databaseService.PlatformChargeModel.findOne({
+                school_id,
+            }).lean();
+            if (!schoolMdr) {
+                throw new common_1.BadRequestException('School MDR details not found');
+            }
+            const selectedCharge = schoolMdr.platform_charges.find((charge) => charge.payment_mode === payment_mode &&
+                charge.platform_type === platform_type);
+            if (!selectedCharge) {
+                throw new common_1.BadRequestException('No MDR found for the given payment mode and platform type');
+            }
+            const applicableCharges = await this.getApplicableCharge(checkAmount, selectedCharge.range_charge);
+            return {
+                range_charge: applicableCharges,
+            };
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async getApplicableCharge(amount, rangeCharge) {
+        for (let chargeObj of rangeCharge) {
+            if (chargeObj.upto === null || amount <= chargeObj.upto) {
+                return chargeObj;
+            }
+        }
+        return null;
+    }
+    async addCharge(body) {
+        const { school_id, platform_type, payment_mode, range_charge } = body;
+        const platformCharges = await this.databaseService.PlatformChargeModel.findOne({
+            school_id,
+        });
+        if (!platformCharges) {
+            throw new Error('Could not find');
+        }
+        platformCharges.platform_charges.forEach((platformCharge) => {
+            if (platformCharge.platform_type.toLowerCase() ===
+                platform_type.toLowerCase() &&
+                platformCharge.payment_mode.toLowerCase() === payment_mode.toLowerCase()) {
+                throw new common_1.BadRequestException('MDR already present');
+            }
+        });
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -2341,6 +2404,29 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getMerchantVendonrSingleTransactions", null);
+__decorate([
+    (0, common_1.Post)('/update-school-mdr'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "updateSchoolMdr", null);
+__decorate([
+    (0, common_1.Get)('/get-payment-mdr'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __param(1, (0, common_1.Query)('payment_mode')),
+    __param(2, (0, common_1.Query)('platform_type')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getPaymentMdr", null);
+__decorate([
+    (0, common_1.Post)('/add-charge'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "addCharge", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
