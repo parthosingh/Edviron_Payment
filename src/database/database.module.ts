@@ -11,10 +11,20 @@ import {
   CollectRequestStatusSchema,
 } from './schemas/collect_req_status.schema';
 import { Webhooks, WebhooksSchema } from './schemas/webhooks.schema';
-import { VendorTransaction, VendorTransactionSchema } from './schemas/vendor.Transaction.schema';
-import { ErpWebhooksLogs, ErpWebhooksLogsSchema } from './schemas/erp.webhooks.logs.schema';
-import { BatchTransactions, BatchTransactionsSchema } from './schemas/batch.transactions.schema';
+import {
+  VendorTransaction,
+  VendorTransactionSchema,
+} from './schemas/vendor.Transaction.schema';
+import {
+  ErpWebhooksLogs,
+  ErpWebhooksLogsSchema,
+} from './schemas/erp.webhooks.logs.schema';
+import {
+  BatchTransactions,
+  BatchTransactionsSchema,
+} from './schemas/batch.transactions.schema';
 import { ErrorLogs, ErrorLogsSchema } from './schemas/error.logs.schema';
+import { SchoolMdr, SchoolMdrSchema } from './schemas/platform.charges.schema';
 dotenv.config();
 
 @Module({
@@ -41,6 +51,10 @@ dotenv.config();
     MongooseModule.forFeature([
       { name: ErrorLogs.name, schema: ErrorLogsSchema },
     ]),
+
+    MongooseModule.forFeature([
+      { name: SchoolMdr.name, schema: SchoolMdrSchema },
+    ]),
   ],
   providers: [DatabaseService],
   exports: [
@@ -66,6 +80,9 @@ dotenv.config();
     ]),
     MongooseModule.forFeature([
       { name: ErrorLogs.name, schema: ErrorLogsSchema },
+    ]),
+    MongooseModule.forFeature([
+      { name: SchoolMdr.name, schema: SchoolMdrSchema },
     ]),
   ],
 })
