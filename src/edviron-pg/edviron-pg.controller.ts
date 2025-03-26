@@ -26,7 +26,10 @@ import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { skip } from 'node:test';
-import { PlatformCharge } from 'src/database/schemas/platform.charges.schema';
+import {
+  PlatformCharge,
+  rangeCharge,
+} from 'src/database/schemas/platform.charges.schema';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -2984,11 +2987,11 @@ export class EdvironPgController {
   ) {
     const { token, trustee_id, school_id, platform_charges } = body;
     try {
-      await this.databaseService.PlatformChargeModel.create({
-        trustee_id,
-        school_id,
-        platform_charges,
-      });
+      await this.databaseService.PlatformChargeModel.findOneAndUpdate(
+        { school_id }, // Search criteria
+        { platform_charges }, // Fields to update
+        { upsert: true, new: true }, // Upsert to insert if not found, return the updated document
+      );
 
       return { message: 'School MDR updated successfully' };
     } catch (e) {
@@ -2999,46 +3002,88 @@ export class EdvironPgController {
   }
   @Get('/get-payment-mdr')
   async getPaymentMdr(
-    @Query('school_id') school_id: string,
+    @Query('collect_id') collect_id: string,
     @Query('payment_mode') payment_mode: string,
     @Query('platform_type') platform_type: string,
-    @Query('amount') amount: string,
   ) {
-    const checkAmount = Number(amount);
-    if (isNaN(checkAmount) || checkAmount <= 0) {
-      throw new BadRequestException('Invalid amount provided');
+    try {
+      const collectRequest =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collectRequest) {
+        throw new BadRequestException('Invalid collect_id provided');
+      }
+      const checkAmount = collectRequest.amount;
+      const school_id = collectRequest.school_id;
+      // Fetch MDR details for the given school_id
+      const schoolMdr = await this.databaseService.PlatformChargeModel.findOne({
+        school_id,
+      }).lean();
+      if (!schoolMdr) {
+        throw new BadRequestException('School MDR details not found');
+      }
+
+      const selectedCharge = schoolMdr.platform_charges.find(
+        (charge) =>
+          charge.payment_mode === payment_mode &&
+          charge.platform_type === platform_type,
+      );
+
+      if (!selectedCharge) {
+        throw new BadRequestException(
+          'No MDR found for the given payment mode and platform type',
+        );
+      }
+
+      const applicableCharges = await this.getApplicableCharge(
+        checkAmount,
+        selectedCharge.range_charge,
+      );
+      return {
+        range_charge: applicableCharges,
+      };
+    } catch (e) {
+      throw new BadRequestException(e.message);
     }
-
-    // Fetch MDR details for the given school_id
-    const schoolMdr = await this.databaseService.PlatformChargeModel.findOne({ school_id }).lean();
-    if (!schoolMdr) {
-      throw new BadRequestException('School MDR details not found');
-    }
-
-
-    const selectedCharge = schoolMdr.platform_charges.find(
-      (charge) => charge.payment_mode === payment_mode && charge.platform_type === platform_type,
-    );
-
-    if (!selectedCharge) {
-      throw new BadRequestException('No MDR found for the given payment mode and platform type');
-    }
-    
-    const applicableCharges = await this.getApplicableCharge(
-      checkAmount,
-      selectedCharge.range_charge
-    )
-    return {
-      range_charge: applicableCharges,
-    };
   }
 
-  async getApplicableCharge(amount: number, rangeCharge: { charge: number; charge_type: string; upto: number | null }[]) {
+  async getApplicableCharge(
+    amount: number,
+    rangeCharge: { charge: number; charge_type: string; upto: number | null }[],
+  ) {
     for (let chargeObj of rangeCharge) {
       if (chargeObj.upto === null || amount <= chargeObj.upto) {
         return chargeObj;
       }
     }
     return null;
+  }
+
+  @Post('/add-charge')
+  async addCharge(
+    @Body()
+    body: {
+      school_id: String;
+      platform_type: String;
+      payment_mode: String;
+      range_charge: rangeCharge[];
+    },
+  ) {
+    const { school_id, platform_type, payment_mode, range_charge } = body;
+    const platformCharges =
+      await this.databaseService.PlatformChargeModel.findOne({
+        school_id,
+      });
+    if (!platformCharges) {
+      throw new Error('Could not find');
+    }
+    platformCharges.platform_charges.forEach((platformCharge) => {
+      if (
+        platformCharge.platform_type.toLowerCase() ===
+          platform_type.toLowerCase() &&
+        platformCharge.payment_mode.toLowerCase() === payment_mode.toLowerCase()
+      ) {
+        throw new BadRequestException('MDR already present');
+      }
+    });
   }
 }
