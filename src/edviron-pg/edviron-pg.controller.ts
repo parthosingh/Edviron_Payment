@@ -3024,8 +3024,8 @@ export class EdvironPgController {
 
       const selectedCharge = schoolMdr.platform_charges.find(
         (charge) =>
-          charge.payment_mode === payment_mode &&
-          charge.platform_type === platform_type,
+          charge.payment_mode.toLocaleLowerCase() === payment_mode.toLocaleLowerCase() &&
+          charge.platform_type.toLocaleLowerCase() === platform_type.toLocaleLowerCase(),
       );
 
       if (!selectedCharge) {
