@@ -2055,8 +2055,12 @@ let EdvironPgController = class EdvironPgController {
             if (!schoolMdr) {
                 throw new common_1.BadRequestException('School MDR details not found');
             }
-            const selectedCharge = schoolMdr.platform_charges.find((charge) => charge.payment_mode.toLocaleLowerCase() === payment_mode.toLocaleLowerCase() &&
+            let selectedCharge = schoolMdr.platform_charges.find((charge) => charge.payment_mode.toLocaleLowerCase() === payment_mode.toLocaleLowerCase() &&
                 charge.platform_type.toLocaleLowerCase() === platform_type.toLocaleLowerCase());
+            if (!selectedCharge) {
+                selectedCharge = schoolMdr.platform_charges.find((charge) => charge.payment_mode.toLowerCase() === 'others' &&
+                    charge.platform_type.toLowerCase() === platform_type.toLowerCase());
+            }
             if (!selectedCharge) {
                 throw new common_1.BadRequestException('No MDR found for the given payment mode and platform type');
             }
