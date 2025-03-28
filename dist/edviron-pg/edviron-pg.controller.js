@@ -1143,6 +1143,34 @@ let EdvironPgController = class EdvironPgController {
                         collect_id: { $in: requestId },
                     };
                 }
+                else if (seachFilter === 'bank_reference') {
+                    console.log('Serching bank_reference');
+                    console.log(searchParams, 'bank_reference');
+                    const requestInfo = await this.databaseService.CollectRequestStatusModel.findOne({
+                        bank_reference: searchParams,
+                    });
+                    if (!requestInfo)
+                        throw new common_1.NotFoundException('No record found for Input');
+                    searchIfo = {
+                        collect_id: requestInfo.collect_id,
+                    };
+                }
+                else if (seachFilter === 'upi_id') {
+                    console.log('Serching upi_id');
+                    console.log(searchParams, 'searchParams');
+                    const requestInfo = await this.databaseService.CollectRequestStatusModel.find({
+                        details: { $regex: `"upi_id":"${searchParams}"`, $options: "i" }
+                    });
+                    console.log(requestInfo, "requestInfo");
+                    if (!requestInfo)
+                        throw new common_1.NotFoundException('No record found for Input');
+                    const collectId = requestInfo.map((order) => order.collect_id);
+                    console.log(collectId);
+                    searchIfo = {
+                        collect_id: { $in: collectId },
+                    };
+                }
+                console.log(searchIfo, 'custom q');
                 transactions =
                     await this.databaseService.CollectRequestStatusModel.aggregate([
                         {
@@ -1246,6 +1274,7 @@ let EdvironPgController = class EdvironPgController {
                             },
                         },
                     ]);
+                console.log(transactions, 'transactions');
             }
             else {
                 console.log(query, 'query');
