@@ -1606,21 +1606,21 @@ export class EdvironPgController {
           searchIfo = {
             collect_id: { $in: requestId },
           };
-        } else if (seachFilter === 'bank_reference') {
-          console.log('Serching bank_reference');
-          console.log(searchParams, 'bank_reference');
+        } 
+        else if (seachFilter === 'bank_reference') {
+         
           const requestInfo =
             await this.databaseService.CollectRequestStatusModel.findOne({
               bank_reference: searchParams,
             });
           if (!requestInfo)
             throw new NotFoundException('No record found for Input');
+          console.log(requestInfo, 'requestInfo');
           searchIfo = {
-            collect_id: requestInfo.collect_id,
+            collect_id:  requestInfo.collect_id,
           };
         } else if (seachFilter === 'upi_id') {
-          console.log('Serching upi_id');
-          console.log(searchParams, 'searchParams');
+        
           const requestInfo =
             await this.databaseService.CollectRequestStatusModel.find({
               details: { $regex: `"upi_id":"${searchParams}"`, $options: "i" }
@@ -1629,13 +1629,12 @@ export class EdvironPgController {
           if (!requestInfo)
             throw new NotFoundException('No record found for Input');
             const collectId = requestInfo.map((order: any) => order.collect_id);
-          console.log(collectId)
+            console.log(collectId)
           searchIfo = {
             collect_id: { $in: collectId },
           };
         }
-        console.log(searchIfo, 'custom q');
-
+       
         transactions =
           await this.databaseService.CollectRequestStatusModel.aggregate([
             {
@@ -1726,7 +1725,7 @@ export class EdvironPgController {
                       payment_time: '$payment_time',
                       isQRPayment: '$collect_request.isQRPayment',
                       reason: '$reason',
-                      gateway: '$gateway',
+                      gateway: '$gateway'
                     },
                   ],
                 },
@@ -1744,7 +1743,7 @@ export class EdvironPgController {
             //   $sort: { createdAt: -1 },
             // },
           ]);
-        console.log(transactions, 'transactions');
+        // console.log(transactions, 'transactions');
       } else {
         console.log(query, 'query');
         transactions =
