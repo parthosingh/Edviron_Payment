@@ -33,7 +33,7 @@ export class EdvironPgService implements GatewayService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly cashfreeService: CashfreeService,
-  ) { }
+  ) {}
   async collect(
     request: CollectRequest,
     platform_charges: platformChange[],
@@ -273,7 +273,7 @@ export class EdvironPgService implements GatewayService {
       if (err.name === 'AxiosError')
         throw new BadRequestException(
           'Invalid client id or client secret ' +
-          JSON.stringify(err.response.data),
+            JSON.stringify(err.response.data),
         );
       console.log(err);
     }
@@ -324,14 +324,14 @@ export class EdvironPgService implements GatewayService {
       let transaction_time = '';
       if (
         order_status_to_transaction_status_map[
-        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ] === TransactionStatus.SUCCESS
       ) {
         transaction_time = collect_status?.updatedAt?.toISOString() as string;
       }
       const checkStatus =
         order_status_to_transaction_status_map[
-        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ];
       let status_code;
       if (checkStatus === TransactionStatus.SUCCESS) {
@@ -352,7 +352,7 @@ export class EdvironPgService implements GatewayService {
       return {
         status:
           order_status_to_transaction_status_map[
-          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+            cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
           ],
         amount: cashfreeRes.order_amount,
         transaction_amount: Number(collect_status?.transaction_amount),
@@ -918,6 +918,30 @@ export class EdvironPgService implements GatewayService {
     }
   }
 
+  async checkCreatedVendorStatus(vendor_id: string, client_id: string) {
+    try {
+      const config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: `${process.env.CASHFREE_ENDPOINT}/pg/easy-split/vendors/${vendor_id}`,
+        headers: {
+          'x-api-version': '2023-08-01',
+          'x-partner-merchantid': client_id,
+          'x-partner-apikey': process.env.CASHFREE_API_KEY,
+        },
+      };
+      const { data } = await axios.request(config);
+      return {
+        name: data?.name,
+        email: data?.email,
+        vendor_id: data?.vendor_id,
+        status: data?.status,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Something went wrong');
+    }
+  }
+
   async convertISTStartToUTC(dateStr: string) {
     const [year, month, day] = dateStr.split('-').map(Number);
 
@@ -994,15 +1018,21 @@ export class EdvironPgService implements GatewayService {
             from: 'collectrequests',
             localField: 'collect_id',
             foreignField: '_id',
-            pipeline: [{ $project: { additional_data: 1, custom_order_id: 1 } }],
+            pipeline: [
+              { $project: { additional_data: 1, custom_order_id: 1 } },
+            ],
             as: 'collectRequest',
           },
         },
         {
           $set: {
             // studentDetail:{$arrayElemAt: ['$collectRequest.additional_data', 0]},
-            additional_data: { $arrayElemAt: ['$collectRequest.additional_data', 0] },
-            custom_order_id: { $arrayElemAt: ['$collectRequest.custom_order_id', 0] },
+            additional_data: {
+              $arrayElemAt: ['$collectRequest.additional_data', 0],
+            },
+            custom_order_id: {
+              $arrayElemAt: ['$collectRequest.custom_order_id', 0],
+            },
             status: { $arrayElemAt: ['$collect_req_status.status', 0] },
             payment_method: {
               $arrayElemAt: ['$collect_req_status.payment_method', 0],

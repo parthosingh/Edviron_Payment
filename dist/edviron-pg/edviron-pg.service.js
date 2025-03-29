@@ -750,6 +750,30 @@ let EdvironPgService = class EdvironPgService {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async checkCreatedVendorStatus(vendor_id, client_id) {
+        try {
+            const config = {
+                method: 'get',
+                maxBodyLength: Infinity,
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/easy-split/vendors/${vendor_id}`,
+                headers: {
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': client_id,
+                    'x-partner-apikey': process.env.CASHFREE_API_KEY,
+                },
+            };
+            const { data } = await axios_1.default.request(config);
+            return {
+                name: data?.name,
+                email: data?.email,
+                vendor_id: data?.vendor_id,
+                status: data?.status,
+            };
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message || 'Something went wrong');
+        }
+    }
     async convertISTStartToUTC(dateStr) {
         const [year, month, day] = dateStr.split('-').map(Number);
         const istStartDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
@@ -788,14 +812,20 @@ let EdvironPgService = class EdvironPgService {
                     from: 'collectrequests',
                     localField: 'collect_id',
                     foreignField: '_id',
-                    pipeline: [{ $project: { additional_data: 1, custom_order_id: 1 } }],
+                    pipeline: [
+                        { $project: { additional_data: 1, custom_order_id: 1 } },
+                    ],
                     as: 'collectRequest',
                 },
             },
             {
                 $set: {
-                    additional_data: { $arrayElemAt: ['$collectRequest.additional_data', 0] },
-                    custom_order_id: { $arrayElemAt: ['$collectRequest.custom_order_id', 0] },
+                    additional_data: {
+                        $arrayElemAt: ['$collectRequest.additional_data', 0],
+                    },
+                    custom_order_id: {
+                        $arrayElemAt: ['$collectRequest.custom_order_id', 0],
+                    },
                     status: { $arrayElemAt: ['$collect_req_status.status', 0] },
                     payment_method: {
                         $arrayElemAt: ['$collect_req_status.payment_method', 0],

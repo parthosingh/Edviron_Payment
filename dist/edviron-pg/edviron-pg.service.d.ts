@@ -82,6 +82,12 @@ export declare class EdvironPgService implements GatewayService {
             passport_number?: string;
         };
     }): Promise<any>;
+    checkCreatedVendorStatus(vendor_id: string, client_id: string): Promise<{
+        name: any;
+        email: any;
+        vendor_id: any;
+        status: any;
+    }>;
     convertISTStartToUTC(dateStr: string): Promise<string>;
     convertISTEndToUTC(dateStr: string): Promise<string>;
     getVendorTransactions(query: any, limit: number, page: number): Promise<{
