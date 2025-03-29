@@ -2103,7 +2103,8 @@ let EdvironPgController = class EdvironPgController {
             if (!collectRequest) {
                 throw new common_1.NotFoundException('Collect Request not found');
             }
-            return collectRequest.disabled_modes;
+            const disableModes = collectRequest.disabled_modes || [];
+            return disableModes;
         }
         catch (e) {
             throw new common_1.BadRequestException(e.message);
