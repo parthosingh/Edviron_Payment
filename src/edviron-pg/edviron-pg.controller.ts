@@ -3067,12 +3067,20 @@ export class EdvironPgController {
         throw new BadRequestException('School MDR details not found');
       }
 
-      const selectedCharge = schoolMdr.platform_charges.find(
+      let selectedCharge = schoolMdr.platform_charges.find(
         (charge) =>
           charge.payment_mode.toLocaleLowerCase() === payment_mode.toLocaleLowerCase() &&
           charge.platform_type.toLocaleLowerCase() === platform_type.toLocaleLowerCase(),
       );
 
+      if (!selectedCharge) {
+        selectedCharge = schoolMdr.platform_charges.find(
+          (charge) =>
+            charge.payment_mode.toLowerCase() === 'others' &&
+            charge.platform_type.toLowerCase() === platform_type.toLowerCase(),
+        );
+      }
+  
       if (!selectedCharge) {
         throw new BadRequestException(
           'No MDR found for the given payment mode and platform type',
