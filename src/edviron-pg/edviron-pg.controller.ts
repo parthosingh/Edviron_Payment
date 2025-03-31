@@ -26,6 +26,10 @@ import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { skip } from 'node:test';
+import {
+  PlatformCharge,
+  rangeCharge,
+} from 'src/database/schemas/platform.charges.schema';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -1439,6 +1443,14 @@ export class EdvironPgController {
           $lt: endOfDayUTC,
         },
       };
+
+      if(seachFilter==='student_info'){
+        collectQuery = {
+         ...collectQuery,
+         additional_data: { $regex: searchParams, $options: 'i' },
+        };
+      }
+
       if (school_id != 'null') {
         collectQuery = {
           ...collectQuery,
@@ -1542,6 +1554,19 @@ export class EdvironPgController {
         };
       }
 
+      if(seachFilter ==='upi_id'){
+        query={
+          ...query,
+          details:{$regex:searchParams}
+        }
+      }
+
+      if(seachFilter === 'bank_reference'){
+        query={
+         ...query,
+         bank_reference:{$regex:searchParams}
+        }
+      }
       // const transactionsCount =
       //   await this.databaseService.CollectRequestModel.find({
       //     trustee_id: trustee_id,
@@ -1552,9 +1577,8 @@ export class EdvironPgController {
       //   }).select('_id');
 
       console.time('aggregating transaction');
-      if (isCustomSearch) {
+      if (seachFilter === 'order_id' || seachFilter === 'custom_order_id') {
         console.log('Serching custom');
-
         let searchIfo: any = {};
         if (seachFilter === 'order_id') {
           const checkReq =
@@ -1578,33 +1602,60 @@ export class EdvironPgController {
           searchIfo = {
             collect_id: requestInfo._id,
           };
-        } else if (seachFilter === 'student_info') {
-          console.log('Serching student_info');
-          const studentRegex = {
-            $regex: searchParams,
-            $options: 'i',
-          };
-          console.log(studentRegex);
-          console.log(trustee_id, 'trustee');
+        } 
+        // else if (seachFilter === 'student_info') {
+        //   console.log('Serching student_info');
+        //   const studentRegex = {
+        //     $regex: searchParams,
+        //     $options: 'i',
+        //   };
+        //   console.log(studentRegex);
+        //   console.log(trustee_id, 'trustee');
 
-          const requestInfo =
-            await this.databaseService.CollectRequestModel.find({
-              trustee_id: trustee_id,
-              additional_data: { $regex: searchParams, $options: 'i' },
-            })
-              .sort({ createdAt: -1 })
-              .select('_id');
-          console.log(requestInfo, 'Regex');
+        //   const requestInfo =
+        //     await this.databaseService.CollectRequestModel.find({
+        //       trustee_id: trustee_id,
+        //       additional_data: { $regex: searchParams, $options: 'i' },
+        //     })
+        //       .sort({ createdAt: -1 })
+        //       .select('_id');
+        //   console.log(requestInfo, 'Regex');
 
-          if (!requestInfo)
-            throw new NotFoundException(`No record found for ${searchParams}`);
-          const requestId = requestInfo.map((order: any) => order._id);
-          searchIfo = {
-            collect_id: { $in: requestId },
-          };
-        }
-        // console.log(searchIfo.collect_id, 'custom q');
-
+        //   if (!requestInfo)
+        //     throw new NotFoundException(`No record found for ${searchParams}`);
+        //   const requestId = requestInfo.map((order: any) => order._id);
+        //   searchIfo = {
+        //     collect_id: { $in: requestId },
+        //   };
+        // } 
+        // else if (seachFilter === 'bank_reference') {
+         
+        //   const requestInfo =
+        //     await this.databaseService.CollectRequestStatusModel.findOne({
+        //       bank_reference: searchParams,
+        //     });
+        //   if (!requestInfo)
+        //     throw new NotFoundException('No record found for Input');
+        //   console.log(requestInfo, 'requestInfo');
+        //   searchIfo = {
+        //     collect_id:  requestInfo.collect_id,
+        //   };
+        // } else if (seachFilter === 'upi_id') {
+        
+        //   const requestInfo =
+        //     await this.databaseService.CollectRequestStatusModel.find({
+        //       details: { $regex: `"upi_id":"${searchParams}"`, $options: "i" }
+        //     });
+        //     console.log(requestInfo, "requestInfo")
+        //   if (!requestInfo)
+        //     throw new NotFoundException('No record found for Input');
+        //     const collectId = requestInfo.map((order: any) => order.collect_id);
+        //     console.log(collectId)
+        //   searchIfo = {
+        //     collect_id: { $in: collectId },
+        //   };
+        // }
+       
         transactions =
           await this.databaseService.CollectRequestStatusModel.aggregate([
             {
@@ -1695,7 +1746,7 @@ export class EdvironPgController {
                       payment_time: '$payment_time',
                       isQRPayment: '$collect_request.isQRPayment',
                       reason: '$reason',
-                      gateway: '$gateway',
+                      gateway: '$gateway'
                     },
                   ],
                 },
@@ -1715,7 +1766,7 @@ export class EdvironPgController {
           ]);
         // console.log(transactions, 'transactions');
       } else {
-        console.log(query, 'query');
+        console.log(query, 'else query');
         transactions =
           await this.databaseService.CollectRequestStatusModel.aggregate([
             {
@@ -2993,5 +3044,125 @@ export class EdvironPgController {
     }
 
     return await this.edvironPgService.getSingleTransaction(orderId);
+  }
+
+  @Post('/update-school-mdr')
+  async updateSchoolMdr(
+    @Body()
+    body: {
+      token: string;
+      trustee_id: string;
+      school_id: string;
+      platform_charges: PlatformCharge[];
+    },
+  ) {
+    const { token, trustee_id, school_id, platform_charges } = body;
+    try {
+      await this.databaseService.PlatformChargeModel.findOneAndUpdate(
+        { school_id }, // Search criteria
+        { platform_charges }, // Fields to update
+        { upsert: true, new: true }, // Upsert to insert if not found, return the updated document
+      );
+
+      return { message: 'School MDR updated successfully' };
+    } catch (e) {
+      console.log(e);
+
+      throw new InternalServerErrorException(e.message);
+    }
+  }
+  @Get('/get-payment-mdr')
+  async getPaymentMdr(
+    @Query('collect_id') collect_id: string,
+    @Query('payment_mode') payment_mode: string,
+    @Query('platform_type') platform_type: string,
+  ) {
+    try {
+      const collectRequest =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collectRequest) {
+        throw new BadRequestException('Invalid collect_id provided');
+      }
+      const checkAmount = collectRequest.amount;
+      const school_id = collectRequest.school_id;
+      // Fetch MDR details for the given school_id
+      const schoolMdr = await this.databaseService.PlatformChargeModel.findOne({
+        school_id,
+      }).lean();
+      if (!schoolMdr) {
+        throw new BadRequestException('School MDR details not found');
+      }
+
+      let selectedCharge = schoolMdr.platform_charges.find(
+        (charge) =>
+          charge.payment_mode.toLocaleLowerCase() === payment_mode.toLocaleLowerCase() &&
+          charge.platform_type.toLocaleLowerCase() === platform_type.toLocaleLowerCase(),
+      );
+
+      if (!selectedCharge) {
+        selectedCharge = schoolMdr.platform_charges.find(
+          (charge) =>
+            charge.payment_mode.toLowerCase() === 'others' &&
+            charge.platform_type.toLowerCase() === platform_type.toLowerCase(),
+        );
+      }
+  
+      if (!selectedCharge) {
+        throw new BadRequestException(
+          'No MDR found for the given payment mode and platform type',
+        );
+      }
+
+      const applicableCharges = await this.getApplicableCharge(
+        checkAmount,
+        selectedCharge.range_charge,
+      );
+      return {
+        range_charge: applicableCharges,
+      };
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  async getApplicableCharge(
+    amount: number,
+    rangeCharge: { charge: number; charge_type: string; upto: number | null }[],
+  ) {
+    for (let chargeObj of rangeCharge) {
+      if (chargeObj.upto === null || amount <= chargeObj.upto) {
+        return chargeObj;
+      }
+    }
+    return null;
+  }
+
+  @Post('/add-charge')
+  async addCharge(
+    @Body()
+    body: {
+      school_id: String;
+      platform_type: String;
+      payment_mode: String;
+      range_charge: rangeCharge[];
+    },
+  ) {
+    const { school_id, platform_type, payment_mode, range_charge } = body;
+    const platformCharges =
+      await this.databaseService.PlatformChargeModel.findOne({
+        school_id,
+      });
+    if (!platformCharges) {
+      throw new Error('Could not find');
+    }
+    platformCharges.platform_charges.forEach((platformCharge) => {
+      if (
+        platformCharge.platform_type.toLowerCase() ===
+          platform_type.toLowerCase() &&
+        platformCharge.payment_mode.toLowerCase() === payment_mode.toLowerCase()
+      ) {
+        throw new BadRequestException('MDR already present');
+      }
+    });
   }
 }
