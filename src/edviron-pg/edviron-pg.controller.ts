@@ -3139,4 +3139,21 @@ export class EdvironPgController {
       }
     });
   }
+
+  @Get('get-collection-disable-modes')
+  async getCollectDisableMode(
+    @Query('collect_id') collect_id: string
+  ) {
+    try {
+      const collectRequest =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collectRequest) {
+        throw new NotFoundException('Collect Request not found');
+      }
+      const disableModes = collectRequest.disabled_modes || [];
+      return disableModes;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
 }

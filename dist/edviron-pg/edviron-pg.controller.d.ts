@@ -302,4 +302,5 @@ export declare class EdvironPgController {
         payment_mode: String;
         range_charge: rangeCharge[];
     }): Promise<void>;
+    getCollectDisableMode(collect_id: string): Promise<string[]>;
 }

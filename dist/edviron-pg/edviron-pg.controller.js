@@ -2093,6 +2093,19 @@ let EdvironPgController = class EdvironPgController {
             }
         });
     }
+    async getCollectDisableMode(collect_id) {
+        try {
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest) {
+                throw new common_1.NotFoundException('Collect Request not found');
+            }
+            const disableModes = collectRequest.disabled_modes || [];
+            return disableModes;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -2427,6 +2440,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "addCharge", null);
+__decorate([
+    (0, common_1.Get)('get-collection-disable-modes'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getCollectDisableMode", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
