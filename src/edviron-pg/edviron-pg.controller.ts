@@ -1443,6 +1443,12 @@ export class EdvironPgController {
           $lt: endOfDayUTC,
         },
       };
+      if(seachFilter==='student_info'){
+        collectQuery = {
+         ...collectQuery,
+         additional_data: { $regex: searchParams, $options: 'i' },
+        };
+      }
       if (school_id != 'null') {
         collectQuery = {
           ...collectQuery,
@@ -1546,6 +1552,19 @@ export class EdvironPgController {
         };
       }
 
+      if(seachFilter ==='upi_id'){
+        query={
+          ...query,
+          details:{$regex:searchParams}
+        }
+      }
+
+      if(seachFilter === 'bank_reference'){
+        query={
+         ...query,
+         bank_reference:{$regex:searchParams}
+        }
+      }
       // const transactionsCount =
       //   await this.databaseService.CollectRequestModel.find({
       //     trustee_id: trustee_id,
@@ -1556,9 +1575,8 @@ export class EdvironPgController {
       //   }).select('_id');
 
       console.time('aggregating transaction');
-      if (isCustomSearch) {
+      if (seachFilter === 'order_id' || seachFilter === 'custom_order_id') {
         console.log('Serching custom');
-
         let searchIfo: any = {};
         if (seachFilter === 'order_id') {
           const checkReq =
@@ -1582,58 +1600,59 @@ export class EdvironPgController {
           searchIfo = {
             collect_id: requestInfo._id,
           };
-        } else if (seachFilter === 'student_info') {
-          console.log('Serching student_info');
-          const studentRegex = {
-            $regex: searchParams,
-            $options: 'i',
-          };
-          console.log(studentRegex);
-          console.log(trustee_id, 'trustee');
-
-          const requestInfo =
-            await this.databaseService.CollectRequestModel.find({
-              trustee_id: trustee_id,
-              additional_data: { $regex: searchParams, $options: 'i' },
-            })
-              .sort({ createdAt: -1 })
-              .select('_id');
-          console.log(requestInfo, 'Regex');
-
-          if (!requestInfo)
-            throw new NotFoundException(`No record found for ${searchParams}`);
-          const requestId = requestInfo.map((order: any) => order._id);
-          searchIfo = {
-            collect_id: { $in: requestId },
-          };
         } 
-        else if (seachFilter === 'bank_reference') {
+        // else if (seachFilter === 'student_info') {
+        //   console.log('Serching student_info');
+        //   const studentRegex = {
+        //     $regex: searchParams,
+        //     $options: 'i',
+        //   };
+        //   console.log(studentRegex);
+        //   console.log(trustee_id, 'trustee');
+
+        //   const requestInfo =
+        //     await this.databaseService.CollectRequestModel.find({
+        //       trustee_id: trustee_id,
+        //       additional_data: { $regex: searchParams, $options: 'i' },
+        //     })
+        //       .sort({ createdAt: -1 })
+        //       .select('_id');
+        //   console.log(requestInfo, 'Regex');
+
+        //   if (!requestInfo)
+        //     throw new NotFoundException(`No record found for ${searchParams}`);
+        //   const requestId = requestInfo.map((order: any) => order._id);
+        //   searchIfo = {
+        //     collect_id: { $in: requestId },
+        //   };
+        // } 
+        // else if (seachFilter === 'bank_reference') {
          
-          const requestInfo =
-            await this.databaseService.CollectRequestStatusModel.findOne({
-              bank_reference: searchParams,
-            });
-          if (!requestInfo)
-            throw new NotFoundException('No record found for Input');
-          console.log(requestInfo, 'requestInfo');
-          searchIfo = {
-            collect_id:  requestInfo.collect_id,
-          };
-        } else if (seachFilter === 'upi_id') {
+        //   const requestInfo =
+        //     await this.databaseService.CollectRequestStatusModel.findOne({
+        //       bank_reference: searchParams,
+        //     });
+        //   if (!requestInfo)
+        //     throw new NotFoundException('No record found for Input');
+        //   console.log(requestInfo, 'requestInfo');
+        //   searchIfo = {
+        //     collect_id:  requestInfo.collect_id,
+        //   };
+        // } else if (seachFilter === 'upi_id') {
         
-          const requestInfo =
-            await this.databaseService.CollectRequestStatusModel.find({
-              details: { $regex: `"upi_id":"${searchParams}"`, $options: "i" }
-            });
-            console.log(requestInfo, "requestInfo")
-          if (!requestInfo)
-            throw new NotFoundException('No record found for Input');
-            const collectId = requestInfo.map((order: any) => order.collect_id);
-            console.log(collectId)
-          searchIfo = {
-            collect_id: { $in: collectId },
-          };
-        }
+        //   const requestInfo =
+        //     await this.databaseService.CollectRequestStatusModel.find({
+        //       details: { $regex: `"upi_id":"${searchParams}"`, $options: "i" }
+        //     });
+        //     console.log(requestInfo, "requestInfo")
+        //   if (!requestInfo)
+        //     throw new NotFoundException('No record found for Input');
+        //     const collectId = requestInfo.map((order: any) => order.collect_id);
+        //     console.log(collectId)
+        //   searchIfo = {
+        //     collect_id: { $in: collectId },
+        //   };
+        // }
        
         transactions =
           await this.databaseService.CollectRequestStatusModel.aggregate([
@@ -1745,7 +1764,7 @@ export class EdvironPgController {
           ]);
         // console.log(transactions, 'transactions');
       } else {
-        console.log(query, 'query');
+        console.log(query, 'else query');
         transactions =
           await this.databaseService.CollectRequestStatusModel.aggregate([
             {
