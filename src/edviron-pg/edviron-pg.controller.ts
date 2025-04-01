@@ -1422,6 +1422,7 @@ export class EdvironPgController {
       const endDate = req.query.endDate || null;
       const status = req.query.status || null;
       const school_id = req.query.school_id || null;
+      console.log(school_id, 'CHECKING SCHOOL ID');
 
       const startOfDayUTC = new Date(
         await this.edvironPgService.convertISTStartToUTC(startDate),
@@ -1443,10 +1444,10 @@ export class EdvironPgController {
           $lt: endOfDayUTC,
         },
       };
-      if(seachFilter==='student_info'){
+      if (seachFilter === 'student_info') {
         collectQuery = {
-         ...collectQuery,
-         additional_data: { $regex: searchParams, $options: 'i' },
+          ...collectQuery,
+          additional_data: { $regex: searchParams, $options: 'i' },
         };
       }
       if (school_id != 'null') {
@@ -1552,18 +1553,31 @@ export class EdvironPgController {
         };
       }
 
-      if(seachFilter ==='upi_id'){
-        query={
+      if (seachFilter === 'upi_id') {
+        query = {
           ...query,
-          details:{$regex:searchParams}
-        }
+          details: { $regex: searchParams },
+        };
       }
 
-      if(seachFilter === 'bank_reference'){
-        query={
-         ...query,
-         bank_reference:{$regex:searchParams}
+      if (seachFilter === 'bank_reference') {
+        const newOrders =
+          await this.databaseService.CollectRequestStatusModel.findOne({
+            bank_reference: { $regex: searchParams },
+          });
+        if (!newOrders)
+          throw new NotFoundException('No record found for Input');
+        const request=await this.databaseService.CollectRequestModel.findOne({
+          _id: newOrders.collect_id,
+          trustee_id,
+        })
+        if (!request){
+          throw new NotFoundException('No record found for Input');
         }
+        
+        query = {
+          collect_id: newOrders.collect_id,
+        };
       }
       // const transactionsCount =
       //   await this.databaseService.CollectRequestModel.find({
@@ -1580,9 +1594,10 @@ export class EdvironPgController {
         let searchIfo: any = {};
         if (seachFilter === 'order_id') {
           const checkReq =
-            await this.databaseService.CollectRequestModel.findById(
-              searchParams,
-            );
+            await this.databaseService.CollectRequestModel.findOne({
+              _id: new Types.ObjectId(searchParams),
+              trustee_id,
+            });
           if (!checkReq)
             throw new NotFoundException('No record found for Input');
           console.log('Serching Order_id');
@@ -1594,13 +1609,14 @@ export class EdvironPgController {
           const requestInfo =
             await this.databaseService.CollectRequestModel.findOne({
               custom_order_id: searchParams,
+              trustee_id
             });
           if (!requestInfo)
             throw new NotFoundException('No record found for Input');
           searchIfo = {
             collect_id: requestInfo._id,
           };
-        } 
+        }
         // else if (seachFilter === 'student_info') {
         //   console.log('Serching student_info');
         //   const studentRegex = {
@@ -1625,9 +1641,9 @@ export class EdvironPgController {
         //   searchIfo = {
         //     collect_id: { $in: requestId },
         //   };
-        // } 
+        // }
         // else if (seachFilter === 'bank_reference') {
-         
+
         //   const requestInfo =
         //     await this.databaseService.CollectRequestStatusModel.findOne({
         //       bank_reference: searchParams,
@@ -1639,7 +1655,7 @@ export class EdvironPgController {
         //     collect_id:  requestInfo.collect_id,
         //   };
         // } else if (seachFilter === 'upi_id') {
-        
+
         //   const requestInfo =
         //     await this.databaseService.CollectRequestStatusModel.find({
         //       details: { $regex: `"upi_id":"${searchParams}"`, $options: "i" }
@@ -1653,7 +1669,7 @@ export class EdvironPgController {
         //     collect_id: { $in: collectId },
         //   };
         // }
-       
+
         transactions =
           await this.databaseService.CollectRequestStatusModel.aggregate([
             {
@@ -1744,7 +1760,7 @@ export class EdvironPgController {
                       payment_time: '$payment_time',
                       isQRPayment: '$collect_request.isQRPayment',
                       reason: '$reason',
-                      gateway: '$gateway'
+                      gateway: '$gateway',
                     },
                   ],
                 },
@@ -3069,8 +3085,10 @@ export class EdvironPgController {
 
       let selectedCharge = schoolMdr.platform_charges.find(
         (charge) =>
-          charge.payment_mode.toLocaleLowerCase() === payment_mode.toLocaleLowerCase() &&
-          charge.platform_type.toLocaleLowerCase() === platform_type.toLocaleLowerCase(),
+          charge.payment_mode.toLocaleLowerCase() ===
+            payment_mode.toLocaleLowerCase() &&
+          charge.platform_type.toLocaleLowerCase() ===
+            platform_type.toLocaleLowerCase(),
       );
 
       if (!selectedCharge) {
@@ -3080,7 +3098,7 @@ export class EdvironPgController {
             charge.platform_type.toLowerCase() === platform_type.toLowerCase(),
         );
       }
-  
+
       if (!selectedCharge) {
         throw new BadRequestException(
           'No MDR found for the given payment mode and platform type',
@@ -3141,9 +3159,7 @@ export class EdvironPgController {
   }
 
   @Get('get-collection-disable-modes')
-  async getCollectDisableMode(
-    @Query('collect_id') collect_id: string
-  ) {
+  async getCollectDisableMode(@Query('collect_id') collect_id: string) {
     try {
       const collectRequest =
         await this.databaseService.CollectRequestModel.findById(collect_id);

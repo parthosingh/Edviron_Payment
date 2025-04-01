@@ -1001,6 +1001,7 @@ let EdvironPgController = class EdvironPgController {
             const endDate = req.query.endDate || null;
             const status = req.query.status || null;
             const school_id = req.query.school_id || null;
+            console.log(school_id, 'CHECKING SCHOOL ID');
             const startOfDayUTC = new Date(await this.edvironPgService.convertISTStartToUTC(startDate));
             const endOfDayUTC = new Date(await this.edvironPgService.convertISTEndToUTC(endDate));
             const endOfDay = new Date(endDate);
@@ -1106,13 +1107,24 @@ let EdvironPgController = class EdvironPgController {
             if (seachFilter === 'upi_id') {
                 query = {
                     ...query,
-                    details: { $regex: searchParams }
+                    details: { $regex: searchParams },
                 };
             }
             if (seachFilter === 'bank_reference') {
+                const newOrders = await this.databaseService.CollectRequestStatusModel.findOne({
+                    bank_reference: { $regex: searchParams },
+                });
+                if (!newOrders)
+                    throw new common_1.NotFoundException('No record found for Input');
+                const request = await this.databaseService.CollectRequestModel.findOne({
+                    _id: newOrders.collect_id,
+                    trustee_id,
+                });
+                if (!request) {
+                    throw new common_1.NotFoundException('No record found for Input');
+                }
                 query = {
-                    ...query,
-                    bank_reference: { $regex: searchParams }
+                    collect_id: newOrders.collect_id,
                 };
             }
             console.time('aggregating transaction');
@@ -1120,7 +1132,10 @@ let EdvironPgController = class EdvironPgController {
                 console.log('Serching custom');
                 let searchIfo = {};
                 if (seachFilter === 'order_id') {
-                    const checkReq = await this.databaseService.CollectRequestModel.findById(searchParams);
+                    const checkReq = await this.databaseService.CollectRequestModel.findOne({
+                        _id: new mongoose_1.Types.ObjectId(searchParams),
+                        trustee_id,
+                    });
                     if (!checkReq)
                         throw new common_1.NotFoundException('No record found for Input');
                     console.log('Serching Order_id');
@@ -1132,6 +1147,7 @@ let EdvironPgController = class EdvironPgController {
                     console.log('Serching custom_order_id');
                     const requestInfo = await this.databaseService.CollectRequestModel.findOne({
                         custom_order_id: searchParams,
+                        trustee_id
                     });
                     if (!requestInfo)
                         throw new common_1.NotFoundException('No record found for Input');
@@ -1227,7 +1243,7 @@ let EdvironPgController = class EdvironPgController {
                                             payment_time: '$payment_time',
                                             isQRPayment: '$collect_request.isQRPayment',
                                             reason: '$reason',
-                                            gateway: '$gateway'
+                                            gateway: '$gateway',
                                         },
                                     ],
                                 },
@@ -2051,8 +2067,10 @@ let EdvironPgController = class EdvironPgController {
             if (!schoolMdr) {
                 throw new common_1.BadRequestException('School MDR details not found');
             }
-            let selectedCharge = schoolMdr.platform_charges.find((charge) => charge.payment_mode.toLocaleLowerCase() === payment_mode.toLocaleLowerCase() &&
-                charge.platform_type.toLocaleLowerCase() === platform_type.toLocaleLowerCase());
+            let selectedCharge = schoolMdr.platform_charges.find((charge) => charge.payment_mode.toLocaleLowerCase() ===
+                payment_mode.toLocaleLowerCase() &&
+                charge.platform_type.toLocaleLowerCase() ===
+                    platform_type.toLocaleLowerCase());
             if (!selectedCharge) {
                 selectedCharge = schoolMdr.platform_charges.find((charge) => charge.payment_mode.toLowerCase() === 'others' &&
                     charge.platform_type.toLowerCase() === platform_type.toLowerCase());
