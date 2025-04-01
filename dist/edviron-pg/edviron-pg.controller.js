@@ -1216,6 +1216,7 @@ let EdvironPgController = class EdvironPgController {
                                 isAutoRefund: 1,
                                 payment_time: 1,
                                 reason: 1,
+                                capture_status: 1
                             },
                         },
                         {
@@ -1244,6 +1245,7 @@ let EdvironPgController = class EdvironPgController {
                                             isQRPayment: '$collect_request.isQRPayment',
                                             reason: '$reason',
                                             gateway: '$gateway',
+                                            capture_status: '$capture_status'
                                         },
                                     ],
                                 },
@@ -1322,6 +1324,7 @@ let EdvironPgController = class EdvironPgController {
                                 isAutoRefund: 1,
                                 payment_time: 1,
                                 reason: 1,
+                                capture_status: 1
                             },
                         },
                         {
@@ -1349,6 +1352,7 @@ let EdvironPgController = class EdvironPgController {
                                             payment_time: '$payment_time',
                                             reason: '$reason',
                                             gateway: '$gateway',
+                                            capture_status: '$capture_status'
                                         },
                                     ],
                                 },

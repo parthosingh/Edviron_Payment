@@ -26,6 +26,7 @@ export declare class CollectRequestStatus {
     isAutoRefund: boolean;
     reason: string;
     payment_message: string;
+    capture_status: string;
     _id: ObjectId;
 }
 export type CollectRequestStatusDocument = CollectRequestStatus & Document;

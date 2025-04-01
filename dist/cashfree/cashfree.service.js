@@ -397,6 +397,14 @@ let CashfreeService = class CashfreeService {
     }
     async initiateCapture(client_id, collect_id, capture, amount) {
         try {
+            const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id
+            });
+            if (!requestStatus) {
+                throw new common_1.BadRequestException('Request status not found');
+            }
+            requestStatus.capture_status = 'PENDING';
+            await requestStatus.save();
             const config = {
                 method: 'post',
                 maxBodyLength: Infinity,
@@ -414,9 +422,12 @@ let CashfreeService = class CashfreeService {
                 },
             };
             const response = await (0, axios_1.default)(config);
+            requestStatus.capture_status = response.data.authorization.action;
+            await requestStatus.save();
             return response.data;
         }
         catch (e) {
+            console.log(e);
             if (e.response?.data.message) {
                 console.log(e.response.data);
                 throw new common_1.BadRequestException(e.response.data.message);

@@ -64,6 +64,9 @@ export class CollectRequestStatus {
   @Prop({ required: false, default: '' })
   payment_message: string;
 
+  @Prop({ required: false, default: '' })
+  capture_status: string;
+
   _id: ObjectId;
 }
 
