@@ -247,7 +247,7 @@ let CheckStatusService = class CheckStatusService {
         const differenceInMinutes = timeDifference / (1000 * 60);
         if (differenceInMinutes > 20) {
             return {
-                status: 'EXPIRED',
+                status: collect_req_status_schema_1.PaymentStatus.USER_DROPPED,
                 custom_order_id: request.custom_order_id || 'NA',
                 amount: request.amount,
                 status_code: 202,

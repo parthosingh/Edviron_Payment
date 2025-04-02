@@ -289,7 +289,7 @@ export class CheckStatusService {
     // Check if the difference is more than 20 minutes
     if (differenceInMinutes > 20) {
       return {
-        status: 'EXPIRED',
+        status: PaymentStatus.USER_DROPPED, 
         custom_order_id: request.custom_order_id || 'NA',
         amount: request.amount,
         status_code: 202,
