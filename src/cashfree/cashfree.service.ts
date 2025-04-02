@@ -13,6 +13,7 @@ import {
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import * as moment from 'moment-timezone';
+import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 @Injectable()
 export class CashfreeService {
   constructor(
@@ -493,14 +494,17 @@ export class CashfreeService {
     amount: number,
   ) {
     try {
-      const requestStatus=await this.databaseService.CollectRequestStatusModel.findOne({
-        collect_id
-      })
-      if(!requestStatus){
-        throw new BadRequestException('Request status not found')
+      console.log(capture, 'cap');
+
+      const requestStatus =
+        await this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id,
+        });
+      if (!requestStatus) {
+        throw new BadRequestException('Request status not found');
       }
-      requestStatus.capture_status='PENDING'
-      await requestStatus.save()
+      requestStatus.capture_status = 'PENDING';
+      await requestStatus.save();
       const config = {
         method: 'post',
         maxBodyLength: Infinity,
@@ -517,14 +521,66 @@ export class CashfreeService {
           amount: amount,
         },
       };
+      if (capture === 'CAPTURE') {
+        try {
+          console.log('capture');
+          try {
+            const response1 = await axios(config);
+          } catch (e) {
+            console.log(e.message);
+          }
+          const response = await axios(config);
+          return response.data;
+        } catch (e) {
+          console.log(e.response.data, 'new');
+          if (
+            e?.response?.data &&
+            e?.response?.data.code === 'request_invalid' &&
+            e?.response?.data.message ===
+              'transaction is already captured or void'
+          ) {
+
+            requestStatus.capture_status='CAPTURE'
+            await requestStatus.save()
+            return {
+              auth_id: 'NA',
+              authorization: {
+                action: 'CAPTURE',
+                status: 'SUCCESS',
+                captured_amount: requestStatus.transaction_amount,
+                // start_time: '2025-02-14T17:04:07+05:30',
+                // end_time: '2025-02-17T17:04:07+05:30',
+                // action_reference: '504517702695',
+                // approve_by: null,
+                // action_time: '2025-02-14T17:05:18.832839',
+              },
+              order_id: collect_id,
+              bank_reference: requestStatus.bank_reference,
+              order_amount: requestStatus.order_amount,
+              payment_amount: requestStatus.transaction_amount,
+              payment_completion_time: requestStatus.payment_time,
+              payment_currency: 'INR',
+              payment_group: requestStatus.payment_method,
+              payment_method: JSON.parse(requestStatus.details.toString()),
+              payment_status: requestStatus.status,
+            };
+          }
+
+          throw new BadRequestException(e.response.data.message);
+        }
+      }
       const response = await axios(config);
-      requestStatus.capture_status=response.data.authorization.action
-      await requestStatus.save()
+      requestStatus.capture_status = response.data.authorization.action;
+      if (response.data.payment_status === 'VOID') {
+        requestStatus.status = PaymentStatus.FAILURE;
+        await requestStatus.save();
+      }
+      await requestStatus.save();
       return response.data;
     } catch (e) {
-      console.log(e);
+      // console.log(e);
       if (e.response?.data.message) {
-        console.log(e.response.data);
+        // console.log(e.response.data);
         throw new BadRequestException(e.response.data.message);
       }
 
@@ -597,10 +653,9 @@ export class CashfreeService {
       },
     };
     try {
-      const {data:response} = await axios(config);
-      
-      return response.data;
+      const { data: response } = await axios(config);
 
+      return response.data;
     } catch (e) {
       console.log(e);
       throw new BadRequestException(e.message);

@@ -20,6 +20,7 @@ const collect_request_schema_1 = require("../database/schemas/collect_request.sc
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const transactionStatus_1 = require("../types/transactionStatus");
 const moment = require("moment-timezone");
+const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 let CashfreeService = class CashfreeService {
     constructor(databaseService, edvironPgService) {
         this.databaseService = databaseService;
@@ -397,8 +398,9 @@ let CashfreeService = class CashfreeService {
     }
     async initiateCapture(client_id, collect_id, capture, amount) {
         try {
+            console.log(capture, 'cap');
             const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
-                collect_id
+                collect_id,
             });
             if (!requestStatus) {
                 throw new common_1.BadRequestException('Request status not found');
@@ -421,15 +423,58 @@ let CashfreeService = class CashfreeService {
                     amount: amount,
                 },
             };
+            if (capture === 'CAPTURE') {
+                try {
+                    console.log('capture');
+                    try {
+                        const response1 = await (0, axios_1.default)(config);
+                    }
+                    catch (e) {
+                        console.log(e.message);
+                    }
+                    const response = await (0, axios_1.default)(config);
+                    return response.data;
+                }
+                catch (e) {
+                    console.log(e.response.data, 'new');
+                    if (e?.response?.data &&
+                        e?.response?.data.code === 'request_invalid' &&
+                        e?.response?.data.message ===
+                            'transaction is already captured or void') {
+                        requestStatus.capture_status = 'CAPTURE';
+                        await requestStatus.save();
+                        return {
+                            auth_id: 'NA',
+                            authorization: {
+                                action: 'CAPTURE',
+                                status: 'SUCCESS',
+                                captured_amount: requestStatus.transaction_amount,
+                            },
+                            order_id: collect_id,
+                            bank_reference: requestStatus.bank_reference,
+                            order_amount: requestStatus.order_amount,
+                            payment_amount: requestStatus.transaction_amount,
+                            payment_completion_time: requestStatus.payment_time,
+                            payment_currency: 'INR',
+                            payment_group: requestStatus.payment_method,
+                            payment_method: JSON.parse(requestStatus.details.toString()),
+                            payment_status: requestStatus.status,
+                        };
+                    }
+                    throw new common_1.BadRequestException(e.response.data.message);
+                }
+            }
             const response = await (0, axios_1.default)(config);
             requestStatus.capture_status = response.data.authorization.action;
+            if (response.data.payment_status === 'VOID') {
+                requestStatus.status = collect_req_status_schema_1.PaymentStatus.FAILURE;
+                await requestStatus.save();
+            }
             await requestStatus.save();
             return response.data;
         }
         catch (e) {
-            console.log(e);
             if (e.response?.data.message) {
-                console.log(e.response.data);
                 throw new common_1.BadRequestException(e.response.data.message);
             }
             throw new common_1.BadRequestException(e.message);
