@@ -1131,11 +1131,21 @@ let EdvironPgController = class EdvironPgController {
             if (seachFilter === 'order_id' || seachFilter === 'custom_order_id') {
                 console.log('Serching custom');
                 let searchIfo = {};
+                let findQuery = {
+                    trustee_id
+                };
+                if (school_id) {
+                    findQuery = {
+                        ...findQuery,
+                        school_id: school_id
+                    };
+                }
                 if (seachFilter === 'order_id') {
-                    const checkReq = await this.databaseService.CollectRequestModel.findOne({
-                        _id: new mongoose_1.Types.ObjectId(searchParams),
-                        trustee_id,
-                    });
+                    findQuery = {
+                        ...findQuery,
+                        _id: new mongoose_1.Types.ObjectId(searchParams)
+                    };
+                    const checkReq = await this.databaseService.CollectRequestModel.findOne(findQuery);
                     if (!checkReq)
                         throw new common_1.NotFoundException('No record found for Input');
                     console.log('Serching Order_id');
@@ -1144,11 +1154,12 @@ let EdvironPgController = class EdvironPgController {
                     };
                 }
                 else if (seachFilter === 'custom_order_id') {
-                    console.log('Serching custom_order_id');
-                    const requestInfo = await this.databaseService.CollectRequestModel.findOne({
+                    findQuery = {
+                        ...findQuery,
                         custom_order_id: searchParams,
-                        trustee_id
-                    });
+                    };
+                    console.log('Serching custom_order_id');
+                    const requestInfo = await this.databaseService.CollectRequestModel.findOne(findQuery);
                     if (!requestInfo)
                         throw new common_1.NotFoundException('No record found for Input');
                     searchIfo = {
