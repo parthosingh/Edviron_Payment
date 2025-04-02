@@ -230,7 +230,7 @@ let CheckStatusService = class CheckStatusService {
                 return await this.checkExpiry(collectRequest);
             case collect_request_schema_1.Gateway.EXPIRED:
                 return {
-                    status: collect_req_status_schema_1.PaymentStatus.EXPIRED,
+                    status: collect_req_status_schema_1.PaymentStatus.USER_DROPPED,
                     edviron_order_id: collectRequest._id.toString(),
                     amount: collectRequest.amount,
                     status_code: 202,
