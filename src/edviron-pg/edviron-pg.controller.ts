@@ -1509,7 +1509,6 @@ export class EdvironPgController {
         collect_id: { $in: orderIds },
       };
 
-      console.log(query, "query")
       if (startDate && endDate) {
         query = {
           ...query,
