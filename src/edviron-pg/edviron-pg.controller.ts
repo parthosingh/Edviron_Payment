@@ -1595,7 +1595,7 @@ export class EdvironPgController {
         let findQuery:any={
           trustee_id
         }
-        if(school_id){
+        if(school_id !== 'null'){
           findQuery = {
             ...findQuery,
             school_id: school_id
@@ -1606,6 +1606,9 @@ export class EdvironPgController {
             ...findQuery,
             _id: new Types.ObjectId(searchParams)
           }
+
+          console.log(findQuery,'findQuery');
+          
           const checkReq =
             await this.databaseService.CollectRequestModel.findOne(findQuery);
           if (!checkReq)
@@ -1620,6 +1623,7 @@ export class EdvironPgController {
             custom_order_id: searchParams,
           }
           console.log('Serching custom_order_id');
+          console.log(findQuery,'findQuery');
           const requestInfo =
             await this.databaseService.CollectRequestModel.findOne(findQuery);
           if (!requestInfo)

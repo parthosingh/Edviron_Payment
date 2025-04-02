@@ -1134,7 +1134,7 @@ let EdvironPgController = class EdvironPgController {
                 let findQuery = {
                     trustee_id
                 };
-                if (school_id) {
+                if (school_id !== 'null') {
                     findQuery = {
                         ...findQuery,
                         school_id: school_id
@@ -1145,6 +1145,7 @@ let EdvironPgController = class EdvironPgController {
                         ...findQuery,
                         _id: new mongoose_1.Types.ObjectId(searchParams)
                     };
+                    console.log(findQuery, 'findQuery');
                     const checkReq = await this.databaseService.CollectRequestModel.findOne(findQuery);
                     if (!checkReq)
                         throw new common_1.NotFoundException('No record found for Input');
@@ -1159,6 +1160,7 @@ let EdvironPgController = class EdvironPgController {
                         custom_order_id: searchParams,
                     };
                     console.log('Serching custom_order_id');
+                    console.log(findQuery, 'findQuery');
                     const requestInfo = await this.databaseService.CollectRequestModel.findOne(findQuery);
                     if (!requestInfo)
                         throw new common_1.NotFoundException('No record found for Input');
