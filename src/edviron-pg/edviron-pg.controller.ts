@@ -43,7 +43,7 @@ export class EdvironPgController {
   async handleRedirect(@Req() req: any, @Res() res: any) {
     const wallet = req.query.wallet;
     const cardless = req.query.cardless;
-    const netbanking = req.query.netbanking;
+    const net_banking = req.query.net_banking;
     const pay_later = req.query.pay_later;
     const upi = req.query.upi;
     const card = req.query.card;
@@ -53,7 +53,7 @@ export class EdvironPgController {
     let disable_modes = '';
     if (wallet) disable_modes += `&wallet=${wallet}`;
     if (cardless) disable_modes += `&cardless=${cardless}`;
-    if (netbanking) disable_modes += `&netbanking=${netbanking}`;
+    if (net_banking) disable_modes += `&net_banking=${net_banking}`;
     if (pay_later) disable_modes += `&pay_later=${pay_later}`;
     if (upi) disable_modes += `&upi=${upi}`;
     if (card) disable_modes += `&card=${card}`;
