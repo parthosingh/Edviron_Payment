@@ -195,7 +195,7 @@ export class CashfreeService {
     try {
       const { data: cashfreeRes } = await axios.request(config);
 
-      // console.log(cashfreeRes, 'cashfree status response');
+     
 
       const order_status_to_transaction_status_map = {
         ACTIVE: TransactionStatus.PENDING,
@@ -494,8 +494,15 @@ export class CashfreeService {
     amount: number,
   ) {
     try {
-      console.log(capture, 'cap');
+      
+      const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id)
+      if (!collectRequest) {
+        throw new BadRequestException('Collect Request not found');
+      }
 
+      const staus=await this.checkStatus(collect_id,collectRequest)
+      // console.log(staus,'statu');
+      
       const requestStatus =
         await this.databaseService.CollectRequestStatusModel.findOne({
           collect_id,
@@ -518,10 +525,12 @@ export class CashfreeService {
         },
         data: {
           action: capture,
-          amount: amount,
+          amount: requestStatus.transaction_amount,
         },
       };
       const response = await axios(config);
+      console.log(response.data);
+      
       requestStatus.capture_status = response.data.authorization.action;
       if (response.data.payment_status === 'VOID') {
         requestStatus.status = PaymentStatus.FAILURE;

@@ -398,7 +398,11 @@ let CashfreeService = class CashfreeService {
     }
     async initiateCapture(client_id, collect_id, capture, amount) {
         try {
-            console.log(capture, 'cap');
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest) {
+                throw new common_1.BadRequestException('Collect Request not found');
+            }
+            const staus = await this.checkStatus(collect_id, collectRequest);
             const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
                 collect_id,
             });
@@ -420,10 +424,11 @@ let CashfreeService = class CashfreeService {
                 },
                 data: {
                     action: capture,
-                    amount: amount,
+                    amount: requestStatus.transaction_amount,
                 },
             };
             const response = await (0, axios_1.default)(config);
+            console.log(response.data);
             requestStatus.capture_status = response.data.authorization.action;
             if (response.data.payment_status === 'VOID') {
                 requestStatus.status = collect_req_status_schema_1.PaymentStatus.FAILURE;
