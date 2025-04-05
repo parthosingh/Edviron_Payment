@@ -23,6 +23,7 @@ const fs = require("fs");
 const handlebars = require("handlebars");
 const moment = require("moment-timezone");
 const sign_2 = require("../utils/sign");
+const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
 const mongoose_1 = require("mongoose");
 let EdvironPgService = class EdvironPgService {
@@ -270,9 +271,12 @@ let EdvironPgService = class EdvironPgService {
             const uptDate = moment(date);
             const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
             const settlementInfo = await this.cashfreeService.settlementStatus(collect_request._id.toString(), collect_request.clientId);
-            console.log(settlementInfo, 'opopo');
+            let formatedStatus = order_status_to_transaction_status_map[cashfreeRes.order_status];
+            if (collect_status.status === collect_req_status_schema_1.PaymentStatus.USER_DROPPED) {
+                formatedStatus = transactionStatus_1.TransactionStatus.USER_DROPPED;
+            }
             return {
-                status: order_status_to_transaction_status_map[cashfreeRes.order_status],
+                status: formatedStatus,
                 amount: cashfreeRes.order_amount,
                 transaction_amount: Number(collect_status?.transaction_amount),
                 status_code,

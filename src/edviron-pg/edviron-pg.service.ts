@@ -347,13 +347,16 @@ export class EdvironPgService implements GatewayService {
         collect_request._id.toString(),
         collect_request.clientId,
       );
-      console.log(settlementInfo, 'opopo');
-
+      
+      let formatedStatus=order_status_to_transaction_status_map[
+        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+        ]
+      if(collect_status.status === PaymentStatus.USER_DROPPED){
+        formatedStatus = TransactionStatus.USER_DROPPED;
+      }
       return {
         status:
-          order_status_to_transaction_status_map[
-          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
-          ],
+        formatedStatus,
         amount: cashfreeRes.order_amount,
         transaction_amount: Number(collect_status?.transaction_amount),
         status_code,
