@@ -409,7 +409,6 @@ let CashfreeService = class CashfreeService {
             if (!requestStatus) {
                 throw new common_1.BadRequestException('Request status not found');
             }
-            requestStatus.capture_status = 'PENDING';
             await requestStatus.save();
             const config = {
                 method: 'post',

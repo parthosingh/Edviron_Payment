@@ -510,7 +510,6 @@ export class CashfreeService {
       if (!requestStatus) {
         throw new BadRequestException('Request status not found');
       }
-      requestStatus.capture_status = 'PENDING';
       await requestStatus.save();
       const config = {
         method: 'post',
@@ -528,6 +527,7 @@ export class CashfreeService {
           amount: requestStatus.transaction_amount,
         },
       };
+      // requestStatus.capture_status = 'PENDING';
       const response = await axios(config);
       console.log(response.data);
       
