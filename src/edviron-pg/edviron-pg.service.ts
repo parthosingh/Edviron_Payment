@@ -127,8 +127,11 @@ export class EdvironPgService implements GatewayService {
 
         vendor.map(async (info) => {
           const { vendor_id, percentage, amount, name } = info;
-          let split_amount = amount;
-          if (percentage) {
+          let split_amount=0
+          if(amount){
+             split_amount = amount;
+          }
+          if (percentage && percentage !==0) {
             split_amount = (request.amount * percentage) / 100;
           }
           await new this.databaseService.VendorTransactionModel({
