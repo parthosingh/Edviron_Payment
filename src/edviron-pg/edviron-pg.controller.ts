@@ -26,6 +26,7 @@ import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { skip } from 'node:test';
+import * as qs from 'qs';
 import {
   PlatformCharge,
   rangeCharge,
@@ -3189,6 +3190,30 @@ export class EdvironPgController {
       return disableModes;
     } catch (e) {
       throw new BadRequestException(e.message);
+    }
+  }
+
+  @Get('/get-card-info')
+  async getCardInfo(@Query('bin') bin: string) {
+    try {
+      const data = qs.stringify({
+        appId: process.env.CASHFREE_CARD_APP_ID,
+        secretKey: process.env.CASHFREE_CARD_SECRET_KEY,
+        cardBin: bin,
+      });
+
+      const config = {
+        method: 'POST',
+        url: 'https://api.cashfree.com/api/v1/vault/cards/cardbin',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        data: data,
+      };
+      const res = await axios.request(config);
+      return res.data;
+    } catch (e) {
+      throw new BadRequestException(e.message)
     }
   }
 }

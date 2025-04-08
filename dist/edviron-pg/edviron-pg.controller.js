@@ -24,6 +24,7 @@ const transactionStatus_1 = require("../types/transactionStatus");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
+const qs = require("qs");
 let EdvironPgController = class EdvironPgController {
     constructor(edvironPgService, databaseService, easebuzzService, cashfreeService) {
         this.edvironPgService = edvironPgService;
@@ -2141,6 +2142,28 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async getCardInfo(bin) {
+        try {
+            const data = qs.stringify({
+                appId: process.env.CASHFREE_CARD_APP_ID,
+                secretKey: process.env.CASHFREE_CARD_SECRET_KEY,
+                cardBin: bin,
+            });
+            const config = {
+                method: 'POST',
+                url: 'https://api.cashfree.com/api/v1/vault/cards/cardbin',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                data: data,
+            };
+            const res = await axios_1.default.request(config);
+            return res.data;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -2482,6 +2505,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getCollectDisableMode", null);
+__decorate([
+    (0, common_1.Get)('/get-card-info'),
+    __param(0, (0, common_1.Query)('bin')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getCardInfo", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
