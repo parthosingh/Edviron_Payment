@@ -1553,7 +1553,7 @@ export class EdvironPgController {
       } else if (status === 'FAILED') {
         query = {
           ...query,
-          status: { $in: ['FAILED', 'FAILURE'] },
+          status: { $in: ['FAILED', 'FAILURE','failure'] },
         };
       }
 
