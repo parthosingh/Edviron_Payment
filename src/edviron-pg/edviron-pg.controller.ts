@@ -653,8 +653,11 @@ export class EdvironPgController {
       req_webhook_urls: collectReq?.req_webhook_urls,
       custom_order_id,
       createdAt: collectRequestStatus?.createdAt,
-      transaction_time: collectRequestStatus?.updatedAt,
+      transaction_time: payment_time || collectRequestStatus?.updatedAt,
       additional_data,
+      details:collectRequestStatus.details,
+      transaction_amount:collectRequestStatus.transaction_amount,
+      bank_reference:collectRequestStatus.bank_reference,
       // formattedTransaction_time: transactionTime.toLocaleDateString('en-GB') || null,
       formattedDate: `${payment_time.getFullYear()}-${String(
         payment_time.getMonth() + 1,
@@ -1040,8 +1043,11 @@ export class EdvironPgController {
       req_webhook_urls: collectReq?.req_webhook_urls,
       custom_order_id,
       createdAt: collectRequestStatus?.createdAt,
-      transaction_time: collectRequestStatus?.updatedAt,
+      transaction_time: payment_time ||collectRequestStatus?.updatedAt,
       additional_data,
+      details:collectRequestStatus.details,
+      transaction_amount:collectRequestStatus.transaction_amount,
+      bank_reference:collectRequestStatus.bank_reference,
       formattedDate: `${transactionTime.getFullYear()}-${String(
         transactionTime.getMonth() + 1,
       ).padStart(2, '0')}-${String(transactionTime.getDate()).padStart(
