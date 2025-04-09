@@ -582,6 +582,9 @@ let EdvironPgService = class EdvironPgService {
                 transaction_time: webhookData?.updatedAt,
                 additional_data: webhookData.additional_data,
                 formattedTransactionDate: webhookData?.formattedDate,
+                details: webhookData?.details,
+                transaction_amount: webhookData?.transaction_amount,
+                bank_reference: webhookData?.bank_reference
             });
             const createConfig = (url) => ({
                 method: 'post',
