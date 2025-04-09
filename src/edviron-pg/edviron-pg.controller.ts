@@ -658,6 +658,8 @@ export class EdvironPgController {
       details:collectRequestStatus.details,
       transaction_amount:collectRequestStatus.transaction_amount,
       bank_reference:collectRequestStatus.bank_reference,
+      payment_method:collectRequestStatus.payment_method,
+      payment_details:collectRequestStatus.details,
       // formattedTransaction_time: transactionTime.toLocaleDateString('en-GB') || null,
       formattedDate: `${payment_time.getFullYear()}-${String(
         payment_time.getMonth() + 1,
@@ -1048,6 +1050,8 @@ export class EdvironPgController {
       details:collectRequestStatus.details,
       transaction_amount:collectRequestStatus.transaction_amount,
       bank_reference:collectRequestStatus.bank_reference,
+      payment_method:collectRequestStatus.payment_method,
+      payment_details:collectRequestStatus.details,
       formattedDate: `${transactionTime.getFullYear()}-${String(
         transactionTime.getMonth() + 1,
       ).padStart(2, '0')}-${String(transactionTime.getDate()).padStart(

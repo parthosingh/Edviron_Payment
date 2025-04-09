@@ -719,7 +719,9 @@ export class EdvironPgService implements GatewayService {
         formattedTransactionDate: webhookData?.formattedDate,
         details:webhookData?.details,
         transaction_amount:webhookData?.transaction_amount,
-        bank_reference:webhookData?.bank_reference
+        bank_reference:webhookData?.bank_reference,
+        payment_method:webhookData?.payment_method,
+        payment_details:webhookData?.payment_details
       });
 
       const createConfig = (url: string) => ({
