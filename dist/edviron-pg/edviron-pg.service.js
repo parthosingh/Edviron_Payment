@@ -579,7 +579,7 @@ let EdvironPgService = class EdvironPgService {
                 req_webhook_urls: webhookData?.req_webhook_urls,
                 custom_order_id: webhookData.custom_order_id,
                 createdAt: webhookData.createdAt,
-                transaction_time: webhookData?.updatedAt,
+                transaction_time: webhookData?.transaction_time,
                 additional_data: webhookData.additional_data,
                 formattedTransactionDate: webhookData?.formattedDate,
                 details: webhookData?.details,
