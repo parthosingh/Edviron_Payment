@@ -278,6 +278,9 @@ let EdvironPgService = class EdvironPgService {
             if (collect_status.status === collect_req_status_schema_1.PaymentStatus.USER_DROPPED) {
                 formatedStatus = transactionStatus_1.TransactionStatus.USER_DROPPED;
             }
+            if (collect_status.status.toUpperCase() === 'FAILED' || collect_status.status.toUpperCase() === 'FAILURE') {
+                formatedStatus = transactionStatus_1.TransactionStatus.FAILURE;
+            }
             return {
                 status: formatedStatus,
                 amount: cashfreeRes.order_amount,

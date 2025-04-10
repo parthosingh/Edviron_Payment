@@ -59,7 +59,6 @@ export declare class CheckStatusService {
         custom_order_id: string | null;
     } | {
         custom_order_id: string | null;
-        capture_status: string;
         status: TransactionStatus;
         amount: number;
         transaction_amount?: number | undefined;

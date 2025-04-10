@@ -357,6 +357,10 @@ export class EdvironPgService implements GatewayService {
       if(collect_status.status === PaymentStatus.USER_DROPPED){
         formatedStatus = TransactionStatus.USER_DROPPED;
       }
+
+      if(collect_status.status.toUpperCase() === 'FAILED' || collect_status.status.toUpperCase() ==='FAILURE'){
+        formatedStatus=TransactionStatus.FAILURE
+      }
       return {
         status:
         formatedStatus,
