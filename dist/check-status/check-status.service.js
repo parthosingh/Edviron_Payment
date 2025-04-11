@@ -85,7 +85,7 @@ let CheckStatusService = class CheckStatusService {
                 return {
                     ...edvironPgResponse,
                     custom_order_id,
-                    capture_status: collect_req_status.capture_status || 'NA',
+                    capture_status: collect_req_status.capture_status || 'PENDING',
                 };
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
                 const easebuzzStatus = await this.easebuzzService.statusResponse(collect_request_id.toString(), collectRequest);
