@@ -304,4 +304,15 @@ export declare class EdvironPgController {
     }): Promise<void>;
     getCollectDisableMode(collect_id: string): Promise<string[]>;
     getCardInfo(bin: string): Promise<any>;
+    vendorrecon(body: {
+        limit: number;
+        merchant_vendor_id: string;
+        settlement_id: string;
+        client_id: string;
+        cursor?: string | null;
+    }): Promise<{
+        cursor: any;
+        limit: any;
+        settlements_transactions: any;
+    }>;
 }

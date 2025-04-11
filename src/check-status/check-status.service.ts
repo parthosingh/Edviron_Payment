@@ -367,7 +367,7 @@ export class CheckStatusService {
         return {
           ...edvironPgResponse,
           custom_order_id,
-          capture_status: 'PENDING',
+          capture_status: collect_req_status.capture_status || 'PENDING',
         };
 
       case Gateway.EDVIRON_EASEBUZZ:

@@ -1143,18 +1143,18 @@ let EdvironPgController = class EdvironPgController {
                 console.log('Serching custom');
                 let searchIfo = {};
                 let findQuery = {
-                    trustee_id
+                    trustee_id,
                 };
                 if (school_id !== 'null') {
                     findQuery = {
                         ...findQuery,
-                        school_id: school_id
+                        school_id: school_id,
                     };
                 }
                 if (seachFilter === 'order_id') {
                     findQuery = {
                         ...findQuery,
-                        _id: new mongoose_1.Types.ObjectId(searchParams)
+                        _id: new mongoose_1.Types.ObjectId(searchParams),
                     };
                     console.log(findQuery, 'findQuery');
                     const checkReq = await this.databaseService.CollectRequestModel.findOne(findQuery);
@@ -1240,7 +1240,7 @@ let EdvironPgController = class EdvironPgController {
                                 isAutoRefund: 1,
                                 payment_time: 1,
                                 reason: 1,
-                                capture_status: 1
+                                capture_status: 1,
                             },
                         },
                         {
@@ -1269,7 +1269,7 @@ let EdvironPgController = class EdvironPgController {
                                             isQRPayment: '$collect_request.isQRPayment',
                                             reason: '$reason',
                                             gateway: '$gateway',
-                                            capture_status: '$capture_status'
+                                            capture_status: '$capture_status',
                                         },
                                     ],
                                 },
@@ -1348,7 +1348,7 @@ let EdvironPgController = class EdvironPgController {
                                 isAutoRefund: 1,
                                 payment_time: 1,
                                 reason: 1,
-                                capture_status: 1
+                                capture_status: 1,
                             },
                         },
                         {
@@ -1376,7 +1376,7 @@ let EdvironPgController = class EdvironPgController {
                                             payment_time: '$payment_time',
                                             reason: '$reason',
                                             gateway: '$gateway',
-                                            capture_status: '$capture_status'
+                                            capture_status: '$capture_status',
                                         },
                                     ],
                                 },
@@ -2174,6 +2174,84 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async vendorrecon(body) {
+        try {
+            const { limit, merchant_vendor_id, client_id, settlement_id, cursor } = body;
+            const data = {
+                pagination: {
+                    limit,
+                    cursor: cursor || null,
+                },
+                filters: {
+                    settlement_id: Number(settlement_id),
+                },
+            };
+            const config = {
+                method: 'post',
+                url: 'https://api.cashfree.com/pg/recon/vendor',
+                headers: {
+                    'Content-Type': 'application/json',
+                    accept: 'application/json',
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': client_id,
+                    'x-partner-apikey': process.env.CASHFREE_API_KEY
+                },
+                data: {
+                    pagination: {
+                        limit,
+                        cursor: cursor || null,
+                    },
+                    filters: {
+                        merchant_vendor_id: merchant_vendor_id,
+                        settlement_id: Number(settlement_id),
+                    },
+                },
+            };
+            const { data: response } = await axios_1.default.request(config);
+            const orderIds = response.data
+                .filter((order) => order.merchant_order_id !== null && order.merchant_order_id !== 'NA')
+                .map((order) => order.merchant_order_id);
+            const customOrders = await this.databaseService.CollectRequestModel.find({
+                _id: { $in: orderIds },
+            });
+            const customOrderMap = new Map(customOrders.map((doc) => [
+                doc._id.toString(),
+                {
+                    custom_order_id: doc.custom_order_id,
+                    school_id: doc.school_id,
+                    additional_data: doc.additional_data,
+                },
+            ]));
+            const enrichedOrders = response.data
+                .filter((order) => order.merchant_order_id && order.merchant_order_id !== 'NA')
+                .map((order) => {
+                let customData = {};
+                let additionalData = {};
+                if (order.merchant_order_id && order.merchant_order_id !== 'NA') {
+                    customData = customOrderMap.get(order.merchant_order_id) || {};
+                    additionalData = JSON.parse(customData?.additional_data);
+                }
+                return {
+                    ...order,
+                    custom_order_id: customData.custom_order_id || null,
+                    school_id: customData.school_id || null,
+                    student_id: additionalData?.student_details?.student_id || null,
+                    student_name: additionalData.student_details?.student_name || null,
+                    student_email: additionalData.student_details?.student_email || null,
+                    student_phone_no: additionalData.student_details?.student_phone_no || null,
+                };
+            });
+            return {
+                cursor: response.cursor,
+                limit: response.limit,
+                settlements_transactions: enrichedOrders,
+            };
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -2522,6 +2600,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getCardInfo", null);
+__decorate([
+    (0, common_1.Post)('/vendor-settlement-reconcilation'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "vendorrecon", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

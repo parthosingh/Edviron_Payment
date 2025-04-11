@@ -655,11 +655,11 @@ export class EdvironPgController {
       createdAt: collectRequestStatus?.createdAt,
       transaction_time: payment_time || collectRequestStatus?.updatedAt,
       additional_data,
-      details:collectRequestStatus.details,
-      transaction_amount:collectRequestStatus.transaction_amount,
-      bank_reference:collectRequestStatus.bank_reference,
-      payment_method:collectRequestStatus.payment_method,
-      payment_details:collectRequestStatus.details,
+      details: collectRequestStatus.details,
+      transaction_amount: collectRequestStatus.transaction_amount,
+      bank_reference: collectRequestStatus.bank_reference,
+      payment_method: collectRequestStatus.payment_method,
+      payment_details: collectRequestStatus.details,
       // formattedTransaction_time: transactionTime.toLocaleDateString('en-GB') || null,
       formattedDate: `${payment_time.getFullYear()}-${String(
         payment_time.getMonth() + 1,
@@ -1045,13 +1045,13 @@ export class EdvironPgController {
       req_webhook_urls: collectReq?.req_webhook_urls,
       custom_order_id,
       createdAt: collectRequestStatus?.createdAt,
-      transaction_time: payment_time ||collectRequestStatus?.updatedAt,
+      transaction_time: payment_time || collectRequestStatus?.updatedAt,
       additional_data,
-      details:collectRequestStatus.details,
-      transaction_amount:collectRequestStatus.transaction_amount,
-      bank_reference:collectRequestStatus.bank_reference,
-      payment_method:collectRequestStatus.payment_method,
-      payment_details:collectRequestStatus.details,
+      details: collectRequestStatus.details,
+      transaction_amount: collectRequestStatus.transaction_amount,
+      bank_reference: collectRequestStatus.bank_reference,
+      payment_method: collectRequestStatus.payment_method,
+      payment_details: collectRequestStatus.details,
       formattedDate: `${transactionTime.getFullYear()}-${String(
         transactionTime.getMonth() + 1,
       ).padStart(2, '0')}-${String(transactionTime.getDate()).padStart(
@@ -1553,7 +1553,7 @@ export class EdvironPgController {
       } else if (status === 'FAILED') {
         query = {
           ...query,
-          status: { $in: ['FAILED', 'FAILURE','failure'] },
+          status: { $in: ['FAILED', 'FAILURE', 'failure'] },
         };
       }
 
@@ -1578,14 +1578,14 @@ export class EdvironPgController {
           });
         if (!newOrders)
           throw new NotFoundException('No record found for Input');
-        const request=await this.databaseService.CollectRequestModel.findOne({
+        const request = await this.databaseService.CollectRequestModel.findOne({
           _id: newOrders.collect_id,
           trustee_id,
-        })
-        if (!request){
+        });
+        if (!request) {
           throw new NotFoundException('No record found for Input');
         }
-        
+
         query = {
           collect_id: newOrders.collect_id,
         };
@@ -1603,23 +1603,23 @@ export class EdvironPgController {
       if (seachFilter === 'order_id' || seachFilter === 'custom_order_id') {
         console.log('Serching custom');
         let searchIfo: any = {};
-        let findQuery:any={
-          trustee_id
-        }
-        if(school_id !== 'null'){
+        let findQuery: any = {
+          trustee_id,
+        };
+        if (school_id !== 'null') {
           findQuery = {
             ...findQuery,
-            school_id: school_id
+            school_id: school_id,
           };
         }
         if (seachFilter === 'order_id') {
-          findQuery={
+          findQuery = {
             ...findQuery,
-            _id: new Types.ObjectId(searchParams)
-          }
+            _id: new Types.ObjectId(searchParams),
+          };
 
-          console.log(findQuery,'findQuery');
-          
+          console.log(findQuery, 'findQuery');
+
           const checkReq =
             await this.databaseService.CollectRequestModel.findOne(findQuery);
           if (!checkReq)
@@ -1629,12 +1629,12 @@ export class EdvironPgController {
             collect_id: new Types.ObjectId(searchParams),
           };
         } else if (seachFilter === 'custom_order_id') {
-          findQuery={
+          findQuery = {
             ...findQuery,
             custom_order_id: searchParams,
-          }
+          };
           console.log('Serching custom_order_id');
-          console.log(findQuery,'findQuery');
+          console.log(findQuery, 'findQuery');
           const requestInfo =
             await this.databaseService.CollectRequestModel.findOne(findQuery);
           if (!requestInfo)
@@ -1759,7 +1759,7 @@ export class EdvironPgController {
                 isAutoRefund: 1,
                 payment_time: 1,
                 reason: 1,
-                capture_status:1
+                capture_status: 1,
               },
             },
             {
@@ -1788,7 +1788,7 @@ export class EdvironPgController {
                       isQRPayment: '$collect_request.isQRPayment',
                       reason: '$reason',
                       gateway: '$gateway',
-                      capture_status:'$capture_status'
+                      capture_status: '$capture_status',
                     },
                   ],
                 },
@@ -1873,7 +1873,7 @@ export class EdvironPgController {
                 isAutoRefund: 1,
                 payment_time: 1,
                 reason: 1,
-                capture_status:1
+                capture_status: 1,
               },
             },
             {
@@ -1901,7 +1901,7 @@ export class EdvironPgController {
                       payment_time: '$payment_time',
                       reason: '$reason',
                       gateway: '$gateway',
-                      capture_status:'$capture_status'
+                      capture_status: '$capture_status',
                     },
                   ],
                 },
@@ -3223,7 +3223,106 @@ export class EdvironPgController {
       const res = await axios.request(config);
       return res.data;
     } catch (e) {
-      throw new BadRequestException(e.message)
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Post('/vendor-settlement-reconcilation')
+  async vendorrecon(
+    @Body()
+    body: {
+      limit: number;
+      merchant_vendor_id: string;
+      settlement_id: string;
+      client_id: string;
+      cursor?: string | null;
+    },
+  ) {
+    try {
+      const { limit, merchant_vendor_id, client_id, settlement_id, cursor } =
+        body;
+      const data = {
+        pagination: {
+          limit,
+          cursor: cursor || null,
+        },
+        filters: {
+          settlement_id: Number(settlement_id),
+        },
+      };
+
+      const config = {
+        method: 'post',
+        url: 'https://api.cashfree.com/pg/recon/vendor',
+        headers: {
+          'Content-Type': 'application/json',
+          accept: 'application/json',
+          'x-api-version': '2023-08-01',
+          'x-partner-merchantid': client_id,
+          'x-partner-apikey':process.env.CASHFREE_API_KEY
+        },
+        data: {
+          pagination: {
+            limit,
+            cursor:cursor || null,
+          },
+          filters: {
+            merchant_vendor_id: merchant_vendor_id,
+            settlement_id: Number(settlement_id),
+          },
+        },
+      };
+
+      const { data: response } = await axios.request(config);
+      const orderIds = response.data
+        .filter((order: any) => order.merchant_order_id !== null && order.merchant_order_id !=='NA') // Filter out null merchant_order_id
+        .map((order: any) => order.merchant_order_id);
+      // return orderIds
+      const customOrders = await this.databaseService.CollectRequestModel.find({
+          _id: { $in: orderIds },
+        });
+
+        const customOrderMap = new Map(
+          customOrders.map((doc) => [
+            doc._id.toString(),
+            {
+              custom_order_id: doc.custom_order_id,
+              school_id: doc.school_id,
+              additional_data: doc.additional_data,
+            },
+          ]),
+        );
+
+        const enrichedOrders = response.data
+        .filter((order: any) => order.merchant_order_id && order.merchant_order_id !== 'NA')
+        .map((order: any) => {
+          let customData: any = {};
+          let additionalData: any = {};
+          if (order.merchant_order_id && order.merchant_order_id !== 'NA') {
+            customData = customOrderMap.get(order.merchant_order_id) || {};
+            additionalData = JSON.parse(customData?.additional_data);
+          }
+          return {
+            ...order,
+            custom_order_id: customData.custom_order_id || null,
+            school_id: customData.school_id || null,
+            student_id: additionalData?.student_details?.student_id || null,
+            student_name: additionalData.student_details?.student_name || null,
+            student_email:
+              additionalData.student_details?.student_email || null,
+            student_phone_no:
+              additionalData.student_details?.student_phone_no || null,
+          };
+        });
+        return {
+        cursor: response.cursor,
+        limit: response.limit,
+        settlements_transactions: enrichedOrders,
+      };
+    } catch (e) {
+      console.log(e);
+
+      throw new BadRequestException(e.message);
     }
   }
 }
