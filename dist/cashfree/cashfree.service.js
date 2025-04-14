@@ -501,6 +501,53 @@ let CashfreeService = class CashfreeService {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async submitDisputeEvidence(dispute_id, documents, client_id) {
+        const data = {
+            dispute_id,
+            documents,
+        };
+        const config = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: `${process.env.CASHFREE_ENDPOINT}/pg/disputes/${dispute_id}/documents`,
+            headers: {
+                accept: 'application/json',
+                'Content-Type': 'multipart/form-data',
+                'x-api-version': '2023-08-01',
+                'x-partner-merchantid': client_id,
+                'x-partner-apikey': process.env.CASHFREE_API_KEY,
+            },
+            data: data,
+        };
+        try {
+            const response = await axios_1.default.request(config);
+            return response.data;
+        }
+        catch (error) {
+            throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
+        }
+    }
+    async acceptDispute(disputeId, client_id) {
+        try {
+            const config = {
+                method: 'put',
+                maxBodyLength: Infinity,
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/disputes/${disputeId}/accept`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': client_id,
+                    'x-partner-apikey': process.env.CASHFREE_API_KEY,
+                },
+            };
+            const response = await axios_1.default.request(config);
+            return response.data;
+        }
+        catch (error) {
+            throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
+        }
+    }
 };
 exports.CashfreeService = CashfreeService;
 exports.CashfreeService = CashfreeService = __decorate([

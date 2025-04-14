@@ -54,7 +54,6 @@ let EasebuzzService = class EasebuzzService {
         };
         const { data: statusRes } = await axios.request(config);
         console.log(statusRes);
-        ;
         return statusRes;
     }
     async statusResponse(requestId, collectReq) {
@@ -76,14 +75,13 @@ let EasebuzzService = class EasebuzzService {
         if (!order_id) {
             throw new common_1.BadRequestException('Order ID not found');
         }
-        const hashStringV2 = `${process.env.EASEBUZZ_KEY}|${refund_id}|${order_id}|${(refund_amount)
-            .toFixed(1)}|${process.env.EASEBUZZ_SALT}`;
+        const hashStringV2 = `${process.env.EASEBUZZ_KEY}|${refund_id}|${order_id}|${refund_amount.toFixed(1)}|${process.env.EASEBUZZ_SALT}`;
         let hash2 = await (0, sign_1.calculateSHA512Hash)(hashStringV2);
         const data2 = {
             key: process.env.EASEBUZZ_KEY,
             merchant_refund_id: refund_id,
             easebuzz_id: order_id,
-            refund_amount: (refund_amount).toFixed(1),
+            refund_amount: refund_amount.toFixed(1),
             hash: hash2,
         };
         const config = {
@@ -158,10 +156,40 @@ let EasebuzzService = class EasebuzzService {
                 margin: 2,
                 width: 300,
             });
-            return { intentUrl: upiIntentUrl, qrCodeBase64: qrCodeBase64, collect_id };
+            return {
+                intentUrl: upiIntentUrl,
+                qrCodeBase64: qrCodeBase64,
+                collect_id,
+            };
         }
         catch (e) {
             console.log(e.message);
+        }
+    }
+    async updateDispute(case_id, action, reason, documents) {
+        const hash = await (0, sign_1.calculateSHA512Hash)(process.env.EASEBUZZ_KEY);
+        const config = {
+            method: 'post',
+            url: `https://drs.easebuzz.in/api/v1/merchant/case/update_status/`,
+            headers: {
+                key: process.env.EASEBUZZ_KEY,
+                hash,
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Accept: 'application/json',
+            },
+            data: {
+                case_id: case_id,
+                action: action,
+                reason: reason,
+                documents: documents,
+            },
+        };
+        try {
+            const { data } = await axios_1.default.request(config);
+            return data;
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message || 'Something went wrong');
         }
     }
 };
