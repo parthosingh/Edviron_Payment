@@ -35,6 +35,7 @@
     "moment-timezone": "^0.5.48",
     "mongoose": "^7.5.3",
     "nodemailer": "^6.9.15",
+    "php-unserialize": "^0.0.1",
     "postcss": "^8.4.47",
     "postcss-cli": "^11.0.0",
     "react": "^18.2.0",

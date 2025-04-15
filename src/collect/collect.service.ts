@@ -40,6 +40,8 @@ export class CollectService {
     ccavenue_access_code?: string,
     ccavenue_working_key?: string,
     splitPayments?: boolean,
+    pay_u_key?: string | null,
+    pay_u_salt?: string | null,
     vendor?: [
       {
         vendor_id: string;
@@ -93,6 +95,8 @@ export class CollectService {
       ccavenue_merchant_id: ccavenue_merchant_id || null,
       ccavenue_access_code: ccavenue_access_code || null,
       ccavenue_working_key: ccavenue_working_key || null,
+      pay_u_key: pay_u_key || null,
+      pay_u_salt: pay_u_salt || null,
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({
@@ -102,6 +106,15 @@ export class CollectService {
       transaction_amount: request.amount,
       payment_method: null,
     }).save();
+
+    if (pay_u_key && pay_u_salt) {
+      return {
+        url: `${process.env.URL}/pay-u/redirect?collect_id=${
+          request._id
+        }&school_name=${school_name?.split(' ').join('_')}`,
+        request,
+      };
+    }
 
     if (ccavenue_merchant_id) {
       console.log('creating order with CCavenue');
