@@ -162,6 +162,16 @@ let PayUController = class PayUController {
         const status = await this.payUService.checkStatus(collect_id);
         res.json(status);
     }
+    async handleWebhook(body, req, res) {
+        try {
+            const data = JSON.stringify(body);
+            await this.databaseService.WebhooksModel.create({ body: data });
+            return res.status(200).send('OK');
+        }
+        catch (error) {
+            return res.status(400).send(error.message || 'Error in saving webhook');
+        }
+    }
 };
 exports.PayUController = PayUController;
 __decorate([
@@ -208,6 +218,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], PayUController.prototype, "checkStatus", null);
+__decorate([
+    (0, common_1.Post)('/webhook'),
+    __param(0, (0, common_1.Body)('body')),
+    __param(1, (0, common_1.Req)()),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], PayUController.prototype, "handleWebhook", null);
 exports.PayUController = PayUController = __decorate([
     (0, common_1.Controller)('pay-u'),
     __metadata("design:paramtypes", [pay_u_service_1.PayUService,

@@ -315,4 +315,9 @@ export declare class EdvironPgController {
         limit: any;
         settlements_transactions: any;
     }>;
+    testWebhook(body: {
+        token: string;
+        url: string;
+        trustee_id: string;
+    }): Promise<any>;
 }

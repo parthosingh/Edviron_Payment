@@ -20,7 +20,7 @@ export declare class CheckStatusService {
     checkStatus(collect_request_id: String): Promise<{
         status: TransactionStatus;
         amount: number;
-    } | "Invalid request" | {
+    } | {
         status: any;
         status_code: number;
         custom_order_id: string | null;
@@ -35,7 +35,7 @@ export declare class CheckStatusService {
             formattedTransactionDate: string;
             order_status: any;
         };
-    } | {
+    } | "Invalid request" | {
         status: string;
         custom_order_id: string;
         amount: number;

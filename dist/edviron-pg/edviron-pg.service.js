@@ -278,7 +278,8 @@ let EdvironPgService = class EdvironPgService {
             if (collect_status.status === collect_req_status_schema_1.PaymentStatus.USER_DROPPED) {
                 formatedStatus = transactionStatus_1.TransactionStatus.USER_DROPPED;
             }
-            if (collect_status.status.toUpperCase() === 'FAILED' || collect_status.status.toUpperCase() === 'FAILURE') {
+            if (collect_status.status.toUpperCase() === 'FAILED' ||
+                collect_status.status.toUpperCase() === 'FAILURE') {
                 formatedStatus = transactionStatus_1.TransactionStatus.FAILURE;
             }
             return {
@@ -570,7 +571,7 @@ let EdvironPgService = class EdvironPgService {
         const info = await transporter.sendMail(mailOptions);
         return 'mail sent successfully';
     }
-    async sendErpWebhook(webHookUrl, webhookData) {
+    async sendErpWebhook(webHookUrl, webhookData, webhook_key) {
         if (webHookUrl !== null) {
             const amount = webhookData.amount;
             const webHookData = await (0, sign_2.sign)({
@@ -589,8 +590,12 @@ let EdvironPgService = class EdvironPgService {
                 transaction_amount: webhookData?.transaction_amount,
                 bank_reference: webhookData?.bank_reference,
                 payment_method: webhookData?.payment_method,
-                payment_details: webhookData?.payment_details
+                payment_details: webhookData?.payment_details,
             });
+            let base64Header = '';
+            if (webhook_key) {
+                base64Header = 'Basic ' + Buffer.from(webhook_key).toString('base64');
+            }
             const createConfig = (url) => ({
                 method: 'post',
                 maxBodyLength: Infinity,
@@ -598,6 +603,7 @@ let EdvironPgService = class EdvironPgService {
                 headers: {
                     accept: 'application/json',
                     'content-type': 'application/json',
+                    authorization: base64Header,
                 },
                 data: webHookData,
             });
@@ -803,14 +809,20 @@ let EdvironPgService = class EdvironPgService {
                     from: 'collectrequests',
                     localField: 'collect_id',
                     foreignField: '_id',
-                    pipeline: [{ $project: { additional_data: 1, custom_order_id: 1 } }],
+                    pipeline: [
+                        { $project: { additional_data: 1, custom_order_id: 1 } },
+                    ],
                     as: 'collectRequest',
                 },
             },
             {
                 $set: {
-                    additional_data: { $arrayElemAt: ['$collectRequest.additional_data', 0] },
-                    custom_order_id: { $arrayElemAt: ['$collectRequest.custom_order_id', 0] },
+                    additional_data: {
+                        $arrayElemAt: ['$collectRequest.additional_data', 0],
+                    },
+                    custom_order_id: {
+                        $arrayElemAt: ['$collectRequest.custom_order_id', 0],
+                    },
                     status: { $arrayElemAt: ['$collect_req_status.status', 0] },
                     payment_method: {
                         $arrayElemAt: ['$collect_req_status.payment_method', 0],
