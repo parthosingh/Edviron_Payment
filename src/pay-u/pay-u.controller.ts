@@ -202,13 +202,17 @@ export class PayUController {
 
   @Post('/webhook')
   async handleWebhook(
-    @Body('body') body: any,
-    @Req() req: any,
-    @Res() res: any,
+    @Body() body: any, @Res() res: any
   ) {
     try {
+      console.log(body);
+      
       const data = JSON.stringify(body);
-      await this.databaseService.WebhooksModel.create({ body: data });
+      console.log(data);
+      
+       await new this.databaseService.WebhooksModel({
+        body:data,
+      }).save();
       return res.status(200).send('OK');
     } catch (error) {
       return res.status(400).send(error.message || 'Error in saving webhook');
