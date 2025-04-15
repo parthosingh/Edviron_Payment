@@ -42,4 +42,10 @@ export declare class CashfreeService {
     initiateCapture(client_id: string, collect_id: string, capture: string, amount: number): Promise<any>;
     vendorSettlementRecon(client_id: string, start_date: string, end_date: string, utrNumber: string[], cursor?: string): Promise<any>;
     getPaymentStatus(order_id: string, client_id: string): Promise<any>;
+    submitDisputeEvidence(dispute_id: string, documents: Array<{
+        file: string;
+        doc_type: string;
+        note: string;
+    }>, client_id: string): Promise<any>;
+    acceptDispute(disputeId: string, client_id: string): Promise<any>;
 }

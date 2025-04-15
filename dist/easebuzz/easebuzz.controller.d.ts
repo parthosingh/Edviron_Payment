@@ -19,4 +19,14 @@ export declare class EasebuzzController {
         split_payouts: any;
         peb_refunds: any;
     }>;
+    updateEasebuzzDispute(body: {
+        case_id: string;
+        action: string;
+        reason: string;
+        documents: Array<{
+            document_type: any;
+            file_url: string;
+        }>;
+        sign: string;
+    }): Promise<any>;
 }

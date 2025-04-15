@@ -224,6 +224,27 @@ let CashfreeController = class CashfreeController {
         }
         return this.cashfreeService.getPaymentStatus(collect_id, collectReq.clientId);
     }
+    async disputeEvidence(body) {
+        try {
+            const { dispute_id, documents, action, client_id, sign } = body;
+            const decodedToken = jwt.verify(sign, process.env.KEY);
+            if (!decodedToken)
+                throw new common_1.BadRequestException('Request Forged');
+            if (decodedToken.action !== action ||
+                decodedToken.client_id !== client_id ||
+                decodedToken.dispute_id !== dispute_id)
+                throw new common_1.BadRequestException('Request Forged');
+            if (action === 'deny') {
+                return this.cashfreeService.submitDisputeEvidence(dispute_id, documents, client_id);
+            }
+            else {
+                return this.cashfreeService.acceptDispute(dispute_id, client_id);
+            }
+        }
+        catch (error) {
+            throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
+        }
+    }
 };
 exports.CashfreeController = CashfreeController;
 __decorate([
@@ -276,6 +297,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CashfreeController.prototype, "checkStatus", null);
+__decorate([
+    (0, common_1.Post)('/update-dispute'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "disputeEvidence", null);
 exports.CashfreeController = CashfreeController = __decorate([
     (0, common_1.Controller)('cashfree'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
