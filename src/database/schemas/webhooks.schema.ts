@@ -5,7 +5,7 @@ import { CollectRequest } from './collect_request.schema';
 @Schema({ timestamps: true })
 export class Webhooks {
   @Prop({
-    required: true,
+    required: false,
     type: mongoose.Schema.Types.ObjectId,
     ref: 'CollectRequest',
   })
