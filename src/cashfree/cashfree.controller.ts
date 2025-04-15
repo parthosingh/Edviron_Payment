@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  InternalServerErrorException,
   Post,
   Query,
   Req,
@@ -137,11 +138,11 @@ export class CashfreeController {
     if (!request) {
       throw new BadRequestException('Collect Request not found');
     }
-    if(request.gateway === Gateway.EXPIRED){
+    if (request.gateway === Gateway.EXPIRED) {
       throw new BadRequestException('Payment Expired');
     }
 
-    request.gateway=Gateway.EDVIRON_PG
+    request.gateway = Gateway.EDVIRON_PG;
     await request.save();
     const cashfreeId = request.paymentIds.cashfree_id;
     if (!cashfreeId) {
@@ -236,7 +237,7 @@ export class CashfreeController {
     try {
       const limit = body.limit || 40;
       console.log(limit, 'limit');
-      
+
       return await this.cashfreeService.getTransactionForSettlements(
         utr,
         client_id,
@@ -274,11 +275,60 @@ export class CashfreeController {
 
   @Get('/status')
   async checkStatus(@Req() req: any) {
-    const collect_id=req.query.collect_id
-    const collectReq=await this.databaseService.CollectRequestModel.findById(collect_id)
-    if(!collectReq){
-   throw new BadRequestException('Error while')
+    const collect_id = req.query.collect_id;
+    const collectReq =
+      await this.databaseService.CollectRequestModel.findById(collect_id);
+    if (!collectReq) {
+      throw new BadRequestException('Error while');
     }
-    return this.cashfreeService.getPaymentStatus(collect_id, collectReq.clientId)
+    return this.cashfreeService.getPaymentStatus(
+      collect_id,
+      collectReq.clientId,
+    );
+  }
+
+  @Post('/update-dispute')
+  async disputeEvidence(
+    @Body()
+    body: {
+      dispute_id: string;
+      action: string;
+      documents: Array<{
+        file: string;
+        doc_type: string;
+        note: string;
+      }>;
+      client_id: string;
+      sign: string;
+    },
+  ) {
+    try {
+      const { dispute_id, documents, action, client_id, sign } = body;
+      const decodedToken = jwt.verify(sign, process.env.KEY!) as {
+        client_id: string;
+        dispute_id: string;
+        action: string;
+      };
+      if (!decodedToken) throw new BadRequestException('Request Forged');
+      if (
+        decodedToken.action !== action ||
+        decodedToken.client_id !== client_id ||
+        decodedToken.dispute_id !== dispute_id
+      )
+        throw new BadRequestException('Request Forged');
+      if (action === 'deny') {
+        return this.cashfreeService.submitDisputeEvidence(
+          dispute_id,
+          documents,
+          client_id,
+        );
+      } else {
+        return this.cashfreeService.acceptDispute(dispute_id, client_id);
+      }
+    } catch (error) {
+      throw new InternalServerErrorException(
+        error.message || 'Something went wrong',
+      );
+    }
   }
 }
