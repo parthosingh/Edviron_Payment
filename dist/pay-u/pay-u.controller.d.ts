@@ -10,4 +10,5 @@ export declare class PayUController {
     handleCallback(req: any, res: any): Promise<any>;
     handleCallbackPost(req: any, res: any): Promise<any>;
     checkStatus(req: any, res: any): Promise<void>;
+    handleWebhook(body: any, req: any, res: any): Promise<any>;
 }

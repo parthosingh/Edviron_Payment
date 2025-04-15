@@ -31,6 +31,7 @@ import {
   PlatformCharge,
   rangeCharge,
 } from 'src/database/schemas/platform.charges.schema';
+import * as _jwt from 'jsonwebtoken';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -373,7 +374,6 @@ export class EdvironPgController {
       throw new Error('collect_id is not valid');
     }
     const collectIdObject = new Types.ObjectId(collect_id);
-
     const collectReq =
       await this.databaseService.CollectRequestModel.findById(collectIdObject);
     if (!collectReq) throw new Error('Collect request not found');
@@ -668,6 +668,29 @@ export class EdvironPgController {
 
     if (webHookUrl !== null) {
       console.log('calling webhook');
+      let webhook_key: null | string = null;
+      try {
+        const token = _jwt.sign(
+          { trustee_id: collectReq.trustee_id.toString() },
+          process.env.KEY!,
+        );
+        const config = {
+          method: 'get',
+          maxBodyLength: Infinity,
+          url: `${
+            process.env.VANILLA_SERVICE_ENDPOINT
+          }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+          },
+        };
+        const { data } = await axios.request(config);
+        webhook_key = data?.webhook_key;
+      } catch (error) {
+        console.error('Error getting webhook key:', error.message);
+      }
+
       if (
         collectRequest?.trustee_id.toString() === '66505181ca3e97e19f142075'
       ) {
@@ -677,6 +700,7 @@ export class EdvironPgController {
             await this.edvironPgService.sendErpWebhook(
               webHookUrl,
               webHookDataInfo,
+              webhook_key,
             );
           } catch (e) {
             console.log(`Error sending webhook to ${webHookUrl}:`, e.message);
@@ -689,6 +713,7 @@ export class EdvironPgController {
           await this.edvironPgService.sendErpWebhook(
             webHookUrl,
             webHookDataInfo,
+            webhook_key,
           );
         } catch (e) {
           console.log(`Error sending webhook to ${webHookUrl}:`, e.message);
@@ -3259,12 +3284,12 @@ export class EdvironPgController {
           accept: 'application/json',
           'x-api-version': '2023-08-01',
           'x-partner-merchantid': client_id,
-          'x-partner-apikey':process.env.CASHFREE_API_KEY
+          'x-partner-apikey': process.env.CASHFREE_API_KEY,
         },
         data: {
           pagination: {
             limit,
-            cursor:cursor || null,
+            cursor: cursor || null,
           },
           filters: {
             merchant_vendor_id: merchant_vendor_id,
@@ -3275,26 +3300,33 @@ export class EdvironPgController {
 
       const { data: response } = await axios.request(config);
       const orderIds = response.data
-        .filter((order: any) => order.merchant_order_id !== null && order.merchant_order_id !=='NA') // Filter out null merchant_order_id
+        .filter(
+          (order: any) =>
+            order.merchant_order_id !== null &&
+            order.merchant_order_id !== 'NA',
+        ) // Filter out null merchant_order_id
         .map((order: any) => order.merchant_order_id);
       // return orderIds
       const customOrders = await this.databaseService.CollectRequestModel.find({
-          _id: { $in: orderIds },
-        });
+        _id: { $in: orderIds },
+      });
 
-        const customOrderMap = new Map(
-          customOrders.map((doc) => [
-            doc._id.toString(),
-            {
-              custom_order_id: doc.custom_order_id,
-              school_id: doc.school_id,
-              additional_data: doc.additional_data,
-            },
-          ]),
-        );
+      const customOrderMap = new Map(
+        customOrders.map((doc) => [
+          doc._id.toString(),
+          {
+            custom_order_id: doc.custom_order_id,
+            school_id: doc.school_id,
+            additional_data: doc.additional_data,
+          },
+        ]),
+      );
 
-        const enrichedOrders = response.data
-        .filter((order: any) => order.merchant_order_id && order.merchant_order_id !== 'NA')
+      const enrichedOrders = response.data
+        .filter(
+          (order: any) =>
+            order.merchant_order_id && order.merchant_order_id !== 'NA',
+        )
         .map((order: any) => {
           let customData: any = {};
           let additionalData: any = {};
@@ -3314,7 +3346,7 @@ export class EdvironPgController {
               additionalData.student_details?.student_phone_no || null,
           };
         });
-        return {
+      return {
         cursor: response.cursor,
         limit: response.limit,
         settlements_transactions: enrichedOrders,
@@ -3322,6 +3354,88 @@ export class EdvironPgController {
     } catch (e) {
       console.log(e);
 
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Post('/test-webhook')
+  async testWebhook(
+    @Body() body: { token: string; url: string; trustee_id: string },
+  ) {
+    try {
+      const { token, url, trustee_id } = body;
+
+      // const decrypted = jwt.verify(token, process.env.KEY!) as any;
+      // if (decrypted.trustee_id !== trustee_id) {
+      //   throw new ForbiddenException('Request forged');
+      // }
+      const dummyData = {
+        collect_id: '67f616ce02821266c233317f',
+        amount: 1,
+        status: 'SUCCESS',
+        trustee_id: '65d43e124174f07e3e3f8966',
+        school_id: '65d443168b8aa46fcb5af3e6',
+        req_webhook_urls: [
+          'https://webhook.site/481f98b3-83df-49a5-9c7b-b8d024185556',
+        ],
+        custom_order_id: '',
+        createdAt: '2025-04-09T06:42:22.542Z',
+        transaction_time: '2025-04-09T06:42:31.000Z',
+        additional_data:
+          '{"student_details":{"student_id":"s123456","student_email":"testing","student_name":"test name","receipt":"r12"},"additional_fields":{"uid":"11111"}}',
+        formattedTransactionDate: '2025-04-09',
+        details: '{"upi":{"channel":null,"upi_id":"rajpbarmaiya@axl"}}',
+        transaction_amount: 1.02,
+        bank_reference: '892748464830',
+        payment_method: 'upi',
+        payment_details: '{"upi":{"channel":null,"upi_id":"rajpbarmaiya@axl"}}',
+        jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb2xsZWN0X2lkIjoiNjdmNjE2Y2UwMjgyMTI2NmMyMzMzMTdlIiwiYW1vdW50IjoxLCJzdGF0dXMiOiJTVUNDRVNTIiwidHJ1c3RlZV9pZCI6IjY1ZDQzZTEyNDE3NGYwN2UzZTNmODk2NyIsInNjaG9vbF9pZCI6IjY1ZDQ0MzE2OGI4YWE0NmZjYjVhZjNlNCIsInJlcV93ZWJob29rX3VybHMiOlsiaHR0cHM6Ly93ZWJob29rLnNpdGUvNDgxZjk4YjMtODNkZi00OWE1LTljN2ItYjhkMDI0MTg1NTU2IiwiZGVmIiwiaHR0cHM6Ly93d3cueWFob28uY29tIiwiaHR0cHM6Ly93d3cuaW5zdGEzNjUuY29tIiwiaHR0cHM6Ly9wYXJ0bmVyLmVkdmlyb24uY29tL2RldiJdLCJjdXN0b21fb3JkZXJfaWQiOiIiLCJjcmVhdGVkQXQiOiIyMDI1LTA0LTA5VDA2OjQyOjIyLjU0MloiLCJ0cmFuc2FjdGlvbl90aW1lIjoiMjAyNS0wNC0wOVQwNjo0MjozMS4wMDBaIiwiYWRkaXRpb25hbF9kYXRhIjoie1wic3R1ZGVudF9kZXRhaWxzXCI6e1wic3R1ZGVudF9pZFwiOlwiczEyMzQ1NlwiLFwic3R1ZGVudF9lbWFpbFwiOlwidGVzdGluZ1wiLFwic3R1ZGVudF9uYW1lXCI6XCJ0ZXN0IG5hbWVcIixcInJlY2VpcHRcIjpcInIxMlwifSxcImFkZGl0aW9uYWxfZmllbGRzXCI6e1widWlkXCI6XCIxMTExMVwifX0iLCJmb3JtYXR0ZWRUcmFuc2FjdGlvbkRhdGUiOiIyMDI1LTA0LTA5IiwiZGV0YWlscyI6IntcInVwaVwiOntcImNoYW5uZWxcIjpudWxsLFwidXBpX2lkXCI6XCJyYWpwYmFybWFpeWFAYXhsXCJ9fSIsInRyYW5zYWN0aW9uX2Ftb3VudCI6MS4wMiwiYmFua19yZWZlcmVuY2UiOiI4OTI3NDg0NjQ4MzAiLCJwYXltZW50X21ldGhvZCI6InVwaSIsInBheW1lbnRfZGV0YWlscyI6IntcInVwaVwiOntcImNoYW5uZWxcIjpudWxsLFwidXBpX2lkXCI6XCJyYWpwYmFybWFpeWFAYXhsXCJ9fSJ9.Bfp9R1oaHYaD6MjCb2frfaEJfh09mJs4GF6xiXSMFXc',
+      };
+
+      const webHookData = await sign(dummyData);
+
+      let webhook_key: null | string = null;
+      try {
+        const token = _jwt.sign(
+          { trustee_id: '65d43e124174f07e3e3f8966' },
+          process.env.KEY!,
+        );
+        const config = {
+          method: 'get',
+          maxBodyLength: Infinity,
+          url: `${
+            process.env.VANILLA_SERVICE_ENDPOINT
+          }/main-backend/get-webhook-key?token=${token}&trustee_id=${'65d43e124174f07e3e3f8966'}`,
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+          },
+        };
+        const { data } = await axios.request(config);
+
+        webhook_key = data?.webhook_key;
+      } catch (error) {
+        console.error('Error getting webhook key:', error.message);
+      }
+      let base64Header = '';
+      if (webhook_key) {
+        base64Header = 'Basic ' + Buffer.from(webhook_key).toString('base64');
+      }
+      const config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: url,
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          authorization: base64Header,
+        },
+        data: webHookData,
+      };
+
+      const res = await axios.request(config);
+      return res.data;
+    } catch (e) {
       throw new BadRequestException(e.message);
     }
   }

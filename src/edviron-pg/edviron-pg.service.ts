@@ -33,7 +33,7 @@ export class EdvironPgService implements GatewayService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly cashfreeService: CashfreeService,
-  ) { }
+  ) {}
   async collect(
     request: CollectRequest,
     platform_charges: platformChange[],
@@ -127,11 +127,11 @@ export class EdvironPgService implements GatewayService {
 
         vendor.map(async (info) => {
           const { vendor_id, percentage, amount, name } = info;
-          let split_amount=0
-          if(amount){
-             split_amount = amount;
+          let split_amount = 0;
+          if (amount) {
+            split_amount = amount;
           }
-          if (percentage && percentage !==0) {
+          if (percentage && percentage !== 0) {
             split_amount = (request.amount * percentage) / 100;
           }
           await new this.databaseService.VendorTransactionModel({
@@ -276,7 +276,7 @@ export class EdvironPgService implements GatewayService {
       if (err.name === 'AxiosError')
         throw new BadRequestException(
           'Invalid client id or client secret ' +
-          JSON.stringify(err.response.data),
+            JSON.stringify(err.response.data),
         );
       console.log(err);
     }
@@ -327,14 +327,14 @@ export class EdvironPgService implements GatewayService {
       let transaction_time = '';
       if (
         order_status_to_transaction_status_map[
-        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ] === TransactionStatus.SUCCESS
       ) {
         transaction_time = collect_status?.updatedAt?.toISOString() as string;
       }
       const checkStatus =
         order_status_to_transaction_status_map[
-        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ];
       let status_code;
       if (checkStatus === TransactionStatus.SUCCESS) {
@@ -350,20 +350,23 @@ export class EdvironPgService implements GatewayService {
         collect_request._id.toString(),
         collect_request.clientId,
       );
-      
-      let formatedStatus=order_status_to_transaction_status_map[
-        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
-        ]
-      if(collect_status.status === PaymentStatus.USER_DROPPED){
+
+      let formatedStatus =
+        order_status_to_transaction_status_map[
+          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+        ];
+      if (collect_status.status === PaymentStatus.USER_DROPPED) {
         formatedStatus = TransactionStatus.USER_DROPPED;
       }
 
-      if(collect_status.status.toUpperCase() === 'FAILED' || collect_status.status.toUpperCase() ==='FAILURE'){
-        formatedStatus=TransactionStatus.FAILURE
+      if (
+        collect_status.status.toUpperCase() === 'FAILED' ||
+        collect_status.status.toUpperCase() === 'FAILURE'
+      ) {
+        formatedStatus = TransactionStatus.FAILURE;
       }
       return {
-        status:
-        formatedStatus,
+        status: formatedStatus,
         amount: cashfreeRes.order_amount,
         transaction_amount: Number(collect_status?.transaction_amount),
         status_code,
@@ -706,7 +709,11 @@ export class EdvironPgService implements GatewayService {
     return 'mail sent successfully';
   }
 
-  async sendErpWebhook(webHookUrl: string[], webhookData: any) {
+  async sendErpWebhook(
+    webHookUrl: string[],
+    webhookData: any,
+    webhook_key?: string | null,
+  ) {
     if (webHookUrl !== null) {
       const amount = webhookData.amount;
       const webHookData = await sign({
@@ -721,12 +728,16 @@ export class EdvironPgService implements GatewayService {
         transaction_time: webhookData?.transaction_time,
         additional_data: webhookData.additional_data,
         formattedTransactionDate: webhookData?.formattedDate,
-        details:webhookData?.details,
-        transaction_amount:webhookData?.transaction_amount,
-        bank_reference:webhookData?.bank_reference,
-        payment_method:webhookData?.payment_method,
-        payment_details:webhookData?.payment_details
+        details: webhookData?.details,
+        transaction_amount: webhookData?.transaction_amount,
+        bank_reference: webhookData?.bank_reference,
+        payment_method: webhookData?.payment_method,
+        payment_details: webhookData?.payment_details,
       });
+      let base64Header = '';
+      if (webhook_key) {
+        base64Header = 'Basic ' + Buffer.from(webhook_key).toString('base64');
+      }
 
       const createConfig = (url: string) => ({
         method: 'post',
@@ -735,14 +746,17 @@ export class EdvironPgService implements GatewayService {
         headers: {
           accept: 'application/json',
           'content-type': 'application/json',
+          authorization: base64Header,
         },
         data: webHookData,
       });
+
       try {
         try {
           const sendWebhook = async (url: string) => {
             try {
               const res = await axios.request(createConfig(url));
+
               const currentIST = new Date().toLocaleString('en-US', {
                 timeZone: 'Asia/Kolkata',
               });
@@ -1009,15 +1023,21 @@ export class EdvironPgService implements GatewayService {
             from: 'collectrequests',
             localField: 'collect_id',
             foreignField: '_id',
-            pipeline: [{ $project: { additional_data: 1, custom_order_id: 1 } }],
+            pipeline: [
+              { $project: { additional_data: 1, custom_order_id: 1 } },
+            ],
             as: 'collectRequest',
           },
         },
         {
           $set: {
             // studentDetail:{$arrayElemAt: ['$collectRequest.additional_data', 0]},
-            additional_data: { $arrayElemAt: ['$collectRequest.additional_data', 0] },
-            custom_order_id: { $arrayElemAt: ['$collectRequest.custom_order_id', 0] },
+            additional_data: {
+              $arrayElemAt: ['$collectRequest.additional_data', 0],
+            },
+            custom_order_id: {
+              $arrayElemAt: ['$collectRequest.custom_order_id', 0],
+            },
             status: { $arrayElemAt: ['$collect_req_status.status', 0] },
             payment_method: {
               $arrayElemAt: ['$collect_req_status.payment_method', 0],
