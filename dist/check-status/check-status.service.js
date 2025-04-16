@@ -85,7 +85,7 @@ let CheckStatusService = class CheckStatusService {
                 return {
                     ...edvironPgResponse,
                     custom_order_id,
-                    capture_status: 'PENDING',
+                    capture_status: collect_req_status.capture_status || 'PENDING',
                 };
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
                 const easebuzzStatus = await this.easebuzzService.statusResponse(collect_request_id.toString(), collectRequest);
@@ -230,7 +230,7 @@ let CheckStatusService = class CheckStatusService {
                 return await this.checkExpiry(collectRequest);
             case collect_request_schema_1.Gateway.EXPIRED:
                 return {
-                    status: collect_req_status_schema_1.PaymentStatus.EXPIRED,
+                    status: collect_req_status_schema_1.PaymentStatus.USER_DROPPED,
                     edviron_order_id: collectRequest._id.toString(),
                     amount: collectRequest.amount,
                     status_code: 202,
@@ -247,7 +247,7 @@ let CheckStatusService = class CheckStatusService {
         const differenceInMinutes = timeDifference / (1000 * 60);
         if (differenceInMinutes > 20) {
             return {
-                status: 'EXPIRED',
+                status: collect_req_status_schema_1.PaymentStatus.USER_DROPPED,
                 custom_order_id: request.custom_order_id || 'NA',
                 amount: request.amount,
                 status_code: 202,
@@ -312,7 +312,7 @@ let CheckStatusService = class CheckStatusService {
                 return {
                     ...edvironPgResponse,
                     custom_order_id,
-                    capture_status: 'PENDING',
+                    capture_status: collect_req_status.capture_status || 'PENDING',
                 };
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
                 const easebuzzStatus = await this.easebuzzService.statusResponse(collect_request_id.toString(), collectRequest);

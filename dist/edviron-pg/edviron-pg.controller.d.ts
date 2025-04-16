@@ -308,4 +308,22 @@ export declare class EdvironPgController {
         payment_mode: String;
         range_charge: rangeCharge[];
     }): Promise<void>;
+    getCollectDisableMode(collect_id: string): Promise<string[]>;
+    getCardInfo(bin: string): Promise<any>;
+    vendorrecon(body: {
+        limit: number;
+        merchant_vendor_id: string;
+        settlement_id: string;
+        client_id: string;
+        cursor?: string | null;
+    }): Promise<{
+        cursor: any;
+        limit: any;
+        settlements_transactions: any;
+    }>;
+    testWebhook(body: {
+        token: string;
+        url: string;
+        trustee_id: string;
+    }): Promise<any>;
 }

@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const edviron_pg_service_1 = require("./edviron-pg.service");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
+const sign_1 = require("../utils/sign");
 const axios_1 = require("axios");
 const mongoose_1 = require("mongoose");
 const jwt = require("jsonwebtoken");
@@ -24,6 +25,8 @@ const transactionStatus_1 = require("../types/transactionStatus");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
+const qs = require("qs");
+const _jwt = require("jsonwebtoken");
 let EdvironPgController = class EdvironPgController {
     constructor(edvironPgService, databaseService, easebuzzService, cashfreeService) {
         this.edvironPgService = edvironPgService;
@@ -34,7 +37,7 @@ let EdvironPgController = class EdvironPgController {
     async handleRedirect(req, res) {
         const wallet = req.query.wallet;
         const cardless = req.query.cardless;
-        const netbanking = req.query.netbanking;
+        const net_banking = req.query.net_banking;
         const pay_later = req.query.pay_later;
         const upi = req.query.upi;
         const card = req.query.card;
@@ -46,8 +49,8 @@ let EdvironPgController = class EdvironPgController {
             disable_modes += `&wallet=${wallet}`;
         if (cardless)
             disable_modes += `&cardless=${cardless}`;
-        if (netbanking)
-            disable_modes += `&netbanking=${netbanking}`;
+        if (net_banking)
+            disable_modes += `&net_banking=${net_banking}`;
         if (pay_later)
             disable_modes += `&pay_later=${pay_later}`;
         if (upi)
@@ -413,17 +416,40 @@ let EdvironPgController = class EdvironPgController {
             req_webhook_urls: collectReq?.req_webhook_urls,
             custom_order_id,
             createdAt: collectRequestStatus?.createdAt,
-            transaction_time: collectRequestStatus?.updatedAt,
+            transaction_time: payment_time || collectRequestStatus?.updatedAt,
             additional_data,
+            details: collectRequestStatus.details,
+            transaction_amount: collectRequestStatus.transaction_amount,
+            bank_reference: collectRequestStatus.bank_reference,
+            payment_method: collectRequestStatus.payment_method,
+            payment_details: collectRequestStatus.details,
             formattedDate: `${payment_time.getFullYear()}-${String(payment_time.getMonth() + 1).padStart(2, '0')}-${String(payment_time.getDate()).padStart(2, '0')}`,
         };
         if (webHookUrl !== null) {
             console.log('calling webhook');
+            let webhook_key = null;
+            try {
+                const token = _jwt.sign({ trustee_id: collectReq.trustee_id.toString() }, process.env.KEY);
+                const config = {
+                    method: 'get',
+                    maxBodyLength: Infinity,
+                    url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+                    headers: {
+                        accept: 'application/json',
+                        'content-type': 'application/json',
+                    },
+                };
+                const { data } = await axios_1.default.request(config);
+                webhook_key = data?.webhook_key;
+            }
+            catch (error) {
+                console.error('Error getting webhook key:', error.message);
+            }
             if (collectRequest?.trustee_id.toString() === '66505181ca3e97e19f142075') {
                 console.log('Webhook called for webschool');
                 setTimeout(async () => {
                     try {
-                        await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
+                        await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key);
                     }
                     catch (e) {
                         console.log(`Error sending webhook to ${webHookUrl}:`, e.message);
@@ -434,7 +460,7 @@ let EdvironPgController = class EdvironPgController {
                 console.log('Webhook called for other schools');
                 console.log(webHookDataInfo);
                 try {
-                    await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
+                    await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key);
                 }
                 catch (e) {
                     console.log(`Error sending webhook to ${webHookUrl}:`, e.message);
@@ -694,8 +720,13 @@ let EdvironPgController = class EdvironPgController {
             req_webhook_urls: collectReq?.req_webhook_urls,
             custom_order_id,
             createdAt: collectRequestStatus?.createdAt,
-            transaction_time: collectRequestStatus?.updatedAt,
+            transaction_time: payment_time || collectRequestStatus?.updatedAt,
             additional_data,
+            details: collectRequestStatus.details,
+            transaction_amount: collectRequestStatus.transaction_amount,
+            bank_reference: collectRequestStatus.bank_reference,
+            payment_method: collectRequestStatus.payment_method,
+            payment_details: collectRequestStatus.details,
             formattedDate: `${transactionTime.getFullYear()}-${String(transactionTime.getMonth() + 1).padStart(2, '0')}-${String(transactionTime.getDate()).padStart(2, '0')}`,
         };
         if (webHookUrl !== null) {
@@ -1001,6 +1032,7 @@ let EdvironPgController = class EdvironPgController {
             const endDate = req.query.endDate || null;
             const status = req.query.status || null;
             const school_id = req.query.school_id || null;
+            console.log(school_id, 'CHECKING SCHOOL ID');
             const startOfDayUTC = new Date(await this.edvironPgService.convertISTStartToUTC(startDate));
             const endOfDayUTC = new Date(await this.edvironPgService.convertISTEndToUTC(endDate));
             const endOfDay = new Date(endDate);
@@ -1094,7 +1126,7 @@ let EdvironPgController = class EdvironPgController {
             else if (status === 'FAILED') {
                 query = {
                     ...query,
-                    status: { $in: ['FAILED', 'FAILURE'] },
+                    status: { $in: ['FAILED', 'FAILURE', 'failure'] },
                 };
             }
             if (payment_modes) {
@@ -1106,21 +1138,46 @@ let EdvironPgController = class EdvironPgController {
             if (seachFilter === 'upi_id') {
                 query = {
                     ...query,
-                    details: { $regex: searchParams }
+                    details: { $regex: searchParams },
                 };
             }
             if (seachFilter === 'bank_reference') {
+                const newOrders = await this.databaseService.CollectRequestStatusModel.findOne({
+                    bank_reference: { $regex: searchParams },
+                });
+                if (!newOrders)
+                    throw new common_1.NotFoundException('No record found for Input');
+                const request = await this.databaseService.CollectRequestModel.findOne({
+                    _id: newOrders.collect_id,
+                    trustee_id,
+                });
+                if (!request) {
+                    throw new common_1.NotFoundException('No record found for Input');
+                }
                 query = {
-                    ...query,
-                    bank_reference: { $regex: searchParams }
+                    collect_id: newOrders.collect_id,
                 };
             }
             console.time('aggregating transaction');
             if (seachFilter === 'order_id' || seachFilter === 'custom_order_id') {
                 console.log('Serching custom');
                 let searchIfo = {};
+                let findQuery = {
+                    trustee_id,
+                };
+                if (school_id !== 'null') {
+                    findQuery = {
+                        ...findQuery,
+                        school_id: school_id,
+                    };
+                }
                 if (seachFilter === 'order_id') {
-                    const checkReq = await this.databaseService.CollectRequestModel.findById(searchParams);
+                    findQuery = {
+                        ...findQuery,
+                        _id: new mongoose_1.Types.ObjectId(searchParams),
+                    };
+                    console.log(findQuery, 'findQuery');
+                    const checkReq = await this.databaseService.CollectRequestModel.findOne(findQuery);
                     if (!checkReq)
                         throw new common_1.NotFoundException('No record found for Input');
                     console.log('Serching Order_id');
@@ -1129,10 +1186,13 @@ let EdvironPgController = class EdvironPgController {
                     };
                 }
                 else if (seachFilter === 'custom_order_id') {
-                    console.log('Serching custom_order_id');
-                    const requestInfo = await this.databaseService.CollectRequestModel.findOne({
+                    findQuery = {
+                        ...findQuery,
                         custom_order_id: searchParams,
-                    });
+                    };
+                    console.log('Serching custom_order_id');
+                    console.log(findQuery, 'findQuery');
+                    const requestInfo = await this.databaseService.CollectRequestModel.findOne(findQuery);
                     if (!requestInfo)
                         throw new common_1.NotFoundException('No record found for Input');
                     searchIfo = {
@@ -1200,6 +1260,7 @@ let EdvironPgController = class EdvironPgController {
                                 isAutoRefund: 1,
                                 payment_time: 1,
                                 reason: 1,
+                                capture_status: 1,
                             },
                         },
                         {
@@ -1227,7 +1288,8 @@ let EdvironPgController = class EdvironPgController {
                                             payment_time: '$payment_time',
                                             isQRPayment: '$collect_request.isQRPayment',
                                             reason: '$reason',
-                                            gateway: '$gateway'
+                                            gateway: '$gateway',
+                                            capture_status: '$capture_status',
                                         },
                                     ],
                                 },
@@ -1306,6 +1368,7 @@ let EdvironPgController = class EdvironPgController {
                                 isAutoRefund: 1,
                                 payment_time: 1,
                                 reason: 1,
+                                capture_status: 1,
                             },
                         },
                         {
@@ -1333,6 +1396,7 @@ let EdvironPgController = class EdvironPgController {
                                             payment_time: '$payment_time',
                                             reason: '$reason',
                                             gateway: '$gateway',
+                                            capture_status: '$capture_status',
                                         },
                                     ],
                                 },
@@ -2066,8 +2130,10 @@ let EdvironPgController = class EdvironPgController {
             if (!schoolMdr) {
                 throw new common_1.BadRequestException('School MDR details not found');
             }
-            let selectedCharge = schoolMdr.platform_charges.find((charge) => charge.payment_mode.toLocaleLowerCase() === payment_mode.toLocaleLowerCase() &&
-                charge.platform_type.toLocaleLowerCase() === platform_type.toLocaleLowerCase());
+            let selectedCharge = schoolMdr.platform_charges.find((charge) => charge.payment_mode.toLocaleLowerCase() ===
+                payment_mode.toLocaleLowerCase() &&
+                charge.platform_type.toLocaleLowerCase() ===
+                    platform_type.toLocaleLowerCase());
             if (!selectedCharge) {
                 selectedCharge = schoolMdr.platform_charges.find((charge) => charge.payment_mode.toLowerCase() === 'others' &&
                     charge.platform_type.toLowerCase() === platform_type.toLowerCase());
@@ -2107,6 +2173,185 @@ let EdvironPgController = class EdvironPgController {
                 throw new common_1.BadRequestException('MDR already present');
             }
         });
+    }
+    async getCollectDisableMode(collect_id) {
+        try {
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest) {
+                throw new common_1.NotFoundException('Collect Request not found');
+            }
+            const disableModes = collectRequest.disabled_modes || [];
+            return disableModes;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async getCardInfo(bin) {
+        try {
+            const data = qs.stringify({
+                appId: process.env.CASHFREE_CARD_APP_ID,
+                secretKey: process.env.CASHFREE_CARD_SECRET_KEY,
+                cardBin: bin,
+            });
+            const config = {
+                method: 'POST',
+                url: 'https://api.cashfree.com/api/v1/vault/cards/cardbin',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                data: data,
+            };
+            const res = await axios_1.default.request(config);
+            return res.data;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async vendorrecon(body) {
+        try {
+            const { limit, merchant_vendor_id, client_id, settlement_id, cursor } = body;
+            const data = {
+                pagination: {
+                    limit,
+                    cursor: cursor || null,
+                },
+                filters: {
+                    settlement_id: Number(settlement_id),
+                },
+            };
+            const config = {
+                method: 'post',
+                url: 'https://api.cashfree.com/pg/recon/vendor',
+                headers: {
+                    'Content-Type': 'application/json',
+                    accept: 'application/json',
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': client_id,
+                    'x-partner-apikey': process.env.CASHFREE_API_KEY,
+                },
+                data: {
+                    pagination: {
+                        limit,
+                        cursor: cursor || null,
+                    },
+                    filters: {
+                        merchant_vendor_id: merchant_vendor_id,
+                        settlement_id: Number(settlement_id),
+                    },
+                },
+            };
+            const { data: response } = await axios_1.default.request(config);
+            const orderIds = response.data
+                .filter((order) => order.merchant_order_id !== null &&
+                order.merchant_order_id !== 'NA')
+                .map((order) => order.merchant_order_id);
+            const customOrders = await this.databaseService.CollectRequestModel.find({
+                _id: { $in: orderIds },
+            });
+            const customOrderMap = new Map(customOrders.map((doc) => [
+                doc._id.toString(),
+                {
+                    custom_order_id: doc.custom_order_id,
+                    school_id: doc.school_id,
+                    additional_data: doc.additional_data,
+                },
+            ]));
+            const enrichedOrders = response.data
+                .filter((order) => order.merchant_order_id && order.merchant_order_id !== 'NA')
+                .map((order) => {
+                let customData = {};
+                let additionalData = {};
+                if (order.merchant_order_id && order.merchant_order_id !== 'NA') {
+                    customData = customOrderMap.get(order.merchant_order_id) || {};
+                    additionalData = JSON.parse(customData?.additional_data);
+                }
+                return {
+                    ...order,
+                    custom_order_id: customData.custom_order_id || null,
+                    school_id: customData.school_id || null,
+                    student_id: additionalData?.student_details?.student_id || null,
+                    student_name: additionalData.student_details?.student_name || null,
+                    student_email: additionalData.student_details?.student_email || null,
+                    student_phone_no: additionalData.student_details?.student_phone_no || null,
+                };
+            });
+            return {
+                cursor: response.cursor,
+                limit: response.limit,
+                settlements_transactions: enrichedOrders,
+            };
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async testWebhook(body) {
+        try {
+            const { token, url, trustee_id } = body;
+            const dummyData = {
+                collect_id: '67f616ce02821266c233317f',
+                amount: 1,
+                status: 'SUCCESS',
+                trustee_id: '65d43e124174f07e3e3f8966',
+                school_id: '65d443168b8aa46fcb5af3e6',
+                req_webhook_urls: [
+                    'https://webhook.site/481f98b3-83df-49a5-9c7b-b8d024185556',
+                ],
+                custom_order_id: '',
+                createdAt: '2025-04-09T06:42:22.542Z',
+                transaction_time: '2025-04-09T06:42:31.000Z',
+                additional_data: '{"student_details":{"student_id":"s123456","student_email":"testing","student_name":"test name","receipt":"r12"},"additional_fields":{"uid":"11111"}}',
+                formattedTransactionDate: '2025-04-09',
+                details: '{"upi":{"channel":null,"upi_id":"rajpbarmaiya@axl"}}',
+                transaction_amount: 1.02,
+                bank_reference: '892748464830',
+                payment_method: 'upi',
+                payment_details: '{"upi":{"channel":null,"upi_id":"rajpbarmaiya@axl"}}',
+                jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb2xsZWN0X2lkIjoiNjdmNjE2Y2UwMjgyMTI2NmMyMzMzMTdlIiwiYW1vdW50IjoxLCJzdGF0dXMiOiJTVUNDRVNTIiwidHJ1c3RlZV9pZCI6IjY1ZDQzZTEyNDE3NGYwN2UzZTNmODk2NyIsInNjaG9vbF9pZCI6IjY1ZDQ0MzE2OGI4YWE0NmZjYjVhZjNlNCIsInJlcV93ZWJob29rX3VybHMiOlsiaHR0cHM6Ly93ZWJob29rLnNpdGUvNDgxZjk4YjMtODNkZi00OWE1LTljN2ItYjhkMDI0MTg1NTU2IiwiZGVmIiwiaHR0cHM6Ly93d3cueWFob28uY29tIiwiaHR0cHM6Ly93d3cuaW5zdGEzNjUuY29tIiwiaHR0cHM6Ly9wYXJ0bmVyLmVkdmlyb24uY29tL2RldiJdLCJjdXN0b21fb3JkZXJfaWQiOiIiLCJjcmVhdGVkQXQiOiIyMDI1LTA0LTA5VDA2OjQyOjIyLjU0MloiLCJ0cmFuc2FjdGlvbl90aW1lIjoiMjAyNS0wNC0wOVQwNjo0MjozMS4wMDBaIiwiYWRkaXRpb25hbF9kYXRhIjoie1wic3R1ZGVudF9kZXRhaWxzXCI6e1wic3R1ZGVudF9pZFwiOlwiczEyMzQ1NlwiLFwic3R1ZGVudF9lbWFpbFwiOlwidGVzdGluZ1wiLFwic3R1ZGVudF9uYW1lXCI6XCJ0ZXN0IG5hbWVcIixcInJlY2VpcHRcIjpcInIxMlwifSxcImFkZGl0aW9uYWxfZmllbGRzXCI6e1widWlkXCI6XCIxMTExMVwifX0iLCJmb3JtYXR0ZWRUcmFuc2FjdGlvbkRhdGUiOiIyMDI1LTA0LTA5IiwiZGV0YWlscyI6IntcInVwaVwiOntcImNoYW5uZWxcIjpudWxsLFwidXBpX2lkXCI6XCJyYWpwYmFybWFpeWFAYXhsXCJ9fSIsInRyYW5zYWN0aW9uX2Ftb3VudCI6MS4wMiwiYmFua19yZWZlcmVuY2UiOiI4OTI3NDg0NjQ4MzAiLCJwYXltZW50X21ldGhvZCI6InVwaSIsInBheW1lbnRfZGV0YWlscyI6IntcInVwaVwiOntcImNoYW5uZWxcIjpudWxsLFwidXBpX2lkXCI6XCJyYWpwYmFybWFpeWFAYXhsXCJ9fSJ9.Bfp9R1oaHYaD6MjCb2frfaEJfh09mJs4GF6xiXSMFXc',
+            };
+            const webHookData = await (0, sign_1.sign)(dummyData);
+            let webhook_key = null;
+            try {
+                const token = _jwt.sign({ trustee_id: '65d43e124174f07e3e3f8966' }, process.env.KEY);
+                const config = {
+                    method: 'get',
+                    maxBodyLength: Infinity,
+                    url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-webhook-key?token=${token}&trustee_id=${'65d43e124174f07e3e3f8966'}`,
+                    headers: {
+                        accept: 'application/json',
+                        'content-type': 'application/json',
+                    },
+                };
+                const { data } = await axios_1.default.request(config);
+                webhook_key = data?.webhook_key;
+            }
+            catch (error) {
+                console.error('Error getting webhook key:', error.message);
+            }
+            let base64Header = '';
+            if (webhook_key) {
+                base64Header = 'Basic ' + Buffer.from(webhook_key).toString('base64');
+            }
+            const config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: url,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    authorization: base64Header,
+                },
+                data: webHookData,
+            };
+            const res = await axios_1.default.request(config);
+            return res.data;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
     }
 };
 exports.EdvironPgController = EdvironPgController;
@@ -2449,6 +2694,34 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "addCharge", null);
+__decorate([
+    (0, common_1.Get)('get-collection-disable-modes'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getCollectDisableMode", null);
+__decorate([
+    (0, common_1.Get)('/get-card-info'),
+    __param(0, (0, common_1.Query)('bin')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getCardInfo", null);
+__decorate([
+    (0, common_1.Post)('/vendor-settlement-reconcilation'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "vendorrecon", null);
+__decorate([
+    (0, common_1.Post)('/test-webhook'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "testWebhook", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

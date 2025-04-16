@@ -127,8 +127,11 @@ export class EdvironPgService implements GatewayService {
 
         vendor.map(async (info) => {
           const { vendor_id, percentage, amount, name } = info;
-          let split_amount = amount;
-          if (percentage) {
+          let split_amount = 0;
+          if (amount) {
+            split_amount = amount;
+          }
+          if (percentage && percentage !== 0) {
             split_amount = (request.amount * percentage) / 100;
           }
           await new this.databaseService.VendorTransactionModel({
@@ -347,13 +350,23 @@ export class EdvironPgService implements GatewayService {
         collect_request._id.toString(),
         collect_request.clientId,
       );
-      console.log(settlementInfo, 'opopo');
 
+      let formatedStatus =
+        order_status_to_transaction_status_map[
+          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+        ];
+      if (collect_status.status === PaymentStatus.USER_DROPPED) {
+        formatedStatus = TransactionStatus.USER_DROPPED;
+      }
+
+      if (
+        collect_status.status.toUpperCase() === 'FAILED' ||
+        collect_status.status.toUpperCase() === 'FAILURE'
+      ) {
+        formatedStatus = TransactionStatus.FAILURE;
+      }
       return {
-        status:
-          order_status_to_transaction_status_map[
-            cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
-          ],
+        status: formatedStatus,
         amount: cashfreeRes.order_amount,
         transaction_amount: Number(collect_status?.transaction_amount),
         status_code,
@@ -696,7 +709,11 @@ export class EdvironPgService implements GatewayService {
     return 'mail sent successfully';
   }
 
-  async sendErpWebhook(webHookUrl: string[], webhookData: any) {
+  async sendErpWebhook(
+    webHookUrl: string[],
+    webhookData: any,
+    webhook_key?: string | null,
+  ) {
     if (webHookUrl !== null) {
       const amount = webhookData.amount;
       const webHookData = await sign({
@@ -708,10 +725,19 @@ export class EdvironPgService implements GatewayService {
         req_webhook_urls: webhookData?.req_webhook_urls,
         custom_order_id: webhookData.custom_order_id,
         createdAt: webhookData.createdAt,
-        transaction_time: webhookData?.updatedAt,
+        transaction_time: webhookData?.transaction_time,
         additional_data: webhookData.additional_data,
         formattedTransactionDate: webhookData?.formattedDate,
+        details: webhookData?.details,
+        transaction_amount: webhookData?.transaction_amount,
+        bank_reference: webhookData?.bank_reference,
+        payment_method: webhookData?.payment_method,
+        payment_details: webhookData?.payment_details,
       });
+      let base64Header = '';
+      if (webhook_key) {
+        base64Header = 'Basic ' + Buffer.from(webhook_key).toString('base64');
+      }
 
       const createConfig = (url: string) => ({
         method: 'post',
@@ -720,14 +746,17 @@ export class EdvironPgService implements GatewayService {
         headers: {
           accept: 'application/json',
           'content-type': 'application/json',
+          authorization: base64Header,
         },
         data: webHookData,
       });
+
       try {
         try {
           const sendWebhook = async (url: string) => {
             try {
               const res = await axios.request(createConfig(url));
+
               const currentIST = new Date().toLocaleString('en-US', {
                 timeZone: 'Asia/Kolkata',
               });

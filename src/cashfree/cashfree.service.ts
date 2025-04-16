@@ -3,6 +3,7 @@ import {
   forwardRef,
   Inject,
   Injectable,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import axios from 'axios';
 import { DatabaseService } from 'src/database/database.service';
@@ -13,6 +14,7 @@ import {
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import * as moment from 'moment-timezone';
+import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 @Injectable()
 export class CashfreeService {
   constructor(
@@ -193,8 +195,6 @@ export class CashfreeService {
     };
     try {
       const { data: cashfreeRes } = await axios.request(config);
-
-      // console.log(cashfreeRes, 'cashfree status response');
 
       const order_status_to_transaction_status_map = {
         ACTIVE: TransactionStatus.PENDING,
@@ -493,6 +493,23 @@ export class CashfreeService {
     amount: number,
   ) {
     try {
+      const collectRequest =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collectRequest) {
+        throw new BadRequestException('Collect Request not found');
+      }
+
+      const staus = await this.checkStatus(collect_id, collectRequest);
+      // console.log(staus,'statu');
+
+      const requestStatus =
+        await this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id,
+        });
+      if (!requestStatus) {
+        throw new BadRequestException('Request status not found');
+      }
+      await requestStatus.save();
       const config = {
         method: 'post',
         maxBodyLength: Infinity,
@@ -506,14 +523,24 @@ export class CashfreeService {
         },
         data: {
           action: capture,
-          amount: amount,
+          amount: requestStatus.transaction_amount,
         },
       };
+      // requestStatus.capture_status = 'PENDING';
       const response = await axios(config);
+      console.log(response.data);
+
+      requestStatus.capture_status = response.data.authorization.action;
+      if (response.data.payment_status === 'VOID') {
+        requestStatus.status = PaymentStatus.FAILURE;
+        await requestStatus.save();
+      }
+      await requestStatus.save();
       return response.data;
     } catch (e) {
+      // console.log(e);
       if (e.response?.data.message) {
-        console.log(e.response.data);
+        // console.log(e.response.data);
         throw new BadRequestException(e.response.data.message);
       }
 
@@ -586,13 +613,73 @@ export class CashfreeService {
       },
     };
     try {
-      const {data:response} = await axios(config);
-      
-      return response.data;
+      const { data: response } = await axios(config);
 
+      return response.data;
     } catch (e) {
       console.log(e);
       throw new BadRequestException(e.message);
+    }
+  }
+
+  async submitDisputeEvidence(
+    dispute_id: string,
+    documents: Array<{
+      file: string;
+      doc_type: string;
+      note: string;
+    }>,
+    client_id: string,
+  ) {
+    const data = {
+      dispute_id,
+      documents,
+    };
+
+    const config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: `${process.env.CASHFREE_ENDPOINT}/pg/disputes/${dispute_id}/documents`,
+      headers: {
+        accept: 'application/json',
+        'Content-Type': 'multipart/form-data',
+        'x-api-version': '2023-08-01',
+        'x-partner-merchantid': client_id,
+        'x-partner-apikey': process.env.CASHFREE_API_KEY,
+      },
+      data: data,
+    };
+    try {
+      const response = await axios.request(config);
+      return response.data;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        error.message || 'Something went wrong',
+      );
+    }
+  }
+  async acceptDispute(disputeId: string, client_id: string) {
+    try {
+      const config = {
+        method: 'put',
+        maxBodyLength: Infinity,
+        url: `${process.env.CASHFREE_ENDPOINT}/pg/disputes/${disputeId}/accept`,
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-api-version': '2023-08-01',
+          'x-partner-merchantid': client_id,
+          'x-partner-apikey': process.env.CASHFREE_API_KEY,
+        },
+      };
+
+      const response = await axios.request(config);
+
+      return response.data;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        error.message || 'Something went wrong',
+      );
     }
   }
 }

@@ -20,6 +20,7 @@ const collect_request_schema_1 = require("../database/schemas/collect_request.sc
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const transactionStatus_1 = require("../types/transactionStatus");
 const moment = require("moment-timezone");
+const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 let CashfreeService = class CashfreeService {
     constructor(databaseService, edvironPgService) {
         this.databaseService = databaseService;
@@ -397,6 +398,18 @@ let CashfreeService = class CashfreeService {
     }
     async initiateCapture(client_id, collect_id, capture, amount) {
         try {
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest) {
+                throw new common_1.BadRequestException('Collect Request not found');
+            }
+            const staus = await this.checkStatus(collect_id, collectRequest);
+            const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id,
+            });
+            if (!requestStatus) {
+                throw new common_1.BadRequestException('Request status not found');
+            }
+            await requestStatus.save();
             const config = {
                 method: 'post',
                 maxBodyLength: Infinity,
@@ -410,15 +423,21 @@ let CashfreeService = class CashfreeService {
                 },
                 data: {
                     action: capture,
-                    amount: amount,
+                    amount: requestStatus.transaction_amount,
                 },
             };
             const response = await (0, axios_1.default)(config);
+            console.log(response.data);
+            requestStatus.capture_status = response.data.authorization.action;
+            if (response.data.payment_status === 'VOID') {
+                requestStatus.status = collect_req_status_schema_1.PaymentStatus.FAILURE;
+                await requestStatus.save();
+            }
+            await requestStatus.save();
             return response.data;
         }
         catch (e) {
             if (e.response?.data.message) {
-                console.log(e.response.data);
                 throw new common_1.BadRequestException(e.response.data.message);
             }
             throw new common_1.BadRequestException(e.message);
@@ -480,6 +499,53 @@ let CashfreeService = class CashfreeService {
         catch (e) {
             console.log(e);
             throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async submitDisputeEvidence(dispute_id, documents, client_id) {
+        const data = {
+            dispute_id,
+            documents,
+        };
+        const config = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: `${process.env.CASHFREE_ENDPOINT}/pg/disputes/${dispute_id}/documents`,
+            headers: {
+                accept: 'application/json',
+                'Content-Type': 'multipart/form-data',
+                'x-api-version': '2023-08-01',
+                'x-partner-merchantid': client_id,
+                'x-partner-apikey': process.env.CASHFREE_API_KEY,
+            },
+            data: data,
+        };
+        try {
+            const response = await axios_1.default.request(config);
+            return response.data;
+        }
+        catch (error) {
+            throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
+        }
+    }
+    async acceptDispute(disputeId, client_id) {
+        try {
+            const config = {
+                method: 'put',
+                maxBodyLength: Infinity,
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/disputes/${disputeId}/accept`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': client_id,
+                    'x-partner-apikey': process.env.CASHFREE_API_KEY,
+                },
+            };
+            const response = await axios_1.default.request(config);
+            return response.data;
+        }
+        catch (error) {
+            throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
         }
     }
 };

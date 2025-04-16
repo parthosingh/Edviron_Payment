@@ -21,6 +21,7 @@ const easebuzz_controller_1 = require("./easebuzz/easebuzz.controller");
 const easebuzz_service_1 = require("./easebuzz/easebuzz.service");
 const cashfree_controller_1 = require("./cashfree/cashfree.controller");
 const cashfree_module_1 = require("./cashfree/cashfree.module");
+const pay_u_module_1 = require("./pay-u/pay-u.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -34,7 +35,8 @@ exports.AppModule = AppModule = __decorate([
             hdfc_module_1.HdfcModule,
             edviron_pg_module_1.EdvironPgModule,
             ccavenue_module_1.CcavenueModule,
-            cashfree_module_1.CashfreeModule
+            cashfree_module_1.CashfreeModule,
+            pay_u_module_1.PayUModule
         ],
         controllers: [app_controller_1.AppController, easebuzz_controller_1.EasebuzzController, cashfree_controller_1.CashfreeController],
         providers: [app_service_1.AppService, easebuzz_service_1.EasebuzzService],

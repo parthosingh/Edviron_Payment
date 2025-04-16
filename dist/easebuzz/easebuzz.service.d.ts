@@ -12,4 +12,8 @@ export declare class EasebuzzService {
         qrCodeBase64: any;
         collect_id: string;
     } | undefined>;
+    updateDispute(case_id: string, action: string, reason: string, documents: Array<{
+        document_type: any;
+        file_url: string;
+    }>): Promise<any>;
 }

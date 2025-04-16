@@ -18,7 +18,7 @@ let Webhooks = class Webhooks {
 exports.Webhooks = Webhooks;
 __decorate([
     (0, mongoose_1.Prop)({
-        required: true,
+        required: false,
         type: mongoose_2.default.Schema.Types.ObjectId,
         ref: 'CollectRequest',
     }),

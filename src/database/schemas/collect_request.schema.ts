@@ -9,7 +9,8 @@ export enum Gateway {
   EDVIRON_CASHFREE='EDVIRON_CASHFREE',
   EDVIRON_EASEBUZZ='EDVIRON_EASEBUZZ',
   PENDING='PENDING',
-  EXPIRED='EXPIRED'
+  EXPIRED='EXPIRED',
+  EDVIRON_PAY_U= 'EDVIRON_PAY_U',
 }
 
 
@@ -109,6 +110,12 @@ export class CollectRequest {
   
   @Prop({ required: false, default: false })
   isQRPayment: boolean;
+
+  @Prop({ required: false })
+  pay_u_key: string;
+
+  @Prop({ required: false })
+  pay_u_salt: string;
 
   _id: ObjectId;
 }

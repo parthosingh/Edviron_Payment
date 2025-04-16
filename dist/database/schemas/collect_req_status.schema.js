@@ -91,6 +91,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false, default: '' }),
     __metadata("design:type", String)
 ], CollectRequestStatus.prototype, "payment_message", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: '' }),
+    __metadata("design:type", String)
+], CollectRequestStatus.prototype, "capture_status", void 0);
 exports.CollectRequestStatus = CollectRequestStatus = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequestStatus);

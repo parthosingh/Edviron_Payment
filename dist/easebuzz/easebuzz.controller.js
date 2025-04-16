@@ -179,6 +179,21 @@ let EasebuzzController = class EasebuzzController {
             throw new common_1.BadRequestException(error.message || 'Something Went Wrong');
         }
     }
+    async updateEasebuzzDispute(body) {
+        try {
+            const { case_id, action, reason, documents, sign } = body;
+            const decodedToken = jwt.verify(sign, process.env.KEY);
+            if (!decodedToken)
+                throw new common_1.BadRequestException('Request Forged');
+            if (decodedToken.action !== action || decodedToken.case_id !== case_id)
+                throw new common_1.BadRequestException('Request Forged');
+            const data = await this.easebuzzService.updateDispute(case_id, action, reason, documents);
+            return data;
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message || 'Something went wrong');
+        }
+    }
 };
 exports.EasebuzzController = EasebuzzController;
 __decorate([
@@ -219,6 +234,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EasebuzzController.prototype, "settlementRecon", null);
+__decorate([
+    (0, common_1.Post)('/update-dispute'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EasebuzzController.prototype, "updateEasebuzzDispute", null);
 exports.EasebuzzController = EasebuzzController = __decorate([
     (0, common_1.Controller)('easebuzz'),
     __metadata("design:paramtypes", [easebuzz_service_1.EasebuzzService,

@@ -37,4 +37,15 @@ export declare class CashfreeController {
     testWebhook(req: any, res: any): Promise<any>;
     testWebhook2(req: any, res: any): Promise<any>;
     checkStatus(req: any): Promise<any>;
+    disputeEvidence(body: {
+        dispute_id: string;
+        action: string;
+        documents: Array<{
+            file: string;
+            doc_type: string;
+            note: string;
+        }>;
+        client_id: string;
+        sign: string;
+    }): Promise<any>;
 }

@@ -13,6 +13,7 @@ import { EasebuzzController } from './easebuzz/easebuzz.controller';
 import { EasebuzzService } from './easebuzz/easebuzz.service';
 import { CashfreeController } from './cashfree/cashfree.controller';
 import { CashfreeModule } from './cashfree/cashfree.module';
+import { PayUModule } from './pay-u/pay-u.module';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { CashfreeModule } from './cashfree/cashfree.module';
     HdfcModule,
     EdvironPgModule,
     CcavenueModule,
-    CashfreeModule
+    CashfreeModule,
+    PayUModule
   ],
   controllers: [AppController, EasebuzzController, CashfreeController],
   providers: [AppService, EasebuzzService],
