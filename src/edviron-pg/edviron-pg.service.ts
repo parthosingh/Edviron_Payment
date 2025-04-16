@@ -947,6 +947,30 @@ export class EdvironPgService implements GatewayService {
     }
   }
 
+  async checkCreatedVendorStatus(vendor_id: string, client_id: string) {
+    try {
+      const config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: `${process.env.CASHFREE_ENDPOINT}/pg/easy-split/vendors/${vendor_id}`,
+        headers: {
+          'x-api-version': '2023-08-01',
+          'x-partner-merchantid': client_id,
+          'x-partner-apikey': process.env.CASHFREE_API_KEY,
+        },
+      };
+      const { data } = await axios.request(config);
+      return {
+        name: data?.name,
+        email: data?.email,
+        vendor_id: data?.vendor_id,
+        status: data?.status,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Something went wrong');
+    }
+  }
+
   async convertISTStartToUTC(dateStr: string) {
     const [year, month, day] = dateStr.split('-').map(Number);
 

@@ -1486,6 +1486,7 @@ export class EdvironPgController {
           additional_data: { $regex: searchParams, $options: 'i' },
         };
       }
+
       if (school_id != 'null') {
         collectQuery = {
           ...collectQuery,
@@ -2331,6 +2332,30 @@ export class EdvironPgController {
       // console.log(e);
 
       throw new BadRequestException(e.message);
+    }
+  }
+
+  @Get('get-vendor-status')
+  async checkVendorStatus(@Query('token') token: string) {
+    try {
+      const decrypted = jwt.verify(token, process.env.KEY!) as {
+        vendor_id: string;
+        client_id: string;
+      };
+
+      if (!decrypted) {
+        throw new BadRequestException('Invalid Token');
+      }
+
+      if (!decrypted.vendor_id || !decrypted.client_id) {
+        throw new BadRequestException('Request Forged');
+      }
+      return await this.edvironPgService.checkCreatedVendorStatus(
+        decrypted.vendor_id,
+        decrypted.client_id,
+      );
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Something went wrong');
     }
   }
 

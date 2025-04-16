@@ -124,6 +124,12 @@ export declare class EdvironPgController {
         };
         client_id: string;
     }): Promise<any>;
+    checkVendorStatus(token: string): Promise<{
+        name: any;
+        email: any;
+        vendor_id: any;
+        status: any;
+    }>;
     vendorTransactions(vendor_id: string, trustee_id: string, validate_trustee: string, school_id: string, collect_id: string, token: string, limit: string, page: string): Promise<{
         vendorsTransaction: any[];
         totalCount: number;

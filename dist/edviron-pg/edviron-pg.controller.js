@@ -1644,6 +1644,21 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async checkVendorStatus(token) {
+        try {
+            const decrypted = jwt.verify(token, process.env.KEY);
+            if (!decrypted) {
+                throw new common_1.BadRequestException('Invalid Token');
+            }
+            if (!decrypted.vendor_id || !decrypted.client_id) {
+                throw new common_1.BadRequestException('Request Forged');
+            }
+            return await this.edvironPgService.checkCreatedVendorStatus(decrypted.vendor_id, decrypted.client_id);
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message || 'Something went wrong');
+        }
+    }
     async vendorTransactions(vendor_id, trustee_id, validate_trustee, school_id, collect_id, token, limit, page) {
         const dataLimit = Number(limit) || 100;
         const dataPage = Number(page) || 1;
@@ -2512,6 +2527,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "createVendor", null);
+__decorate([
+    (0, common_1.Get)('get-vendor-status'),
+    __param(0, (0, common_1.Query)('token')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "checkVendorStatus", null);
 __decorate([
     (0, common_1.Get)('get-vendor-transaction'),
     __param(0, (0, common_1.Query)('vendor_id')),
