@@ -948,7 +948,7 @@ export class EdvironPgController {
         break;
       case 'UPI':
         payment_method = 'upi';
-        platform_type = 'UPI';
+        platform_type = 'Others';
         details = {
           upi: {
             upi_id: reqToCheck.msg.upi_va,
