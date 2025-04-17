@@ -1,9 +1,11 @@
 import { PayUService } from './pay-u.service';
 import { DatabaseService } from 'src/database/database.service';
+import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 export declare class PayUController {
     private readonly payUService;
     private readonly databaseService;
-    constructor(payUService: PayUService, databaseService: DatabaseService);
+    private readonly edvironPgService;
+    constructor(payUService: PayUService, databaseService: DatabaseService, edvironPgService: EdvironPgService);
     testPayment(): Promise<any>;
     redirectPayu(req: any, res: any): Promise<void>;
     testUpi(): Promise<any>;
