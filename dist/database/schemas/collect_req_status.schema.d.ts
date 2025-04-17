@@ -10,6 +10,11 @@ export declare enum PaymentStatus {
     AUTO_REFUND = "AUTO_REFUND",
     USER_DROPPED = "USER_DROPPED"
 }
+interface error_details {
+    error_description: string | null;
+    error_code: string | null;
+    error_source: string | null;
+}
 export declare class CollectRequestStatus {
     createdAt?: Date;
     updatedAt?: Date;
@@ -27,6 +32,7 @@ export declare class CollectRequestStatus {
     reason: string;
     payment_message: string;
     capture_status: string;
+    error_details: error_details;
     _id: ObjectId;
 }
 export type CollectRequestStatusDocument = CollectRequestStatus & Document;
@@ -35,3 +41,4 @@ export declare const CollectRequestStatusSchema: mongoose.Schema<CollectRequestS
 }>, any>, {}, {}, {}, {}, mongoose.DefaultSchemaOptions, CollectRequestStatus, mongoose.Document<unknown, {}, mongoose.FlatRecord<CollectRequestStatus>> & mongoose.FlatRecord<CollectRequestStatus> & Required<{
     _id: mongoose.Schema.Types.ObjectId;
 }>>;
+export {};

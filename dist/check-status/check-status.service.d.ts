@@ -17,10 +17,10 @@ export declare class CheckStatusService {
     private readonly easebuzzService;
     private readonly cashfreeService;
     constructor(databaseService: DatabaseService, hdfcService: HdfcService, phonePeService: PhonepeService, edvironPgService: EdvironPgService, ccavenueService: CcavenueService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService);
-    checkStatus(collect_request_id: String): Promise<{
+    checkStatus(collect_request_id: String): Promise<"Invalid request" | {
         status: TransactionStatus;
         amount: number;
-    } | "Invalid request" | {
+    } | {
         status: any;
         status_code: number;
         custom_order_id: string | null;
@@ -73,10 +73,10 @@ export declare class CheckStatusService {
         transaction_amount?: undefined;
         details?: undefined;
     } | undefined>;
-    checkStatusByOrderId(order_id: String, school_id: string): Promise<{
+    checkStatusByOrderId(order_id: String, school_id: string): Promise<"Invalid request" | {
         status: TransactionStatus;
         amount: number;
-    } | "Invalid request" | {
+    } | {
         status: string;
         custom_order_id: string;
         amount: number;
@@ -115,10 +115,10 @@ export declare class CheckStatusService {
         amount: number;
         status_code: number;
     }>;
-    checkStatusV2(collect_request_id: String): Promise<{
+    checkStatusV2(collect_request_id: String): Promise<"Invalid request" | {
         status: TransactionStatus;
         amount: number;
-    } | "Invalid request" | {
+    } | {
         status: string;
         custom_order_id: string;
         amount: number;

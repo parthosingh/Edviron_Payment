@@ -369,6 +369,7 @@ export class EdvironPgController {
   async handleWebhook(@Body() body: any, @Res() res: any) {
     const { data: webHookData } = JSON.parse(JSON.stringify(body));
     if (!webHookData) throw new Error('Invalid webhook data');
+    const { error_details } = body;
     const collect_id = webHookData.order.order_id || body.order.order_id;
     if (!Types.ObjectId.isValid(collect_id)) {
       throw new Error('collect_id is not valid');
@@ -616,6 +617,11 @@ export class EdvironPgController {
             payment_time,
             reason: payment_message || 'NA',
             payment_message: payment_message || 'NA',
+            error_details: {
+              error_description: error_details?.error_description || 'NA',
+              error_source: error_details?.error_source || 'NA',
+              error_reason: error_details?.error_reason || 'NA',
+            },
           },
         },
         {
