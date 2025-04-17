@@ -189,7 +189,7 @@ let PayUController = class PayUController {
             const pendingCollectReq = await this.databaseService.CollectRequestStatusModel.findOne({
                 collect_id: collectIdObject,
             });
-            collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
+            collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PAY_U;
             await collectReq.save();
             try {
                 if (pendingCollectReq &&

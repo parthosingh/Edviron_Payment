@@ -256,7 +256,7 @@ export class PayUController {
       //   res.status(200).send('OK');
       //   return;
       // }
-      collectReq.gateway = Gateway.EDVIRON_PG;
+      collectReq.gateway = Gateway.EDVIRON_PAY_U;
       await collectReq.save();
 
       // Auto refund code start
