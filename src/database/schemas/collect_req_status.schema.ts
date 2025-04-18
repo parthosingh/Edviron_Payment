@@ -15,7 +15,7 @@ export enum PaymentStatus {
 
 interface error_details {
   error_description: string | null;
-  error_code: string | null;
+  error_reason: string | null;
   error_source: string | null;
 }
 

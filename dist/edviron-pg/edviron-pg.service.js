@@ -944,6 +944,7 @@ let EdvironPgService = class EdvironPgService {
                         reason: '$collect_req_status.reason',
                         createdAt: 1,
                         updatedAt: 1,
+                        error_details: '$collect_req_status.error_details',
                     },
                 },
             ]);
