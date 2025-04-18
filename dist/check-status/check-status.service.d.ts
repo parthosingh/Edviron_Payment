@@ -8,6 +8,7 @@ import { TransactionStatus } from 'src/types/transactionStatus';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
+import { PayUService } from 'src/pay-u/pay-u.service';
 export declare class CheckStatusService {
     private readonly databaseService;
     private readonly hdfcService;
@@ -16,7 +17,8 @@ export declare class CheckStatusService {
     private readonly ccavenueService;
     private readonly easebuzzService;
     private readonly cashfreeService;
-    constructor(databaseService: DatabaseService, hdfcService: HdfcService, phonePeService: PhonepeService, edvironPgService: EdvironPgService, ccavenueService: CcavenueService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService);
+    private readonly payUService;
+    constructor(databaseService: DatabaseService, hdfcService: HdfcService, phonePeService: PhonepeService, edvironPgService: EdvironPgService, ccavenueService: CcavenueService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, payUService: PayUService);
     checkStatus(collect_request_id: String): Promise<{
         status: TransactionStatus;
         amount: number;
@@ -35,6 +37,20 @@ export declare class CheckStatusService {
             formattedTransactionDate: string;
             order_status: any;
         };
+    } | {
+        status: any;
+        amount: number;
+        transaction_amount: number;
+        status_code: number;
+        details: {
+            payment_mode: any;
+            bank_ref: any;
+            payment_methods: {};
+            transaction_time: any;
+        };
+        mode: any;
+        net_amount_debit: any;
+        bank_ref_num: any;
     } | {
         status: string;
         custom_order_id: string;
@@ -77,6 +93,20 @@ export declare class CheckStatusService {
         status: TransactionStatus;
         amount: number;
     } | "Invalid request" | {
+        status: any;
+        amount: number;
+        transaction_amount: number;
+        status_code: number;
+        details: {
+            payment_mode: any;
+            bank_ref: any;
+            payment_methods: {};
+            transaction_time: any;
+        };
+        mode: any;
+        net_amount_debit: any;
+        bank_ref_num: any;
+    } | {
         status: string;
         custom_order_id: string;
         amount: number;
