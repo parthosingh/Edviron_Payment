@@ -65,7 +65,6 @@ export declare class EdvironPgController {
         collect_id: string;
         trustee_id: string;
         token: string;
-        school_id: string;
     }): Promise<any[]>;
     getErpLogo(collect_id: string): Promise<any>;
     getSchoolId(collect_id: string): Promise<string>;

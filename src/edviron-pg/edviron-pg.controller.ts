@@ -1980,29 +1980,22 @@ export class EdvironPgController {
       collect_id: string;
       trustee_id: string;
       token: string;
-      school_id: string;
     },
   ) {
     try {
-      const { collect_id, trustee_id, token, school_id } = body;
+      const { collect_id, trustee_id, token } = body;
       if (!token) throw new BadRequestException('Token required');
       const decrypted = jwt.verify(token, process.env.KEY!) as {
         trustee_id: string;
         collect_id: string;
-        school_id: string;
       };
       if (decrypted && decrypted?.trustee_id !== trustee_id)
         throw new ForbiddenException('Request forged');
       if (decrypted && decrypted?.collect_id !== collect_id)
         throw new ForbiddenException('Request forged');
-      if (decrypted && decrypted?.school_id !== school_id)
-        throw new ForbiddenException('Request forged');
 
-      const paymentInfo = await this.edvironPgService.getSingleTransactionInfo(
-        collect_id,
-        trustee_id,
-        school_id,
-      );
+      const paymentInfo =
+        await this.edvironPgService.getSingleTransactionInfo(collect_id);
       return paymentInfo;
     } catch (error) {
       throw new InternalServerErrorException(

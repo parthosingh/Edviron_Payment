@@ -1435,7 +1435,7 @@ let EdvironPgController = class EdvironPgController {
     }
     async singleTransactionReport(body) {
         try {
-            const { collect_id, trustee_id, token, school_id } = body;
+            const { collect_id, trustee_id, token } = body;
             if (!token)
                 throw new common_1.BadRequestException('Token required');
             const decrypted = jwt.verify(token, process.env.KEY);
@@ -1443,9 +1443,7 @@ let EdvironPgController = class EdvironPgController {
                 throw new common_1.ForbiddenException('Request forged');
             if (decrypted && decrypted?.collect_id !== collect_id)
                 throw new common_1.ForbiddenException('Request forged');
-            if (decrypted && decrypted?.school_id !== school_id)
-                throw new common_1.ForbiddenException('Request forged');
-            const paymentInfo = await this.edvironPgService.getSingleTransactionInfo(collect_id, trustee_id, school_id);
+            const paymentInfo = await this.edvironPgService.getSingleTransactionInfo(collect_id);
             return paymentInfo;
         }
         catch (error) {

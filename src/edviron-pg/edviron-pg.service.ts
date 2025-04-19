@@ -1122,11 +1122,7 @@ export class EdvironPgService implements GatewayService {
     };
   }
 
-  async getSingleTransactionInfo(
-    collect_id: string,
-    trustee_id: string,
-    school_id: string,
-  ) {
+  async getSingleTransactionInfo(collect_id: string) {
     try {
       const transaction =
         await this.databaseService.CollectRequestModel.aggregate([

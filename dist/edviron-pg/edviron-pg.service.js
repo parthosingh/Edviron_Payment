@@ -897,7 +897,7 @@ let EdvironPgService = class EdvironPgService {
             totalPages,
         };
     }
-    async getSingleTransactionInfo(collect_id, trustee_id, school_id) {
+    async getSingleTransactionInfo(collect_id) {
         try {
             const transaction = await this.databaseService.CollectRequestModel.aggregate([
                 {
