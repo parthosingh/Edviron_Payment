@@ -23,6 +23,7 @@ const fs = require("fs");
 const handlebars = require("handlebars");
 const moment = require("moment-timezone");
 const sign_2 = require("../utils/sign");
+const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
 const mongoose_1 = require("mongoose");
 let EdvironPgService = class EdvironPgService {
@@ -96,8 +97,11 @@ let EdvironPgService = class EdvironPgService {
                 await collectReq.save();
                 vendor.map(async (info) => {
                     const { vendor_id, percentage, amount, name } = info;
-                    let split_amount = amount;
-                    if (percentage) {
+                    let split_amount = 0;
+                    if (amount) {
+                        split_amount = amount;
+                    }
+                    if (percentage && percentage !== 0) {
                         split_amount = (request.amount * percentage) / 100;
                     }
                     await new this.databaseService.VendorTransactionModel({
@@ -270,9 +274,16 @@ let EdvironPgService = class EdvironPgService {
             const uptDate = moment(date);
             const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
             const settlementInfo = await this.cashfreeService.settlementStatus(collect_request._id.toString(), collect_request.clientId);
-            console.log(settlementInfo, 'opopo');
+            let formatedStatus = order_status_to_transaction_status_map[cashfreeRes.order_status];
+            if (collect_status.status === collect_req_status_schema_1.PaymentStatus.USER_DROPPED) {
+                formatedStatus = transactionStatus_1.TransactionStatus.USER_DROPPED;
+            }
+            if (collect_status.status.toUpperCase() === 'FAILED' ||
+                collect_status.status.toUpperCase() === 'FAILURE') {
+                formatedStatus = transactionStatus_1.TransactionStatus.FAILURE;
+            }
             return {
-                status: order_status_to_transaction_status_map[cashfreeRes.order_status],
+                status: formatedStatus,
                 amount: cashfreeRes.order_amount,
                 transaction_amount: Number(collect_status?.transaction_amount),
                 status_code,
@@ -560,7 +571,7 @@ let EdvironPgService = class EdvironPgService {
         const info = await transporter.sendMail(mailOptions);
         return 'mail sent successfully';
     }
-    async sendErpWebhook(webHookUrl, webhookData) {
+    async sendErpWebhook(webHookUrl, webhookData, webhook_key) {
         if (webHookUrl !== null) {
             const amount = webhookData.amount;
             const webHookData = await (0, sign_2.sign)({
@@ -572,10 +583,19 @@ let EdvironPgService = class EdvironPgService {
                 req_webhook_urls: webhookData?.req_webhook_urls,
                 custom_order_id: webhookData.custom_order_id,
                 createdAt: webhookData.createdAt,
-                transaction_time: webhookData?.updatedAt,
+                transaction_time: webhookData?.transaction_time,
                 additional_data: webhookData.additional_data,
                 formattedTransactionDate: webhookData?.formattedDate,
+                details: webhookData?.details,
+                transaction_amount: webhookData?.transaction_amount,
+                bank_reference: webhookData?.bank_reference,
+                payment_method: webhookData?.payment_method,
+                payment_details: webhookData?.payment_details,
             });
+            let base64Header = '';
+            if (webhook_key) {
+                base64Header = 'Basic ' + Buffer.from(webhook_key).toString('base64');
+            }
             const createConfig = (url) => ({
                 method: 'post',
                 maxBodyLength: Infinity,
@@ -583,6 +603,7 @@ let EdvironPgService = class EdvironPgService {
                 headers: {
                     accept: 'application/json',
                     'content-type': 'application/json',
+                    authorization: base64Header,
                 },
                 data: webHookData,
             });
@@ -750,6 +771,30 @@ let EdvironPgService = class EdvironPgService {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async checkCreatedVendorStatus(vendor_id, client_id) {
+        try {
+            const config = {
+                method: 'get',
+                maxBodyLength: Infinity,
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/easy-split/vendors/${vendor_id}`,
+                headers: {
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': client_id,
+                    'x-partner-apikey': process.env.CASHFREE_API_KEY,
+                },
+            };
+            const { data } = await axios_1.default.request(config);
+            return {
+                name: data?.name,
+                email: data?.email,
+                vendor_id: data?.vendor_id,
+                status: data?.status,
+            };
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message || 'Something went wrong');
+        }
+    }
     async convertISTStartToUTC(dateStr) {
         const [year, month, day] = dateStr.split('-').map(Number);
         const istStartDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
@@ -788,14 +833,20 @@ let EdvironPgService = class EdvironPgService {
                     from: 'collectrequests',
                     localField: 'collect_id',
                     foreignField: '_id',
-                    pipeline: [{ $project: { additional_data: 1, custom_order_id: 1 } }],
+                    pipeline: [
+                        { $project: { additional_data: 1, custom_order_id: 1 } },
+                    ],
                     as: 'collectRequest',
                 },
             },
             {
                 $set: {
-                    additional_data: { $arrayElemAt: ['$collectRequest.additional_data', 0] },
-                    custom_order_id: { $arrayElemAt: ['$collectRequest.custom_order_id', 0] },
+                    additional_data: {
+                        $arrayElemAt: ['$collectRequest.additional_data', 0],
+                    },
+                    custom_order_id: {
+                        $arrayElemAt: ['$collectRequest.custom_order_id', 0],
+                    },
                     status: { $arrayElemAt: ['$collect_req_status.status', 0] },
                     payment_method: {
                         $arrayElemAt: ['$collect_req_status.payment_method', 0],
@@ -846,7 +897,7 @@ let EdvironPgService = class EdvironPgService {
             totalPages,
         };
     }
-    async getSingleTransactionInfo(collect_id, trustee_id, school_id) {
+    async getSingleTransactionInfo(collect_id) {
         try {
             const transaction = await this.databaseService.CollectRequestModel.aggregate([
                 {
@@ -893,6 +944,7 @@ let EdvironPgService = class EdvironPgService {
                         reason: '$collect_req_status.reason',
                         createdAt: 1,
                         updatedAt: 1,
+                        error_details: '$collect_req_status.error_details',
                     },
                 },
             ]);

@@ -21,6 +21,7 @@ var Gateway;
     Gateway["EDVIRON_EASEBUZZ"] = "EDVIRON_EASEBUZZ";
     Gateway["PENDING"] = "PENDING";
     Gateway["EXPIRED"] = "EXPIRED";
+    Gateway["EDVIRON_PAY_U"] = "EDVIRON_PAY_U";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let PaymentIds = class PaymentIds {
 };
@@ -155,6 +156,14 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false, default: false }),
     __metadata("design:type", Boolean)
 ], CollectRequest.prototype, "isQRPayment", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "pay_u_key", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "pay_u_salt", void 0);
 exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequest);

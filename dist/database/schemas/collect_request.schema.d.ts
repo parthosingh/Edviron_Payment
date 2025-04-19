@@ -31,7 +31,8 @@ export declare enum Gateway {
     EDVIRON_CASHFREE = "EDVIRON_CASHFREE",
     EDVIRON_EASEBUZZ = "EDVIRON_EASEBUZZ",
     PENDING = "PENDING",
-    EXPIRED = "EXPIRED"
+    EXPIRED = "EXPIRED",
+    EDVIRON_PAY_U = "EDVIRON_PAY_U"
 }
 export declare class PaymentIds {
     cashfree_id?: string | null;
@@ -64,14 +65,18 @@ export declare class CollectRequest {
     ccavenue_working_key: string;
     deepLink: string;
     paymentIds: PaymentIds;
-    vendors_info?: [{
-        vendor_id: string;
-        percentage?: number;
-        amount?: number;
-        name?: string;
-    }];
+    vendors_info?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
+    ];
     isSplitPayments: boolean;
     isQRPayment: boolean;
+    pay_u_key: string;
+    pay_u_salt: string;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;

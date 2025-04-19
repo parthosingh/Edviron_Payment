@@ -12,6 +12,6 @@ import { CashfreeModule } from 'src/cashfree/cashfree.module';
     DatabaseModule,
     forwardRef(() => CashfreeModule), // Use forwardRef to avoid circular dependency
   ],
-  exports: [EdvironPgService],
+  exports: [EdvironPgService,CashfreeModule],
 })
 export class EdvironPgModule {}

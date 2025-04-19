@@ -33,7 +33,7 @@ export class EdvironPgService implements GatewayService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly cashfreeService: CashfreeService,
-  ) { }
+  ) {}
   async collect(
     request: CollectRequest,
     platform_charges: platformChange[],
@@ -127,8 +127,11 @@ export class EdvironPgService implements GatewayService {
 
         vendor.map(async (info) => {
           const { vendor_id, percentage, amount, name } = info;
-          let split_amount = amount;
-          if (percentage) {
+          let split_amount = 0;
+          if (amount) {
+            split_amount = amount;
+          }
+          if (percentage && percentage !== 0) {
             split_amount = (request.amount * percentage) / 100;
           }
           await new this.databaseService.VendorTransactionModel({
@@ -273,7 +276,7 @@ export class EdvironPgService implements GatewayService {
       if (err.name === 'AxiosError')
         throw new BadRequestException(
           'Invalid client id or client secret ' +
-          JSON.stringify(err.response.data),
+            JSON.stringify(err.response.data),
         );
       console.log(err);
     }
@@ -324,14 +327,14 @@ export class EdvironPgService implements GatewayService {
       let transaction_time = '';
       if (
         order_status_to_transaction_status_map[
-        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ] === TransactionStatus.SUCCESS
       ) {
         transaction_time = collect_status?.updatedAt?.toISOString() as string;
       }
       const checkStatus =
         order_status_to_transaction_status_map[
-        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ];
       let status_code;
       if (checkStatus === TransactionStatus.SUCCESS) {
@@ -347,13 +350,23 @@ export class EdvironPgService implements GatewayService {
         collect_request._id.toString(),
         collect_request.clientId,
       );
-      console.log(settlementInfo, 'opopo');
 
-      return {
-        status:
-          order_status_to_transaction_status_map[
+      let formatedStatus =
+        order_status_to_transaction_status_map[
           cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
-          ],
+        ];
+      if (collect_status.status === PaymentStatus.USER_DROPPED) {
+        formatedStatus = TransactionStatus.USER_DROPPED;
+      }
+
+      if (
+        collect_status.status.toUpperCase() === 'FAILED' ||
+        collect_status.status.toUpperCase() === 'FAILURE'
+      ) {
+        formatedStatus = TransactionStatus.FAILURE;
+      }
+      return {
+        status: formatedStatus,
         amount: cashfreeRes.order_amount,
         transaction_amount: Number(collect_status?.transaction_amount),
         status_code,
@@ -696,7 +709,11 @@ export class EdvironPgService implements GatewayService {
     return 'mail sent successfully';
   }
 
-  async sendErpWebhook(webHookUrl: string[], webhookData: any) {
+  async sendErpWebhook(
+    webHookUrl: string[],
+    webhookData: any,
+    webhook_key?: string | null,
+  ) {
     if (webHookUrl !== null) {
       const amount = webhookData.amount;
       const webHookData = await sign({
@@ -708,10 +725,19 @@ export class EdvironPgService implements GatewayService {
         req_webhook_urls: webhookData?.req_webhook_urls,
         custom_order_id: webhookData.custom_order_id,
         createdAt: webhookData.createdAt,
-        transaction_time: webhookData?.updatedAt,
+        transaction_time: webhookData?.transaction_time,
         additional_data: webhookData.additional_data,
         formattedTransactionDate: webhookData?.formattedDate,
+        details: webhookData?.details,
+        transaction_amount: webhookData?.transaction_amount,
+        bank_reference: webhookData?.bank_reference,
+        payment_method: webhookData?.payment_method,
+        payment_details: webhookData?.payment_details,
       });
+      let base64Header = '';
+      if (webhook_key) {
+        base64Header = 'Basic ' + Buffer.from(webhook_key).toString('base64');
+      }
 
       const createConfig = (url: string) => ({
         method: 'post',
@@ -720,14 +746,17 @@ export class EdvironPgService implements GatewayService {
         headers: {
           accept: 'application/json',
           'content-type': 'application/json',
+          authorization: base64Header,
         },
         data: webHookData,
       });
+
       try {
         try {
           const sendWebhook = async (url: string) => {
             try {
               const res = await axios.request(createConfig(url));
+
               const currentIST = new Date().toLocaleString('en-US', {
                 timeZone: 'Asia/Kolkata',
               });
@@ -918,6 +947,30 @@ export class EdvironPgService implements GatewayService {
     }
   }
 
+  async checkCreatedVendorStatus(vendor_id: string, client_id: string) {
+    try {
+      const config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: `${process.env.CASHFREE_ENDPOINT}/pg/easy-split/vendors/${vendor_id}`,
+        headers: {
+          'x-api-version': '2023-08-01',
+          'x-partner-merchantid': client_id,
+          'x-partner-apikey': process.env.CASHFREE_API_KEY,
+        },
+      };
+      const { data } = await axios.request(config);
+      return {
+        name: data?.name,
+        email: data?.email,
+        vendor_id: data?.vendor_id,
+        status: data?.status,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Something went wrong');
+    }
+  }
+
   async convertISTStartToUTC(dateStr: string) {
     const [year, month, day] = dateStr.split('-').map(Number);
 
@@ -994,15 +1047,21 @@ export class EdvironPgService implements GatewayService {
             from: 'collectrequests',
             localField: 'collect_id',
             foreignField: '_id',
-            pipeline: [{ $project: { additional_data: 1, custom_order_id: 1 } }],
+            pipeline: [
+              { $project: { additional_data: 1, custom_order_id: 1 } },
+            ],
             as: 'collectRequest',
           },
         },
         {
           $set: {
             // studentDetail:{$arrayElemAt: ['$collectRequest.additional_data', 0]},
-            additional_data: { $arrayElemAt: ['$collectRequest.additional_data', 0] },
-            custom_order_id: { $arrayElemAt: ['$collectRequest.custom_order_id', 0] },
+            additional_data: {
+              $arrayElemAt: ['$collectRequest.additional_data', 0],
+            },
+            custom_order_id: {
+              $arrayElemAt: ['$collectRequest.custom_order_id', 0],
+            },
             status: { $arrayElemAt: ['$collect_req_status.status', 0] },
             payment_method: {
               $arrayElemAt: ['$collect_req_status.payment_method', 0],
@@ -1063,11 +1122,7 @@ export class EdvironPgService implements GatewayService {
     };
   }
 
-  async getSingleTransactionInfo(
-    collect_id: string,
-    trustee_id: string,
-    school_id: string,
-  ) {
+  async getSingleTransactionInfo(collect_id: string) {
     try {
       const transaction =
         await this.databaseService.CollectRequestModel.aggregate([
@@ -1115,6 +1170,7 @@ export class EdvironPgService implements GatewayService {
               reason: '$collect_req_status.reason',
               createdAt: 1,
               updatedAt: 1,
+              error_details: '$collect_req_status.error_details',
             },
           },
         ]);

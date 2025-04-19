@@ -22,8 +22,9 @@ const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const moment = require("moment-timezone");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
+const pay_u_service_1 = require("../pay-u/pay-u.service");
 let CheckStatusService = class CheckStatusService {
-    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService) {
+    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService) {
         this.databaseService = databaseService;
         this.hdfcService = hdfcService;
         this.phonePeService = phonePeService;
@@ -31,6 +32,7 @@ let CheckStatusService = class CheckStatusService {
         this.ccavenueService = ccavenueService;
         this.easebuzzService = easebuzzService;
         this.cashfreeService = cashfreeService;
+        this.payUService = payUService;
     }
     async checkStatus(collect_request_id) {
         console.log('checking status for', collect_request_id);
@@ -85,7 +87,7 @@ let CheckStatusService = class CheckStatusService {
                 return {
                     ...edvironPgResponse,
                     custom_order_id,
-                    capture_status: 'PENDING',
+                    capture_status: collect_req_status.capture_status || 'PENDING',
                 };
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
                 const easebuzzStatus = await this.easebuzzService.statusResponse(collect_request_id.toString(), collectRequest);
@@ -137,6 +139,8 @@ let CheckStatusService = class CheckStatusService {
                     },
                 };
                 return status_response;
+            case collect_request_schema_1.Gateway.EDVIRON_PAY_U:
+                return await this.payUService.checkStatus(collectRequest._id.toString());
             case collect_request_schema_1.Gateway.PENDING:
                 return await this.checkExpiry(collectRequest);
             case collect_request_schema_1.Gateway.EXPIRED:
@@ -226,11 +230,13 @@ let CheckStatusService = class CheckStatusService {
                     },
                 };
                 return status_response;
+            case collect_request_schema_1.Gateway.EDVIRON_PAY_U:
+                return await this.payUService.checkStatus(collectRequest._id.toString());
             case collect_request_schema_1.Gateway.PENDING:
                 return await this.checkExpiry(collectRequest);
             case collect_request_schema_1.Gateway.EXPIRED:
                 return {
-                    status: collect_req_status_schema_1.PaymentStatus.EXPIRED,
+                    status: collect_req_status_schema_1.PaymentStatus.USER_DROPPED,
                     edviron_order_id: collectRequest._id.toString(),
                     amount: collectRequest.amount,
                     status_code: 202,
@@ -247,7 +253,7 @@ let CheckStatusService = class CheckStatusService {
         const differenceInMinutes = timeDifference / (1000 * 60);
         if (differenceInMinutes > 20) {
             return {
-                status: 'EXPIRED',
+                status: collect_req_status_schema_1.PaymentStatus.USER_DROPPED,
                 custom_order_id: request.custom_order_id || 'NA',
                 amount: request.amount,
                 status_code: 202,
@@ -312,7 +318,7 @@ let CheckStatusService = class CheckStatusService {
                 return {
                     ...edvironPgResponse,
                     custom_order_id,
-                    capture_status: 'PENDING',
+                    capture_status: collect_req_status.capture_status || 'PENDING',
                 };
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
                 const easebuzzStatus = await this.easebuzzService.statusResponse(collect_request_id.toString(), collectRequest);
@@ -385,6 +391,7 @@ exports.CheckStatusService = CheckStatusService = __decorate([
         edviron_pg_service_1.EdvironPgService,
         ccavenue_service_1.CcavenueService,
         easebuzz_service_1.EasebuzzService,
-        cashfree_service_1.CashfreeService])
+        cashfree_service_1.CashfreeService,
+        pay_u_service_1.PayUService])
 ], CheckStatusService);
 //# sourceMappingURL=check-status.service.js.map

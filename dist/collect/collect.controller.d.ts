@@ -34,6 +34,8 @@ export declare class CollectController {
         ccavenue_access_code?: string;
         ccavenue_working_key?: string;
         split_payments?: boolean;
+        pay_u_key?: string | null;
+        pay_u_salt: string | null;
         vendors_info?: [
             {
                 vendor_id: string;

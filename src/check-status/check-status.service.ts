@@ -14,6 +14,7 @@ import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import * as moment from 'moment-timezone';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
+import { PayUService } from 'src/pay-u/pay-u.service';
 @Injectable()
 export class CheckStatusService {
   constructor(
@@ -24,6 +25,7 @@ export class CheckStatusService {
     private readonly ccavenueService: CcavenueService,
     private readonly easebuzzService: EasebuzzService,
     private readonly cashfreeService: CashfreeService,
+    private readonly payUService: PayUService,
   ) {}
   async checkStatus(collect_request_id: String) {
     console.log('checking status for', collect_request_id);
@@ -91,7 +93,7 @@ export class CheckStatusService {
         return {
           ...edvironPgResponse,
           custom_order_id,
-          capture_status: 'PENDING',
+          capture_status: collect_req_status.capture_status || 'PENDING',
         };
 
       case Gateway.EDVIRON_EASEBUZZ:
@@ -151,6 +153,10 @@ export class CheckStatusService {
           },
         };
         return status_response;
+      case Gateway.EDVIRON_PAY_U:
+        return await this.payUService.checkStatus(
+          collectRequest._id.toString(),
+        );
       case Gateway.PENDING:
         return await this.checkExpiry(collectRequest);
       case Gateway.EXPIRED:
@@ -261,12 +267,15 @@ export class CheckStatusService {
           },
         };
         return status_response;
-
+      case Gateway.EDVIRON_PAY_U:
+        return await this.payUService.checkStatus(
+          collectRequest._id.toString(),
+        );
       case Gateway.PENDING:
         return await this.checkExpiry(collectRequest);
       case Gateway.EXPIRED:
         return {
-          status: PaymentStatus.EXPIRED,
+          status: PaymentStatus.USER_DROPPED,
           edviron_order_id: collectRequest._id.toString(),
           amount: collectRequest.amount,
           status_code: 202,
@@ -289,7 +298,7 @@ export class CheckStatusService {
     // Check if the difference is more than 20 minutes
     if (differenceInMinutes > 20) {
       return {
-        status: 'EXPIRED',
+        status: PaymentStatus.USER_DROPPED,
         custom_order_id: request.custom_order_id || 'NA',
         amount: request.amount,
         status_code: 202,
@@ -367,7 +376,7 @@ export class CheckStatusService {
         return {
           ...edvironPgResponse,
           custom_order_id,
-          capture_status: 'PENDING',
+          capture_status: collect_req_status.capture_status || 'PENDING',
         };
 
       case Gateway.EDVIRON_EASEBUZZ:

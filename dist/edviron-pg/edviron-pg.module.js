@@ -24,7 +24,7 @@ exports.EdvironPgModule = EdvironPgModule = __decorate([
             database_module_1.DatabaseModule,
             (0, common_1.forwardRef)(() => cashfree_module_1.CashfreeModule),
         ],
-        exports: [edviron_pg_service_1.EdvironPgService],
+        exports: [edviron_pg_service_1.EdvironPgService, cashfree_module_1.CashfreeModule],
     })
 ], EdvironPgModule);
 //# sourceMappingURL=edviron-pg.module.js.map

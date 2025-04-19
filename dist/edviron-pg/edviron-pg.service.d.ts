@@ -56,7 +56,7 @@ export declare class EdvironPgService implements GatewayService {
     getQr(collect_id: string, request: CollectRequest): Promise<void>;
     getSchoolInfo(school_id: string): Promise<any>;
     sendTransactionmail(email: string, request: CollectRequest): Promise<string>;
-    sendErpWebhook(webHookUrl: string[], webhookData: any): Promise<void>;
+    sendErpWebhook(webHookUrl: string[], webhookData: any, webhook_key?: string | null): Promise<void>;
     test(): Promise<void>;
     createVendor(client_id: string, vendor_info: {
         vendor_id: string;
@@ -82,6 +82,12 @@ export declare class EdvironPgService implements GatewayService {
             passport_number?: string;
         };
     }): Promise<any>;
+    checkCreatedVendorStatus(vendor_id: string, client_id: string): Promise<{
+        name: any;
+        email: any;
+        vendor_id: any;
+        status: any;
+    }>;
     convertISTStartToUTC(dateStr: string): Promise<string>;
     convertISTEndToUTC(dateStr: string): Promise<string>;
     getVendorTransactions(query: any, limit: number, page: number): Promise<{
@@ -91,7 +97,7 @@ export declare class EdvironPgService implements GatewayService {
         limit: number;
         totalPages: number;
     }>;
-    getSingleTransactionInfo(collect_id: string, trustee_id: string, school_id: string): Promise<any[]>;
+    getSingleTransactionInfo(collect_id: string): Promise<any[]>;
     getTransactionReportBatched(trustee_id: string, start_date: string, end_date: string, status?: string | null, school_id?: string | null): Promise<{
         length: number;
         transactions: any[];

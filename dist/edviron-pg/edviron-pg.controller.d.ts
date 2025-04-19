@@ -65,7 +65,6 @@ export declare class EdvironPgController {
         collect_id: string;
         trustee_id: string;
         token: string;
-        school_id: string;
     }): Promise<any[]>;
     getErpLogo(collect_id: string): Promise<any>;
     getSchoolId(collect_id: string): Promise<string>;
@@ -124,6 +123,12 @@ export declare class EdvironPgController {
         };
         client_id: string;
     }): Promise<any>;
+    checkVendorStatus(token: string): Promise<{
+        name: any;
+        email: any;
+        vendor_id: any;
+        status: any;
+    }>;
     vendorTransactions(vendor_id: string, trustee_id: string, validate_trustee: string, school_id: string, collect_id: string, token: string, limit: string, page: string): Promise<{
         vendorsTransaction: any[];
         totalCount: number;
@@ -303,4 +308,21 @@ export declare class EdvironPgController {
         range_charge: rangeCharge[];
     }): Promise<void>;
     getCollectDisableMode(collect_id: string): Promise<string[]>;
+    getCardInfo(bin: string): Promise<any>;
+    vendorrecon(body: {
+        limit: number;
+        merchant_vendor_id: string;
+        settlement_id: string;
+        client_id: string;
+        cursor?: string | null;
+    }): Promise<{
+        cursor: any;
+        limit: any;
+        settlements_transactions: any;
+    }>;
+    testWebhook(body: {
+        token: string;
+        url: string;
+        trustee_id: string;
+    }): Promise<any>;
 }

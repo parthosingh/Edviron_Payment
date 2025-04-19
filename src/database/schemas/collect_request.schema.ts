@@ -5,13 +5,13 @@ export enum Gateway {
   PHONEPE = 'PHONEPE',
   HDFC = 'HDFC',
   EDVIRON_PG = 'EDVIRON_PG',
-  EDVIRON_CCAVENUE='EDVIRON_CCAVENUE',
-  EDVIRON_CASHFREE='EDVIRON_CASHFREE',
-  EDVIRON_EASEBUZZ='EDVIRON_EASEBUZZ',
-  PENDING='PENDING',
-  EXPIRED='EXPIRED'
+  EDVIRON_CCAVENUE = 'EDVIRON_CCAVENUE',
+  EDVIRON_CASHFREE = 'EDVIRON_CASHFREE',
+  EDVIRON_EASEBUZZ = 'EDVIRON_EASEBUZZ',
+  PENDING = 'PENDING',
+  EXPIRED = 'EXPIRED',
+  EDVIRON_PAY_U = 'EDVIRON_PAY_U',
 }
-
 
 @Schema()
 export class PaymentIds {
@@ -102,13 +102,21 @@ export class CollectRequest {
   paymentIds: PaymentIds;
 
   @Prop({ required: false })
-  vendors_info?: [{ vendor_id: string; percentage?: number; amount?: number,name?:string }];
+  vendors_info?: [
+    { vendor_id: string; percentage?: number; amount?: number; name?: string },
+  ];
 
   @Prop({ required: false, default: false })
   isSplitPayments: boolean;
-  
+
   @Prop({ required: false, default: false })
   isQRPayment: boolean;
+
+  @Prop({ required: false })
+  pay_u_key: string;
+
+  @Prop({ required: false })
+  pay_u_salt: string;
 
   _id: ObjectId;
 }

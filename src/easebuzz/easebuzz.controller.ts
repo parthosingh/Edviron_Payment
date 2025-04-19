@@ -142,9 +142,7 @@ export class EasebuzzController {
   }
 
   @Get('/refund-status')
-  async checkRefund(
-    @Req() req: any,
-  ){
+  async checkRefund(@Req() req: any) {
     return await this.easebuzzService.checkRefundSttaus(req.query.collect_id);
   }
 
@@ -246,6 +244,38 @@ export class EasebuzzController {
       };
     } catch (error) {
       throw new BadRequestException(error.message || 'Something Went Wrong');
+    }
+  }
+
+  @Post('/update-dispute')
+  async updateEasebuzzDispute(
+    @Body()
+    body: {
+      case_id: string;
+      action: string;
+      reason: string;
+      documents: Array<{ document_type: any; file_url: string }>;
+      sign: string;
+    },
+  ) {
+    try {
+      const { case_id, action, reason, documents, sign } = body;
+      const decodedToken = jwt.verify(sign, process.env.KEY!) as {
+        case_id: string;
+        action: string;
+      };
+      if (!decodedToken) throw new BadRequestException('Request Forged');
+      if (decodedToken.action !== action || decodedToken.case_id !== case_id)
+        throw new BadRequestException('Request Forged');
+      const data = await this.easebuzzService.updateDispute(
+        case_id,
+        action,
+        reason,
+        documents,
+      );
+      return data;
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Something went wrong');
     }
   }
 }

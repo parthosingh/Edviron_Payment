@@ -27,7 +27,7 @@ let CollectService = class CollectService {
         this.databaseService = databaseService;
         this.ccavenueService = ccavenueService;
     }
-    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, splitPayments, vendor) {
+    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, splitPayments, pay_u_key, pay_u_salt, vendor) {
         console.log(req_webhook_urls, 'webhook url');
         console.log(webHook);
         console.log(ccavenue_merchant_id, 'ccavenue', ccavenue_access_code, ccavenue_working_key);
@@ -61,6 +61,8 @@ let CollectService = class CollectService {
             ccavenue_merchant_id: ccavenue_merchant_id || null,
             ccavenue_access_code: ccavenue_access_code || null,
             ccavenue_working_key: ccavenue_working_key || null,
+            pay_u_key: pay_u_key || null,
+            pay_u_salt: pay_u_salt || null,
         }).save();
         await new this.databaseService.CollectRequestStatusModel({
             collect_id: request._id,
@@ -69,6 +71,12 @@ let CollectService = class CollectService {
             transaction_amount: request.amount,
             payment_method: null,
         }).save();
+        if (pay_u_key && pay_u_salt) {
+            return {
+                url: `${process.env.URL}/pay-u/redirect?collect_id=${request._id}&school_name=${school_name?.split(' ').join('_')}`,
+                request,
+            };
+        }
         if (ccavenue_merchant_id) {
             console.log('creating order with CCavenue');
             const transaction = await this.ccavenueService.createOrder(request);

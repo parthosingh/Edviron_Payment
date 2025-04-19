@@ -5,12 +5,18 @@ import { CollectRequest } from './collect_request.schema';
 export enum PaymentStatus {
   SUCCESS = 'SUCCESS',
   FAIL = 'FAIL',
-  FAILED= 'FAILED',
+  FAILED = 'FAILED',
   PENDING = 'PENDING',
   EXPIRED = 'EXPIRED',
   FAILURE = 'FAILURE',
   AUTO_REFUND = 'AUTO_REFUND',
   USER_DROPPED = 'USER_DROPPED',
+}
+
+interface error_details {
+  error_description: string | null;
+  error_reason: string | null;
+  error_source: string | null;
 }
 
 @Schema({ timestamps: true })
@@ -64,10 +70,23 @@ export class CollectRequestStatus {
   @Prop({ required: false, default: '' })
   payment_message: string;
 
+  @Prop({ required: false, default: '' })
+  capture_status: string;
+
+  @Prop({
+    required: false,
+    type: {
+      error_description: { type: String, required: false, default: null },
+      error_source: { type: String, required: false, default: null },
+      error_reason: { type: String, required: false, default: null },
+    },
+    _id: false,
+  })
+  error_details: error_details;
+
   _id: ObjectId;
 }
 
 export type CollectRequestStatusDocument = CollectRequestStatus & Document;
 export const CollectRequestStatusSchema =
   SchemaFactory.createForClass(CollectRequestStatus);
-
