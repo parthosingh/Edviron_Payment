@@ -65,12 +65,14 @@ export declare class CollectRequest {
     ccavenue_working_key: string;
     deepLink: string;
     paymentIds: PaymentIds;
-    vendors_info?: [{
-        vendor_id: string;
-        percentage?: number;
-        amount?: number;
-        name?: string;
-    }];
+    vendors_info?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
+    ];
     isSplitPayments: boolean;
     isQRPayment: boolean;
     pay_u_key: string;

@@ -1122,11 +1122,7 @@ export class EdvironPgService implements GatewayService {
     };
   }
 
-  async getSingleTransactionInfo(
-    collect_id: string,
-    trustee_id: string,
-    school_id: string,
-  ) {
+  async getSingleTransactionInfo(collect_id: string) {
     try {
       const transaction =
         await this.databaseService.CollectRequestModel.aggregate([
@@ -1174,6 +1170,7 @@ export class EdvironPgService implements GatewayService {
               reason: '$collect_req_status.reason',
               createdAt: 1,
               updatedAt: 1,
+              error_details: '$collect_req_status.error_details',
             },
           },
         ]);

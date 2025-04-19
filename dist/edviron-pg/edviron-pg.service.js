@@ -897,7 +897,7 @@ let EdvironPgService = class EdvironPgService {
             totalPages,
         };
     }
-    async getSingleTransactionInfo(collect_id, trustee_id, school_id) {
+    async getSingleTransactionInfo(collect_id) {
         try {
             const transaction = await this.databaseService.CollectRequestModel.aggregate([
                 {
@@ -944,6 +944,7 @@ let EdvironPgService = class EdvironPgService {
                         reason: '$collect_req_status.reason',
                         createdAt: 1,
                         updatedAt: 1,
+                        error_details: '$collect_req_status.error_details',
                     },
                 },
             ]);

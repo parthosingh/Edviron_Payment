@@ -369,6 +369,7 @@ export class EdvironPgController {
   async handleWebhook(@Body() body: any, @Res() res: any) {
     const { data: webHookData } = JSON.parse(JSON.stringify(body));
     if (!webHookData) throw new Error('Invalid webhook data');
+    const { error_details } = webHookData;
     const collect_id = webHookData.order.order_id || body.order.order_id;
     if (!Types.ObjectId.isValid(collect_id)) {
       throw new Error('collect_id is not valid');
@@ -616,6 +617,11 @@ export class EdvironPgController {
             payment_time,
             reason: payment_message || 'NA',
             payment_message: payment_message || 'NA',
+            error_details: {
+              error_description: error_details?.error_description || 'NA',
+              error_source: error_details?.error_source || 'NA',
+              error_reason: error_details?.error_reason || 'NA',
+            },
           },
         },
         {
@@ -1974,29 +1980,22 @@ export class EdvironPgController {
       collect_id: string;
       trustee_id: string;
       token: string;
-      school_id: string;
     },
   ) {
     try {
-      const { collect_id, trustee_id, token, school_id } = body;
+      const { collect_id, trustee_id, token } = body;
       if (!token) throw new BadRequestException('Token required');
       const decrypted = jwt.verify(token, process.env.KEY!) as {
         trustee_id: string;
         collect_id: string;
-        school_id: string;
       };
       if (decrypted && decrypted?.trustee_id !== trustee_id)
         throw new ForbiddenException('Request forged');
       if (decrypted && decrypted?.collect_id !== collect_id)
         throw new ForbiddenException('Request forged');
-      if (decrypted && decrypted?.school_id !== school_id)
-        throw new ForbiddenException('Request forged');
 
-      const paymentInfo = await this.edvironPgService.getSingleTransactionInfo(
-        collect_id,
-        trustee_id,
-        school_id,
-      );
+      const paymentInfo =
+        await this.edvironPgService.getSingleTransactionInfo(collect_id);
       return paymentInfo;
     } catch (error) {
       throw new InternalServerErrorException(
