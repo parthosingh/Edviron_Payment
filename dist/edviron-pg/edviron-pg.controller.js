@@ -1028,9 +1028,13 @@ let EdvironPgController = class EdvironPgController {
     }
     async bulkTransactions(body, res, req) {
         console.time('bulk-transactions-report');
-        const { trustee_id, token, searchParams, isCustomSearch, seachFilter, payment_modes, isQRCode, gateway, } = body;
+        const { trustee_id, token, searchParams, isCustomSearch, seachFilter, isQRCode, gateway, } = body;
+        let { payment_modes, } = body;
         if (!token)
             throw new Error('Token not provided');
+        if (payment_modes?.includes('upi')) {
+            payment_modes = [...payment_modes, 'upi_credit_card'];
+        }
         try {
             const page = Number(req.query.page) || 1;
             const limit = Number(req.query.limit) || 10;
@@ -1095,6 +1099,7 @@ let EdvironPgController = class EdvironPgController {
             let query = {
                 collect_id: { $in: orderIds },
             };
+            console.log(query, "query");
             if (startDate && endDate) {
                 query = {
                     ...query,
