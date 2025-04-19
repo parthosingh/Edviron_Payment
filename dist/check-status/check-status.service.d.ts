@@ -22,7 +22,7 @@ export declare class CheckStatusService {
     checkStatus(collect_request_id: String): Promise<{
         status: TransactionStatus;
         amount: number;
-    } | {
+    } | "Invalid request" | {
         status: any;
         status_code: number;
         custom_order_id: string | null;
@@ -51,7 +51,7 @@ export declare class CheckStatusService {
         mode: any;
         net_amount_debit: any;
         bank_ref_num: any;
-    } | "Invalid request" | {
+    } | {
         status: string;
         custom_order_id: string;
         amount: number;
@@ -92,20 +92,6 @@ export declare class CheckStatusService {
     checkStatusByOrderId(order_id: String, school_id: string): Promise<{
         status: TransactionStatus;
         amount: number;
-    } | {
-        status: any;
-        amount: number;
-        transaction_amount: number;
-        status_code: number;
-        details: {
-            payment_mode: any;
-            bank_ref: any;
-            payment_methods: {};
-            transaction_time: any;
-        };
-        mode: any;
-        net_amount_debit: any;
-        bank_ref_num: any;
     } | "Invalid request" | {
         status: any;
         amount: number;
