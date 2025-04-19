@@ -9,10 +9,11 @@ import { CcavenueModule } from 'src/ccavenue/ccavenue.module';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeModule } from 'src/cashfree/cashfree.module';
+import { PayUService } from 'src/pay-u/pay-u.service';
 
 @Module({
   controllers: [CheckStatusController],
-  providers: [CheckStatusService,CcavenueService,EasebuzzService],
+  providers: [CheckStatusService,CcavenueService,EasebuzzService,PayUService],
   imports: [DatabaseModule, PhonepeModule,CashfreeModule, HdfcModule, EdvironPgModule],
 })
 export class CheckStatusModule {}
