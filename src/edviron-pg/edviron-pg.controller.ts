@@ -369,7 +369,7 @@ export class EdvironPgController {
   async handleWebhook(@Body() body: any, @Res() res: any) {
     const { data: webHookData } = JSON.parse(JSON.stringify(body));
     if (!webHookData) throw new Error('Invalid webhook data');
-    const { error_details } = body;
+    const { error_details } = webHookData;
     const collect_id = webHookData.order.order_id || body.order.order_id;
     if (!Types.ObjectId.isValid(collect_id)) {
       throw new Error('collect_id is not valid');
