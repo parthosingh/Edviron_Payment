@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.decrypt = exports.encryptCard = exports.merchantKeySHA256 = exports.calculateSHA256 = exports.calculateSHA512Hash = exports.sign = void 0;
+exports.decrypt = exports.encryptCard = exports.generateHMACBase64Type = exports.merchantKeySHA256 = exports.calculateSHA256 = exports.calculateSHA512Hash = exports.sign = void 0;
 const _jwt = require("jsonwebtoken");
 const crypto = require('crypto');
 const sign = async (body) => {
@@ -42,6 +42,12 @@ const merchantKeySHA256 = async () => {
     };
 };
 exports.merchantKeySHA256 = merchantKeySHA256;
+const generateHMACBase64Type = (signed_payload, secret) => {
+    const hmac = crypto.createHmac('sha256', secret);
+    hmac.update(signed_payload);
+    return hmac.digest('base64');
+};
+exports.generateHMACBase64Type = generateHMACBase64Type;
 const encryptCard = async (data, key, iv) => {
     console.log(`encrypting card info ${data}`);
     const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
