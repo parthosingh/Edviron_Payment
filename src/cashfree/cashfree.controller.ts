@@ -336,10 +336,10 @@ export class CashfreeController {
 
   @Post('/webhook/secure-test')
   async testSecureWebhook(@Req() req: any, @Res() res: any) {
+    const webhook_signature = req.headers['x-webhook-signature'];
+    const webhook_timestamp = req.headers['x-webhook-timestamp'];
+    const raw_body = JSON.stringify(req.body);
     try {
-      const webhook_signature = req.headers['x-webhook-signature'];
-      const webhook_timestamp = req.headers['x-webhook-timestamp'];
-      const raw_body = JSON.stringify(req.body);
       const signed_payload = `${webhook_timestamp}${raw_body}`;
       const generated_signature = generateHMACBase64Type(
         signed_payload,
@@ -348,7 +348,7 @@ export class CashfreeController {
       if (generated_signature !== webhook_signature) {
         return res.status(400).send('Invalid webhook signature');
       }
-      this.databaseService.WebhooksModel.create({
+      await this.databaseService.WebhooksModel.create({
         body: raw_body,
         webhook_header: {
           source: WebhookSource.Cashfree,
@@ -360,6 +360,22 @@ export class CashfreeController {
       });
       return res.status(200).json({ message: 'Webhook test successful' });
     } catch (error) {
+      const body_data = {
+        header: {
+          'x-webhook-signature': webhook_signature,
+          'x-webhook-timestamp': webhook_timestamp,
+        },
+        body: raw_body,
+      };
+
+      const stringified_body = JSON.stringify(body_data);
+
+      await this.databaseService.ErrorLogsModel.create({
+        type: 'Cashfree_Testing',
+        body: stringified_body,
+        des: error.message,
+        identifier: 'Cashfree',
+      });
       throw new BadRequestException(error.message);
     }
   }
