@@ -13,6 +13,8 @@ import { DatabaseService } from 'src/database/database.service';
 import * as jwt from 'jsonwebtoken';
 import { CashfreeService } from './cashfree.service';
 import { Gateway } from 'src/database/schemas/collect_request.schema';
+import { generateHMACBase64Type } from 'src/utils/sign';
+import { WebhookSource } from 'src/database/schemas/webhooks.schema';
 @Controller('cashfree')
 export class CashfreeController {
   constructor(
@@ -329,6 +331,36 @@ export class CashfreeController {
       throw new InternalServerErrorException(
         error.message || 'Something went wrong',
       );
+    }
+  }
+
+  @Post('/webhook/secure-test')
+  async testSecureWebhook(@Req() req: any, @Res() res: any) {
+    try {
+      const webhook_signature = req.headers['x-webhook-signature'];
+      const webhook_timestamp = req.headers['x-webhook-timestamp'];
+      const raw_body = JSON.stringify(req.body);
+      const signed_payload = `${webhook_timestamp}${raw_body}`;
+      const generated_signature = generateHMACBase64Type(
+        signed_payload,
+        process.env.CASHFREE_CLIENT_SECRET!,
+      );
+      if (generated_signature !== webhook_signature) {
+        return res.status(400).send('Invalid webhook signature');
+      }
+      this.databaseService.WebhooksModel.create({
+        body: raw_body,
+        webhook_header: {
+          source: WebhookSource.Cashfree,
+          headers: {
+            'x-webhook-signature': webhook_signature,
+            'x-webhook-timestamp': webhook_timestamp,
+          },
+        },
+      });
+      return res.status(200).json({ message: 'Webhook test successful' });
+    } catch (error) {
+      throw new BadRequestException(error.message);
     }
   }
 }
