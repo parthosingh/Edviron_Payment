@@ -4,6 +4,9 @@ import * as qs from 'qs';
 import axios from 'axios';
 const { unserialize } = require('php-unserialize');
 import { DatabaseService } from 'src/database/database.service';
+import { Types } from 'mongoose';
+import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
+
 @Injectable()
 export class PayUService {
   constructor(private readonly databaseService: DatabaseService) {}
@@ -85,8 +88,31 @@ export class PayUService {
       };
     } catch (e) {
       console.log(e);
-
       throw new BadRequestException(e.message);
+    }
+  }
+
+  async terminateOrder(collect_id: string) {
+    try {
+      const [request, req_status] = await Promise.all([
+        this.databaseService.CollectRequestModel.findById(collect_id),
+        this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: new Types.ObjectId(collect_id),
+        }),
+      ]);
+      if (!request || !req_status) {
+        throw new BadRequestException('Order not found');
+      }
+      if (req_status.status === PaymentStatus.PENDING) {
+        req_status.status = PaymentStatus.USER_DROPPED;
+        await req_status.save();
+        return true;
+      }
+      return req_status.status !== PaymentStatus.SUCCESS;
+    } catch (error) {
+      throw new BadRequestException(
+        error.message || 'Failed to terminate order',
+      );
     }
   }
 }

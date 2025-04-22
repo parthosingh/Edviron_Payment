@@ -12,6 +12,7 @@ import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { platformChange } from './collect.controller';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
 import * as nodemailer from 'nodemailer';
+import { PayUService } from 'src/pay-u/pay-u.service';
 @Injectable()
 export class CollectService {
   constructor(
@@ -20,6 +21,7 @@ export class CollectService {
     private readonly edvironPgService: EdvironPgService,
     private readonly databaseService: DatabaseService,
     private readonly ccavenueService: CcavenueService,
+    private readonly payuService: PayUService,
   ) {}
   async collect(
     amount: Number,
@@ -108,6 +110,16 @@ export class CollectService {
     }).save();
 
     if (pay_u_key && pay_u_salt) {
+      setTimeout(
+        async () => {
+          try {
+            await this.payuService.terminateOrder(request._id.toString());
+          } catch (error) {
+            console.log(error.message);
+          }
+        },
+        15 * 60 * 1000,
+      );
       return {
         url: `${process.env.URL}/pay-u/redirect?collect_id=${
           request._id

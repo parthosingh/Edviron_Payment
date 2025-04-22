@@ -51,6 +51,7 @@ export class PayUController {
       });
 
       const response = await axios.post(url, data, { headers });
+      console.log(response.data);
       return response.data;
     } catch (error) {
       throw new Error(`Payment request failed: ${error.message}`);
@@ -60,10 +61,37 @@ export class PayUController {
   @Get('redirect')
   async redirectPayu(@Req() req: any, @Res() res: any) {
     const collect_id = req.query.collect_id;
-    const request =
-      await this.databaseService.CollectRequestModel.findById(collect_id);
-    if (!request) {
+    const [request, req_status] = await Promise.all([
+      this.databaseService.CollectRequestModel.findById(collect_id),
+      this.databaseService.CollectRequestStatusModel.findOne({
+        collect_id: new Types.ObjectId(collect_id),
+      }),
+    ]);
+
+    if (!request || !req_status) {
       throw new ConflictException('url fordge');
+    }
+
+    if (req_status.status === PaymentStatus.SUCCESS) {
+      return res.send(`
+        <script>
+          alert('This payment has already been completed.');
+          window.location.href = '${process.env.URL}/pay-u/callback/?collect_id=${collect_id}';
+        </script>
+      `);
+    }
+
+    const created_at = new Date(req_status.createdAt!).getTime();
+    const now = Date.now();
+    const expiry_duration = 15 * 60 * 1000;
+
+    if (now - created_at > expiry_duration) {
+      return res.send(`
+        <script>
+          alert('The payment session has expired. Please initiate the payment again.');
+          window.location.href = '${process.env.URL}/pay-u/callback/?collect_id=${collect_id}';
+        </script>
+      `);
     }
 
     const hash = await this.payUService.generate512HASH(
@@ -75,23 +103,23 @@ export class PayUController {
 
     res.send(
       `<form action="https://secure.payu.in/_payment" method="post" name="redirect">
-      <input type="hidden" name="key" value="${request.pay_u_key}" />
-      <input type="hidden" name="txnid" value="${collect_id}" />
-      <input type="hidden" name="productinfo" value="school_fee" />
-      <input type="hidden" name="amount" value="${request.amount}" />
-      <input type="hidden" name="email" value="noreply@edviron.com" />
-      <input type="hidden" name="firstname" value="edviron" />
-      <input type="hidden" name="lastname" value="edviron" />
-      <input type="hidden" name="surl" value="${process.env.URL}/pay-u/callback/?collect_id=${collect_id}" />
-      <input type="hidden" name="furl" value="${process.env.URL}/pay-u/callback/?collect_id=${collect_id}" />
-      <input type="hidden" name="phone" value="0000000000" />
-      <input type="hidden" name="hash" value="${hash}" />
-    </form>
-    <script type="text/javascript">
-                      window.onload = function(){
-                          document.forms['redirect'].submit();
-                      }
-                  </script>`,
+        <input type="hidden" name="key" value="${request.pay_u_key}" />
+        <input type="hidden" name="txnid" value="${collect_id}" />
+        <input type="hidden" name="productinfo" value="school_fee" />
+        <input type="hidden" name="amount" value="${request.amount}" />
+        <input type="hidden" name="email" value="noreply@edviron.com" />
+        <input type="hidden" name="firstname" value="edviron" />
+        <input type="hidden" name="lastname" value="edviron" />
+        <input type="hidden" name="surl" value="${process.env.URL}/pay-u/callback/?collect_id=${collect_id}" />
+        <input type="hidden" name="furl" value="${process.env.URL}/pay-u/callback/?collect_id=${collect_id}" />
+        <input type="hidden" name="phone" value="0000000000" />
+        <input type="hidden" name="hash" value="${hash}" />
+      </form>
+      <script type="text/javascript">
+          window.onload = function(){
+              document.forms['redirect'].submit();
+          }
+      </script>`,
     );
   }
 
@@ -131,6 +159,7 @@ export class PayUController {
 
   @Get('/callback')
   async handleCallback(@Req() req: any, @Res() res: any) {
+    console.log(req.body);
     const { collect_id } = req.query;
     const collectRequest =
       await this.databaseService.CollectRequestModel.findById(collect_id);
@@ -165,6 +194,7 @@ export class PayUController {
 
   @Post('/callback')
   async handleCallbackPost(@Req() req: any, @Res() res: any) {
+    console.log(req.body);
     const { collect_id } = req.query;
     const collectRequest =
       await this.databaseService.CollectRequestModel.findById(collect_id);
@@ -227,7 +257,7 @@ export class PayUController {
         error_Message,
         card_no,
         mihpayid, // payment id for pay-u may used in some APIs
-        bankcode
+        bankcode,
       } = body;
       const collectIdObject = new Types.ObjectId(txnid);
       const collectReq =

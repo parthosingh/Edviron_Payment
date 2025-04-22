@@ -19,13 +19,15 @@ const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const ccavenue_service_1 = require("../ccavenue/ccavenue.service");
 const nodemailer = require("nodemailer");
+const pay_u_service_1 = require("../pay-u/pay-u.service");
 let CollectService = class CollectService {
-    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService) {
+    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService, payuService) {
         this.phonepeService = phonepeService;
         this.hdfcService = hdfcService;
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
         this.ccavenueService = ccavenueService;
+        this.payuService = payuService;
     }
     async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, splitPayments, pay_u_key, pay_u_salt, vendor) {
         console.log(req_webhook_urls, 'webhook url');
@@ -72,6 +74,14 @@ let CollectService = class CollectService {
             payment_method: null,
         }).save();
         if (pay_u_key && pay_u_salt) {
+            setTimeout(async () => {
+                try {
+                    await this.payuService.terminateOrder(request._id.toString());
+                }
+                catch (error) {
+                    console.log(error.message);
+                }
+            }, 15 * 60 * 1000);
             return {
                 url: `${process.env.URL}/pay-u/redirect?collect_id=${request._id}&school_name=${school_name?.split(' ').join('_')}`,
                 request,
@@ -172,6 +182,7 @@ exports.CollectService = CollectService = __decorate([
         hdfc_service_1.HdfcService,
         edviron_pg_service_1.EdvironPgService,
         database_service_1.DatabaseService,
-        ccavenue_service_1.CcavenueService])
+        ccavenue_service_1.CcavenueService,
+        pay_u_service_1.PayUService])
 ], CollectService);
 //# sourceMappingURL=collect.service.js.map
