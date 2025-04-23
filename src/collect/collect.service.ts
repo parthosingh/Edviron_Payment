@@ -12,6 +12,7 @@ import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { platformChange } from './collect.controller';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
 import * as nodemailer from 'nodemailer';
+import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 @Injectable()
 export class CollectService {
   constructor(
@@ -20,7 +21,8 @@ export class CollectService {
     private readonly edvironPgService: EdvironPgService,
     private readonly databaseService: DatabaseService,
     private readonly ccavenueService: CcavenueService,
-  ) {}
+    private readonly hdfcRazorpay: HdfcRazorpayService,
+  ) { }
   async collect(
     amount: Number,
     callbackUrl: string,
@@ -42,6 +44,9 @@ export class CollectService {
     splitPayments?: boolean,
     pay_u_key?: string | null,
     pay_u_salt?: string | null,
+    hdfc_razorpay_id?: string,
+    hdfc_razorpay_secret?: string,
+    hdfc_razorpay_mid?: string,
     vendor?: [
       {
         vendor_id: string;
@@ -77,6 +82,8 @@ export class CollectService {
     });
 
     const gateway = clientId === 'edviron' ? Gateway.HDFC : Gateway.PENDING;
+
+    
 
     const request = await new this.databaseService.CollectRequestModel({
       amount,
@@ -122,15 +129,45 @@ export class CollectService {
       return { url: transaction.url, request };
     }
 
+    if (hdfc_razorpay_id && hdfc_razorpay_secret && hdfc_razorpay_mid) {
+
+      request.hdfc_razorpay_id = hdfc_razorpay_id;
+      request.hdfc_razorpay_secret = hdfc_razorpay_secret;
+      request.hdfc_razorpay_mid = hdfc_razorpay_mid;
+      request.gateway = Gateway.EDVIRON_HDFC_RAZORPAY;
+    
+      await request.save(); // update the existing request
+    
+      await new this.databaseService.CollectRequestStatusModel({
+        collect_id: request._id,
+        status: PaymentStatus.PENDING,
+        order_amount: request.amount,
+        transaction_amount: request.amount,
+        payment_method: null,
+      }).save();
+      const orderData = await this.hdfcRazorpay.createOrder(request);
+      if(orderData.status === 'created'){
+        request.hdfc_razorpay_order_id = orderData.id
+        await request.save()
+      }
+      return {
+        url: `${process.env.URL}/hdfc-razorpay/redirect?order_id=${
+          orderData.id
+        }&collect_id=${request._id}&school_name=${school_name
+          ?.split(' ')
+          .join('_')}`,
+        request,
+      };
+    }
     const transaction = (
       gateway === Gateway.PENDING
         ? await this.edvironPgService.collect(
-            request,
-            platform_charges,
-            school_name,
-            splitPayments || false,
-            vendor,
-          )
+          request,
+          platform_charges,
+          school_name,
+          splitPayments || false,
+          vendor,
+        )
         : await this.hdfcService.collect(request)
     )!;
     await this.databaseService.CollectRequestModel.updateOne(

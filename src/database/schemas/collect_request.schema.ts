@@ -5,12 +5,13 @@ export enum Gateway {
   PHONEPE = 'PHONEPE',
   HDFC = 'HDFC',
   EDVIRON_PG = 'EDVIRON_PG',
-  EDVIRON_CCAVENUE = 'EDVIRON_CCAVENUE',
-  EDVIRON_CASHFREE = 'EDVIRON_CASHFREE',
-  EDVIRON_EASEBUZZ = 'EDVIRON_EASEBUZZ',
-  PENDING = 'PENDING',
-  EXPIRED = 'EXPIRED',
   EDVIRON_PAY_U = 'EDVIRON_PAY_U',
+  EDVIRON_CCAVENUE='EDVIRON_CCAVENUE',
+  EDVIRON_CASHFREE='EDVIRON_CASHFREE',
+  EDVIRON_EASEBUZZ='EDVIRON_EASEBUZZ',
+  PENDING='PENDING',
+  EXPIRED='EXPIRED',
+  EDVIRON_HDFC_RAZORPAY = 'EDVIRON_HDFC_RAZORPAY',
 }
 
 @Schema()
@@ -105,6 +106,21 @@ export class CollectRequest {
   vendors_info?: [
     { vendor_id: string; percentage?: number; amount?: number; name?: string },
   ];
+
+  @Prop({ required: false })
+  hdfc_razorpay_id: string;
+
+  @Prop({ required: false })
+  hdfc_razorpay_secret: string;
+
+  @Prop({ required: false })
+  hdfc_razorpay_payment_id: string;
+
+  @Prop({ required: false })
+  hdfc_razorpay_order_id: string;
+
+  @Prop({ required: false })
+  hdfc_razorpay_mid: string;
 
   @Prop({ required: false, default: false })
   isSplitPayments: boolean;

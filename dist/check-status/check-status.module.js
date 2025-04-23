@@ -18,13 +18,14 @@ const ccavenue_service_1 = require("../ccavenue/ccavenue.service");
 const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 const cashfree_module_1 = require("../cashfree/cashfree.module");
 const pay_u_service_1 = require("../pay-u/pay-u.service");
+const hdfc_razorpay_service_1 = require("../hdfc_razporpay/hdfc_razorpay.service");
 let CheckStatusModule = class CheckStatusModule {
 };
 exports.CheckStatusModule = CheckStatusModule;
 exports.CheckStatusModule = CheckStatusModule = __decorate([
     (0, common_1.Module)({
         controllers: [check_status_controller_1.CheckStatusController],
-        providers: [check_status_service_1.CheckStatusService, ccavenue_service_1.CcavenueService, easebuzz_service_1.EasebuzzService, pay_u_service_1.PayUService],
+        providers: [check_status_service_1.CheckStatusService, ccavenue_service_1.CcavenueService, easebuzz_service_1.EasebuzzService, pay_u_service_1.PayUService, hdfc_razorpay_service_1.HdfcRazorpayService],
         imports: [database_module_1.DatabaseModule, phonepe_module_1.PhonepeModule, cashfree_module_1.CashfreeModule, hdfc_module_1.HdfcModule, edviron_pg_module_1.EdvironPgModule],
     })
 ], CheckStatusModule);
