@@ -105,6 +105,7 @@ export class PayUService {
       }
       if (req_status.status === PaymentStatus.PENDING) {
         req_status.status = PaymentStatus.USER_DROPPED;
+        req_status.payment_message = 'Session Expired';
         await req_status.save();
         return true;
       }
