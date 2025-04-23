@@ -408,6 +408,7 @@ export class EdvironPgService implements GatewayService {
     if (request.gateway !== Gateway.PENDING) {
       if (request.isQRPayment && requestStatus.status === 'PENDING') {
         requestStatus.status = TransactionStatus.USER_DROPPED;
+        requestStatus.payment_message='SESSION EXPIRED'
         await requestStatus.save();
       }
       console.log(request.gateway, 'not Terminating');
@@ -415,6 +416,7 @@ export class EdvironPgService implements GatewayService {
     }
     if (requestStatus.status === TransactionStatus.PENDING) {
       requestStatus.status = TransactionStatus.USER_DROPPED;
+       requestStatus.payment_message='SESSION EXPIRED'
       await requestStatus.save();
       console.log(`Order terminated: ${request.gateway}`);
     }
