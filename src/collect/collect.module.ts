@@ -7,10 +7,11 @@ import { HdfcModule } from 'src/hdfc/hdfc.module';
 import { EdvironPgModule } from '../edviron-pg/edviron-pg.module';
 import { CcavenueModule } from 'src/ccavenue/ccavenue.module';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
+import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 
 @Module({
   controllers: [CollectController],
-  providers: [CollectService,CcavenueService],
+  providers: [CollectService,CcavenueService, HdfcRazorpayService],
   imports: [PhonepeModule, DatabaseModule, HdfcModule, EdvironPgModule,CcavenueModule],
 })
 export class CollectModule {}
