@@ -23,8 +23,9 @@ const collect_req_status_schema_1 = require("../database/schemas/collect_req_sta
 const moment = require("moment-timezone");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
 const pay_u_service_1 = require("../pay-u/pay-u.service");
+const hdfc_razorpay_service_1 = require("../hdfc_razporpay/hdfc_razorpay.service");
 let CheckStatusService = class CheckStatusService {
-    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService) {
+    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay) {
         this.databaseService = databaseService;
         this.hdfcService = hdfcService;
         this.phonePeService = phonePeService;
@@ -33,6 +34,7 @@ let CheckStatusService = class CheckStatusService {
         this.easebuzzService = easebuzzService;
         this.cashfreeService = cashfreeService;
         this.payUService = payUService;
+        this.hdfcRazorpay = hdfcRazorpay;
     }
     async checkStatus(collect_request_id) {
         console.log('checking status for', collect_request_id);
@@ -141,6 +143,41 @@ let CheckStatusService = class CheckStatusService {
                 return status_response;
             case collect_request_schema_1.Gateway.EDVIRON_PAY_U:
                 return await this.payUService.checkStatus(collectRequest._id.toString());
+            case collect_request_schema_1.Gateway.EDVIRON_HDFC_RAZORPAY:
+                const EDVIRON_HDFC_RAZORPAY = await this.hdfcRazorpay.checkPaymentStatus(collect_request_id.toString(), collectRequest);
+                let order_status = "";
+                if (EDVIRON_HDFC_RAZORPAY.status.toUpperCase() === 'SUCCESS') {
+                    order_status = "SUCCESS";
+                }
+                else {
+                    order_status = "PENDING";
+                }
+                let statusCode;
+                if (EDVIRON_HDFC_RAZORPAY.status.toUpperCase() === 'SUCCESS') {
+                    statusCode = 200;
+                }
+                else {
+                    statusCode = 400;
+                }
+                const Updateddate = EDVIRON_HDFC_RAZORPAY.details.transaction_time;
+                if (!Updateddate) {
+                    throw new Error('No date found in the transaction status');
+                }
+                const ehr_status_response = {
+                    status: order_status.toUpperCase(),
+                    statusCode,
+                    custom_order_id,
+                    amount: parseInt(EDVIRON_HDFC_RAZORPAY?.amount),
+                    details: {
+                        payment_mode: EDVIRON_HDFC_RAZORPAY?.details?.payment_method,
+                        bank_ref: EDVIRON_HDFC_RAZORPAY.details.bank_ref,
+                        payment_method: { mode: EDVIRON_HDFC_RAZORPAY?.details?.payment_mode, method: EDVIRON_HDFC_RAZORPAY?.details?.payment_methods },
+                        transaction_time: Updateddate,
+                        formattedTransactionDate: `${new Date(Updateddate).getFullYear()}-${String(new Date(Updateddate).getMonth() + 1).padStart(2, '0')}-${String(new Date(Updateddate).getDate()).padStart(2, '0')}`,
+                        order_status: EDVIRON_HDFC_RAZORPAY.status,
+                    },
+                };
+                return ehr_status_response;
             case collect_request_schema_1.Gateway.PENDING:
                 return await this.checkExpiry(collectRequest);
             case collect_request_schema_1.Gateway.EXPIRED:
@@ -392,6 +429,7 @@ exports.CheckStatusService = CheckStatusService = __decorate([
         ccavenue_service_1.CcavenueService,
         easebuzz_service_1.EasebuzzService,
         cashfree_service_1.CashfreeService,
-        pay_u_service_1.PayUService])
+        pay_u_service_1.PayUService,
+        hdfc_razorpay_service_1.HdfcRazorpayService])
 ], CheckStatusService);
 //# sourceMappingURL=check-status.service.js.map
