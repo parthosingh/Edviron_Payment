@@ -85,7 +85,7 @@ export class NttdataService {
         },
         payDetails: {
           amount: formattedAmount,
-          product: 'AIPAY',
+          product: 'FEE PAYMENT',
           txnCurrency: 'INR',
         },
         custDetails: {
@@ -199,6 +199,7 @@ export class NttdataService {
       }
       if (req_status.status === PaymentStatus.PENDING) {
         req_status.status = PaymentStatus.USER_DROPPED;
+        req_status.payment_message = 'Session Expired';
         await req_status.save();
         return true;
       }
