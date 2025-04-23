@@ -19,7 +19,7 @@ export const formatRazorpayPaymentStatus = (
 
 @Injectable()
 export class HdfcRazorpayService {
-  private readonly API_URL = process.env.RAZORPAY_URL;
+  private readonly API_URL = process.env.HDFC_RAZORPAY_URL;
 
   constructor(private readonly databaseService: DatabaseService) {}
 
@@ -68,7 +68,7 @@ export class HdfcRazorpayService {
   }
 
   async checkPaymentStatus(paymentId: string, collectRequest: CollectRequest) {
-    const rzp_payment_id = await this.databaseService.CollectRequestModel.findById(paymentId)
+    const rzp_payment_id = await this.databaseService.CollectRequestModel.findById(collectRequest._id)
     try {
       const config = {
         method: 'get',

@@ -39,7 +39,10 @@ export class HdfcRazorpayController {
         razorpay_payment_id: paymentId,
         razorpay_signature: signature,
       } = body;
-
+      console.log(body);
+      
+      console.log(collect_id);
+      
       const collectRequest =
         await this.databaseService.CollectRequestModel.findById(collect_id);
       if (!collectRequest) throw new BadRequestException('Order Id not found');

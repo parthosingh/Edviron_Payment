@@ -27,6 +27,8 @@ let HdfcRazorpayController = class HdfcRazorpayController {
     async handleCallback(body, collect_id, res) {
         try {
             const { razorpay_order_id: orderId, razorpay_payment_id: paymentId, razorpay_signature: signature, } = body;
+            console.log(body);
+            console.log(collect_id);
             const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
             if (!collectRequest)
                 throw new common_1.BadRequestException('Order Id not found');

@@ -28,7 +28,7 @@ exports.formatRazorpayPaymentStatus = formatRazorpayPaymentStatus;
 let HdfcRazorpayService = class HdfcRazorpayService {
     constructor(databaseService) {
         this.databaseService = databaseService;
-        this.API_URL = process.env.RAZORPAY_URL;
+        this.API_URL = process.env.HDFC_RAZORPAY_URL;
     }
     async verifySignature(orderId, paymentId, signature, secret) {
         const body = `${orderId}|${paymentId}`;
@@ -67,7 +67,7 @@ let HdfcRazorpayService = class HdfcRazorpayService {
         }
     }
     async checkPaymentStatus(paymentId, collectRequest) {
-        const rzp_payment_id = await this.databaseService.CollectRequestModel.findById(paymentId);
+        const rzp_payment_id = await this.databaseService.CollectRequestModel.findById(collectRequest._id);
         try {
             const config = {
                 method: 'get',
