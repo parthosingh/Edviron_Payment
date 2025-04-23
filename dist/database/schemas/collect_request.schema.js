@@ -22,6 +22,7 @@ var Gateway;
     Gateway["PENDING"] = "PENDING";
     Gateway["EXPIRED"] = "EXPIRED";
     Gateway["EDVIRON_PAY_U"] = "EDVIRON_PAY_U";
+    Gateway["EDVIRON_NTTDATA"] = "EDVIRON_NTTDATA";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let PaymentIds = class PaymentIds {
 };
@@ -164,6 +165,18 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "pay_u_salt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        required: false,
+        type: {
+            nttdata_id: { type: String, required: false, default: null },
+            nttdata_secret: { type: String, required: false, default: null },
+            ntt_atom_token: { type: String, required: false, default: null },
+        },
+        _id: false,
+    }),
+    __metadata("design:type", Object)
+], CollectRequest.prototype, "ntt_data", void 0);
 exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequest);

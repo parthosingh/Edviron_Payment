@@ -11,6 +11,13 @@ export enum Gateway {
   PENDING = 'PENDING',
   EXPIRED = 'EXPIRED',
   EDVIRON_PAY_U = 'EDVIRON_PAY_U',
+  EDVIRON_NTTDATA = 'EDVIRON_NTTDATA',
+}
+
+interface I_NTT_DATA {
+  nttdata_id: string;
+  nttdata_secret: string;
+  ntt_atom_token: string;
 }
 
 @Schema()
@@ -117,6 +124,17 @@ export class CollectRequest {
 
   @Prop({ required: false })
   pay_u_salt: string;
+
+  @Prop({
+    required: false,
+    type: {
+      nttdata_id: { type: String, required: false, default: null },
+      nttdata_secret: { type: String, required: false, default: null },
+      ntt_atom_token: { type: String, required: false, default: null },
+    },
+    _id: false,
+  })
+  ntt_data: I_NTT_DATA;
 
   _id: ObjectId;
 }

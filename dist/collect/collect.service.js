@@ -19,15 +19,17 @@ const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const ccavenue_service_1 = require("../ccavenue/ccavenue.service");
 const nodemailer = require("nodemailer");
+const nttdata_service_1 = require("../nttdata/nttdata.service");
 let CollectService = class CollectService {
-    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService) {
+    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService, nttdataService) {
         this.phonepeService = phonepeService;
         this.hdfcService = hdfcService;
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
         this.ccavenueService = ccavenueService;
+        this.nttdataService = nttdataService;
     }
-    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, splitPayments, pay_u_key, pay_u_salt, vendor) {
+    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, splitPayments, pay_u_key, pay_u_salt, nttdata_id, nttdata_secret, vendor) {
         console.log(req_webhook_urls, 'webhook url');
         console.log(webHook);
         console.log(ccavenue_merchant_id, 'ccavenue', ccavenue_access_code, ccavenue_working_key);
@@ -63,6 +65,10 @@ let CollectService = class CollectService {
             ccavenue_working_key: ccavenue_working_key || null,
             pay_u_key: pay_u_key || null,
             pay_u_salt: pay_u_salt || null,
+            ntt_data: {
+                nttdata_id,
+                nttdata_secret,
+            },
         }).save();
         await new this.databaseService.CollectRequestStatusModel({
             collect_id: request._id,
@@ -71,6 +77,13 @@ let CollectService = class CollectService {
             transaction_amount: request.amount,
             payment_method: null,
         }).save();
+        if (nttdata_id && nttdata_secret) {
+            const { url, collect_req } = await this.nttdataService.createOrder(request);
+            setTimeout(() => {
+                this.nttdataService.terminateOrder(collect_req._id.toString());
+            }, 15 * 60 * 1000);
+            return { url, request: collect_req };
+        }
         if (pay_u_key && pay_u_salt) {
             return {
                 url: `${process.env.URL}/pay-u/redirect?collect_id=${request._id}&school_name=${school_name?.split(' ').join('_')}`,
@@ -172,6 +185,7 @@ exports.CollectService = CollectService = __decorate([
         hdfc_service_1.HdfcService,
         edviron_pg_service_1.EdvironPgService,
         database_service_1.DatabaseService,
-        ccavenue_service_1.CcavenueService])
+        ccavenue_service_1.CcavenueService,
+        nttdata_service_1.NttdataService])
 ], CollectService);
 //# sourceMappingURL=collect.service.js.map

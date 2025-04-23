@@ -12,6 +12,7 @@ import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { platformChange } from './collect.controller';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
 import * as nodemailer from 'nodemailer';
+import { NttdataService } from 'src/nttdata/nttdata.service';
 @Injectable()
 export class CollectService {
   constructor(
@@ -20,6 +21,7 @@ export class CollectService {
     private readonly edvironPgService: EdvironPgService,
     private readonly databaseService: DatabaseService,
     private readonly ccavenueService: CcavenueService,
+    private readonly nttdataService: NttdataService,
   ) {}
   async collect(
     amount: Number,
@@ -42,6 +44,8 @@ export class CollectService {
     splitPayments?: boolean,
     pay_u_key?: string | null,
     pay_u_salt?: string | null,
+    nttdata_id?: string | null,
+    nttdata_secret?: string | null,
     vendor?: [
       {
         vendor_id: string;
@@ -97,6 +101,10 @@ export class CollectService {
       ccavenue_working_key: ccavenue_working_key || null,
       pay_u_key: pay_u_key || null,
       pay_u_salt: pay_u_salt || null,
+      ntt_data: {
+        nttdata_id,
+        nttdata_secret,
+      },
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({
@@ -106,6 +114,18 @@ export class CollectService {
       transaction_amount: request.amount,
       payment_method: null,
     }).save();
+
+    if (nttdata_id && nttdata_secret) {
+      const { url, collect_req } =
+        await this.nttdataService.createOrder(request);
+      setTimeout(
+        () => {
+          this.nttdataService.terminateOrder(collect_req._id.toString());
+        },
+        15 * 60 * 1000,
+      );
+      return { url, request: collect_req };
+    }
 
     if (pay_u_key && pay_u_salt) {
       return {

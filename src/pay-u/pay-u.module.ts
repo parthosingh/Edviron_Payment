@@ -7,8 +7,8 @@ import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import { EdvironPgModule } from 'src/edviron-pg/edviron-pg.module';
 
 @Module({
-  providers: [PayUService,DatabaseService,EdvironPgService],
-  imports:[DatabaseModule,EdvironPgModule],
-  controllers: [PayUController] 
+  providers: [PayUService, DatabaseService, EdvironPgService],
+  imports: [DatabaseModule, EdvironPgModule],
+  controllers: [PayUController],
 })
 export class PayUModule {}

@@ -56,8 +56,10 @@ export class CollectController {
       ccavenue_access_code?: string;
       ccavenue_working_key?: string;
       split_payments?: boolean;
-      pay_u_key?:string | null;
+      pay_u_key?: string | null;
       pay_u_salt: string | null;
+      nttdata_id?: string | null;
+      nttdata_secret?: string | null;
       vendors_info?: [
         {
           vendor_id: string;
@@ -91,6 +93,8 @@ export class CollectController {
       vendors_info,
       pay_u_key,
       pay_u_salt,
+      nttdata_id,
+      nttdata_secret,
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -129,6 +133,8 @@ export class CollectController {
           split_payments || false,
           pay_u_key,
           pay_u_salt,
+          nttdata_id,
+          nttdata_secret,
           vendors_info,
         ),
       );
@@ -159,5 +165,5 @@ export class CollectController {
     res.redirect(callbackUrl.toString());
     // const callback_url = `${collect_request?.callbackUrl}&status=cancelled&reason=dropped-by-user`;
     // res.redirect(callback_url);
-  } 
+  }
 }

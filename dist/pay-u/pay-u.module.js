@@ -21,7 +21,7 @@ exports.PayUModule = PayUModule = __decorate([
     (0, common_1.Module)({
         providers: [pay_u_service_1.PayUService, database_service_1.DatabaseService, edviron_pg_service_1.EdvironPgService],
         imports: [database_module_1.DatabaseModule, edviron_pg_module_1.EdvironPgModule],
-        controllers: [pay_u_controller_1.PayUController]
+        controllers: [pay_u_controller_1.PayUController],
     })
 ], PayUModule);
 //# sourceMappingURL=pay-u.module.js.map

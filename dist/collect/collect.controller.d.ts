@@ -36,6 +36,8 @@ export declare class CollectController {
         split_payments?: boolean;
         pay_u_key?: string | null;
         pay_u_salt: string | null;
+        nttdata_id?: string | null;
+        nttdata_secret?: string | null;
         vendors_info?: [
             {
                 vendor_id: string;

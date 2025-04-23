@@ -14,6 +14,7 @@ import { EasebuzzService } from './easebuzz/easebuzz.service';
 import { CashfreeController } from './cashfree/cashfree.controller';
 import { CashfreeModule } from './cashfree/cashfree.module';
 import { PayUModule } from './pay-u/pay-u.module';
+import { NttdataModule } from './nttdata/nttdata.module';
 
 @Module({
   imports: [
@@ -25,7 +26,8 @@ import { PayUModule } from './pay-u/pay-u.module';
     EdvironPgModule,
     CcavenueModule,
     CashfreeModule,
-    PayUModule
+    PayUModule,
+    NttdataModule
   ],
   controllers: [AppController, EasebuzzController, CashfreeController],
   providers: [AppService, EasebuzzService],
