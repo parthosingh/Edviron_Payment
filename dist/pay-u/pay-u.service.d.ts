@@ -2,7 +2,7 @@ import { DatabaseService } from 'src/database/database.service';
 export declare class PayUService {
     private readonly databaseService;
     constructor(databaseService: DatabaseService);
-    generate512HASH(key: string, txnid: string, amount: number, salt: string): Promise<any>;
+    generate512HASH(key: string, txnid: string, amount: number, salt: string, firstName: string): Promise<any>;
     checkStatus(collect_id: string): Promise<{
         status: any;
         amount: number;
