@@ -18,6 +18,8 @@ const database_service_1 = require("../database/database.service");
 const jwt = require("jsonwebtoken");
 const cashfree_service_1 = require("./cashfree.service");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
+const sign_1 = require("../utils/sign");
+const webhooks_schema_1 = require("../database/schemas/webhooks.schema");
 let CashfreeController = class CashfreeController {
     constructor(databaseService, cashfreeService) {
         this.databaseService = databaseService;
@@ -245,6 +247,46 @@ let CashfreeController = class CashfreeController {
             throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
         }
     }
+    async testSecureWebhook(req, res) {
+        const webhook_signature = req.headers['x-webhook-signature'];
+        const webhook_timestamp = req.headers['x-webhook-timestamp'];
+        const raw_body = JSON.stringify(req.body);
+        try {
+            const signed_payload = `${webhook_timestamp}${raw_body}`;
+            const generated_signature = (0, sign_1.generateHMACBase64Type)(signed_payload, process.env.CASHFREE_CLIENT_SECRET);
+            if (generated_signature !== webhook_signature) {
+                return res.status(400).send('Invalid webhook signature');
+            }
+            await this.databaseService.WebhooksModel.create({
+                body: raw_body,
+                webhook_header: {
+                    source: webhooks_schema_1.WebhookSource.Cashfree,
+                    headers: {
+                        'x-webhook-signature': webhook_signature,
+                        'x-webhook-timestamp': webhook_timestamp,
+                    },
+                },
+            });
+            return res.status(200).json({ message: 'Webhook test successful' });
+        }
+        catch (error) {
+            const body_data = {
+                header: {
+                    'x-webhook-signature': webhook_signature,
+                    'x-webhook-timestamp': webhook_timestamp,
+                },
+                body: raw_body,
+            };
+            const stringified_body = JSON.stringify(body_data);
+            await this.databaseService.ErrorLogsModel.create({
+                type: 'Cashfree_Testing',
+                body: stringified_body,
+                des: error.message,
+                identifier: 'Cashfree',
+            });
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
 };
 exports.CashfreeController = CashfreeController;
 __decorate([
@@ -304,6 +346,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CashfreeController.prototype, "disputeEvidence", null);
+__decorate([
+    (0, common_1.Post)('/webhook/secure-test'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "testSecureWebhook", null);
 exports.CashfreeController = CashfreeController = __decorate([
     (0, common_1.Controller)('cashfree'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

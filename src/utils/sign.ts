@@ -22,8 +22,8 @@ export const calculateSHA256 = async (data: any) => {
 export const merchantKeySHA256 = async () => {
   const merchantKey = process.env.EASEBUZZ_KEY;
   const salt = process.env.EASEBUZZ_SALT;
-  console.log({merchantKey,salt});
-  
+  console.log({ merchantKey, salt });
+
   const key = crypto
     .createHash('sha256')
     .update(merchantKey)
@@ -42,6 +42,15 @@ export const merchantKeySHA256 = async () => {
   };
 };
 
+export const generateHMACBase64Type = (
+  signed_payload: string,
+  secret: string,
+) => {
+  const hmac = crypto.createHmac('sha256', secret);
+  hmac.update(signed_payload);
+  return hmac.digest('base64');
+};
+
 // export const encryptCard=async(data:string,key:string,iv:string)=>{
 //   console.log({data,key,iv});
 
@@ -57,16 +66,20 @@ export const merchantKeySHA256 = async () => {
 
 export const encryptCard = async (data: string, key: string, iv: string) => {
   console.log(`encrypting card info ${data}`);
-  
+
   const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
   let encrypted = cipher.update(data, 'utf-8', 'base64');
   encrypted += cipher.final('base64');
   return encrypted;
 };
 
-export const decrypt=async(encryptedData:string, key:string, iv:string)=> {
+export const decrypt = async (
+  encryptedData: string,
+  key: string,
+  iv: string,
+) => {
   const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
   let decrypted = decipher.update(encryptedData, 'base64', 'utf-8');
   decrypted += decipher.final('utf-8');
   return decrypted;
-}
+};
