@@ -39,6 +39,7 @@ interface I_NTT_DATA {
     nttdata_id: string;
     nttdata_secret: string;
     ntt_atom_token: string;
+    ntt_atom_txn_id: string;
 }
 export declare class PaymentIds {
     cashfree_id?: string | null;

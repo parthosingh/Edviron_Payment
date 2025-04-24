@@ -3,7 +3,7 @@ import { DatabaseService } from 'src/database/database.service';
 import * as crypto from 'crypto';
 import axios from 'axios';
 import { CollectRequest } from 'src/database/schemas/collect_request.schema';
-import { calculateSHA512Hash } from 'src/utils/sign';
+import { calculateSHA512Hash, generateSignature } from 'src/utils/sign';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { Types } from 'mongoose';
 
@@ -85,7 +85,7 @@ export class NttdataService {
         },
         payDetails: {
           amount: formattedAmount,
-          product: 'FEE PAYMENT',
+          product: 'AIPAY',
           txnCurrency: 'INR',
         },
         custDetails: {
@@ -147,45 +147,94 @@ export class NttdataService {
 
   async getTransactionStatus(collect_id: string) {
     try {
-      const coll_req =
-        await this.databaseService.CollectRequestModel.findById(collect_id);
+      const [coll_req, collec_req_status] = await Promise.all([
+        this.databaseService.CollectRequestModel.findById(collect_id),
+        this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: new Types.ObjectId(collect_id),
+        }),
+      ]);
+
       if (!coll_req) throw new BadRequestException('Orders not found');
-      const ntt_secret = coll_req.ntt_data.nttdata_secret;
+      if (!collec_req_status) {
+        throw new BadRequestException('Error in getting status');
+      }
+      const ntt_merchant_id = coll_req.ntt_data.nttdata_id;
       const txnId = coll_req._id.toString();
       const formattedAmount =
         Math.round(parseFloat(coll_req.amount.toString()) * 100) / 100;
 
-      const hashData = `${ntt_secret}${txnId}${formattedAmount}INR`;
-      const hashValue = await calculateSHA512Hash(hashData);
+      const sign = generateSignature(
+        coll_req.ntt_data.nttdata_id,
+        coll_req.ntt_data.nttdata_secret,
+        coll_req._id.toString(),
+        formattedAmount.toFixed(2),
+        'INR',
+        'TXNVERIFICATION',
+      );
+
       const payload = {
         payInstrument: {
-          payDetails: {
-            amount: formattedAmount,
-            signature: hashValue,
-            txnCurrency: 'INR',
+          headDetails: {
+            api: 'TXNVERIFICATION',
+            source: 'OTS',
           },
           merchDetails: {
-            merchId: coll_req.ntt_data.nttdata_id,
-            merchTxnId: coll_req._id.toString(),
-            merchTxnDate: coll_req.createdAt,
+            merchId: ntt_merchant_id,
+            password: coll_req.ntt_data.nttdata_secret,
+            merchTxnId: txnId,
+            merchTxnDate: coll_req.createdAt?.toISOString().split('T')[0],
+          },
+          payDetails: {
+            atomTxnId: coll_req.ntt_data.ntt_atom_txn_id,
+            amount: formattedAmount.toFixed(2),
+            txnCurrency: 'INR',
+            signature: sign,
           },
         },
       };
+      const encData = this.encrypt(JSON.stringify(payload));
+      const form = new URLSearchParams({
+        merchId: coll_req.ntt_data.nttdata_id,
+        encData,
+      });
       const config = {
         method: 'post',
-        url: `${process.env.NTT_AUTH_API_URL}/ots/v2/payment/status`,
+        url: `${
+          process.env.NTT_AUTH_API_URL
+        }/ots/payment/status?${form.toString()}`,
         headers: {
           'cache-control': 'no-cache',
           'Content-Type': 'application/json',
         },
-        data: payload,
       };
       const { data: paymentStatusRes } = await axios.request(config);
-      return paymentStatusRes;
+      const encResponse = paymentStatusRes?.split('&')?.[0]?.split('=')?.[1];
+
+      if (!encResponse) {
+        throw new Error('Encrypted token not found in NTT response');
+      }
+      const res = JSON.parse(this.decrypt(encResponse));
+      const { payInstrument } = res;
+      const responseData = payInstrument[payInstrument.length - 1];
+      const { payDetails, payModeSpecificData, responseDetails } = responseData;
+      let status_code = 400;
+
+      if (responseDetails.message == 'SUCCESS') {
+        status_code = 200;
+      }
+      const formattedResponse = {
+        status: responseDetails.message,
+        amount: coll_req?.amount,
+        status_code,
+        details: JSON.stringify(payModeSpecificData),
+        custom_order_id: coll_req.custom_order_id || null,
+      };
+      return formattedResponse;
     } catch (error) {
       throw new Error('Failed to fetch transaction status');
     }
   }
+
   async terminateOrder(collect_id: string) {
     try {
       const [request, req_status] = await Promise.all([

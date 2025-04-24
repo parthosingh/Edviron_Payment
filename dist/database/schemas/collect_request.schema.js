@@ -172,6 +172,7 @@ __decorate([
             nttdata_id: { type: String, required: false, default: null },
             nttdata_secret: { type: String, required: false, default: null },
             ntt_atom_token: { type: String, required: false, default: null },
+            ntt_atom_txn_id: { type: String, required: false, default: null },
         },
         _id: false,
     }),

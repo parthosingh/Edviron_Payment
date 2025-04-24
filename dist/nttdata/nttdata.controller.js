@@ -99,9 +99,11 @@ let NttdataController = class NttdataController {
             throw new common_1.BadRequestException(error.message);
         }
     }
-    async handleCallbackPost(req, res) {
+    async handleCallback(req, res) {
         try {
             const { collect_id } = req.query;
+            const encRes = req.body.encData;
+            const data = JSON.parse(this.nttdataService.decrypt(encRes));
             const [collect_request, collect_req_status] = await Promise.all([
                 this.databaseService.CollectRequestModel.findById(collect_id),
                 this.databaseService.CollectRequestStatusModel.findOne({
@@ -111,9 +113,11 @@ let NttdataController = class NttdataController {
             if (!collect_request || !collect_req_status)
                 throw new common_1.NotFoundException('Order not found');
             collect_request.gateway = collect_request_schema_1.Gateway.EDVIRON_NTTDATA;
+            collect_request.ntt_data.ntt_atom_txn_id =
+                data?.payInstrument?.payDetails?.atomTxnId;
             await collect_request.save();
             const status = await this.nttdataService.getTransactionStatus(collect_id);
-            const payment_status = status?.payInstrument?.responseDetails?.message?.toUpperCase();
+            const payment_status = status.status;
             if (payment_status === collect_req_status_schema_1.PaymentStatus.SUCCESS) {
                 collect_req_status.status = collect_req_status_schema_1.PaymentStatus.SUCCESS;
                 await collect_req_status.save();
@@ -142,13 +146,26 @@ let NttdataController = class NttdataController {
     async handleCallbackGet(req, res) {
         try {
             const { collect_id } = req.query;
-            const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id);
-            if (!collect_request)
+            const encRes = req.body.encData;
+            const data = JSON.parse(this.nttdataService.decrypt(encRes));
+            const [collect_request, collect_req_status] = await Promise.all([
+                this.databaseService.CollectRequestModel.findById(collect_id),
+                this.databaseService.CollectRequestStatusModel.findOne({
+                    collect_id: new mongoose_1.Types.ObjectId(collect_id),
+                }),
+            ]);
+            if (!collect_request || !collect_req_status)
                 throw new common_1.NotFoundException('Order not found');
             collect_request.gateway = collect_request_schema_1.Gateway.EDVIRON_NTTDATA;
+            collect_request.ntt_data.ntt_atom_txn_id =
+                data?.payInstrument?.payDetails?.atomTxnId;
             await collect_request.save();
             const status = await this.nttdataService.getTransactionStatus(collect_id);
-            const payment_status = status?.payInstrument?.responseDetails?.message?.toUpperCase();
+            const payment_status = status.status;
+            if (payment_status === collect_req_status_schema_1.PaymentStatus.SUCCESS) {
+                collect_req_status.status = collect_req_status_schema_1.PaymentStatus.SUCCESS;
+                await collect_req_status.save();
+            }
             if (collect_request.sdkPayment) {
                 const redirectBase = process.env.PG_FRONTEND;
                 const route = payment_status === collect_req_status_schema_1.PaymentStatus.SUCCESS
@@ -199,7 +216,7 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
-], NttdataController.prototype, "handleCallbackPost", null);
+], NttdataController.prototype, "handleCallback", null);
 __decorate([
     (0, common_1.Get)('/callback'),
     __param(0, (0, common_1.Req)()),

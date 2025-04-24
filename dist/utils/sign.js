@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.decrypt = exports.encryptCard = exports.merchantKeySHA256 = exports.calculateSHA256 = exports.calculateSHA512Hash = exports.sign = void 0;
+exports.generateSignature = exports.decrypt = exports.encryptCard = exports.merchantKeySHA256 = exports.calculateSHA256 = exports.calculateSHA512Hash = exports.sign = void 0;
 const _jwt = require("jsonwebtoken");
 const crypto = require('crypto');
 const sign = async (body) => {
@@ -57,4 +57,13 @@ const decrypt = async (encryptedData, key, iv) => {
     return decrypted;
 };
 exports.decrypt = decrypt;
+const generateSignature = (merchID, password, merchTxnID, amount, txnCurrency, txnType) => {
+    const resHashKey = 'KEY123657234';
+    const signatureString = merchID + password + merchTxnID + amount + txnCurrency + txnType;
+    const hmac = crypto.createHmac('sha512', resHashKey);
+    const data = hmac.update(signatureString);
+    const gen_hmac = data.digest('hex');
+    return gen_hmac;
+};
+exports.generateSignature = generateSignature;
 //# sourceMappingURL=sign.js.map

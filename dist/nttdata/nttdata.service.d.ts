@@ -15,6 +15,12 @@ export declare class NttdataService {
         url: string;
         collect_req: CollectRequest;
     }>;
-    getTransactionStatus(collect_id: string): Promise<any>;
+    getTransactionStatus(collect_id: string): Promise<{
+        status: any;
+        amount: number;
+        status_code: number;
+        details: string;
+        custom_order_id: string | null;
+    }>;
     terminateOrder(collect_id: string): Promise<boolean>;
 }

@@ -109,9 +109,12 @@ export class NttdataController {
   }
 
   @Post('/callback')
-  async handleCallbackPost(@Req() req: any, @Res() res: any) {
+  async handleCallback(@Req() req: any, @Res() res: any) {
     try {
       const { collect_id } = req.query;
+      const encRes = req.body.encData;
+      const data = JSON.parse(this.nttdataService.decrypt(encRes));
+
       const [collect_request, collect_req_status] = await Promise.all([
         this.databaseService.CollectRequestModel.findById(collect_id),
         this.databaseService.CollectRequestStatusModel.findOne({
@@ -123,11 +126,12 @@ export class NttdataController {
         throw new NotFoundException('Order not found');
 
       collect_request.gateway = Gateway.EDVIRON_NTTDATA;
+      collect_request.ntt_data.ntt_atom_txn_id =
+        data?.payInstrument?.payDetails?.atomTxnId;
       await collect_request.save();
 
       const status = await this.nttdataService.getTransactionStatus(collect_id);
-      const payment_status =
-        status?.payInstrument?.responseDetails?.message?.toUpperCase();
+      const payment_status = status.status;
 
       if (payment_status === PaymentStatus.SUCCESS) {
         collect_req_status.status = PaymentStatus.SUCCESS;
@@ -164,17 +168,31 @@ export class NttdataController {
   async handleCallbackGet(@Req() req: any, @Res() res: any) {
     try {
       const { collect_id } = req.query;
-      const collect_request =
-        await this.databaseService.CollectRequestModel.findById(collect_id);
+      const encRes = req.body.encData;
+      const data = JSON.parse(this.nttdataService.decrypt(encRes));
 
-      if (!collect_request) throw new NotFoundException('Order not found');
+      const [collect_request, collect_req_status] = await Promise.all([
+        this.databaseService.CollectRequestModel.findById(collect_id),
+        this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: new Types.ObjectId(collect_id),
+        }),
+      ]);
+
+      if (!collect_request || !collect_req_status)
+        throw new NotFoundException('Order not found');
 
       collect_request.gateway = Gateway.EDVIRON_NTTDATA;
+      collect_request.ntt_data.ntt_atom_txn_id =
+        data?.payInstrument?.payDetails?.atomTxnId;
       await collect_request.save();
 
       const status = await this.nttdataService.getTransactionStatus(collect_id);
-      const payment_status =
-        status?.payInstrument?.responseDetails?.message?.toUpperCase();
+      const payment_status = status.status;
+
+      if (payment_status === PaymentStatus.SUCCESS) {
+        collect_req_status.status = PaymentStatus.SUCCESS;
+        await collect_req_status.save();
+      }
 
       if (collect_request.sdkPayment) {
         const redirectBase = process.env.PG_FRONTEND;
@@ -195,7 +213,6 @@ export class NttdataController {
         callbackUrl.searchParams.set('reason', 'Payment-failed');
         return res.redirect(callbackUrl.toString());
       }
-
       callbackUrl.searchParams.set('status', 'SUCCESS');
       return res.redirect(callbackUrl.toString());
     } catch (error) {
