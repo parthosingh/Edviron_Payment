@@ -7,11 +7,12 @@ import { HdfcModule } from 'src/hdfc/hdfc.module';
 import { EdvironPgModule } from '../edviron-pg/edviron-pg.module';
 import { CcavenueModule } from 'src/ccavenue/ccavenue.module';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
+import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 import { NttdataService } from 'src/nttdata/nttdata.service';
 
 @Module({
   controllers: [CollectController],
-  providers: [CollectService, CcavenueService, NttdataService],
+  providers: [CollectService, CcavenueService, HdfcRazorpayService, NttdataService],
   imports: [
     PhonepeModule,
     DatabaseModule,

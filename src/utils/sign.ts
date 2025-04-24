@@ -42,6 +42,15 @@ export const merchantKeySHA256 = async () => {
   };
 };
 
+export const generateHMACBase64Type = (
+  signed_payload: string,
+  secret: string,
+) => {
+  const hmac = crypto.createHmac('sha256', secret);
+  hmac.update(signed_payload);
+  return hmac.digest('base64');
+};
+
 // export const encryptCard=async(data:string,key:string,iv:string)=>{
 //   console.log({data,key,iv});
 
@@ -83,7 +92,7 @@ export const generateSignature = (
   txnCurrency: string,
   txnType: string,
 ) => {
-  const resHashKey = 'KEY123657234';
+  const resHashKey = process.env.NTT_REQUEST_HASH_KEY;
   const signatureString =
     merchID + password + merchTxnID + amount + txnCurrency + txnType;
   const hmac = crypto.createHmac('sha512', resHashKey);

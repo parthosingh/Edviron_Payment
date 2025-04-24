@@ -13,7 +13,12 @@ import { EasebuzzController } from './easebuzz/easebuzz.controller';
 import { EasebuzzService } from './easebuzz/easebuzz.service';
 import { CashfreeController } from './cashfree/cashfree.controller';
 import { CashfreeModule } from './cashfree/cashfree.module';
+
 import { PayUModule } from './pay-u/pay-u.module';
+
+import { HdfcRazorpayModule } from './hdfc_razporpay/hdfc_razorpay.module';
+import { CashfreeService } from './cashfree/cashfree.service';
+import { CcavenueService } from './ccavenue/ccavenue.service';
 import { NttdataModule } from './nttdata/nttdata.module';
 
 @Module({
@@ -27,9 +32,10 @@ import { NttdataModule } from './nttdata/nttdata.module';
     CcavenueModule,
     CashfreeModule,
     PayUModule,
+    HdfcRazorpayModule,
     NttdataModule
   ],
   controllers: [AppController, EasebuzzController, CashfreeController],
-  providers: [AppService, EasebuzzService],
+  providers: [AppService, CashfreeService, EasebuzzService, CcavenueService],
 })
 export class AppModule {}

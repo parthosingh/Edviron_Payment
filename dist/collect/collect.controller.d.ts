@@ -38,6 +38,9 @@ export declare class CollectController {
         pay_u_salt: string | null;
         nttdata_id?: string | null;
         nttdata_secret?: string | null;
+        hdfc_razorpay_id?: string;
+        hdfc_razorpay_secret?: string;
+        hdfc_razorpay_mid?: string;
         vendors_info?: [
             {
                 vendor_id: string;

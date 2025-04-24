@@ -58,6 +58,9 @@ export class CollectController {
       split_payments?: boolean;
       pay_u_key?: string | null;
       pay_u_salt: string | null;
+      hdfc_razorpay_id?: string;
+      hdfc_razorpay_secret?: string;
+      hdfc_razorpay_mid?: string;
       nttdata_id?: string | null;
       nttdata_secret?: string | null;
       vendors_info?: [
@@ -93,6 +96,9 @@ export class CollectController {
       vendors_info,
       pay_u_key,
       pay_u_salt,
+      hdfc_razorpay_id,
+      hdfc_razorpay_secret,
+      hdfc_razorpay_mid,
       nttdata_id,
       nttdata_secret,
     } = body;
@@ -133,6 +139,9 @@ export class CollectController {
           split_payments || false,
           pay_u_key,
           pay_u_salt,
+          hdfc_razorpay_id,
+          hdfc_razorpay_secret,
+          hdfc_razorpay_mid,
           nttdata_id,
           nttdata_secret,
           vendors_info,

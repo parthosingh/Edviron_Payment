@@ -15,6 +15,7 @@ import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import * as moment from 'moment-timezone';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { PayUService } from 'src/pay-u/pay-u.service';
+import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 @Injectable()
 export class CheckStatusService {
   constructor(
@@ -26,6 +27,7 @@ export class CheckStatusService {
     private readonly easebuzzService: EasebuzzService,
     private readonly cashfreeService: CashfreeService,
     private readonly payUService: PayUService,
+    private readonly hdfcRazorpay: HdfcRazorpayService,
   ) {}
   async checkStatus(collect_request_id: String) {
     console.log('checking status for', collect_request_id);
@@ -157,6 +159,48 @@ export class CheckStatusService {
         return await this.payUService.checkStatus(
           collectRequest._id.toString(),
         );
+
+      case Gateway.EDVIRON_HDFC_RAZORPAY:
+        const EDVIRON_HDFC_RAZORPAY = await this.hdfcRazorpay.checkPaymentStatus(
+          collect_request_id.toString(),
+          collectRequest,
+        );
+
+        let order_status = ""
+        if (EDVIRON_HDFC_RAZORPAY.status.toUpperCase() === 'SUCCESS') {
+          order_status = "SUCCESS"
+        } else {
+          order_status = "PENDING"
+        }
+
+        let statusCode;
+        if (EDVIRON_HDFC_RAZORPAY.status.toUpperCase() === 'SUCCESS') {
+          statusCode = 200;
+        } else {
+          statusCode = 400;
+        }
+        const Updateddate = EDVIRON_HDFC_RAZORPAY.details.transaction_time;
+        if (!Updateddate) {
+          throw new Error('No date found in the transaction status');
+        }
+        const ehr_status_response = {
+          status: order_status.toUpperCase(),
+          statusCode,
+          custom_order_id,
+          amount: parseInt(EDVIRON_HDFC_RAZORPAY?.amount),
+          details: {
+            payment_mode: EDVIRON_HDFC_RAZORPAY?.details?.payment_method,
+            bank_ref: EDVIRON_HDFC_RAZORPAY.details.bank_ref,
+            payment_method: { mode: EDVIRON_HDFC_RAZORPAY?.details?.payment_mode, method: EDVIRON_HDFC_RAZORPAY?.details?.payment_methods },
+            transaction_time: Updateddate,
+            formattedTransactionDate: `${new Date(Updateddate).getFullYear()}-${String(
+              new Date(Updateddate).getMonth() + 1,
+            ).padStart(2, '0')}-${String(new Date(Updateddate).getDate()).padStart(2, '0')}`,
+            order_status: EDVIRON_HDFC_RAZORPAY.status,
+          },
+        };
+        return ehr_status_response;
+
       case Gateway.PENDING:
         return await this.checkExpiry(collectRequest);
       case Gateway.EXPIRED:

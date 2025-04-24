@@ -16,12 +16,13 @@ var Gateway;
     Gateway["PHONEPE"] = "PHONEPE";
     Gateway["HDFC"] = "HDFC";
     Gateway["EDVIRON_PG"] = "EDVIRON_PG";
+    Gateway["EDVIRON_PAY_U"] = "EDVIRON_PAY_U";
     Gateway["EDVIRON_CCAVENUE"] = "EDVIRON_CCAVENUE";
     Gateway["EDVIRON_CASHFREE"] = "EDVIRON_CASHFREE";
     Gateway["EDVIRON_EASEBUZZ"] = "EDVIRON_EASEBUZZ";
     Gateway["PENDING"] = "PENDING";
     Gateway["EXPIRED"] = "EXPIRED";
-    Gateway["EDVIRON_PAY_U"] = "EDVIRON_PAY_U";
+    Gateway["EDVIRON_HDFC_RAZORPAY"] = "EDVIRON_HDFC_RAZORPAY";
     Gateway["EDVIRON_NTTDATA"] = "EDVIRON_NTTDATA";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let PaymentIds = class PaymentIds {
@@ -149,6 +150,26 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", Array)
 ], CollectRequest.prototype, "vendors_info", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "hdfc_razorpay_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "hdfc_razorpay_secret", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "hdfc_razorpay_payment_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "hdfc_razorpay_order_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "hdfc_razorpay_mid", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false, default: false }),
     __metadata("design:type", Boolean)

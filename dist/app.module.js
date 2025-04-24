@@ -23,6 +23,9 @@ const cashfree_controller_1 = require("./cashfree/cashfree.controller");
 const cashfree_module_1 = require("./cashfree/cashfree.module");
 const pay_u_module_1 = require("./pay-u/pay-u.module");
 const nttdata_module_1 = require("./nttdata/nttdata.module");
+const hdfc_razorpay_module_1 = require("./hdfc_razporpay/hdfc_razorpay.module");
+const cashfree_service_1 = require("./cashfree/cashfree.service");
+const ccavenue_service_1 = require("./ccavenue/ccavenue.service");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -39,9 +42,11 @@ exports.AppModule = AppModule = __decorate([
             cashfree_module_1.CashfreeModule,
             pay_u_module_1.PayUModule,
             nttdata_module_1.NttdataModule
+            pay_u_module_1.PayUModule,
+            hdfc_razorpay_module_1.HdfcRazorpayModule
         ],
         controllers: [app_controller_1.AppController, easebuzz_controller_1.EasebuzzController, cashfree_controller_1.CashfreeController],
-        providers: [app_service_1.AppService, easebuzz_service_1.EasebuzzService],
+        providers: [app_service_1.AppService, cashfree_service_1.CashfreeService, easebuzz_service_1.EasebuzzService, ccavenue_service_1.CcavenueService],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

@@ -5,6 +5,7 @@ import { PhonepeService } from 'src/phonepe/phonepe.service';
 import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
 import { platformChange } from './collect.controller';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
+import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 import { NttdataService } from 'src/nttdata/nttdata.service';
 export declare class CollectService {
     private readonly phonepeService;

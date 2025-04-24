@@ -20,9 +20,8 @@ let PayUService = class PayUService {
     constructor(databaseService) {
         this.databaseService = databaseService;
     }
-    async generate512HASH(key, txnid, amount, salt) {
-        const hashString = `${key}|${txnid}|${amount}|school_fee|edviron|noreply@edviron.com|||||||||||${salt}`;
-        console.log(hashString);
+    async generate512HASH(key, txnid, amount, salt, firstName) {
+        const hashString = `${key}|${txnid}|${amount}|school_fee|${firstName}|noreply@edviron.com|||||||||||${salt}`;
         const hash = await (0, sign_1.calculateSHA512Hash)(hashString);
         return hash;
     }

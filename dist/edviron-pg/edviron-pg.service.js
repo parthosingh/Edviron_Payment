@@ -321,6 +321,8 @@ let EdvironPgService = class EdvironPgService {
         if (request.gateway !== collect_request_schema_1.Gateway.PENDING) {
             if (request.isQRPayment && requestStatus.status === 'PENDING') {
                 requestStatus.status = transactionStatus_1.TransactionStatus.USER_DROPPED;
+                requestStatus.payment_message = 'SESSION EXPIRED';
+                requestStatus.reason = 'SESSION EXPIRED';
                 await requestStatus.save();
             }
             console.log(request.gateway, 'not Terminating');
@@ -328,6 +330,8 @@ let EdvironPgService = class EdvironPgService {
         }
         if (requestStatus.status === transactionStatus_1.TransactionStatus.PENDING) {
             requestStatus.status = transactionStatus_1.TransactionStatus.USER_DROPPED;
+            requestStatus.payment_message = 'SESSION EXPIRED';
+            requestStatus.reason = 'SESSION EXPIRED';
             await requestStatus.save();
             console.log(`Order terminated: ${request.gateway}`);
         }
