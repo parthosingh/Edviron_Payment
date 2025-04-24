@@ -13,9 +13,10 @@ export declare class CollectService {
     private readonly edvironPgService;
     private readonly databaseService;
     private readonly ccavenueService;
+    private readonly hdfcRazorpay;
     private readonly nttdataService;
-    constructor(phonepeService: PhonepeService, hdfcService: HdfcService, edvironPgService: EdvironPgService, databaseService: DatabaseService, ccavenueService: CcavenueService, nttdataService: NttdataService);
-    collect(amount: Number, callbackUrl: string, school_id: string, trustee_id: string, disabled_modes: string[] | undefined, platform_charges: platformChange[], clientId?: string, clientSecret?: string, webHook?: string, additional_data?: {}, custom_order_id?: string, req_webhook_urls?: string[], school_name?: string, easebuzz_sub_merchant_id?: string, ccavenue_merchant_id?: string, ccavenue_access_code?: string, ccavenue_working_key?: string, splitPayments?: boolean, pay_u_key?: string | null, pay_u_salt?: string | null, nttdata_id?: string | null, nttdata_secret?: string | null, vendor?: [
+    constructor(phonepeService: PhonepeService, hdfcService: HdfcService, edvironPgService: EdvironPgService, databaseService: DatabaseService, ccavenueService: CcavenueService, hdfcRazorpay: HdfcRazorpayService, nttdataService: NttdataService);
+    collect(amount: Number, callbackUrl: string, school_id: string, trustee_id: string, disabled_modes: string[] | undefined, platform_charges: platformChange[], clientId?: string, clientSecret?: string, webHook?: string, additional_data?: {}, custom_order_id?: string, req_webhook_urls?: string[], school_name?: string, easebuzz_sub_merchant_id?: string, ccavenue_merchant_id?: string, ccavenue_access_code?: string, ccavenue_working_key?: string, splitPayments?: boolean, pay_u_key?: string | null, pay_u_salt?: string | null, hdfc_razorpay_id?: string, hdfc_razorpay_secret?: string, hdfc_razorpay_mid?: string, nttdata_id?: string | null, nttdata_secret?: string | null, vendor?: [
         {
             vendor_id: string;
             percentage?: number;

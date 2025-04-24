@@ -92,7 +92,7 @@ export const generateSignature = (
   txnCurrency: string,
   txnType: string,
 ) => {
-  const resHashKey = process.env.NTT_REQUEST_HASH_KEY;
+  const resHashKey = process.env.NTT_REQUEST_HASH_KEY!;
   const signatureString =
     merchID + password + merchTxnID + amount + txnCurrency + txnType;
   const hmac = crypto.createHmac('sha512', resHashKey);

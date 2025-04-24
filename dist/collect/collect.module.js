@@ -24,7 +24,7 @@ exports.CollectModule = CollectModule;
 exports.CollectModule = CollectModule = __decorate([
     (0, common_1.Module)({
         controllers: [collect_controller_1.CollectController],
-        providers: [collect_service_1.CollectService, ccavenue_service_1.CcavenueService, nttdata_service_1.NttdataService],
+        providers: [collect_service_1.CollectService, ccavenue_service_1.CcavenueService, hdfc_razorpay_service_1.HdfcRazorpayService, nttdata_service_1.NttdataService],
         imports: [
             phonepe_module_1.PhonepeModule,
             database_module_1.DatabaseModule,

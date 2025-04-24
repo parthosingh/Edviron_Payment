@@ -1029,7 +1029,7 @@ let EdvironPgController = class EdvironPgController {
     async bulkTransactions(body, res, req) {
         console.time('bulk-transactions-report');
         const { trustee_id, token, searchParams, isCustomSearch, seachFilter, isQRCode, gateway, } = body;
-        let { payment_modes, } = body;
+        let { payment_modes } = body;
         if (!token)
             throw new Error('Token not provided');
         if (payment_modes?.includes('upi')) {

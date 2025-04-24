@@ -35,7 +35,7 @@ let CollectController = class CollectController {
             console.log(disabled_modes);
             let decrypted = _jwt.verify(jwt, process.env.KEY);
             console.log(decrypted);
-            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, school_id, trustee_id, disabled_modes, platform_charges, clientId, clientSecret, webHook, additional_data || {}, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, split_payments || false, pay_u_key, pay_u_salt, nttdata_id, nttdata_secret, vendors_info));
+            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, school_id, trustee_id, disabled_modes, platform_charges, clientId, clientSecret, webHook, additional_data || {}, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, split_payments || false, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, vendors_info));
         }
         catch (e) {
             console.log(e);

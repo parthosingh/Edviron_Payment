@@ -16,6 +16,7 @@ import * as moment from 'moment-timezone';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { PayUService } from 'src/pay-u/pay-u.service';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
+import { NttdataService } from 'src/nttdata/nttdata.service';
 @Injectable()
 export class CheckStatusService {
   constructor(
@@ -28,6 +29,7 @@ export class CheckStatusService {
     private readonly cashfreeService: CashfreeService,
     private readonly payUService: PayUService,
     private readonly hdfcRazorpay: HdfcRazorpayService,
+    private readonly nttdataService: NttdataService,
   ) {}
   async checkStatus(collect_request_id: String) {
     console.log('checking status for', collect_request_id);
@@ -161,16 +163,17 @@ export class CheckStatusService {
         );
 
       case Gateway.EDVIRON_HDFC_RAZORPAY:
-        const EDVIRON_HDFC_RAZORPAY = await this.hdfcRazorpay.checkPaymentStatus(
-          collect_request_id.toString(),
-          collectRequest,
-        );
+        const EDVIRON_HDFC_RAZORPAY =
+          await this.hdfcRazorpay.checkPaymentStatus(
+            collect_request_id.toString(),
+            collectRequest,
+          );
 
-        let order_status = ""
+        let order_status = '';
         if (EDVIRON_HDFC_RAZORPAY.status.toUpperCase() === 'SUCCESS') {
-          order_status = "SUCCESS"
+          order_status = 'SUCCESS';
         } else {
-          order_status = "PENDING"
+          order_status = 'PENDING';
         }
 
         let statusCode;
@@ -191,15 +194,27 @@ export class CheckStatusService {
           details: {
             payment_mode: EDVIRON_HDFC_RAZORPAY?.details?.payment_method,
             bank_ref: EDVIRON_HDFC_RAZORPAY.details.bank_ref,
-            payment_method: { mode: EDVIRON_HDFC_RAZORPAY?.details?.payment_mode, method: EDVIRON_HDFC_RAZORPAY?.details?.payment_methods },
+            payment_method: {
+              mode: EDVIRON_HDFC_RAZORPAY?.details?.payment_mode,
+              method: EDVIRON_HDFC_RAZORPAY?.details?.payment_methods,
+            },
             transaction_time: Updateddate,
-            formattedTransactionDate: `${new Date(Updateddate).getFullYear()}-${String(
+            formattedTransactionDate: `${new Date(
+              Updateddate,
+            ).getFullYear()}-${String(
               new Date(Updateddate).getMonth() + 1,
-            ).padStart(2, '0')}-${String(new Date(Updateddate).getDate()).padStart(2, '0')}`,
+            ).padStart(2, '0')}-${String(
+              new Date(Updateddate).getDate(),
+            ).padStart(2, '0')}`,
             order_status: EDVIRON_HDFC_RAZORPAY.status,
           },
         };
         return ehr_status_response;
+
+      case Gateway.EDVIRON_NTTDATA:
+        return await this.nttdataService.getTransactionStatus(
+          collect_request_id.toString(),
+        );
 
       case Gateway.PENDING:
         return await this.checkExpiry(collectRequest);
@@ -314,6 +329,10 @@ export class CheckStatusService {
       case Gateway.EDVIRON_PAY_U:
         return await this.payUService.checkStatus(
           collectRequest._id.toString(),
+        );
+      case Gateway.EDVIRON_NTTDATA:
+        return await this.nttdataService.getTransactionStatus(
+          collectRequest.toString(),
         );
       case Gateway.PENDING:
         return await this.checkExpiry(collectRequest);

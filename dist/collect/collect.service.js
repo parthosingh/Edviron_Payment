@@ -213,6 +213,7 @@ exports.CollectService = CollectService = __decorate([
         edviron_pg_service_1.EdvironPgService,
         database_service_1.DatabaseService,
         ccavenue_service_1.CcavenueService,
+        hdfc_razorpay_service_1.HdfcRazorpayService,
         nttdata_service_1.NttdataService])
 ], CollectService);
 //# sourceMappingURL=collect.service.js.map
