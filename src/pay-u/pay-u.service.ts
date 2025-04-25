@@ -15,10 +15,11 @@ export class PayUService {
     txnid: string,
     amount: number,
     salt: string,
+    firstName:string
   ) {
     // key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||SALT
-    const hashString = `${key}|${txnid}|${amount}|school_fee|edviron|noreply@edviron.com|||||||||||${salt}`;
-    console.log(hashString);
+    const hashString = `${key}|${txnid}|${amount}|school_fee|${firstName}|noreply@edviron.com|||||||||||${salt}`;
+    // console.log(hashString);
     // BuxMPz|67ece371867428170c271728|1|school_fee|edviron|noreply@edviron.com|||||||||||ePBfYcIbiJPsAyduYb3rPre11uRvaI7a
 
     const hash = await calculateSHA512Hash(hashString);

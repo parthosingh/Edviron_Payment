@@ -89,15 +89,20 @@ let PayUController = class PayUController {
         </script>
       `);
         }
-        const hash = await this.payUService.generate512HASH(request.pay_u_key, collect_id, request.amount, request.pay_u_salt);
+        const { student_details } = JSON.parse(request.additional_data);
+        const fullName = student_details.student_name?.trim() || '';
+        const nameParts = fullName.split(' ').filter(Boolean);
+        const firstName = nameParts[0] || 'NA';
+        const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+        const hash = await this.payUService.generate512HASH(request.pay_u_key, collect_id, request.amount, request.pay_u_salt, firstName);
         res.send(`<form action="https://secure.payu.in/_payment" method="post" name="redirect">
         <input type="hidden" name="key" value="${request.pay_u_key}" />
         <input type="hidden" name="txnid" value="${collect_id}" />
         <input type="hidden" name="productinfo" value="school_fee" />
         <input type="hidden" name="amount" value="${request.amount}" />
         <input type="hidden" name="email" value="noreply@edviron.com" />
-        <input type="hidden" name="firstname" value="edviron" />
-        <input type="hidden" name="lastname" value="edviron" />
+        <input type="hidden" name="firstname" value=${firstName} />
+        <input type="hidden" name="lastname" value=${lastName} />
         <input type="hidden" name="surl" value="${process.env.URL}/pay-u/callback/?collect_id=${collect_id}" />
         <input type="hidden" name="furl" value="${process.env.URL}/pay-u/callback/?collect_id=${collect_id}" />
         <input type="hidden" name="phone" value="0000000000" />

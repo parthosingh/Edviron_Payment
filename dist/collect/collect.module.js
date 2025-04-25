@@ -16,6 +16,7 @@ const hdfc_module_1 = require("../hdfc/hdfc.module");
 const edviron_pg_module_1 = require("../edviron-pg/edviron-pg.module");
 const ccavenue_module_1 = require("../ccavenue/ccavenue.module");
 const ccavenue_service_1 = require("../ccavenue/ccavenue.service");
+const hdfc_razorpay_service_1 = require("../hdfc_razporpay/hdfc_razorpay.service");
 const pay_u_service_1 = require("../pay-u/pay-u.service");
 let CollectModule = class CollectModule {
 };
@@ -23,7 +24,7 @@ exports.CollectModule = CollectModule;
 exports.CollectModule = CollectModule = __decorate([
     (0, common_1.Module)({
         controllers: [collect_controller_1.CollectController],
-        providers: [collect_service_1.CollectService, ccavenue_service_1.CcavenueService, pay_u_service_1.PayUService],
+        providers: [collect_service_1.CollectService, ccavenue_service_1.CcavenueService, hdfc_razorpay_service_1.HdfcRazorpayService, pay_u_service_1.PayUService],
         imports: [
             phonepe_module_1.PhonepeModule,
             database_module_1.DatabaseModule,

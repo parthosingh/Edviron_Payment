@@ -5,5 +5,6 @@ export declare const merchantKeySHA256: () => Promise<{
     key: any;
     iv: any;
 }>;
+export declare const generateHMACBase64Type: (signed_payload: string, secret: string) => any;
 export declare const encryptCard: (data: string, key: string, iv: string) => Promise<any>;
 export declare const decrypt: (encryptedData: string, key: string, iv: string) => Promise<any>;

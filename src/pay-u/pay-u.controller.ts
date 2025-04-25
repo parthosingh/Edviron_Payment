@@ -81,6 +81,15 @@ export class PayUController {
       `);
     }
 
+    if (req_status.status === PaymentStatus.SUCCESS) {
+      return res.send(`
+        <script>
+          alert('This payment has already been completed.');
+          window.location.href = '${process.env.URL}/pay-u/callback/?collect_id=${collect_id}';
+        </script>
+      `);
+    }
+
     const created_at = new Date(req_status.createdAt!).getTime();
     const now = Date.now();
     const expiry_duration = 15 * 60 * 1000;
@@ -93,12 +102,22 @@ export class PayUController {
         </script>
       `);
     }
+    const { student_details } = JSON.parse(request.additional_data);
+    const fullName = student_details.student_name?.trim() || '';
+
+    // Split name into parts
+    const nameParts = fullName.split(' ').filter(Boolean);
+
+    const firstName = nameParts[0] || 'NA';
+    const lastName =
+      nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
 
     const hash = await this.payUService.generate512HASH(
       request.pay_u_key,
       collect_id,
       request.amount,
       request.pay_u_salt,
+      firstName,
     );
 
     res.send(
@@ -108,8 +127,8 @@ export class PayUController {
         <input type="hidden" name="productinfo" value="school_fee" />
         <input type="hidden" name="amount" value="${request.amount}" />
         <input type="hidden" name="email" value="noreply@edviron.com" />
-        <input type="hidden" name="firstname" value="edviron" />
-        <input type="hidden" name="lastname" value="edviron" />
+        <input type="hidden" name="firstname" value=${firstName} />
+        <input type="hidden" name="lastname" value=${lastName} />
         <input type="hidden" name="surl" value="${process.env.URL}/pay-u/callback/?collect_id=${collect_id}" />
         <input type="hidden" name="furl" value="${process.env.URL}/pay-u/callback/?collect_id=${collect_id}" />
         <input type="hidden" name="phone" value="0000000000" />

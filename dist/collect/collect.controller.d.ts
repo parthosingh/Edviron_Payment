@@ -36,6 +36,9 @@ export declare class CollectController {
         split_payments?: boolean;
         pay_u_key?: string | null;
         pay_u_salt: string | null;
+        hdfc_razorpay_id?: string;
+        hdfc_razorpay_secret?: string;
+        hdfc_razorpay_mid?: string;
         vendors_info?: [
             {
                 vendor_id: string;

@@ -48,4 +48,5 @@ export declare class CashfreeController {
         client_id: string;
         sign: string;
     }): Promise<any>;
+    testSecureWebhook(req: any, res: any): Promise<any>;
 }

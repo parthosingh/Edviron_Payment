@@ -27,12 +27,13 @@ export declare enum Gateway {
     PHONEPE = "PHONEPE",
     HDFC = "HDFC",
     EDVIRON_PG = "EDVIRON_PG",
+    EDVIRON_PAY_U = "EDVIRON_PAY_U",
     EDVIRON_CCAVENUE = "EDVIRON_CCAVENUE",
     EDVIRON_CASHFREE = "EDVIRON_CASHFREE",
     EDVIRON_EASEBUZZ = "EDVIRON_EASEBUZZ",
     PENDING = "PENDING",
     EXPIRED = "EXPIRED",
-    EDVIRON_PAY_U = "EDVIRON_PAY_U"
+    EDVIRON_HDFC_RAZORPAY = "EDVIRON_HDFC_RAZORPAY"
 }
 export declare class PaymentIds {
     cashfree_id?: string | null;
@@ -73,6 +74,11 @@ export declare class CollectRequest {
             name?: string;
         }
     ];
+    hdfc_razorpay_id: string;
+    hdfc_razorpay_secret: string;
+    hdfc_razorpay_payment_id: string;
+    hdfc_razorpay_order_id: string;
+    hdfc_razorpay_mid: string;
     isSplitPayments: boolean;
     isQRPayment: boolean;
     pay_u_key: string;
