@@ -78,6 +78,14 @@ let PayUController = class PayUController {
         </script>
       `);
         }
+        if (req_status.status === collect_req_status_schema_1.PaymentStatus.SUCCESS) {
+            return res.send(`
+        <script>
+          alert('This payment has already been completed.');
+          window.location.href = '${process.env.URL}/pay-u/callback/?collect_id=${collect_id}';
+        </script>
+      `);
+        }
         const created_at = new Date(req_status.createdAt).getTime();
         const now = Date.now();
         const expiry_duration = 15 * 60 * 1000;

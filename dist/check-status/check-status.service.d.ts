@@ -21,7 +21,21 @@ export declare class CheckStatusService {
     private readonly payUService;
     private readonly hdfcRazorpay;
     constructor(databaseService: DatabaseService, hdfcService: HdfcService, phonePeService: PhonepeService, edvironPgService: EdvironPgService, ccavenueService: CcavenueService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, payUService: PayUService, hdfcRazorpay: HdfcRazorpayService);
-    checkStatus(collect_request_id: String): Promise<"Invalid request" | {
+    checkStatus(collect_request_id: String): Promise<{
+        status: any;
+        amount: number;
+        transaction_amount: number;
+        status_code: number;
+        details: {
+            payment_mode: any;
+            bank_ref: any;
+            payment_methods: {};
+            transaction_time: any;
+        };
+        mode: any;
+        net_amount_debit: any;
+        bank_ref_num: any;
+    } | {
         status: TransactionStatus;
         amount: number;
     } | {
@@ -40,20 +54,6 @@ export declare class CheckStatusService {
             order_status: any;
         };
     } | {
-        status: any;
-        amount: number;
-        transaction_amount: number;
-        status_code: number;
-        details: {
-            payment_mode: any;
-            bank_ref: any;
-            payment_methods: {};
-            transaction_time: any;
-        };
-        mode: any;
-        net_amount_debit: any;
-        bank_ref_num: any;
-    } | {
         status: string;
         statusCode: number;
         custom_order_id: string | null;
@@ -69,7 +69,7 @@ export declare class CheckStatusService {
             formattedTransactionDate: string;
             order_status: any;
         };
-    } | {
+    } | "Invalid request" | {
         status: string;
         custom_order_id: string;
         amount: number;
@@ -107,10 +107,7 @@ export declare class CheckStatusService {
         transaction_amount?: undefined;
         details?: undefined;
     } | undefined>;
-    checkStatusByOrderId(order_id: String, school_id: string): Promise<"Invalid request" | {
-        status: TransactionStatus;
-        amount: number;
-    } | {
+    checkStatusByOrderId(order_id: String, school_id: string): Promise<{
         status: any;
         amount: number;
         transaction_amount: number;
@@ -125,6 +122,9 @@ export declare class CheckStatusService {
         net_amount_debit: any;
         bank_ref_num: any;
     } | {
+        status: TransactionStatus;
+        amount: number;
+    } | "Invalid request" | {
         status: string;
         custom_order_id: string;
         amount: number;
@@ -163,10 +163,10 @@ export declare class CheckStatusService {
         amount: number;
         status_code: number;
     }>;
-    checkStatusV2(collect_request_id: String): Promise<"Invalid request" | {
+    checkStatusV2(collect_request_id: String): Promise<{
         status: TransactionStatus;
         amount: number;
-    } | {
+    } | "Invalid request" | {
         status: string;
         custom_order_id: string;
         amount: number;

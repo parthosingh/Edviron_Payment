@@ -91,6 +91,7 @@ let PayUService = class PayUService {
             }
             if (req_status.status === collect_req_status_schema_1.PaymentStatus.PENDING) {
                 req_status.status = collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
+                req_status.payment_message = 'Session Expired';
                 await req_status.save();
                 return true;
             }

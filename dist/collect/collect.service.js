@@ -206,11 +206,11 @@ exports.CollectService = CollectService;
 exports.CollectService = CollectService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [phonepe_service_1.PhonepeService,
-    hdfc_service_1.HdfcService,
-    edviron_pg_service_1.EdvironPgService,
-    database_service_1.DatabaseService,
-    ccavenue_service_1.CcavenueService,
-    hdfc_razorpay_service_1.HdfcRazorpayService,
-    pay_u_service_1.PayUService])
+        hdfc_service_1.HdfcService,
+        edviron_pg_service_1.EdvironPgService,
+        database_service_1.DatabaseService,
+        ccavenue_service_1.CcavenueService,
+        hdfc_razorpay_service_1.HdfcRazorpayService,
+        pay_u_service_1.PayUService])
 ], CollectService);
 //# sourceMappingURL=collect.service.js.map
