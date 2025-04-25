@@ -16,6 +16,8 @@ const qs = require("qs");
 const axios_1 = require("axios");
 const { unserialize } = require('php-unserialize');
 const database_service_1 = require("../database/database.service");
+const mongoose_1 = require("mongoose");
+const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 let PayUService = class PayUService {
     constructor(databaseService) {
         this.databaseService = databaseService;
@@ -74,6 +76,29 @@ let PayUService = class PayUService {
         catch (e) {
             console.log(e);
             throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async terminateOrder(collect_id) {
+        try {
+            const [request, req_status] = await Promise.all([
+                this.databaseService.CollectRequestModel.findById(collect_id),
+                this.databaseService.CollectRequestStatusModel.findOne({
+                    collect_id: new mongoose_1.Types.ObjectId(collect_id),
+                }),
+            ]);
+            if (!request || !req_status) {
+                throw new common_1.BadRequestException('Order not found');
+            }
+            if (req_status.status === collect_req_status_schema_1.PaymentStatus.PENDING) {
+                req_status.status = collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
+                req_status.payment_message = 'Session Expired';
+                await req_status.save();
+                return true;
+            }
+            return req_status.status !== collect_req_status_schema_1.PaymentStatus.SUCCESS;
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message || 'Failed to terminate order');
         }
     }
 };

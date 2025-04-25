@@ -52,6 +52,7 @@ let PayUController = class PayUController {
                 hash: 'fc9d296e94e641ad711817a85dc3eab17b2660d4c411e1e5972131819d81c68411ac50c230f56795d2e393691811a2e17a1c8a39d6d51c050197c0a85b810318',
             });
             const response = await axios_1.default.post(url, data, { headers });
+            console.log(response.data);
             return response.data;
         }
         catch (error) {
@@ -60,9 +61,41 @@ let PayUController = class PayUController {
     }
     async redirectPayu(req, res) {
         const collect_id = req.query.collect_id;
-        const request = await this.databaseService.CollectRequestModel.findById(collect_id);
-        if (!request) {
+        const [request, req_status] = await Promise.all([
+            this.databaseService.CollectRequestModel.findById(collect_id),
+            this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: new mongoose_1.Types.ObjectId(collect_id),
+            }),
+        ]);
+        if (!request || !req_status) {
             throw new common_1.ConflictException('url fordge');
+        }
+        if (req_status.status === collect_req_status_schema_1.PaymentStatus.SUCCESS) {
+            return res.send(`
+        <script>
+          alert('This payment has already been completed.');
+          window.location.href = '${process.env.URL}/pay-u/callback/?collect_id=${collect_id}';
+        </script>
+      `);
+        }
+        if (req_status.status === collect_req_status_schema_1.PaymentStatus.SUCCESS) {
+            return res.send(`
+        <script>
+          alert('This payment has already been completed.');
+          window.location.href = '${process.env.URL}/pay-u/callback/?collect_id=${collect_id}';
+        </script>
+      `);
+        }
+        const created_at = new Date(req_status.createdAt).getTime();
+        const now = Date.now();
+        const expiry_duration = 15 * 60 * 1000;
+        if (now - created_at > expiry_duration) {
+            return res.send(`
+        <script>
+          alert('The payment session has expired. Please initiate the payment again.');
+          window.location.href = '${process.env.URL}/pay-u/callback/?collect_id=${collect_id}';
+        </script>
+      `);
         }
         const { student_details } = JSON.parse(request.additional_data);
         const fullName = student_details.student_name?.trim() || '';
@@ -71,23 +104,23 @@ let PayUController = class PayUController {
         const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
         const hash = await this.payUService.generate512HASH(request.pay_u_key, collect_id, request.amount, request.pay_u_salt, firstName);
         res.send(`<form action="https://secure.payu.in/_payment" method="post" name="redirect">
-      <input type="hidden" name="key" value="${request.pay_u_key}" />
-      <input type="hidden" name="txnid" value="${collect_id}" />
-      <input type="hidden" name="productinfo" value="school_fee" />
-      <input type="hidden" name="amount" value="${request.amount}" />
-      <input type="hidden" name="email" value="noreply@edviron.com" />
-      <input type="hidden" name="firstname" value=${firstName} />
-      <input type="hidden" name="lastname" value=${lastName} />
-      <input type="hidden" name="surl" value="${process.env.URL}/pay-u/callback/?collect_id=${collect_id}" />
-      <input type="hidden" name="furl" value="${process.env.URL}/pay-u/callback/?collect_id=${collect_id}" />
-      <input type="hidden" name="phone" value="0000000000" />
-      <input type="hidden" name="hash" value="${hash}" />
-    </form>
-    <script type="text/javascript">
-                      window.onload = function(){
-                          document.forms['redirect'].submit();
-                      }
-                  </script>`);
+        <input type="hidden" name="key" value="${request.pay_u_key}" />
+        <input type="hidden" name="txnid" value="${collect_id}" />
+        <input type="hidden" name="productinfo" value="school_fee" />
+        <input type="hidden" name="amount" value="${request.amount}" />
+        <input type="hidden" name="email" value="noreply@edviron.com" />
+        <input type="hidden" name="firstname" value=${firstName} />
+        <input type="hidden" name="lastname" value=${lastName} />
+        <input type="hidden" name="surl" value="${process.env.URL}/pay-u/callback/?collect_id=${collect_id}" />
+        <input type="hidden" name="furl" value="${process.env.URL}/pay-u/callback/?collect_id=${collect_id}" />
+        <input type="hidden" name="phone" value="0000000000" />
+        <input type="hidden" name="hash" value="${hash}" />
+      </form>
+      <script type="text/javascript">
+          window.onload = function(){
+              document.forms['redirect'].submit();
+          }
+      </script>`);
     }
     async testUpi() {
         try {
@@ -120,6 +153,7 @@ let PayUController = class PayUController {
         }
     }
     async handleCallback(req, res) {
+        console.log(req.body);
         const { collect_id } = req.query;
         const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
         if (!collectRequest) {
@@ -144,6 +178,7 @@ let PayUController = class PayUController {
         return res.redirect(callbackUrl.toString());
     }
     async handleCallbackPost(req, res) {
+        console.log(req.body);
         const { collect_id } = req.query;
         const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
         if (!collectRequest) {

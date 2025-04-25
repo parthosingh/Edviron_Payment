@@ -8,10 +8,17 @@ import { EdvironPgModule } from '../edviron-pg/edviron-pg.module';
 import { CcavenueModule } from 'src/ccavenue/ccavenue.module';
 import { CcavenueService } from 'src/ccavenue/ccavenue.service';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
+import { PayUService } from 'src/pay-u/pay-u.service';
 
 @Module({
   controllers: [CollectController],
-  providers: [CollectService,CcavenueService, HdfcRazorpayService],
-  imports: [PhonepeModule, DatabaseModule, HdfcModule, EdvironPgModule,CcavenueModule],
+  providers: [CollectService, CcavenueService, HdfcRazorpayService, PayUService],
+  imports: [
+    PhonepeModule,
+    DatabaseModule,
+    HdfcModule,
+    EdvironPgModule,
+    CcavenueModule,
+  ],
 })
 export class CollectModule {}

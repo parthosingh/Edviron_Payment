@@ -10,11 +10,21 @@ import {
   CollectRequestStatus,
   CollectRequestStatusDocument,
 } from './schemas/collect_req_status.schema';
-import { VendorTransaction, VendorTransactionDocument } from './schemas/vendor.Transaction.schema';
+import {
+  VendorTransaction,
+  VendorTransactionDocument,
+} from './schemas/vendor.Transaction.schema';
 import { ErpWebhooksLogs } from './schemas/erp.webhooks.logs.schema';
-import { BatchTransactions, BatchTransactionsDocument } from './schemas/batch.transactions.schema';
+import {
+  BatchTransactions,
+  BatchTransactionsDocument,
+} from './schemas/batch.transactions.schema';
 import { ErrorLogs, ErrorLogsDocument } from './schemas/error.logs.schema';
-import { PlatformCharge, SchoolMdr, SchoolMdrDocument } from './schemas/platform.charges.schema';
+import {
+  PlatformCharge,
+  SchoolMdr,
+  SchoolMdrDocument,
+} from './schemas/platform.charges.schema';
 
 @Injectable()
 export class DatabaseService {

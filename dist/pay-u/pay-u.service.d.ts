@@ -18,4 +18,5 @@ export declare class PayUService {
         net_amount_debit: any;
         bank_ref_num: any;
     }>;
+    terminateOrder(collect_id: string): Promise<boolean>;
 }
