@@ -682,4 +682,63 @@ export class CashfreeService {
       );
     }
   }
+
+  async createMerchant(
+    client_id: string,
+    merchant_id: string,
+    merchant_email: string,
+    merchant_name: string,
+    poc_phone: string,
+    merchant_site_url: string,//edviron
+    business_details: {
+      business_legal_name: string;
+      business_type: string;
+      business_model: string;
+      business_category: string;
+      business_subcategory: string;
+      business_pan: string;
+      business_address: string;
+      business_city: string;
+      business_state: string;
+      business_postalcode: string;
+      business_country: string;
+      business_gstin: string;
+      business_cin: string;
+    },
+    website_details: {
+      website_contact_us: string;
+      website_privacy_policy: string;
+      website_refund_policy: string;
+      website_tnc: string; // hard cided same for all
+      // website_shop_delivery: string;
+      // website_checkout_page: string;
+      // website_about_us: string;
+      // website_pricing_policy: string;
+      // website_product_service: string;
+      // website_address: string;
+    },
+    bank_account_details: {
+      bank_account_number: string;
+      bank_ifsc: string;
+    },
+    signatory_details: {
+      signatory_name: string;
+      signatory_pan: string;
+    },
+    additional_details: {
+      payment_gateway_use_case: string;
+      payment_gateway_mcc: string;
+      exporter_type: string;
+      gcl_purpose_code: string;
+      import_export_code: number;
+      gcl_transaction_value: string;
+      gcl_transaction_volume: string;
+      gcl_use_case: string;
+    },
+  ):Promise<string> {
+ 
+    return 'Merchant Rerquest Created Successfully on Cahfree'
+  }
 }
+
+
