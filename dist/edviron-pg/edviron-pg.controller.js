@@ -2366,15 +2366,10 @@ let EdvironPgController = class EdvironPgController {
         const startOfDayUTC = new Date(await this.edvironPgService.convertISTStartToUTC(start_date));
         const endOfDayUTC = new Date(await this.edvironPgService.convertISTEndToUTC(end_date));
         try {
-            const aggegation = await this.databaseService.CollectRequestModel.aggregate([
+            const aggregation = await this.databaseService.CollectRequestModel.aggregate([
                 {
                     $match: {
-                        school_id: school_id,
-                    },
-                },
-                {
-                    $sort: {
-                        createdAt: 1,
+                        school_id,
                     },
                 },
                 {
@@ -2385,16 +2380,10 @@ let EdvironPgController = class EdvironPgController {
                         as: 'result',
                     },
                 },
-                {
-                    $unwind: {
-                        path: '$result',
-                    },
-                },
+                { $unwind: '$result' },
                 {
                     $match: {
-                        'result.status': {
-                            $in: ['success', 'SUCCESS'],
-                        },
+                        'result.status': { $in: ['success', 'SUCCESS'] },
                         $or: [
                             {
                                 'result.payment_time': {
@@ -2404,9 +2393,7 @@ let EdvironPgController = class EdvironPgController {
                                 },
                             },
                             {
-                                'result.payment_time': {
-                                    $eq: null,
-                                },
+                                'result.payment_time': { $eq: null },
                             },
                             {
                                 'result.updatedAt': {
@@ -2418,20 +2405,62 @@ let EdvironPgController = class EdvironPgController {
                     },
                 },
                 {
-                    $group: {
-                        _id: null,
-                        totalTransactions: {
-                            $sum: 1,
-                        },
-                        totalVolume: {
-                            $sum: '$result.transaction_amount',
-                        },
+                    $addFields: {
+                        year: { $year: '$result.updatedAt' },
+                        month: { $month: '$result.updatedAt' },
                     },
                 },
+                {
+                    $group: {
+                        _id: { year: '$year', month: '$month' },
+                        totalTransactions: { $sum: 1 },
+                        totalVolume: { $sum: '$result.transaction_amount' },
+                    },
+                },
+                { $sort: { '_id.year': 1, '_id.month': 1 } },
             ]);
-            return aggegation;
+            const monthlyMap = new Map();
+            let yearlyTotalTransactions = 0;
+            let yearlyTotalVolume = 0;
+            aggregation.forEach((item) => {
+                const key = `${item._id.year}-${item._id.month}`;
+                monthlyMap.set(key, item);
+                yearlyTotalTransactions += item.totalTransactions;
+                yearlyTotalVolume += item.totalVolume;
+            });
+            const start = new Date(start_date);
+            const end = new Date(end_date);
+            const monthlyReport = [];
+            const current = new Date(start.getFullYear(), start.getMonth(), 1);
+            const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+            while (current <= endMonth) {
+                const year = current.getFullYear();
+                const month = current.getMonth() + 1;
+                const key = `${year}-${month}`;
+                if (monthlyMap.has(key)) {
+                    monthlyReport.push(monthlyMap.get(key));
+                }
+                else {
+                    monthlyReport.push({
+                        _id: { year, month },
+                        totalTransactions: 0,
+                        totalVolume: 0,
+                    });
+                }
+                current.setMonth(current.getMonth() + 1);
+            }
+            return {
+                yearlyTotal: {
+                    totalTransactions: yearlyTotalTransactions,
+                    totalVolume: yearlyTotalVolume,
+                },
+                monthlyReport,
+            };
         }
-        catch (e) { }
+        catch (e) {
+            console.error('Error generating report:', e.message);
+            return { error: 'Failed to generate report' };
+        }
     }
 };
 exports.EdvironPgController = EdvironPgController;

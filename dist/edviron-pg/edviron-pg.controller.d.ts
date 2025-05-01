@@ -329,5 +329,16 @@ export declare class EdvironPgController {
         school_id: string;
         start_date: string;
         end_date: string;
-    }): Promise<any[] | undefined>;
+    }): Promise<{
+        yearlyTotal: {
+            totalTransactions: number;
+            totalVolume: number;
+        };
+        monthlyReport: any[];
+        error?: undefined;
+    } | {
+        error: string;
+        yearlyTotal?: undefined;
+        monthlyReport?: undefined;
+    }>;
 }
