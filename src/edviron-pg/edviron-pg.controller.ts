@@ -3476,115 +3476,116 @@ export class EdvironPgController {
     @Body() body: { school_id: string; start_date: string; end_date: string },
   ) {
     const { school_id, start_date, end_date } = body;
+  
     const startOfDayUTC = new Date(
       await this.edvironPgService.convertISTStartToUTC(start_date),
-    ); // Start of December 6 in IST
+    );
     const endOfDayUTC = new Date(
       await this.edvironPgService.convertISTEndToUTC(end_date),
     );
+  
     try {
-      const aggegation =
-        await this.databaseService.CollectRequestModel.aggregate([
-          {
-            $match:
-              /**
-               * query: The query in MQL.
-               */
-              {
-                school_id: school_id,
-                // gateway:{$ne:'PENDING'}
-              },
+      const aggregation = await this.databaseService.CollectRequestModel.aggregate([
+        {
+          $match: {
+            school_id,
           },
-          {
-            $sort:
-              /**
-               * Provide any number of field/order pairs.
-               */
-              {
-                createdAt: 1,
-              },
+        },
+        {
+          $lookup: {
+            from: 'collectrequeststatuses',
+            localField: '_id',
+            foreignField: 'collect_id',
+            as: 'result',
           },
-          {
-            $lookup:
-              /**
-               * from: The target collection.
-               * localField: The local join field.
-               * foreignField: The target join field.
-               * as: The name for the results.
-               * pipeline: Optional pipeline to run on the foreign collection.
-               * let: Optional variables to use in the pipeline field stages.
-               */
+        },
+        { $unwind: '$result' },
+        {
+          $match: {
+            'result.status': { $in: ['success', 'SUCCESS'] },
+            $or: [
               {
-                from: 'collectrequeststatuses',
-                localField: '_id',
-                foreignField: 'collect_id',
-                as: 'result',
-              },
-          },
-          {
-            $unwind:
-              /**
-               * path: Path to the array field.
-               * includeArrayIndex: Optional name for index.
-               * preserveNullAndEmptyArrays: Optional
-               *   toggle to unwind null and empty values.
-               */
-              {
-                path: '$result',
-                // includeArrayIndex: 'string',
-                // preserveNullAndEmptyArrays: boolean
-              },
-          },
-          {
-            $match:
-              /**
-               * query: The query in MQL.
-               */
-              {
-                'result.status': {
-                  $in: ['success', 'SUCCESS'],
-                },
-                $or: [
-                  {
-                    'result.payment_time': {
-                      $ne: null,
-                      $gte: startOfDayUTC,
-                      $lte: endOfDayUTC,
-                    },
-                  },
-                  {
-                    'result.payment_time': {
-                      $eq: null,
-                    },
-                  },
-                  {
-                    'result.updatedAt': {
-                      $gte: startOfDayUTC,
-                      $lte: endOfDayUTC,
-                    },
-                  },
-                ],
-              },
-          },
-          {
-            $group:
-              /**
-               * _id: The id of the group.
-               * fieldN: The first field name.
-               */
-              {
-                _id: null,
-                totalTransactions: {
-                  $sum: 1,
-                },
-                totalVolume: {
-                  $sum: '$result.transaction_amount',
+                'result.payment_time': {
+                  $ne: null,
+                  $gte: startOfDayUTC,
+                  $lte: endOfDayUTC,
                 },
               },
+              {
+                'result.payment_time': { $eq: null },
+              },
+              {
+                'result.updatedAt': {
+                  $gte: startOfDayUTC,
+                  $lte: endOfDayUTC,
+                },
+              },
+            ],
           },
-        ]);
+        },
+        {
+          $addFields: {
+            year: { $year: '$result.updatedAt' },
+            month: { $month: '$result.updatedAt' },
+          },
+        },
+        {
+          $group: {
+            _id: { year: '$year', month: '$month' },
+            totalTransactions: { $sum: 1 },
+            totalVolume: { $sum: '$result.transaction_amount' },
+          },
+        },
+        { $sort: { '_id.year': 1, '_id.month': 1 } },
+      ]);
+  
+      const monthlyMap = new Map();
+      let yearlyTotalTransactions = 0;
+      let yearlyTotalVolume = 0;
+  
+      aggregation.forEach((item) => {
+        const key = `${item._id.year}-${item._id.month}`;
+        monthlyMap.set(key, item);
+        yearlyTotalTransactions += item.totalTransactions;
+        yearlyTotalVolume += item.totalVolume;
+      });
 
-        return aggegation
-    } catch (e) {}
+      const start = new Date(start_date);
+      const end = new Date(end_date);
+      const monthlyReport = [];
+  
+      const current = new Date(start.getFullYear(), start.getMonth(), 1);
+      const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+  
+      while (current <= endMonth) {
+        const year = current.getFullYear();
+        const month = current.getMonth() + 1; 
+        const key = `${year}-${month}`;
+  
+        if (monthlyMap.has(key)) {
+          monthlyReport.push(monthlyMap.get(key));
+        } else {
+          monthlyReport.push({
+            _id: { year, month },
+            totalTransactions: 0,
+            totalVolume: 0,
+          });
+        }
+  
+        current.setMonth(current.getMonth() + 1);
+      }
+  
+      return {
+        monthlyReport,
+        yearlyTotal: {
+          totalTransactions: yearlyTotalTransactions,
+          totalVolume: yearlyTotalVolume,
+        },
+      };
+    } catch (e) {
+      console.error('Error generating report:', e);
+      return { error: 'Failed to generate report' };
+    }
   }
+   
 }
