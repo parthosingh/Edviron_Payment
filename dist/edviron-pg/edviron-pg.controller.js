@@ -2450,15 +2450,15 @@ let EdvironPgController = class EdvironPgController {
                 current.setMonth(current.getMonth() + 1);
             }
             return {
-                monthlyReport,
                 yearlyTotal: {
                     totalTransactions: yearlyTotalTransactions,
                     totalVolume: yearlyTotalVolume,
                 },
+                monthlyReport,
             };
         }
         catch (e) {
-            console.error('Error generating report:', e);
+            console.error('Error generating report:', e.message);
             return { error: 'Failed to generate report' };
         }
     }

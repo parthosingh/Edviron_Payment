@@ -330,15 +330,15 @@ export declare class EdvironPgController {
         start_date: string;
         end_date: string;
     }): Promise<{
-        monthlyReport: any[];
         yearlyTotal: {
             totalTransactions: number;
             totalVolume: number;
         };
+        monthlyReport: any[];
         error?: undefined;
     } | {
         error: string;
-        monthlyReport?: undefined;
         yearlyTotal?: undefined;
+        monthlyReport?: undefined;
     }>;
 }

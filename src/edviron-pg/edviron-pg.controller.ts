@@ -3576,14 +3576,14 @@ export class EdvironPgController {
       }
   
       return {
-        monthlyReport,
         yearlyTotal: {
           totalTransactions: yearlyTotalTransactions,
           totalVolume: yearlyTotalVolume,
         },
+        monthlyReport,
       };
     } catch (e) {
-      console.error('Error generating report:', e);
+      console.error('Error generating report:', e.message);
       return { error: 'Failed to generate report' };
     }
   }
