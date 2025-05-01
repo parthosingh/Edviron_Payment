@@ -325,4 +325,9 @@ export declare class EdvironPgController {
         url: string;
         trustee_id: string;
     }): Promise<any>;
+    genSchoolReport(body: {
+        school_id: string;
+        start_date: string;
+        end_date: string;
+    }): Promise<any[] | undefined>;
 }

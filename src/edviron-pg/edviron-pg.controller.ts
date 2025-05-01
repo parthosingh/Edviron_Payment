@@ -3470,4 +3470,121 @@ export class EdvironPgController {
       throw new BadRequestException(e.message);
     }
   }
+
+  @Post('school-report-new')
+  async genSchoolReport(
+    @Body() body: { school_id: string; start_date: string; end_date: string },
+  ) {
+    const { school_id, start_date, end_date } = body;
+    const startOfDayUTC = new Date(
+      await this.edvironPgService.convertISTStartToUTC(start_date),
+    ); // Start of December 6 in IST
+    const endOfDayUTC = new Date(
+      await this.edvironPgService.convertISTEndToUTC(end_date),
+    );
+    try {
+      const aggegation =
+        await this.databaseService.CollectRequestModel.aggregate([
+          {
+            $match:
+              /**
+               * query: The query in MQL.
+               */
+              {
+                school_id: school_id,
+                // gateway:{$ne:'PENDING'}
+              },
+          },
+          {
+            $sort:
+              /**
+               * Provide any number of field/order pairs.
+               */
+              {
+                createdAt: 1,
+              },
+          },
+          {
+            $lookup:
+              /**
+               * from: The target collection.
+               * localField: The local join field.
+               * foreignField: The target join field.
+               * as: The name for the results.
+               * pipeline: Optional pipeline to run on the foreign collection.
+               * let: Optional variables to use in the pipeline field stages.
+               */
+              {
+                from: 'collectrequeststatuses',
+                localField: '_id',
+                foreignField: 'collect_id',
+                as: 'result',
+              },
+          },
+          {
+            $unwind:
+              /**
+               * path: Path to the array field.
+               * includeArrayIndex: Optional name for index.
+               * preserveNullAndEmptyArrays: Optional
+               *   toggle to unwind null and empty values.
+               */
+              {
+                path: '$result',
+                // includeArrayIndex: 'string',
+                // preserveNullAndEmptyArrays: boolean
+              },
+          },
+          {
+            $match:
+              /**
+               * query: The query in MQL.
+               */
+              {
+                'result.status': {
+                  $in: ['success', 'SUCCESS'],
+                },
+                $or: [
+                  {
+                    'result.payment_time': {
+                      $ne: null,
+                      $gte: startOfDayUTC,
+                      $lte: endOfDayUTC,
+                    },
+                  },
+                  {
+                    'result.payment_time': {
+                      $eq: null,
+                    },
+                  },
+                  {
+                    'result.updatedAt': {
+                      $gte: startOfDayUTC,
+                      $lte: endOfDayUTC,
+                    },
+                  },
+                ],
+              },
+          },
+          {
+            $group:
+              /**
+               * _id: The id of the group.
+               * fieldN: The first field name.
+               */
+              {
+                _id: null,
+                totalTransactions: {
+                  $sum: 1,
+                },
+                totalVolume: {
+                  $sum: '$result.transaction_amount',
+                },
+              },
+          },
+        ]);
+
+        return aggegation
+    } catch (e) {}
+  }
 }

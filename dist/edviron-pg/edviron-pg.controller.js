@@ -2361,6 +2361,78 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async genSchoolReport(body) {
+        const { school_id, start_date, end_date } = body;
+        const startOfDayUTC = new Date(await this.edvironPgService.convertISTStartToUTC(start_date));
+        const endOfDayUTC = new Date(await this.edvironPgService.convertISTEndToUTC(end_date));
+        try {
+            const aggegation = await this.databaseService.CollectRequestModel.aggregate([
+                {
+                    $match: {
+                        school_id: school_id,
+                    },
+                },
+                {
+                    $sort: {
+                        createdAt: 1,
+                    },
+                },
+                {
+                    $lookup: {
+                        from: 'collectrequeststatuses',
+                        localField: '_id',
+                        foreignField: 'collect_id',
+                        as: 'result',
+                    },
+                },
+                {
+                    $unwind: {
+                        path: '$result',
+                    },
+                },
+                {
+                    $match: {
+                        'result.status': {
+                            $in: ['success', 'SUCCESS'],
+                        },
+                        $or: [
+                            {
+                                'result.payment_time': {
+                                    $ne: null,
+                                    $gte: startOfDayUTC,
+                                    $lte: endOfDayUTC,
+                                },
+                            },
+                            {
+                                'result.payment_time': {
+                                    $eq: null,
+                                },
+                            },
+                            {
+                                'result.updatedAt': {
+                                    $gte: startOfDayUTC,
+                                    $lte: endOfDayUTC,
+                                },
+                            },
+                        ],
+                    },
+                },
+                {
+                    $group: {
+                        _id: null,
+                        totalTransactions: {
+                            $sum: 1,
+                        },
+                        totalVolume: {
+                            $sum: '$result.transaction_amount',
+                        },
+                    },
+                },
+            ]);
+            return aggegation;
+        }
+        catch (e) { }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -2730,6 +2802,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "testWebhook", null);
+__decorate([
+    (0, common_1.Post)('school-report-new'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "genSchoolReport", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
