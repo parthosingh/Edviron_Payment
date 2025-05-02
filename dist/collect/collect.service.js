@@ -125,7 +125,6 @@ let CollectService = class CollectService {
             request.smartgateway_customer_id = smartgateway_customer_id;
             request.smartgateway_merchant_id = smartgateway_merchant_id;
             request.smart_gateway_api_key = smart_gateway_api_key;
-            request.gateway = collect_request_schema_1.Gateway.SMART_GATEWAY;
             await request.save();
             const data = await this.hdfcSmartgatewayService.createOrder(request, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key);
             return { url: data?.url, request: data?.request };

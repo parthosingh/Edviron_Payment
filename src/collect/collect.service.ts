@@ -177,7 +177,6 @@ export class CollectService {
       request.smartgateway_customer_id = smartgateway_customer_id;
       request.smartgateway_merchant_id = smartgateway_merchant_id;
       request.smart_gateway_api_key = smart_gateway_api_key;
-      request.gateway = Gateway.SMART_GATEWAY;
       await request.save();
       const data = await this.hdfcSmartgatewayService.createOrder(
         request,
