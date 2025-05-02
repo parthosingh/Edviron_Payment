@@ -68,7 +68,7 @@ let SmartgatewayService = class SmartgatewayService {
                     payment_page_client_id: 'hdfcmaster',
                     action: 'paymentPage',
                     currency: 'INR',
-                    return_url: `https://q3t9s8qk-4001.inc1.devtunnels.ms/smartgateway/callback`,
+                    return_url: `${process.env.URL}/smartgateway/callback`,
                     description: '',
                     first_name: student_name?.split(' ')[0] || '',
                     last_name: student_name?.split(' ')[1] || '',
