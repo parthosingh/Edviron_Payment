@@ -16,6 +16,7 @@ import * as moment from 'moment-timezone';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { PayUService } from 'src/pay-u/pay-u.service';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
+import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
 @Injectable()
 export class CheckStatusService {
   constructor(
@@ -28,6 +29,7 @@ export class CheckStatusService {
     private readonly cashfreeService: CashfreeService,
     private readonly payUService: PayUService,
     private readonly hdfcRazorpay: HdfcRazorpayService,
+    private readonly hdfcSmartgatewayService: SmartgatewayService,
   ) {}
   async checkStatus(collect_request_id: String) {
     console.log('checking status for', collect_request_id);
@@ -97,6 +99,13 @@ export class CheckStatusService {
           custom_order_id,
           capture_status: collect_req_status.capture_status || 'PENDING',
         };
+
+      case Gateway.SMART_GATEWAY:
+        const data = await this.hdfcSmartgatewayService.checkStatus(
+          collectRequest._id.toString(),
+          collectRequest,
+        );
+        return data;
 
       case Gateway.EDVIRON_EASEBUZZ:
         const easebuzzStatus = await this.easebuzzService.statusResponse(
@@ -254,6 +263,13 @@ export class CheckStatusService {
           ...edv_response,
           edviron_order_id: collectRequest._id.toString(),
         };
+
+      case Gateway.SMART_GATEWAY:
+        const data = await this.hdfcSmartgatewayService.checkStatus(
+          collectRequest._id.toString(),
+          collectRequest,
+        );
+        return data;
 
       case Gateway.EDVIRON_EASEBUZZ:
         const easebuzzStatus = await this.easebuzzService.statusResponse(

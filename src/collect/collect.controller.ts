@@ -55,6 +55,9 @@ export class CollectController {
       ccavenue_merchant_id?: string;
       ccavenue_access_code?: string;
       ccavenue_working_key?: string;
+      smartgateway_merchant_id?: string | null;
+      smartgateway_customer_id?: string | null;
+      smart_gateway_api_key?: string | null;
       split_payments?: boolean;
       pay_u_key?:string | null;
       pay_u_salt: string | null;
@@ -90,6 +93,9 @@ export class CollectController {
       ccavenue_access_code,
       ccavenue_working_key,
       ccavenue_merchant_id,
+      smartgateway_merchant_id,
+      smartgateway_customer_id,
+      smart_gateway_api_key,
       split_payments,
       vendors_info,
       pay_u_key,
@@ -132,6 +138,9 @@ export class CollectController {
           ccavenue_merchant_id,
           ccavenue_access_code,
           ccavenue_working_key,
+          smartgateway_customer_id,
+          smartgateway_merchant_id,
+          smart_gateway_api_key,
           split_payments || false,
           pay_u_key,
           pay_u_salt,
@@ -168,5 +177,5 @@ export class CollectController {
     res.redirect(callbackUrl.toString());
     // const callback_url = `${collect_request?.callbackUrl}&status=cancelled&reason=dropped-by-user`;
     // res.redirect(callback_url);
-  } 
+  }
 }

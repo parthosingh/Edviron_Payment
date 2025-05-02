@@ -13,6 +13,7 @@ import { EasebuzzController } from './easebuzz/easebuzz.controller';
 import { EasebuzzService } from './easebuzz/easebuzz.service';
 import { CashfreeController } from './cashfree/cashfree.controller';
 import { CashfreeModule } from './cashfree/cashfree.module';
+import { SmartgatewayModule } from './smartgateway/smartgateway.module';
 
 import { PayUModule } from './pay-u/pay-u.module';
 

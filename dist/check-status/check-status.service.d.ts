@@ -10,6 +10,7 @@ import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { PayUService } from 'src/pay-u/pay-u.service';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
+import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
 export declare class CheckStatusService {
     private readonly databaseService;
     private readonly hdfcService;
@@ -20,143 +21,10 @@ export declare class CheckStatusService {
     private readonly cashfreeService;
     private readonly payUService;
     private readonly hdfcRazorpay;
-    constructor(databaseService: DatabaseService, hdfcService: HdfcService, phonePeService: PhonepeService, edvironPgService: EdvironPgService, ccavenueService: CcavenueService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, payUService: PayUService, hdfcRazorpay: HdfcRazorpayService);
-    checkStatus(collect_request_id: String): Promise<{
-        status: TransactionStatus;
-        amount: number;
-    } | "Invalid request" | {
-        status: any;
-        status_code: number;
-        custom_order_id: string | null;
-        amount: number;
-        details: {
-            payment_mode: String;
-            bank_ref: any;
-            payment_method: {
-                mode: any;
-            };
-            transaction_time: Date | undefined;
-            formattedTransactionDate: string;
-            order_status: any;
-        };
-    } | {
-        status: any;
-        amount: number;
-        transaction_amount: number;
-        status_code: number;
-        details: {
-            payment_mode: any;
-            bank_ref: any;
-            payment_methods: {};
-            transaction_time: any;
-        };
-        mode: any;
-        net_amount_debit: any;
-        bank_ref_num: any;
-    } | {
-        status: string;
-        statusCode: number;
-        custom_order_id: string | null;
-        amount: number;
-        details: {
-            payment_mode: any;
-            bank_ref: any;
-            payment_method: {
-                mode: any;
-                method: any;
-            };
-            transaction_time: any;
-            formattedTransactionDate: string;
-            order_status: any;
-        };
-    } | {
-        status: string;
-        custom_order_id: string;
-        amount: number;
-        status_code: number;
-    } | {
-        status: TransactionStatus;
-        amount: Number;
-        transaction_amount: Number;
-        status_code: number;
-        details: {
-            payment_mode: String;
-            bank_ref: string;
-            payment_methods: any;
-            transaction_time: string;
-            formattedTransactionDate: string;
-            order_status: TransactionStatus;
-            isSettlementComplete: null;
-            transfer_utr: null;
-            service_charge: null;
-        };
-        custom_order_id: string | null;
-    } | {
-        custom_order_id: string | null;
-        capture_status: string;
-        status: TransactionStatus;
-        amount: number;
-        transaction_amount?: number | undefined;
-        status_code?: number | undefined;
-        details?: any;
-    } | {
-        status: PaymentStatus;
-        custom_order_id: string | null;
-        amount: number;
-        status_code: number;
-        transaction_amount?: undefined;
-        details?: undefined;
-    } | undefined>;
-    checkStatusByOrderId(order_id: String, school_id: string): Promise<{
-        status: TransactionStatus;
-        amount: number;
-    } | "Invalid request" | {
-        status: any;
-        amount: number;
-        transaction_amount: number;
-        status_code: number;
-        details: {
-            payment_mode: any;
-            bank_ref: any;
-            payment_methods: {};
-            transaction_time: any;
-        };
-        mode: any;
-        net_amount_debit: any;
-        bank_ref_num: any;
-    } | {
-        status: string;
-        custom_order_id: string;
-        amount: number;
-        status_code: number;
-    } | {
-        status: any;
-        status_code: number;
-        edviron_order_id: string;
-        amount: number;
-        details: {
-            bank_ref: any;
-            payment_method: {
-                mode: any;
-            };
-            transaction_time: Date | undefined;
-            formattedTransactionDate: string;
-            order_status: any;
-        };
-    } | {
-        edviron_order_id: string;
-        status: TransactionStatus;
-        amount: number;
-        transaction_amount?: number | undefined;
-        status_code?: number | undefined;
-        details?: any;
-        custom_order_id?: string | undefined;
-    } | {
-        status: PaymentStatus;
-        edviron_order_id: string;
-        amount: number;
-        status_code: number;
-    } | undefined>;
+    private readonly hdfcSmartgatewayService;
+    constructor(databaseService: DatabaseService, hdfcService: HdfcService, phonePeService: PhonepeService, edvironPgService: EdvironPgService, ccavenueService: CcavenueService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, payUService: PayUService, hdfcRazorpay: HdfcRazorpayService, hdfcSmartgatewayService: SmartgatewayService);
+    checkStatus(collect_request_id: String): Promise<any>;
+    checkStatusByOrderId(order_id: String, school_id: string): Promise<any>;
     checkExpiry(request: CollectRequest): Promise<"Invalid request" | {
         status: string;
         custom_order_id: string;

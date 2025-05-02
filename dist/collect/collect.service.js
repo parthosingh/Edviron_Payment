@@ -21,8 +21,9 @@ const ccavenue_service_1 = require("../ccavenue/ccavenue.service");
 const nodemailer = require("nodemailer");
 const hdfc_razorpay_service_1 = require("../hdfc_razporpay/hdfc_razorpay.service");
 const pay_u_service_1 = require("../pay-u/pay-u.service");
+const smartgateway_service_1 = require("../smartgateway/smartgateway.service");
 let CollectService = class CollectService {
-    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService, hdfcRazorpay, payuService) {
+    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService, hdfcRazorpay, payuService, hdfcSmartgatewayService) {
         this.phonepeService = phonepeService;
         this.hdfcService = hdfcService;
         this.edvironPgService = edvironPgService;
@@ -30,8 +31,9 @@ let CollectService = class CollectService {
         this.ccavenueService = ccavenueService;
         this.hdfcRazorpay = hdfcRazorpay;
         this.payuService = payuService;
+        this.hdfcSmartgatewayService = hdfcSmartgatewayService;
     }
-    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, vendor) {
+    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, vendor) {
         console.log(req_webhook_urls, 'webhook url');
         console.log(webHook);
         console.log(ccavenue_merchant_id, 'ccavenue', ccavenue_access_code, ccavenue_working_key);
@@ -118,6 +120,16 @@ let CollectService = class CollectService {
                     .join('_')}`,
                 request,
             };
+        }
+        if (smartgateway_customer_id && smartgateway_merchant_id && smart_gateway_api_key) {
+            request.smartgateway_customer_id = smartgateway_customer_id;
+            request.smartgateway_merchant_id = smartgateway_merchant_id;
+            request.smart_gateway_api_key = smart_gateway_api_key;
+            request.gateway = collect_request_schema_1.Gateway.SMART_GATEWAY;
+            await request.save();
+            const data = await this.hdfcSmartgatewayService.createOrder(request, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key);
+            console.log(data);
+            return { url: data?.url, request: data?.request };
         }
         const transaction = (gateway === collect_request_schema_1.Gateway.PENDING
             ? await this.edvironPgService.collect(request, platform_charges, school_name, splitPayments || false, vendor)
@@ -211,6 +223,7 @@ exports.CollectService = CollectService = __decorate([
         database_service_1.DatabaseService,
         ccavenue_service_1.CcavenueService,
         hdfc_razorpay_service_1.HdfcRazorpayService,
-        pay_u_service_1.PayUService])
+        pay_u_service_1.PayUService,
+        smartgateway_service_1.SmartgatewayService])
 ], CollectService);
 //# sourceMappingURL=collect.service.js.map

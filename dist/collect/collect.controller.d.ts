@@ -33,6 +33,9 @@ export declare class CollectController {
         ccavenue_merchant_id?: string;
         ccavenue_access_code?: string;
         ccavenue_working_key?: string;
+        smartgateway_merchant_id?: string | null;
+        smartgateway_customer_id?: string | null;
+        smart_gateway_api_key?: string | null;
         split_payments?: boolean;
         pay_u_key?: string | null;
         pay_u_salt: string | null;

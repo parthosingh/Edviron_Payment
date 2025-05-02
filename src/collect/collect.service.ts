@@ -14,6 +14,7 @@ import { CcavenueService } from 'src/ccavenue/ccavenue.service';
 import * as nodemailer from 'nodemailer';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 import { PayUService } from 'src/pay-u/pay-u.service';
+import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
 @Injectable()
 export class CollectService {
   constructor(
@@ -24,6 +25,7 @@ export class CollectService {
     private readonly ccavenueService: CcavenueService,
     private readonly hdfcRazorpay: HdfcRazorpayService,
     private readonly payuService: PayUService,
+    private readonly hdfcSmartgatewayService: SmartgatewayService,
   ) {}
   async collect(
     amount: Number,
@@ -43,6 +45,9 @@ export class CollectService {
     ccavenue_merchant_id?: string,
     ccavenue_access_code?: string,
     ccavenue_working_key?: string,
+    smartgateway_customer_id?: string | null,
+    smartgateway_merchant_id?: string | null,
+    smart_gateway_api_key?: string | null,
     splitPayments?: boolean,
     pay_u_key?: string | null,
     pay_u_salt?: string | null,
@@ -168,6 +173,22 @@ export class CollectService {
         request,
       };
     }
+    if (smartgateway_customer_id && smartgateway_merchant_id && smart_gateway_api_key) {
+      request.smartgateway_customer_id = smartgateway_customer_id;
+      request.smartgateway_merchant_id = smartgateway_merchant_id;
+      request.smart_gateway_api_key = smart_gateway_api_key;
+      request.gateway = Gateway.SMART_GATEWAY;
+      await request.save();
+      const data = await this.hdfcSmartgatewayService.createOrder(
+        request,
+        smartgateway_customer_id,
+        smartgateway_merchant_id,
+        smart_gateway_api_key
+      );
+      console.log(data);
+      return { url: data?.url, request: data?.request };
+    }
+
     const transaction = (
       gateway === Gateway.PENDING
         ? await this.edvironPgService.collect(
