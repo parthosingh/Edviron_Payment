@@ -24,8 +24,9 @@ const moment = require("moment-timezone");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
 const pay_u_service_1 = require("../pay-u/pay-u.service");
 const hdfc_razorpay_service_1 = require("../hdfc_razporpay/hdfc_razorpay.service");
+const smartgateway_service_1 = require("../smartgateway/smartgateway.service");
 let CheckStatusService = class CheckStatusService {
-    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay) {
+    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay, hdfcSmartgatewayService) {
         this.databaseService = databaseService;
         this.hdfcService = hdfcService;
         this.phonePeService = phonePeService;
@@ -35,6 +36,7 @@ let CheckStatusService = class CheckStatusService {
         this.cashfreeService = cashfreeService;
         this.payUService = payUService;
         this.hdfcRazorpay = hdfcRazorpay;
+        this.hdfcSmartgatewayService = hdfcSmartgatewayService;
     }
     async checkStatus(collect_request_id) {
         console.log('checking status for', collect_request_id);
@@ -91,6 +93,9 @@ let CheckStatusService = class CheckStatusService {
                     custom_order_id,
                     capture_status: collect_req_status.capture_status || 'PENDING',
                 };
+            case collect_request_schema_1.Gateway.SMART_GATEWAY:
+                const data = await this.hdfcSmartgatewayService.checkStatus(collectRequest._id.toString(), collectRequest);
+                return data;
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
                 const easebuzzStatus = await this.easebuzzService.statusResponse(collect_request_id.toString(), collectRequest);
                 let status_code;
@@ -218,6 +223,9 @@ let CheckStatusService = class CheckStatusService {
                     ...edv_response,
                     edviron_order_id: collectRequest._id.toString(),
                 };
+            case collect_request_schema_1.Gateway.SMART_GATEWAY:
+                const data = await this.hdfcSmartgatewayService.checkStatus(collectRequest._id.toString(), collectRequest);
+                return data;
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
                 const easebuzzStatus = await this.easebuzzService.statusResponse(collectidString, collectRequest);
                 let status_code;
@@ -430,6 +438,7 @@ exports.CheckStatusService = CheckStatusService = __decorate([
         easebuzz_service_1.EasebuzzService,
         cashfree_service_1.CashfreeService,
         pay_u_service_1.PayUService,
-        hdfc_razorpay_service_1.HdfcRazorpayService])
+        hdfc_razorpay_service_1.HdfcRazorpayService,
+        smartgateway_service_1.SmartgatewayService])
 ], CheckStatusService);
 //# sourceMappingURL=check-status.service.js.map

@@ -11,10 +11,27 @@ import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeModule } from 'src/cashfree/cashfree.module';
 import { PayUService } from 'src/pay-u/pay-u.service';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
+import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
+
+
+ 
 
 @Module({
   controllers: [CheckStatusController],
-  providers: [CheckStatusService, CcavenueService, EasebuzzService, PayUService, HdfcRazorpayService],
-  imports: [DatabaseModule, PhonepeModule, CashfreeModule, HdfcModule, EdvironPgModule],
+  providers: [
+    CheckStatusService,
+    CcavenueService,
+    EasebuzzService,
+    SmartgatewayService,
+    PayUService, 
+    HdfcRazorpayService
+  ],
+  imports: [
+    DatabaseModule,
+    PhonepeModule,
+    CashfreeModule,
+    HdfcModule,
+    EdvironPgModule,
+  ],
 })
 export class CheckStatusModule {}

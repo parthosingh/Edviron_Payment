@@ -23,6 +23,7 @@ var Gateway;
     Gateway["PENDING"] = "PENDING";
     Gateway["EXPIRED"] = "EXPIRED";
     Gateway["EDVIRON_HDFC_RAZORPAY"] = "EDVIRON_HDFC_RAZORPAY";
+    Gateway["SMART_GATEWAY"] = "EDVIRON_SMARTGATEWAY";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let PaymentIds = class PaymentIds {
 };
@@ -137,6 +138,18 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "ccavenue_working_key", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "smartgateway_merchant_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "smartgateway_customer_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "smart_gateway_api_key", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)

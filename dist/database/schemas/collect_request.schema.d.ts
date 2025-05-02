@@ -33,7 +33,8 @@ export declare enum Gateway {
     EDVIRON_EASEBUZZ = "EDVIRON_EASEBUZZ",
     PENDING = "PENDING",
     EXPIRED = "EXPIRED",
-    EDVIRON_HDFC_RAZORPAY = "EDVIRON_HDFC_RAZORPAY"
+    EDVIRON_HDFC_RAZORPAY = "EDVIRON_HDFC_RAZORPAY",
+    SMART_GATEWAY = "EDVIRON_SMARTGATEWAY"
 }
 export declare class PaymentIds {
     cashfree_id?: string | null;
@@ -64,6 +65,9 @@ export declare class CollectRequest {
     ccavenue_merchant_id: string;
     ccavenue_access_code: string;
     ccavenue_working_key: string;
+    smartgateway_merchant_id: string;
+    smartgateway_customer_id: string;
+    smart_gateway_api_key: string;
     deepLink: string;
     paymentIds: PaymentIds;
     vendors_info?: [

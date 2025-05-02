@@ -12,6 +12,7 @@ export enum Gateway {
   PENDING='PENDING',
   EXPIRED='EXPIRED',
   EDVIRON_HDFC_RAZORPAY = 'EDVIRON_HDFC_RAZORPAY',
+  SMART_GATEWAY = 'EDVIRON_SMARTGATEWAY',
 }
 
 @Schema()
@@ -95,6 +96,15 @@ export class CollectRequest {
 
   @Prop({ required: false })
   ccavenue_working_key: string;
+
+  @Prop({ required: false })
+  smartgateway_merchant_id: string;
+
+  @Prop({ required: false })
+  smartgateway_customer_id: string;
+
+  @Prop({ required: false })
+  smart_gateway_api_key: string;
 
   @Prop({ required: false })
   deepLink: string;
