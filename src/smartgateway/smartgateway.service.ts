@@ -85,7 +85,6 @@ export class SmartgatewayService {
       };
 
       const { data } = await axios.request(config);
-      console.log('data', data); 
       const updatedCollectRequest =
         await this.databaseService.CollectRequestModel.findById(
           collectRequest._id,

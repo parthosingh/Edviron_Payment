@@ -185,7 +185,6 @@ export class CollectService {
         smartgateway_merchant_id,
         smart_gateway_api_key
       );
-      console.log(data);
       return { url: data?.url, request: data?.request };
     }
 

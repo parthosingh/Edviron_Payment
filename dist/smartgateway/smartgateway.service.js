@@ -75,7 +75,6 @@ let SmartgatewayService = class SmartgatewayService {
                 },
             };
             const { data } = await axios_1.default.request(config);
-            console.log('data', data);
             const updatedCollectRequest = await this.databaseService.CollectRequestModel.findById(collectRequest._id);
             if (!updatedCollectRequest) {
                 throw new common_1.BadRequestException(`CollectRequest with ID ${collectRequest._id} not found.`);

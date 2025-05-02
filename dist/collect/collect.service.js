@@ -128,7 +128,6 @@ let CollectService = class CollectService {
             request.gateway = collect_request_schema_1.Gateway.SMART_GATEWAY;
             await request.save();
             const data = await this.hdfcSmartgatewayService.createOrder(request, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key);
-            console.log(data);
             return { url: data?.url, request: data?.request };
         }
         const transaction = (gateway === collect_request_schema_1.Gateway.PENDING
