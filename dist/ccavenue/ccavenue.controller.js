@@ -153,6 +153,29 @@ let CcavenueController = class CcavenueController {
                 throw new Error('Collect request not found');
             collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_CCAVENUE;
             await collectReq.save();
+            if (collectReq.school_id === '6819e115e79a645e806c0a70') {
+                console.log('new flow');
+                const status = await this.ccavenueService.checkStatusProd(collectReq, collectIdObject);
+                const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: new mongoose_1.Types.ObjectId(collectIdObject) });
+                if (!requestStatus) {
+                    throw new common_1.BadRequestException('status not foubnd');
+                }
+                const order_info = JSON.parse(status.decrypt_res);
+                let payment_method = order_info.order_option_type;
+                let details = status.decrypt_res;
+                if (order_info.order_option_type === 'OPTUPI') {
+                    payment_method = 'upi';
+                    const details_data = {
+                        upi: { channel: null, upi_id: 'NA' },
+                    };
+                    details = JSON.stringify(details_data);
+                }
+                requestStatus.status = status.status;
+                requestStatus.payment_method = payment_method;
+                requestStatus.details = details;
+                await requestStatus.save();
+                return res.send(order_info);
+            }
             const status = await this.ccavenueService.checkStatus(collectReq, collectIdObject);
             const orderDetails = JSON.parse(status.decrypt_res);
             console.log(orderDetails, 'order details');

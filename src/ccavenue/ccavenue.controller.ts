@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { CcavenueService } from './ccavenue.service';
 import { Types } from 'mongoose';
@@ -196,7 +196,35 @@ export class CcavenueController {
 
       collectReq.gateway = Gateway.EDVIRON_CCAVENUE;
       await collectReq.save();
+        if(collectReq.school_id==='6819e115e79a645e806c0a70'){
+          console.log('new flow');
+          
+          const status=await this.ccavenueService.checkStatusProd(
+            collectReq,
+            collectIdObject
+          )
+          const requestStatus=await this.databaseService.CollectRequestStatusModel.findOne({collect_id:new Types.ObjectId(collectIdObject)})
+          if(!requestStatus){
+            throw new BadRequestException('status not foubnd')
+          } 
+          const  order_info=JSON.parse(status.decrypt_res)
+          let payment_method=order_info.order_option_type
+          let details=status.decrypt_res
 
+          if (order_info.order_option_type === 'OPTUPI') {
+            payment_method = 'upi';
+            const details_data = {
+              upi: { channel: null, upi_id: 'NA' },
+            };
+            details = JSON.stringify(details_data);
+          }
+          requestStatus.status=status.status
+          requestStatus.payment_method=payment_method
+          requestStatus.details=details
+
+          await requestStatus.save()
+          return res.send(order_info)
+        }
       const status = await this.ccavenueService.checkStatus(
         collectReq,
         collectIdObject,

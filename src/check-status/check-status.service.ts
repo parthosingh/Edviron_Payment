@@ -140,6 +140,12 @@ export class CheckStatusService {
         };
         return ezb_status_response;
       case Gateway.EDVIRON_CCAVENUE:
+        if(collectRequest.school_id==='6819e115e79a645e806c0a70'){
+          return await this.ccavenueService.checkStatusProd(
+            collectRequest,
+            collect_request_id.toString(),
+          )
+        }
         const res = await this.ccavenueService.checkStatus(
           collectRequest,
           collect_request_id.toString(),
@@ -303,6 +309,12 @@ export class CheckStatusService {
         };
         return ezb_status_response;
       case Gateway.EDVIRON_CCAVENUE:
+        if(collectRequest.school_id==='6819e115e79a645e806c0a70'){
+          return await this.ccavenueService.checkStatusProd(
+            collectRequest,
+            collectidString,
+          )
+        }
         const res = await this.ccavenueService.checkStatus(
           collectRequest,
           collectidString,

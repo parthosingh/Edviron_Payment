@@ -125,6 +125,9 @@ let CheckStatusService = class CheckStatusService {
                 };
                 return ezb_status_response;
             case collect_request_schema_1.Gateway.EDVIRON_CCAVENUE:
+                if (collectRequest.school_id === '6819e115e79a645e806c0a70') {
+                    return await this.ccavenueService.checkStatusProd(collectRequest, collect_request_id.toString());
+                }
                 const res = await this.ccavenueService.checkStatus(collectRequest, collect_request_id.toString());
                 let status_codes;
                 if (res.status.toUpperCase() === transactionStatus_1.TransactionStatus.SUCCESS) {
@@ -254,6 +257,9 @@ let CheckStatusService = class CheckStatusService {
                 };
                 return ezb_status_response;
             case collect_request_schema_1.Gateway.EDVIRON_CCAVENUE:
+                if (collectRequest.school_id === '6819e115e79a645e806c0a70') {
+                    return await this.ccavenueService.checkStatusProd(collectRequest, collectidString);
+                }
                 const res = await this.ccavenueService.checkStatus(collectRequest, collectidString);
                 const order_info = JSON.parse(res.decrypt_res);
                 let status_codes;
