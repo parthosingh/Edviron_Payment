@@ -174,7 +174,13 @@ let CcavenueController = class CcavenueController {
                 requestStatus.payment_method = payment_method;
                 requestStatus.details = details;
                 await requestStatus.save();
-                return res.send(order_info);
+                const callbackUrl = new URL(collectReq?.callbackUrl);
+                if (status.status.toUpperCase() !== `SUCCESS`) {
+                    console.log('payment failure', status.status);
+                    return res.redirect(`${callbackUrl.toString()}?EdvironCollectRequestId=${collectIdObject}status=cancelled&reason=payment-declined`);
+                }
+                callbackUrl.searchParams.set('EdvironCollectRequestId', collectIdObject);
+                return res.redirect(callbackUrl.toString());
             }
             const status = await this.ccavenueService.checkStatus(collectReq, collectIdObject);
             const orderDetails = JSON.parse(status.decrypt_res);

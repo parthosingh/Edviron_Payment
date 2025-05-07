@@ -206,7 +206,7 @@ export class CcavenueController {
           const requestStatus=await this.databaseService.CollectRequestStatusModel.findOne({collect_id:new Types.ObjectId(collectIdObject)})
           if(!requestStatus){
             throw new BadRequestException('status not foubnd')
-          } 
+          }  
           const  order_info=JSON.parse(status.decrypt_res)
           let payment_method=order_info.order_option_type
           let details=status.decrypt_res
@@ -223,7 +223,16 @@ export class CcavenueController {
           requestStatus.details=details
 
           await requestStatus.save()
-          return res.send(order_info)
+          const callbackUrl = new URL(collectReq?.callbackUrl);
+          if (status.status.toUpperCase() !== `SUCCESS`) {
+            console.log('payment failure',status.status);
+            
+            return res.redirect(
+              `${callbackUrl.toString()}?EdvironCollectRequestId=${collectIdObject}status=cancelled&reason=payment-declined`,
+            );
+          }
+          callbackUrl.searchParams.set('EdvironCollectRequestId', collectIdObject);
+          return res.redirect(callbackUrl.toString());
         }
       const status = await this.ccavenueService.checkStatus(
         collectReq,
