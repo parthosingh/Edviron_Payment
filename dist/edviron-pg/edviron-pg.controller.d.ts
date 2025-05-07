@@ -21,10 +21,10 @@
 /// <reference types="mongoose/types/utility" />
 /// <reference types="mongoose/types/validation" />
 /// <reference types="mongoose/types/virtuals" />
-/// <reference types="mongoose" />
 /// <reference types="mongoose/types/inferschematype" />
 import { DatabaseService } from '../database/database.service';
 import { EdvironPgService } from './edviron-pg.service';
+import { Types } from 'mongoose';
 import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
@@ -341,4 +341,15 @@ export declare class EdvironPgController {
         yearlyTotal?: undefined;
         monthlyReport?: undefined;
     }>;
+    bulkSubTrusteeTransactions(body: {
+        trustee_id: string;
+        token: string;
+        searchParams?: string;
+        isCustomSearch?: boolean;
+        seachFilter?: string;
+        payment_modes?: string[];
+        isQRCode?: boolean;
+        gateway?: string[];
+        school_ids: Types.ObjectId[];
+    }, res: any, req: any): Promise<void>;
 }
