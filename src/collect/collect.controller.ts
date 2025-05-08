@@ -32,7 +32,7 @@ export class CollectController {
   constructor(
     private readonly collectService: CollectService,
     private readonly databaseService: DatabaseService,
-  ) {}
+  ) { }
   @Post('/')
   async collect(
     @Body()
@@ -66,6 +66,10 @@ export class CollectController {
       hdfc_razorpay_mid?: string;
       nttdata_id?: string | null;
       nttdata_secret?: string | null;
+      nttdata_hash_req_key?: string | null;
+      nttdata_hash_res_key?: string | null;
+      nttdata_res_salt?: string | null;
+      nttdata_req_salt?: string | null;
       vendors_info?: [
         {
           vendor_id: string;
@@ -107,6 +111,10 @@ export class CollectController {
       hdfc_razorpay_mid,
       nttdata_id,
       nttdata_secret,
+      nttdata_hash_req_key,
+      nttdata_hash_res_key,
+      nttdata_res_salt,
+      nttdata_req_salt,
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -153,6 +161,10 @@ export class CollectController {
           hdfc_razorpay_mid,
           nttdata_id,
           nttdata_secret,
+          nttdata_hash_req_key,
+          nttdata_hash_res_key,
+          nttdata_res_salt,
+          nttdata_req_salt,
           vendors_info,
         ),
       );

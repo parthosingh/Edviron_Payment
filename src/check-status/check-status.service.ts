@@ -227,6 +227,7 @@ export class CheckStatusService {
         return ehr_status_response;
 
       case Gateway.EDVIRON_NTTDATA:
+        console.log('checking status for NTTDATA', collect_request_id);
         return await this.nttdataService.getTransactionStatus(
           collect_request_id.toString(),
         );

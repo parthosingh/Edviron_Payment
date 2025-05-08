@@ -14,34 +14,30 @@ const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const crypto = require("crypto");
 const axios_1 = require("axios");
+const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const sign_1 = require("../utils/sign");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const mongoose_1 = require("mongoose");
 let NttdataService = class NttdataService {
     constructor(databaseService) {
         this.databaseService = databaseService;
-        this.ENC_KEY = process.env.NTT_ENCRYPTION_KEY || '';
-        this.REQ_SALT = process.env.NTT_ENCRYPTION_KEY || '';
         this.IV = Buffer.from([
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
         ]);
-        this.ALGORITHM = 'aes-256-cbc';
-        this.PASSWORD = Buffer.from(this.ENC_KEY, 'utf8');
-        this.SALT = Buffer.from(this.REQ_SALT, 'utf8');
     }
-    encrypt(text) {
-        const derivedKey = crypto.pbkdf2Sync(this.PASSWORD, this.SALT, 65536, 32, 'sha512');
-        const cipher = crypto.createCipheriv(this.ALGORITHM, derivedKey, this.IV);
+    encrypt(text, ENC_KEY, REQ_SALT) {
+        const derivedKey = crypto.pbkdf2Sync(Buffer.from(ENC_KEY, 'utf8'), Buffer.from(REQ_SALT, 'utf8'), 65536, 32, 'sha512');
+        const cipher = crypto.createCipheriv("aes-256-cbc", derivedKey, this.IV);
         let encrypted = cipher.update(text, 'utf8');
         encrypted = Buffer.concat([encrypted, cipher.final()]);
         return encrypted.toString('hex');
     }
-    decrypt(text) {
-        const respassword = Buffer.from('75AEF0FA1B94B3C10D4F5B268F757F11', 'utf8');
-        const ressalt = Buffer.from('75AEF0FA1B94B3C10D4F5B268F757F11', 'utf8');
+    decrypt(text, RES_ENC_KEY, RES_SALT) {
+        const respassword = Buffer.from(RES_ENC_KEY, 'utf8');
+        const ressalt = Buffer.from(RES_SALT, 'utf8');
         const derivedKey = crypto.pbkdf2Sync(respassword, ressalt, 65536, 32, 'sha512');
         const encryptedText = Buffer.from(text, 'hex');
-        const decipher = crypto.createDecipheriv(this.ALGORITHM, derivedKey, this.IV);
+        const decipher = crypto.createDecipheriv("aes-256-cbc", derivedKey, this.IV);
         let decrypted = decipher.update(encryptedText);
         decrypted = Buffer.concat([decrypted, decipher.final()]);
         return decrypted.toString();
@@ -69,7 +65,7 @@ let NttdataService = class NttdataService {
                 },
                 payDetails: {
                     amount: formattedAmount,
-                    product: 'AIPAY',
+                    product: 'SCHOOL',
                     txnCurrency: 'INR',
                 },
                 custDetails: {
@@ -86,7 +82,7 @@ let NttdataService = class NttdataService {
             },
         };
         try {
-            const encData = this.encrypt(JSON.stringify(payload));
+            const encData = this.encrypt(JSON.stringify(payload), ntt_data.nttdata_hash_req_key, ntt_data.nttdata_req_salt);
             const form = new URLSearchParams({
                 encData,
                 merchId: ntt_data.nttdata_id,
@@ -104,8 +100,12 @@ let NttdataService = class NttdataService {
             if (!encResponse) {
                 throw new Error('Encrypted token not found in NTT response');
             }
-            const { atomTokenId } = JSON.parse(this.decrypt(encResponse));
-            const updatedRequest = await this.databaseService.CollectRequestModel.findOneAndUpdate({ _id }, { $set: { 'ntt_data.ntt_atom_token': atomTokenId } }, { new: true });
+            const { atomTokenId } = JSON.parse(this.decrypt(encResponse, ntt_data.nttdata_hash_res_key, ntt_data.nttdata_res_salt));
+            const updatedRequest = await this.databaseService.CollectRequestModel.findOneAndUpdate({ _id }, { $set: {
+                    'ntt_data.ntt_atom_token': atomTokenId,
+                    'ntt_data.ntt_atom_txn_id': _id.toString(),
+                    'gateway': collect_request_schema_1.Gateway.EDVIRON_NTTDATA,
+                } }, { new: true });
             if (!updatedRequest)
                 throw new common_1.BadRequestException('Orders not found');
             const url = `${process.env.URL}/nttdata/redirect?collect_id=${_id.toString()}`;
@@ -152,7 +152,7 @@ let NttdataService = class NttdataService {
                     },
                 },
             };
-            const encData = this.encrypt(JSON.stringify(payload));
+            const encData = this.encrypt(JSON.stringify(payload), coll_req.ntt_data.nttdata_hash_req_key, coll_req.ntt_data.nttdata_req_salt);
             const form = new URLSearchParams({
                 merchId: coll_req.ntt_data.nttdata_id,
                 encData,
@@ -170,7 +170,7 @@ let NttdataService = class NttdataService {
             if (!encResponse) {
                 throw new Error('Encrypted token not found in NTT response');
             }
-            const res = JSON.parse(this.decrypt(encResponse));
+            const res = await JSON.parse(this.decrypt(encResponse, coll_req.ntt_data.nttdata_hash_res_key, coll_req.ntt_data.nttdata_res_salt));
             const { payInstrument } = res;
             const responseData = payInstrument[payInstrument.length - 1];
             const { payDetails, payModeSpecificData, responseDetails } = responseData;

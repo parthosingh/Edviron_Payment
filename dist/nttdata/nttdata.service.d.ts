@@ -2,15 +2,10 @@ import { DatabaseService } from 'src/database/database.service';
 import { CollectRequest } from 'src/database/schemas/collect_request.schema';
 export declare class NttdataService {
     private readonly databaseService;
-    private readonly ENC_KEY;
-    private readonly REQ_SALT;
     private readonly IV;
-    private readonly ALGORITHM;
-    private readonly PASSWORD;
-    private readonly SALT;
     constructor(databaseService: DatabaseService);
-    encrypt(text: string): string;
-    decrypt(text: string): string;
+    encrypt(text: string, ENC_KEY: any, REQ_SALT: any): string;
+    decrypt(text: string, RES_ENC_KEY: any, RES_SALT: any): string;
     createOrder(request: CollectRequest): Promise<{
         url: string;
         collect_req: CollectRequest;

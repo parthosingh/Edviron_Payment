@@ -35,7 +35,7 @@ let CollectService = class CollectService {
         this.hdfcSmartgatewayService = hdfcSmartgatewayService;
         this.nttdataService = nttdataService;
     }
-    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, vendor) {
+    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, nttdata_hash_req_key, nttdata_hash_res_key, nttdata_res_salt, nttdata_req_salt, vendor) {
         console.log(req_webhook_urls, 'webhook url');
         console.log(webHook);
         console.log(ccavenue_merchant_id, 'ccavenue', ccavenue_access_code, ccavenue_working_key);
@@ -74,6 +74,10 @@ let CollectService = class CollectService {
             ntt_data: {
                 nttdata_id,
                 nttdata_secret,
+                nttdata_hash_req_key,
+                nttdata_hash_res_key,
+                nttdata_res_salt,
+                nttdata_req_salt,
             },
         }).save();
         await new this.databaseService.CollectRequestStatusModel({

@@ -64,7 +64,7 @@ let NttdataController = class NttdataController {
             if (!student_email || !emailRegex.test(student_email)) {
                 student_email = 'testemail@email.com';
             }
-            const student_phone_no = additional_data?.student_details?.student_phone_no || '8888888888';
+            const student_phone_no = additional_data?.student_details?.student_phone_no || '9854684585';
             return res.send(`
             <!DOCTYPE html>
                 <html lang="en">
@@ -73,7 +73,7 @@ let NttdataController = class NttdataController {
                 <title>Payment Page</title>
                 <script defer>
                     const cdnScript = document.createElement('script');
-                    cdnScript.setAttribute('src', 'https://pgtest.atomtech.in/staticdata/ots/js/atomcheckout.js?v=' + Date.now());
+                    cdnScript.setAttribute('src', 'https://psa.atomtech.in/staticdata/ots/js/atomcheckout.js?v=' + Date.now());
                     document.head.appendChild(cdnScript);
                     function openPay() {
                     const options = {
@@ -103,7 +103,6 @@ let NttdataController = class NttdataController {
         try {
             const { collect_id } = req.query;
             const encRes = req.body.encData;
-            const data = JSON.parse(this.nttdataService.decrypt(encRes));
             const [collect_request, collect_req_status] = await Promise.all([
                 this.databaseService.CollectRequestModel.findById(collect_id),
                 this.databaseService.CollectRequestStatusModel.findOne({
@@ -112,6 +111,7 @@ let NttdataController = class NttdataController {
             ]);
             if (!collect_request || !collect_req_status)
                 throw new common_1.NotFoundException('Order not found');
+            const data = JSON.parse(this.nttdataService.decrypt(encRes, collect_request.ntt_data.nttdata_hash_res_key, collect_request.ntt_data.nttdata_res_salt));
             collect_request.gateway = collect_request_schema_1.Gateway.EDVIRON_NTTDATA;
             collect_request.ntt_data.ntt_atom_txn_id =
                 data?.payInstrument?.payDetails?.atomTxnId;
@@ -147,7 +147,6 @@ let NttdataController = class NttdataController {
         try {
             const { collect_id } = req.query;
             const encRes = req.body.encData;
-            const data = JSON.parse(this.nttdataService.decrypt(encRes));
             const [collect_request, collect_req_status] = await Promise.all([
                 this.databaseService.CollectRequestModel.findById(collect_id),
                 this.databaseService.CollectRequestStatusModel.findOne({
@@ -156,6 +155,7 @@ let NttdataController = class NttdataController {
             ]);
             if (!collect_request || !collect_req_status)
                 throw new common_1.NotFoundException('Order not found');
+            const data = JSON.parse(this.nttdataService.decrypt(encRes, collect_request.ntt_data.nttdata_hash_res_key, collect_request.ntt_data.nttdata_res_salt));
             collect_request.gateway = collect_request_schema_1.Gateway.EDVIRON_NTTDATA;
             collect_request.ntt_data.ntt_atom_txn_id =
                 data?.payInstrument?.payDetails?.atomTxnId;

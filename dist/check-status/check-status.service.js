@@ -192,6 +192,7 @@ let CheckStatusService = class CheckStatusService {
                 };
                 return ehr_status_response;
             case collect_request_schema_1.Gateway.EDVIRON_NTTDATA:
+                console.log('checking status for NTTDATA', collect_request_id);
                 return await this.nttdataService.getTransactionStatus(collect_request_id.toString());
             case collect_request_schema_1.Gateway.PENDING:
                 return await this.checkExpiry(collectRequest);

@@ -21,6 +21,10 @@ interface I_NTT_DATA {
   nttdata_secret: string;
   ntt_atom_token: string;
   ntt_atom_txn_id: string;
+  nttdata_hash_req_key: string;
+  nttdata_req_salt: string;
+  nttdata_hash_res_key: string;
+  nttdata_res_salt: string;
 }
 
 @Schema()
@@ -159,6 +163,10 @@ export class CollectRequest {
       nttdata_secret: { type: String, required: false, default: null },
       ntt_atom_token: { type: String, required: false, default: null },
       ntt_atom_txn_id: { type: String, required: false, default: null },
+      nttdata_hash_req_key: { type: String, required: false, default: null },
+      nttdata_req_salt: { type: String, required: false, default: null },
+      nttdata_hash_res_key: { type: String, required: false, default: null },
+      nttdata_res_salt: { type: String, required: false, default: null },
     },
     _id: false,
   })

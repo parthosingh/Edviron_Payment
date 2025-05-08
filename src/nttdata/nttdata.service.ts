@@ -2,41 +2,37 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import * as crypto from 'crypto';
 import axios from 'axios';
-import { CollectRequest } from 'src/database/schemas/collect_request.schema';
+import { CollectRequest, Gateway } from 'src/database/schemas/collect_request.schema';
 import { calculateSHA512Hash, generateSignature } from 'src/utils/sign';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { Types } from 'mongoose';
+import e from 'express';
 
 @Injectable()
 export class NttdataService {
-  private readonly ENC_KEY = process.env.NTT_ENCRYPTION_KEY || '';
-  private readonly REQ_SALT = process.env.NTT_ENCRYPTION_KEY || '';
+
   private readonly IV = Buffer.from([
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
   ]);
-  private readonly ALGORITHM = 'aes-256-cbc';
-  private readonly PASSWORD = Buffer.from(this.ENC_KEY, 'utf8');
-  private readonly SALT = Buffer.from(this.REQ_SALT, 'utf8');
+  constructor(private readonly databaseService: DatabaseService) { }
 
-  constructor(private readonly databaseService: DatabaseService) {}
-
-  encrypt(text: string): string {
+  encrypt(text: string, ENC_KEY: any, REQ_SALT: any): string {
     const derivedKey = crypto.pbkdf2Sync(
-      this.PASSWORD,
-      this.SALT,
+      Buffer.from(ENC_KEY, 'utf8'),
+      Buffer.from(REQ_SALT, 'utf8'),
       65536,
       32,
       'sha512',
     );
-    const cipher = crypto.createCipheriv(this.ALGORITHM, derivedKey, this.IV);
+    const cipher = crypto.createCipheriv("aes-256-cbc", derivedKey, this.IV);
     let encrypted = cipher.update(text, 'utf8');
     encrypted = Buffer.concat([encrypted, cipher.final()]);
     return encrypted.toString('hex');
   }
 
-  decrypt(text: string): string {
-    const respassword = Buffer.from('75AEF0FA1B94B3C10D4F5B268F757F11', 'utf8');
-    const ressalt = Buffer.from('75AEF0FA1B94B3C10D4F5B268F757F11', 'utf8');
+  decrypt(text: string, RES_ENC_KEY: any, RES_SALT: any): string {
+    const respassword = Buffer.from(RES_ENC_KEY, 'utf8');
+    const ressalt = Buffer.from(RES_SALT, 'utf8');
     const derivedKey = crypto.pbkdf2Sync(
       respassword,
       ressalt,
@@ -46,7 +42,7 @@ export class NttdataService {
     );
     const encryptedText = Buffer.from(text, 'hex');
     const decipher = crypto.createDecipheriv(
-      this.ALGORITHM,
+      "aes-256-cbc",
       derivedKey,
       this.IV,
     );
@@ -85,7 +81,7 @@ export class NttdataService {
         },
         payDetails: {
           amount: formattedAmount,
-          product: 'AIPAY',
+          product: 'SCHOOL',
           txnCurrency: 'INR',
         },
         custDetails: {
@@ -103,7 +99,8 @@ export class NttdataService {
     };
 
     try {
-      const encData = this.encrypt(JSON.stringify(payload));
+      const encData = this.encrypt(JSON.stringify(payload), ntt_data.nttdata_hash_req_key, ntt_data.nttdata_req_salt);
+      
       const form = new URLSearchParams({
         encData,
         merchId: ntt_data.nttdata_id,
@@ -118,27 +115,29 @@ export class NttdataService {
         data: form.toString(),
       };
 
-      const { data } = await axios.request(config);
+      const {data} = await axios.request(config);
 
       const encResponse = data?.split('&')?.[1]?.split('=')?.[1];
       if (!encResponse) {
         throw new Error('Encrypted token not found in NTT response');
       }
-
-      const { atomTokenId } = JSON.parse(this.decrypt(encResponse));
+      const { atomTokenId } = JSON.parse(this.decrypt(encResponse, ntt_data.nttdata_hash_res_key, ntt_data.nttdata_res_salt));
 
       const updatedRequest =
         await this.databaseService.CollectRequestModel.findOneAndUpdate(
           { _id },
-          { $set: { 'ntt_data.ntt_atom_token': atomTokenId } },
+          {  $set: {
+            'ntt_data.ntt_atom_token': atomTokenId,
+            'ntt_data.ntt_atom_txn_id': _id.toString(),
+            'gateway': Gateway.EDVIRON_NTTDATA,
+          } }, 
           { new: true },
         );
 
       if (!updatedRequest) throw new BadRequestException('Orders not found');
 
-      const url = `${
-        process.env.URL
-      }/nttdata/redirect?collect_id=${_id.toString()}`;
+      const url = `${process.env.URL
+        }/nttdata/redirect?collect_id=${_id.toString()}`;
       return { url, collect_req: updatedRequest };
     } catch (error) {
       throw new BadRequestException(error?.message || 'Something went wrong');
@@ -192,16 +191,15 @@ export class NttdataService {
           },
         },
       };
-      const encData = this.encrypt(JSON.stringify(payload));
+      const encData = this.encrypt(JSON.stringify(payload), coll_req.ntt_data.nttdata_hash_req_key, coll_req.ntt_data.nttdata_req_salt);
       const form = new URLSearchParams({
         merchId: coll_req.ntt_data.nttdata_id,
         encData,
       });
       const config = {
         method: 'post',
-        url: `${
-          process.env.NTT_AUTH_API_URL
-        }/ots/payment/status?${form.toString()}`,
+        url: `${process.env.NTT_AUTH_API_URL
+          }/ots/payment/status?${form.toString()}`,
         headers: {
           'cache-control': 'no-cache',
           'Content-Type': 'application/json',
@@ -213,7 +211,7 @@ export class NttdataService {
       if (!encResponse) {
         throw new Error('Encrypted token not found in NTT response');
       }
-      const res = JSON.parse(this.decrypt(encResponse));
+      const res = await JSON.parse(this.decrypt(encResponse, coll_req.ntt_data.nttdata_hash_res_key, coll_req.ntt_data.nttdata_res_salt));
       const { payInstrument } = res;
       const responseData = payInstrument[payInstrument.length - 1];
       const { payDetails, payModeSpecificData, responseDetails } = responseData;
