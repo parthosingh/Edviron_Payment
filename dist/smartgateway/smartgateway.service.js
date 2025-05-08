@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SmartgatewayService = void 0;
 const common_1 = require("@nestjs/common");
 const axios_1 = require("axios");
+const mongoose_1 = require("mongoose");
 const database_service_1 = require("../database/database.service");
 const transactionStatus_1 = require("../types/transactionStatus");
 const mapHDFCStatusToTransactionStatus = (statusId) => {
@@ -256,6 +257,41 @@ let SmartgatewayService = class SmartgatewayService {
             };
         }
         return transformedResponse;
+    }
+    async updateTransaction(order_id) {
+        console.log('chec');
+        const reqStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: new mongoose_1.Types.ObjectId(order_id),
+        });
+        const request = await this.databaseService.CollectRequestModel.findById(order_id);
+        if (!request) {
+            throw new common_1.BadRequestException('invalid id');
+        }
+        if (!reqStatus) {
+            throw new common_1.BadRequestException('invalid id');
+        }
+        const status = await this.checkStatus(order_id, request);
+        if (status && status.status === 'FAILURE' && status.details.payment_mode === 'upi') {
+            console.log('upi', order_id, status);
+            const { payment_mode, bank_ref, payment_methods, transaction_time } = status.details;
+            reqStatus.status = 'FAILURE';
+            reqStatus.payment_method = 'upi',
+                reqStatus.transaction_amount = status.transaction_amount || 'NA';
+            if (status.transaction_time) {
+                reqStatus.payment_time = status.transaction_time;
+            }
+            reqStatus.bank_reference = bank_ref || 'na';
+            const info = {
+                upi: {
+                    channel: null,
+                    upi_id: payment_methods.upi.payer_vpa
+                }
+            };
+            reqStatus.details = JSON.stringify(info) || 'NA';
+            await reqStatus.save();
+            return reqStatus;
+        }
+        return;
     }
 };
 exports.SmartgatewayService = SmartgatewayService;

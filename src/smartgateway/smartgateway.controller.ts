@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { SmartgatewayService } from './smartgateway.service';
 import { Gateway } from 'src/database/schemas/collect_request.schema';
@@ -76,8 +76,7 @@ export class SmartgatewayController {
       status_id: string;
     },
     @Res() res: any,
-  ) 
-  {
+  ) {
     const { order_id, sdk_status } = body;
     const info =
       await this.databaseService.CollectRequestModel.findById(order_id);
@@ -119,6 +118,11 @@ export class SmartgatewayController {
 
   @Post('/webhook')
   async webhook(@Body() body: any, @Res() res: any) {
+    await new this.databaseService.WebhooksModel({
+      // collect_id: collectIdObject.toString(),
+      body: JSON.stringify(body),
+      gateway: 'smartgateway',
+    }).save();
     const { content, txn_detail, date_created } = body;
     const { order_id } = content.order;
     const { order } = body.content;
@@ -357,5 +361,21 @@ export class SmartgatewayController {
     } catch (e) {
       res.status(500).send('Internal Server Error');
     }
+  }
+
+  @Get('test')
+  async testy(@Req() req: any) {
+    const { collect_id, school_id } = req.query;
+    const requests = await this.databaseService.CollectRequestModel.find({
+      school_id,
+    })
+      .select('_id')
+      .lean(); // lean for performance if only reading
+
+    for (const req of requests) {
+      await this.smartgatewayService.updateTransaction(req._id.toString());
+    }
+    return true;
+    return await this.smartgatewayService.updateTransaction(collect_id);
   }
 }
