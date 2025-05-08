@@ -118,11 +118,20 @@ export class SmartgatewayController {
 
   @Post('/webhook')
   async webhook(@Body() body: any, @Res() res: any) {
-    await new this.databaseService.WebhooksModel({
-      // collect_id: collectIdObject.toString(),
-      body: JSON.stringify(body),
-      gateway: 'smartgateway',
-    }).save();
+    try{
+      console.log('saveing');
+      
+    const log=  await new this.databaseService.WebhooksModel({
+        // collect_id: collectIdObject.toString(),
+        body: JSON.stringify(body),
+        gateway: 'smartgateway',
+      }).save();
+      console.log(log);
+      
+    }catch(e){
+      console.log(e);
+      
+    }
     const { content, txn_detail, date_created } = body;
     const { order_id } = content.order;
     const { order } = body.content;

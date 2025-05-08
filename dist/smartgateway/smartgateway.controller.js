@@ -87,10 +87,17 @@ let SmartgatewayController = class SmartgatewayController {
         return res.redirect(callbackUrl.toString());
     }
     async webhook(body, res) {
-        await new this.databaseService.WebhooksModel({
-            body: JSON.stringify(body),
-            gateway: 'smartgateway',
-        }).save();
+        try {
+            console.log('saveing');
+            const log = await new this.databaseService.WebhooksModel({
+                body: JSON.stringify(body),
+                gateway: 'smartgateway',
+            }).save();
+            console.log(log);
+        }
+        catch (e) {
+            console.log(e);
+        }
         const { content, txn_detail, date_created } = body;
         const { order_id } = content.order;
         const { order } = body.content;
