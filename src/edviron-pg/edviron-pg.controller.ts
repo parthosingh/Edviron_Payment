@@ -32,6 +32,7 @@ import {
   rangeCharge,
 } from 'src/database/schemas/platform.charges.schema';
 import * as _jwt from 'jsonwebtoken';
+import { NttdataService } from 'src/nttdata/nttdata.service';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -40,6 +41,7 @@ export class EdvironPgController {
     private readonly databaseService: DatabaseService,
     private readonly easebuzzService: EasebuzzService,
     private readonly cashfreeService: CashfreeService,
+    private readonly nttDataService:NttdataService,
   ) {}
   @Get('/redirect')
   async handleRedirect(@Req() req: any, @Res() res: any) {
@@ -2208,6 +2210,14 @@ export class EdvironPgController {
       }
       const gateway = request.gateway;
       console.log(gateway);
+
+      if (gateway === Gateway.EDVIRON_NTTDATA) {
+        const refund = await this.nttDataService.initiateRefund(
+          collect_id,
+          amount,
+        );
+        return refund;
+      }
 
       if (gateway === Gateway.EDVIRON_PG) {
         console.log('refunding fromcashfree');

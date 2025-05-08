@@ -257,4 +257,89 @@ export class NttdataService {
       );
     }
   }
+
+  
+  async generateSignature(signature:any, secretKey:string) {
+    const data = signature;
+    const hmac = crypto.createHmac('sha512', secretKey);
+    hmac.update(data);
+    return hmac.digest('hex');
+  }
+
+  async initiateRefund(collect_request_id: string, amount: number) {
+    try {
+      const collect_request =
+        await this.databaseService.CollectRequestModel.findById(
+          collect_request_id,
+        );
+      if (!collect_request) {
+        throw new BadRequestException('Order not found');
+      }
+      if (amount > collect_request.amount) {
+        throw new BadRequestException(
+          "Refund amount can't be greater than order amount",
+        );
+      }
+      const signaturevalue = collect_request.ntt_data.nttdata_id + collect_request.ntt_data.nttdata_secret + collect_request_id + amount + 'INR' + 'REFUNDINIT'
+
+    const signature = await this.generateSignature(signaturevalue, "b459c2e93eb850f5eb")
+    
+      const payload = {
+        payInstrument: {
+          headDetails: {
+            api: 'REFUNDINIT',
+            source: "OTS"
+          },
+          merchDetails: {
+            merchId: collect_request.ntt_data.nttdata_id,
+            password: collect_request.ntt_data.nttdata_secret,
+            merchTxnId: collect_request_id,
+          },
+          payDetails: {
+            atomTxnId: collect_request.ntt_data.ntt_atom_token,
+            signature:signature,
+            prodDetails : [
+              {
+                prodName: "NSE",
+                prodRefundId: "refund1",
+                prodRefundAmount: amount
+              }
+            ],
+            txnCurrency : "INR",
+            totalRefundAmount : amount,
+          },
+        },
+      };
+
+      const encData = this.encrypt(
+        JSON.stringify(payload), collect_request.ntt_data.nttdata_hash_req_key, collect_request.ntt_data.nttdata_req_salt
+      );
+      const form = new URLSearchParams({
+        merchId: collect_request.ntt_data.nttdata_id,
+        encData,
+      });
+      const config = {
+        method: 'post',
+        url: `${process.env.NTT_AUTH_API_URL
+          }/ots/payment/status?${form.toString()}`,
+        headers: {
+          'cache-control': 'no-cache',
+          'Content-Type': 'application/json',
+        },
+      };
+      const { data: paymentStatusRes } = await axios.request(config);
+      const encResponse = paymentStatusRes?.split('&')?.[0]?.split('=')?.[1];
+
+      if (!encResponse) {
+        throw new Error('Encrypted token not found in NTT response');
+      }
+      const res = await JSON.parse(this.decrypt(encResponse, collect_request.ntt_data.nttdata_hash_res_key, collect_request.ntt_data.nttdata_res_salt));
+
+      return res;
+
+    } catch (error) {
+      throw new BadRequestException(error?.message || 'Something went wrong');
+    }
+  }
+
 }

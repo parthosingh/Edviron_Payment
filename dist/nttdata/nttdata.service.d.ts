@@ -18,4 +18,6 @@ export declare class NttdataService {
         custom_order_id: string | null;
     }>;
     terminateOrder(collect_id: string): Promise<boolean>;
+    generateSignature(signature: any, secretKey: string): Promise<string>;
+    initiateRefund(collect_request_id: string, amount: number): Promise<any>;
 }
