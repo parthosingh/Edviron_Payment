@@ -88,9 +88,10 @@ let SmartgatewayController = class SmartgatewayController {
     }
     async webhook(body, res) {
         const { content, txn_detail, date_created } = body;
-        const { order_id } = content.order;
         const { order } = body.content;
+        const { order_id } = order;
         try {
+            console.log('Webhook body:', order_id);
             const collect_id = order_id;
             const collectIdObject = new mongoose_1.Types.ObjectId(collect_id);
             const orderDetail = order;
@@ -121,8 +122,8 @@ let SmartgatewayController = class SmartgatewayController {
                     platform_type = 'Wallet';
                     details = {
                         app: {
-                            channel: status_response.details.payment_methods.wallet.mode,
-                            provider: status_response.details.payment_methods.wallet.mode,
+                            channel: status_response.details.payment_methods.wallet.mode || "N/A",
+                            provider: status_response.details.payment_methods.wallet.mode || "N/A",
                         },
                     };
                     break;
@@ -131,7 +132,7 @@ let SmartgatewayController = class SmartgatewayController {
                     platform_type = 'UPI';
                     details = {
                         upi: {
-                            upi_id: status_response.details.payment_methods.upi.payer_vpa,
+                            upi_id: status_response.details.payment_methods.upi.payer_vpa || "N/A",
                         },
                     };
                     break;
@@ -149,9 +150,9 @@ let SmartgatewayController = class SmartgatewayController {
                     platform_type = 'CreditCard';
                     details = {
                         card: {
-                            card_bank_name: status_response.details.payment_methods.card.card_bank_name,
-                            provicard_network: status_response.details.payment_methods.card.card_network,
-                            card_number: status_response.details.payment_methods.card.card_number,
+                            card_bank_name: status_response.details.payment_methods.card.card_bank_name || "N/A",
+                            provicard_network: status_response.details.payment_methods.card.card_network || "N/A",
+                            card_number: status_response.details.payment_methods.card.card_number || "N/A",
                             card_type: 'credit_card',
                         },
                     };
@@ -161,9 +162,9 @@ let SmartgatewayController = class SmartgatewayController {
                     platform_type = 'DebitCard';
                     details = {
                         card: {
-                            card_bank_name: status_response.details.payment_methods.card.card_bank_name,
-                            provicard_network: status_response.details.payment_methods.card.card_network,
-                            card_number: status_response.details.payment_methods.card.card_number,
+                            card_bank_name: status_response.details.payment_methods.card.card_bank_name || "N/A",
+                            provicard_network: status_response.details.payment_methods.card.card_network || "N/A",
+                            card_number: status_response.details.payment_methods.card.card_number || "N/A",
                             card_type: 'debit_card',
                         },
                     };
@@ -224,12 +225,12 @@ let SmartgatewayController = class SmartgatewayController {
                 collect_id: collectIdObject,
             }, {
                 $set: {
-                    status,
+                    status: status_response.status,
                     transaction_amount,
                     payment_method,
                     details: JSON.stringify(details),
                     payment_time,
-                    bank_reference: content.order.payment_gateway_response.gateway_response.authCode,
+                    bank_reference: content.order.payment_gateway_response.rrn,
                 },
             }, {
                 upsert: true,

@@ -41,6 +41,9 @@ export class Webhooks {
   @Prop({ required: false })
   webhooktype: string;
 
+  @Prop({ required: false })
+  gateway: string;
+
   @Prop({ required: true })
   body: string;
 
