@@ -24,7 +24,7 @@ let CollectController = class CollectController {
         this.databaseService = databaseService;
     }
     async collect(body) {
-        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_access_code, ccavenue_working_key, ccavenue_merchant_id, smartgateway_merchant_id, smartgateway_customer_id, smart_gateway_api_key, split_payments, vendors_info, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, } = body;
+        const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_access_code, ccavenue_working_key, ccavenue_merchant_id, smartgateway_merchant_id, smartgateway_customer_id, smart_gateway_api_key, split_payments, vendors_info, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, } = body;
         if (!jwt)
             throw new common_1.BadRequestException('JWT not provided');
         if (!amount)
@@ -35,7 +35,7 @@ let CollectController = class CollectController {
             console.log(disabled_modes);
             let decrypted = _jwt.verify(jwt, process.env.KEY);
             console.log(decrypted);
-            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, school_id, trustee_id, disabled_modes, platform_charges, clientId, clientSecret, webHook, additional_data || {}, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, split_payments || false, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, vendors_info));
+            return (0, sign_1.sign)(await this.collectService.collect(amount, callbackUrl, school_id, trustee_id, disabled_modes, platform_charges, clientId, clientSecret, webHook, additional_data || {}, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, split_payments || false, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, vendors_info));
         }
         catch (e) {
             console.log(e);

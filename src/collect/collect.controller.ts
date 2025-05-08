@@ -59,11 +59,13 @@ export class CollectController {
       smartgateway_customer_id?: string | null;
       smart_gateway_api_key?: string | null;
       split_payments?: boolean;
-      pay_u_key?:string | null;
+      pay_u_key?: string | null;
       pay_u_salt: string | null;
       hdfc_razorpay_id?: string;
       hdfc_razorpay_secret?: string;
       hdfc_razorpay_mid?: string;
+      nttdata_id?: string | null;
+      nttdata_secret?: string | null;
       vendors_info?: [
         {
           vendor_id: string;
@@ -103,6 +105,8 @@ export class CollectController {
       hdfc_razorpay_id,
       hdfc_razorpay_secret,
       hdfc_razorpay_mid,
+      nttdata_id,
+      nttdata_secret,
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -147,6 +151,8 @@ export class CollectController {
           hdfc_razorpay_id,
           hdfc_razorpay_secret,
           hdfc_razorpay_mid,
+          nttdata_id,
+          nttdata_secret,
           vendors_info,
         ),
       );

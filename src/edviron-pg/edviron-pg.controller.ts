@@ -1451,19 +1451,17 @@ export class EdvironPgController {
       searchParams,
       isCustomSearch,
       seachFilter,
-      
+
       isQRCode,
       gateway,
     } = body;
-    let {
-      payment_modes,
-    } = body;
+    let { payment_modes } = body;
     if (!token) throw new Error('Token not provided');
 
-    if(payment_modes?.includes('upi')){
-      payment_modes = [...payment_modes, 'upi_credit_card']  //debit_card
+    if (payment_modes?.includes('upi')) {
+      payment_modes = [...payment_modes, 'upi_credit_card']; //debit_card
     }
-    
+
     try {
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 10;

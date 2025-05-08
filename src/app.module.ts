@@ -18,6 +18,7 @@ import { PayUModule } from './pay-u/pay-u.module';
 import { HdfcRazorpayModule } from './hdfc_razporpay/hdfc_razorpay.module';
 import { CashfreeService } from './cashfree/cashfree.service';
 import { CcavenueService } from './ccavenue/ccavenue.service';
+import { NttdataModule } from './nttdata/nttdata.module';
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { CcavenueService } from './ccavenue/ccavenue.service';
     CashfreeModule,
     PayUModule,
     HdfcRazorpayModule,
-    SmartgatewayModule
+    SmartgatewayModule,
+    NttdataModule
   ],
   controllers: [AppController, EasebuzzController, CashfreeController],
   providers: [AppService, CashfreeService, EasebuzzService, CcavenueService],
