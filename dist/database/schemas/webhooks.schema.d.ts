@@ -23,7 +23,6 @@ export declare class Webhooks {
     webhooktype: string;
     gateway: string;
     body: string;
-    gateway: string;
     webhook_header?: Webhook_Header;
     _id: ObjectId;
 }

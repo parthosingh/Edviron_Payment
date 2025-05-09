@@ -271,10 +271,10 @@ let SmartgatewayService = class SmartgatewayService {
             throw new common_1.BadRequestException('invalid id');
         }
         const status = await this.checkStatus(order_id, request);
-        if (status && status.status === 'FAILURE' && status.details.payment_mode === 'upi') {
+        if (status && status.status === 'SUCCESS' && status.details.payment_mode === 'upi') {
             console.log('upi', order_id, status);
             const { payment_mode, bank_ref, payment_methods, transaction_time } = status.details;
-            reqStatus.status = 'FAILURE';
+            reqStatus.status = 'SUCCESS';
             reqStatus.payment_method = 'upi',
                 reqStatus.transaction_amount = status.transaction_amount || 'NA';
             if (status.transaction_time) {
@@ -290,6 +290,9 @@ let SmartgatewayService = class SmartgatewayService {
             reqStatus.details = JSON.stringify(info) || 'NA';
             await reqStatus.save();
             return reqStatus;
+        }
+        else {
+            console.log(status.details.payment_mode);
         }
         return;
     }

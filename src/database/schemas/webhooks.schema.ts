@@ -47,9 +47,6 @@ export class Webhooks {
   @Prop({ required: true })
   body: string;
 
-  @Prop({ required: false })
-  gateway: string;
-
   @Prop({ required: false, type: mongoose.Schema.Types.Mixed })
   webhook_header?: Webhook_Header;
 

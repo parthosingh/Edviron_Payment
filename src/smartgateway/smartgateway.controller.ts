@@ -380,6 +380,7 @@ export class SmartgatewayController {
       school_id,
     })
       .select('_id')
+      .sort({ createdAt: -1 })
       .lean(); // lean for performance if only reading
 
     for (const req of requests) {

@@ -51,10 +51,6 @@ __decorate([
     __metadata("design:type", String)
 ], Webhooks.prototype, "body", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: false }),
-    __metadata("design:type", String)
-], Webhooks.prototype, "gateway", void 0);
-__decorate([
     (0, mongoose_1.Prop)({ required: false, type: mongoose_2.default.Schema.Types.Mixed }),
     __metadata("design:type", Object)
 ], Webhooks.prototype, "webhook_header", void 0);

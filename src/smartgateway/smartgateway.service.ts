@@ -350,11 +350,11 @@ export class SmartgatewayService {
     }
 
     const status = await this.checkStatus(order_id, request);
-     if(status && status.status==='FAILURE' && status.details.payment_mode==='upi'){
+     if(status && status.status==='SUCCESS' && status.details.payment_mode==='upi'){
       console.log('upi',order_id,status);
       
       const {payment_mode,bank_ref,payment_methods,transaction_time}=status.details
-      reqStatus.status='FAILURE'
+      reqStatus.status='SUCCESS'
       reqStatus.payment_method='upi',
       reqStatus.transaction_amount=status.transaction_amount || 'NA'
       if(status.transaction_time){
@@ -372,6 +372,33 @@ export class SmartgatewayService {
       await reqStatus.save()
       return reqStatus
 
+    }
+    // else if(status && status.status==='FAILURE' && status.details.payment_mode==='upi'){
+    //   console.log('upi',order_id,status);
+      
+    //   const {payment_mode,bank_ref,payment_methods,transaction_time}=status.details
+    //   reqStatus.status='FAILURE'
+    //   reqStatus.payment_method='upi',
+    //   reqStatus.transaction_amount=status.transaction_amount || 'NA'
+    //   if(status.transaction_time){
+
+    //     reqStatus.payment_time=status.transaction_time 
+    //   }
+    //   reqStatus.bank_reference=bank_ref || 'na'
+    //   const info={
+    //     upi:{
+    //       channel:null,
+    //       upi_id:payment_methods.upi.payer_vpa
+    //     }
+    //   }
+    //   reqStatus.details=JSON.stringify(info) || 'NA'
+    //   await reqStatus.save()
+    //   return reqStatus
+
+    // }
+    else{
+      console.log(status.details.payment_mode);
+      
     }
     return
   }

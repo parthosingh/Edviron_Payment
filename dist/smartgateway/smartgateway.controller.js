@@ -299,6 +299,7 @@ let SmartgatewayController = class SmartgatewayController {
             school_id,
         })
             .select('_id')
+            .sort({ createdAt: -1 })
             .lean();
         for (const req of requests) {
             await this.smartgatewayService.updateTransaction(req._id.toString());
