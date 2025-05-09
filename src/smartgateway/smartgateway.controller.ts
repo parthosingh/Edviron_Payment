@@ -304,7 +304,7 @@ export class SmartgatewayController {
             details: JSON.stringify(details),
             payment_time,
             bank_reference:
-              content.order.payment_gateway_response.rrn,
+              content.order?.payment_gateway_response?.rrn || 'NA',
           },
         },
         {

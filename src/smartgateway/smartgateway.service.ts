@@ -349,7 +349,7 @@ export class SmartgatewayService {
     if (!reqStatus) {
       throw new BadRequestException('invalid id');
     }
-    
+    try{
     const status = await this.checkStatus(order_id, request);
     
     if (reqStatus.status === 'PENDING') {
@@ -408,6 +408,9 @@ export class SmartgatewayService {
     } else {
       console.log(status.details.payment_mode);
     }
+  }catch(e){
+    return
+  }
     return;
   }
 }

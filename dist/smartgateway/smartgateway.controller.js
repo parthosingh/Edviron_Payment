@@ -242,7 +242,7 @@ let SmartgatewayController = class SmartgatewayController {
                     payment_method,
                     details: JSON.stringify(details),
                     payment_time,
-                    bank_reference: content.order.payment_gateway_response.rrn,
+                    bank_reference: content.order?.payment_gateway_response?.rrn || 'NA',
                 },
             }, {
                 upsert: true,
