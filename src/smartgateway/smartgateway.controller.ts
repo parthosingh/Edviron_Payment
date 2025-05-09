@@ -202,9 +202,7 @@ export class SmartgatewayController {
           details = {
             netbanking: {
               netbanking_bank_name:
-                status_response.details.payment_methods.net_banking.payment_method?.substring(
-                  2,
-                ) || '',
+                order.payment_method || '',
             },
           };
           break;

@@ -278,10 +278,11 @@ let SmartgatewayService = class SmartgatewayService {
                     status.details.payment_mode === 'upi') {
                     console.log('upi', order_id, status);
                     try {
-                        const { payment_mode, bank_ref, payment_methods, transaction_time } = status.details;
+                        const { payment_mode, bank_ref, payment_methods, transaction_time, } = status.details;
                         reqStatus.status = 'SUCCESS';
                         (reqStatus.payment_method = 'upi'),
-                            (reqStatus.transaction_amount = status.transaction_amount || 'NA');
+                            (reqStatus.transaction_amount =
+                                status.transaction_amount || 'NA');
                         if (status.transaction_time) {
                             reqStatus.payment_time = status.transaction_time;
                         }
@@ -302,7 +303,7 @@ let SmartgatewayService = class SmartgatewayService {
                 }
             }
             else {
-                console.log(status.details.payment_mode);
+                console.log(status.details.payment_mode, order_id);
             }
         }
         catch (e) {

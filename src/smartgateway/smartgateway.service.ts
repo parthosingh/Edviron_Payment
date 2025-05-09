@@ -334,7 +334,7 @@ export class SmartgatewayService {
   }
 
   async updateTransaction(order_id: string) {
-    console.log('chec',order_id);
+    console.log('chec', order_id);
 
     const reqStatus =
       await this.databaseService.CollectRequestStatusModel.findOne({
@@ -349,68 +349,74 @@ export class SmartgatewayService {
     if (!reqStatus) {
       throw new BadRequestException('invalid id');
     }
-    try{
-    const status = await this.checkStatus(order_id, request);
-    
-    if (reqStatus.status === 'PENDING') {
-      if (
-        status &&
-        status.status === 'SUCCESS' &&
-        status.details.payment_mode === 'upi'
-      ) {
-        console.log('upi', order_id, status);
-        try {
-          const { payment_mode, bank_ref, payment_methods, transaction_time } =
-            status.details;
-          reqStatus.status = 'SUCCESS';
-          (reqStatus.payment_method = 'upi'),
-            (reqStatus.transaction_amount = status.transaction_amount || 'NA');
-          if (status.transaction_time) {
-            reqStatus.payment_time = status.transaction_time;
+    try {
+      const status = await this.checkStatus(order_id, request);
+
+      if (reqStatus.status === 'PENDING') {
+        if (
+          status &&
+          status.status === 'SUCCESS' &&
+          status.details.payment_mode === 'upi'
+        ) {
+          console.log('upi', order_id, status);
+          try {
+            const {
+              payment_mode,
+              bank_ref,
+              payment_methods,
+              transaction_time,
+            } = status.details;
+            reqStatus.status = 'SUCCESS';
+            (reqStatus.payment_method = 'upi'),
+              (reqStatus.transaction_amount =
+                status.transaction_amount || 'NA');
+            if (status.transaction_time) {
+              reqStatus.payment_time = status.transaction_time;
+            }
+            reqStatus.bank_reference = bank_ref || 'na';
+            const info = {
+              upi: {
+                channel: null,
+                upi_id: payment_methods.upi.payer_vpa,
+              },
+            };
+            reqStatus.details = JSON.stringify(info) || 'NA';
+            await reqStatus.save();
+            return reqStatus;
+          } catch (e) {
+            console.log(e);
           }
-          reqStatus.bank_reference = bank_ref || 'na';
-          const info = {
-            upi: {
-              channel: null,
-              upi_id: payment_methods.upi.payer_vpa,
-            },
-          };
-          reqStatus.details = JSON.stringify(info) || 'NA';
-          await reqStatus.save();
-          return reqStatus;
-        } catch (e) {
-          console.log(e);
         }
+        // else if(status && status.status==='FAILURE' && status.details.payment_mode==='upi'){
+        //   console.log('upi',order_id,status);
+
+        //   const {payment_mode,bank_ref,payment_methods,transaction_time}=status.details
+        //   reqStatus.status='FAILURE'
+        //   reqStatus.payment_method='upi',
+        //   reqStatus.transaction_amount=status.transaction_amount || 'NA'
+        //   if(status.transaction_time){
+
+        //     reqStatus.payment_time=status.transaction_time
+        //   }
+        //   reqStatus.bank_reference=bank_ref || 'na'
+        //   const info={
+        //     upi:{
+        //       channel:null,
+        //       upi_id:payment_methods.upi.payer_vpa
+        //     }
+        //   }
+        //   reqStatus.details=JSON.stringify(info) || 'NA'
+        //   await reqStatus.save()
+        //   return reqStatus
+
+        // }
+      } else {
+        console.log(status.details.payment_mode, order_id);
       }
-      // else if(status && status.status==='FAILURE' && status.details.payment_mode==='upi'){
-      //   console.log('upi',order_id,status);
-
-      //   const {payment_mode,bank_ref,payment_methods,transaction_time}=status.details
-      //   reqStatus.status='FAILURE'
-      //   reqStatus.payment_method='upi',
-      //   reqStatus.transaction_amount=status.transaction_amount || 'NA'
-      //   if(status.transaction_time){
-
-      //     reqStatus.payment_time=status.transaction_time
-      //   }
-      //   reqStatus.bank_reference=bank_ref || 'na'
-      //   const info={
-      //     upi:{
-      //       channel:null,
-      //       upi_id:payment_methods.upi.payer_vpa
-      //     }
-      //   }
-      //   reqStatus.details=JSON.stringify(info) || 'NA'
-      //   await reqStatus.save()
-      //   return reqStatus
-
-      // }
-    } else {
-      console.log(status.details.payment_mode);
+    } catch (e) {
+      return;
     }
-  }catch(e){
-    return
-  }
     return;
   }
 }
+

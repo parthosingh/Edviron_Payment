@@ -153,7 +153,7 @@ let SmartgatewayController = class SmartgatewayController {
                     platform_type = 'NetBanking';
                     details = {
                         netbanking: {
-                            netbanking_bank_name: status_response.details.payment_methods.net_banking.payment_method?.substring(2) || '',
+                            netbanking_bank_name: order.payment_method || '',
                         },
                     };
                     break;
