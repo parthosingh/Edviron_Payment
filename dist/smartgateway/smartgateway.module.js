@@ -20,7 +20,11 @@ exports.SmartgatewayModule = SmartgatewayModule = __decorate([
     (0, common_1.Module)({
         imports: [database_module_1.DatabaseModule],
         controllers: [smartgateway_controller_1.SmartgatewayController],
-        providers: [smartgateway_service_1.SmartgatewayService, edviron_pg_service_1.EdvironPgService, cashfree_service_1.CashfreeService],
+        providers: [
+            smartgateway_service_1.SmartgatewayService,
+            edviron_pg_service_1.EdvironPgService,
+            cashfree_service_1.CashfreeService,
+        ],
     })
 ], SmartgatewayModule);
 //# sourceMappingURL=smartgateway.module.js.map

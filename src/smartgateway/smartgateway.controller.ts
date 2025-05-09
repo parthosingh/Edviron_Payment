@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { SmartgatewayService } from './smartgateway.service';
 import { Gateway } from 'src/database/schemas/collect_request.schema';
@@ -14,7 +14,7 @@ export class SmartgatewayController {
     private readonly databaseService: DatabaseService,
     private readonly smartgatewayService: SmartgatewayService,
     private readonly edvironPgService: EdvironPgService,
-  ) {}
+  ) { }
   @Post('/callback')
   async handleCallback(
     @Body()
@@ -76,8 +76,7 @@ export class SmartgatewayController {
       status_id: string;
     },
     @Res() res: any,
-  ) 
-  {
+  ) {
     const { order_id, sdk_status } = body;
     const info =
       await this.databaseService.CollectRequestModel.findById(order_id);
@@ -119,10 +118,24 @@ export class SmartgatewayController {
 
   @Post('/webhook')
   async webhook(@Body() body: any, @Res() res: any) {
-    const { content, txn_detail, date_created } = body;
-    const { order_id } = content.order;
+    try{
+      const log=  await new this.databaseService.WebhooksModel({
+        // collect_id: collectIdObject.toString(),
+        body: JSON.stringify(body),
+        gateway: 'smartgateway',
+      }).save();
+      console.log(log);
+      
+    }catch(e){
+      console.log(e);
+      
+    }
+    const { content, date_created } = body;
     const { order } = body.content;
+    const { order_id } = order;
+    const {txn_detail}=order
     try {
+      console.log('Webhook body:', order_id);
       const collect_id = order_id;
       const collectIdObject = new Types.ObjectId(collect_id);
       const orderDetail = order;
@@ -158,6 +171,8 @@ export class SmartgatewayController {
         collectReq._id.toString(),
         collectReq,
       );
+      console.log(status_response,'status');
+      
       let platform_type;
       let payment_method;
       let details;
@@ -167,8 +182,8 @@ export class SmartgatewayController {
           platform_type = 'Wallet';
           details = {
             app: {
-              channel: status_response.details.payment_methods.wallet.mode,
-              provider: status_response.details.payment_methods.wallet.mode,
+              channel: status_response.details.payment_methods.wallet.mode || "N/A",
+              provider: status_response.details.payment_methods.wallet.mode || "N/A",
             },
           };
           break;
@@ -177,7 +192,7 @@ export class SmartgatewayController {
           platform_type = 'UPI';
           details = {
             upi: {
-              upi_id: status_response.details.payment_methods.upi.payer_vpa,
+              upi_id: status_response.details.payment_methods.upi.payer_vpa || "N/A",
             },
           };
           break;
@@ -187,9 +202,7 @@ export class SmartgatewayController {
           details = {
             netbanking: {
               netbanking_bank_name:
-                status_response.details.payment_methods.net_banking.payment_method?.substring(
-                  2,
-                ) || '',
+                order.payment_method || '',
             },
           };
           break;
@@ -199,11 +212,11 @@ export class SmartgatewayController {
           details = {
             card: {
               card_bank_name:
-                status_response.details.payment_methods.card.card_bank_name,
+                status_response.details.payment_methods.card.card_bank_name || "N/A",
               provicard_network:
-                status_response.details.payment_methods.card.card_network,
+                status_response.details.payment_methods.card.card_network || "N/A",
               card_number:
-                status_response.details.payment_methods.card.card_number,
+                status_response.details.payment_methods.card.card_number || "N/A",
               card_type: 'credit_card',
             },
           };
@@ -214,11 +227,11 @@ export class SmartgatewayController {
           details = {
             card: {
               card_bank_name:
-                status_response.details.payment_methods.card.card_bank_name,
+                status_response.details.payment_methods.card.card_bank_name || "N/A",
               provicard_network:
-                status_response.details.payment_methods.card.card_network,
+                status_response.details.payment_methods.card.card_network || "N/A",
               card_number:
-                status_response.details.payment_methods.card.card_number,
+                status_response.details.payment_methods.card.card_number || "N/A",
               card_type: 'debit_card',
             },
           };
@@ -241,7 +254,7 @@ export class SmartgatewayController {
           school_id: collectReq.school_id,
           trustee_id: collectReq.trustee_id,
           order_amount: pendingCollectReq?.order_amount,
-          transaction_amount: txn_detail.net_amount,
+          transaction_amount: txn_detail?.net_amount,
           platform_type,
           payment_mode: status_response.details.payment_mode,
           collect_id: collectReq?._id,
@@ -283,13 +296,13 @@ export class SmartgatewayController {
         },
         {
           $set: {
-            status,
+            status: status_response.status,
             transaction_amount,
             payment_method,
             details: JSON.stringify(details),
             payment_time,
             bank_reference:
-              content.order.payment_gateway_response.gateway_response.authCode,
+              content.order?.payment_gateway_response?.rrn || 'NA',
           },
         },
         {
@@ -315,7 +328,7 @@ export class SmartgatewayController {
       const webHookDataInfo = {
         collect_id: collectReq._id.toString(),
         amount,
-        status,
+        status:status_response.status,
         trustee_id: collectReq.trustee_id,
         school_id: collectReq.school_id,
         req_webhook_urls: collectReq?.req_webhook_urls,
@@ -355,7 +368,26 @@ export class SmartgatewayController {
       res.status(200).send('OK');
       return;
     } catch (e) {
+      console.log(e);
+      
       res.status(500).send('Internal Server Error');
     }
+  }
+
+  @Get('test')
+  async testy(@Req() req: any) {
+    const { collect_id, school_id } = req.query;
+    const requests = await this.databaseService.CollectRequestModel.find({
+      school_id,
+    })
+      .select('_id')
+      .sort({ createdAt: -1 })
+      .lean(); // lean for performance if only reading
+
+    for (const req of requests) {
+      await this.smartgatewayService.updateTransaction(req._id.toString());
+    }
+    return true;
+    return await this.smartgatewayService.updateTransaction(collect_id);
   }
 }

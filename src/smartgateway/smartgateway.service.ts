@@ -5,6 +5,8 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
+import { Types } from 'mongoose';
+import { CheckStatusService } from 'src/check-status/check-status.service';
 import { DatabaseService } from 'src/database/database.service';
 import { CollectRequestDocument } from 'src/database/schemas/collect_request.schema';
 import { TransactionStatus } from 'src/types/transactionStatus';
@@ -51,7 +53,9 @@ export class SmartgatewayService {
     smart_gateway_api_key: string,
   ): Promise<{ url: string; request: CollectRequestDocument }> {
     try {
-      const base64BasicAuthHeader = await this.createBase64(smart_gateway_api_key);
+      const base64BasicAuthHeader = await this.createBase64(
+        smart_gateway_api_key,
+      );
       const addiitioal_data = JSON.parse(collectRequest.additional_data);
       const student_name = addiitioal_data?.student_details?.student_name || '';
       const student_email =
@@ -146,7 +150,9 @@ export class SmartgatewayService {
     collect_id: string,
     collectRequest: CollectRequestDocument,
   ) {
-    const base64BasicAuthHeader = await this.createBase64(collectRequest?.smart_gateway_api_key);
+    const base64BasicAuthHeader = await this.createBase64(
+      collectRequest?.smart_gateway_api_key,
+    );
     const config = {
       method: 'get',
       maxBodyLength: Infinity,
@@ -208,7 +214,9 @@ export class SmartgatewayService {
         throw new BadRequestException('Payment not captured yet.');
       }
 
-      const base64BasicAuthHeader = await this.createBase64(collectRequest.smart_gateway_api_key);
+      const base64BasicAuthHeader = await this.createBase64(
+        collectRequest.smart_gateway_api_key,
+      );
       const config = {
         method: 'post',
         maxBodyLength: Infinity,
@@ -324,4 +332,91 @@ export class SmartgatewayService {
 
     return transformedResponse;
   }
+
+  async updateTransaction(order_id: string) {
+    console.log('chec', order_id);
+
+    const reqStatus =
+      await this.databaseService.CollectRequestStatusModel.findOne({
+        collect_id: new Types.ObjectId(order_id),
+      });
+    const request =
+      await this.databaseService.CollectRequestModel.findById(order_id);
+    if (!request) {
+      throw new BadRequestException('invalid id');
+    }
+
+    if (!reqStatus) {
+      throw new BadRequestException('invalid id');
+    }
+    try {
+      const status = await this.checkStatus(order_id, request);
+
+      if (reqStatus.status === 'PENDING') {
+        if (
+          status &&
+          status.status === 'SUCCESS' &&
+          status.details.payment_mode === 'upi'
+        ) {
+          console.log('upi', order_id, status);
+          try {
+            const {
+              payment_mode,
+              bank_ref,
+              payment_methods,
+              transaction_time,
+            } = status.details;
+            reqStatus.status = 'SUCCESS';
+            (reqStatus.payment_method = 'upi'),
+              (reqStatus.transaction_amount =
+                status.transaction_amount || 'NA');
+            if (status.transaction_time) {
+              reqStatus.payment_time = status.transaction_time;
+            }
+            reqStatus.bank_reference = bank_ref || 'na';
+            const info = {
+              upi: {
+                channel: null,
+                upi_id: payment_methods.upi.payer_vpa,
+              },
+            };
+            reqStatus.details = JSON.stringify(info) || 'NA';
+            await reqStatus.save();
+            return reqStatus;
+          } catch (e) {
+            console.log(e);
+          }
+        }
+        // else if(status && status.status==='FAILURE' && status.details.payment_mode==='upi'){
+        //   console.log('upi',order_id,status);
+
+        //   const {payment_mode,bank_ref,payment_methods,transaction_time}=status.details
+        //   reqStatus.status='FAILURE'
+        //   reqStatus.payment_method='upi',
+        //   reqStatus.transaction_amount=status.transaction_amount || 'NA'
+        //   if(status.transaction_time){
+
+        //     reqStatus.payment_time=status.transaction_time
+        //   }
+        //   reqStatus.bank_reference=bank_ref || 'na'
+        //   const info={
+        //     upi:{
+        //       channel:null,
+        //       upi_id:payment_methods.upi.payer_vpa
+        //     }
+        //   }
+        //   reqStatus.details=JSON.stringify(info) || 'NA'
+        //   await reqStatus.save()
+        //   return reqStatus
+
+        // }
+      } else {
+        console.log(status.details.payment_mode, order_id);
+      }
+    } catch (e) {
+      return;
+    }
+    return;
+  }
 }
+
