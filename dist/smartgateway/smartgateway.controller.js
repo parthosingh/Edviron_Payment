@@ -87,6 +87,17 @@ let SmartgatewayController = class SmartgatewayController {
         return res.redirect(callbackUrl.toString());
     }
     async webhook(body, res) {
+        try {
+            console.log('saveing');
+            const log = await new this.databaseService.WebhooksModel({
+                body: JSON.stringify(body),
+                gateway: 'smartgateway',
+            }).save();
+            console.log(log);
+        }
+        catch (e) {
+            console.log(e);
+        }
         const { content, txn_detail, date_created } = body;
         const { order } = body.content;
         const { order_id } = order;
@@ -282,6 +293,19 @@ let SmartgatewayController = class SmartgatewayController {
             res.status(500).send('Internal Server Error');
         }
     }
+    async testy(req) {
+        const { collect_id, school_id } = req.query;
+        const requests = await this.databaseService.CollectRequestModel.find({
+            school_id,
+        })
+            .select('_id')
+            .lean();
+        for (const req of requests) {
+            await this.smartgatewayService.updateTransaction(req._id.toString());
+        }
+        return true;
+        return await this.smartgatewayService.updateTransaction(collect_id);
+    }
 };
 exports.SmartgatewayController = SmartgatewayController;
 __decorate([
@@ -308,6 +332,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], SmartgatewayController.prototype, "webhook", null);
+__decorate([
+    (0, common_1.Get)('test'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SmartgatewayController.prototype, "testy", null);
 exports.SmartgatewayController = SmartgatewayController = __decorate([
     (0, common_1.Controller)('smartgateway'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
