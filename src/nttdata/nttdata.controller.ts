@@ -229,6 +229,7 @@ export class NttdataController {
       const stringified_data = JSON.stringify(req.body);
       await this.databaseService.WebhooksModel.create({
         body: stringified_data,
+        gateway:'ntt_payment'
       });
       return res.sendStatus(200);
     } catch (error) {
