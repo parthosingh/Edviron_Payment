@@ -119,9 +119,7 @@ export class SmartgatewayController {
   @Post('/webhook')
   async webhook(@Body() body: any, @Res() res: any) {
     try{
-      console.log('saveing');
-      
-    const log=  await new this.databaseService.WebhooksModel({
+      const log=  await new this.databaseService.WebhooksModel({
         // collect_id: collectIdObject.toString(),
         body: JSON.stringify(body),
         gateway: 'smartgateway',
@@ -132,9 +130,10 @@ export class SmartgatewayController {
       console.log(e);
       
     }
-    const { content, txn_detail, date_created } = body;
+    const { content, date_created } = body;
     const { order } = body.content;
     const { order_id } = order;
+    const {txn_detail}=order
     try {
       console.log('Webhook body:', order_id);
       const collect_id = order_id;
@@ -172,6 +171,8 @@ export class SmartgatewayController {
         collectReq._id.toString(),
         collectReq,
       );
+      console.log(status_response,'status');
+      
       let platform_type;
       let payment_method;
       let details;
@@ -255,7 +256,7 @@ export class SmartgatewayController {
           school_id: collectReq.school_id,
           trustee_id: collectReq.trustee_id,
           order_amount: pendingCollectReq?.order_amount,
-          transaction_amount: txn_detail.net_amount,
+          transaction_amount: txn_detail?.net_amount,
           platform_type,
           payment_mode: status_response.details.payment_mode,
           collect_id: collectReq?._id,
@@ -329,7 +330,7 @@ export class SmartgatewayController {
       const webHookDataInfo = {
         collect_id: collectReq._id.toString(),
         amount,
-        status,
+        status:status_response.status,
         trustee_id: collectReq.trustee_id,
         school_id: collectReq.school_id,
         req_webhook_urls: collectReq?.req_webhook_urls,
@@ -369,6 +370,8 @@ export class SmartgatewayController {
       res.status(200).send('OK');
       return;
     } catch (e) {
+      console.log(e);
+      
       res.status(500).send('Internal Server Error');
     }
   }

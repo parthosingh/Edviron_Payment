@@ -88,7 +88,6 @@ let SmartgatewayController = class SmartgatewayController {
     }
     async webhook(body, res) {
         try {
-            console.log('saveing');
             const log = await new this.databaseService.WebhooksModel({
                 body: JSON.stringify(body),
                 gateway: 'smartgateway',
@@ -98,9 +97,10 @@ let SmartgatewayController = class SmartgatewayController {
         catch (e) {
             console.log(e);
         }
-        const { content, txn_detail, date_created } = body;
+        const { content, date_created } = body;
         const { order } = body.content;
         const { order_id } = order;
+        const { txn_detail } = order;
         try {
             console.log('Webhook body:', order_id);
             const collect_id = order_id;
@@ -124,6 +124,7 @@ let SmartgatewayController = class SmartgatewayController {
                 return;
             }
             const status_response = await this.smartgatewayService.checkStatus(collectReq._id.toString(), collectReq);
+            console.log(status_response, 'status');
             let platform_type;
             let payment_method;
             let details;
@@ -195,7 +196,7 @@ let SmartgatewayController = class SmartgatewayController {
                     school_id: collectReq.school_id,
                     trustee_id: collectReq.trustee_id,
                     order_amount: pendingCollectReq?.order_amount,
-                    transaction_amount: txn_detail.net_amount,
+                    transaction_amount: txn_detail?.net_amount,
                     platform_type,
                     payment_mode: status_response.details.payment_mode,
                     collect_id: collectReq?._id,
@@ -262,7 +263,7 @@ let SmartgatewayController = class SmartgatewayController {
             const webHookDataInfo = {
                 collect_id: collectReq._id.toString(),
                 amount,
-                status,
+                status: status_response.status,
                 trustee_id: collectReq.trustee_id,
                 school_id: collectReq.school_id,
                 req_webhook_urls: collectReq?.req_webhook_urls,
@@ -290,6 +291,7 @@ let SmartgatewayController = class SmartgatewayController {
             return;
         }
         catch (e) {
+            console.log(e);
             res.status(500).send('Internal Server Error');
         }
     }
