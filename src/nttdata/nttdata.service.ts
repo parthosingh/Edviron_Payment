@@ -99,7 +99,9 @@ export class NttdataService {
     };
 
     try {
-      const encData = this.encrypt(JSON.stringify(payload), ntt_data.nttdata_hash_req_key, ntt_data.nttdata_req_salt);
+      const encData = this.encrypt(
+        JSON.stringify(payload), ntt_data.nttdata_req_salt, ntt_data.nttdata_req_salt
+      );
       
       const form = new URLSearchParams({
         encData,
@@ -121,7 +123,9 @@ export class NttdataService {
       if (!encResponse) {
         throw new Error('Encrypted token not found in NTT response');
       }
-      const { atomTokenId } = JSON.parse(this.decrypt(encResponse, ntt_data.nttdata_hash_res_key, ntt_data.nttdata_res_salt));
+      const { atomTokenId } = JSON.parse(this.decrypt
+        (encResponse, ntt_data.nttdata_res_salt, ntt_data.nttdata_res_salt)
+      );
 
       const updatedRequest =
         await this.databaseService.CollectRequestModel.findOneAndUpdate(
@@ -136,8 +140,7 @@ export class NttdataService {
 
       if (!updatedRequest) throw new BadRequestException('Orders not found');
 
-      const url = `${process.env.URL
-        }/nttdata/redirect?collect_id=${_id.toString()}`;
+      const url = `${process.env.URL}/nttdata/redirect?collect_id=${_id.toString()}`;
       return { url, collect_req: updatedRequest };
     } catch (error) {
       throw new BadRequestException(error?.message || 'Something went wrong');
@@ -191,7 +194,9 @@ export class NttdataService {
           },
         },
       };
-      const encData = this.encrypt(JSON.stringify(payload), coll_req.ntt_data.nttdata_hash_req_key, coll_req.ntt_data.nttdata_req_salt);
+      const encData = this.encrypt(
+        JSON.stringify(payload), coll_req.ntt_data.nttdata_req_salt, coll_req.ntt_data.nttdata_req_salt
+      );
       const form = new URLSearchParams({
         merchId: coll_req.ntt_data.nttdata_id,
         encData,
@@ -211,7 +216,7 @@ export class NttdataService {
       if (!encResponse) {
         throw new Error('Encrypted token not found in NTT response');
       }
-      const res = await JSON.parse(this.decrypt(encResponse, coll_req.ntt_data.nttdata_hash_res_key, coll_req.ntt_data.nttdata_res_salt));
+      const res = await JSON.parse(this.decrypt(encResponse, coll_req.ntt_data.nttdata_res_salt, coll_req.ntt_data.nttdata_res_salt));
       const { payInstrument } = res;
       const responseData = payInstrument[payInstrument.length - 1];
       const { payDetails, payModeSpecificData, responseDetails } = responseData;
@@ -282,7 +287,7 @@ export class NttdataService {
       }
       const signaturevalue = collect_request.ntt_data.nttdata_id + collect_request.ntt_data.nttdata_secret + collect_request_id + amount + 'INR' + 'REFUNDINIT'
 
-    const signature = await this.generateSignature(signaturevalue, "b459c2e93eb850f5eb")
+    const signature = await this.generateSignature(signaturevalue, collect_request.ntt_data.nttdata_hash_req_key)
     
       const payload = {
         payInstrument: {
@@ -312,7 +317,7 @@ export class NttdataService {
       };
 
       const encData = this.encrypt(
-        JSON.stringify(payload), collect_request.ntt_data.nttdata_hash_req_key, collect_request.ntt_data.nttdata_req_salt
+        JSON.stringify(payload), collect_request.ntt_data.nttdata_req_salt, collect_request.ntt_data.nttdata_req_salt
       );
       const form = new URLSearchParams({
         merchId: collect_request.ntt_data.nttdata_id,
@@ -333,7 +338,9 @@ export class NttdataService {
       if (!encResponse) {
         throw new Error('Encrypted token not found in NTT response');
       }
-      const res = await JSON.parse(this.decrypt(encResponse, collect_request.ntt_data.nttdata_hash_res_key, collect_request.ntt_data.nttdata_res_salt));
+      const res = await JSON.parse(this.decrypt
+        (encResponse, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt)
+      );
 
       return res;
 

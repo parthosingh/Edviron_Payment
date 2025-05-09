@@ -83,7 +83,7 @@ let NttdataController = class NttdataController {
                         custMobile: "${student_phone_no}",
                         returnUrl: "${process.env.URL}/nttdata/callback?collect_id=${collect_id}"
                     };
-                     new AtomPaynetz(options, 'uat');
+                     new AtomPaynetz(options, 'prod');
                     }
                     window.onload = () => {
                     setTimeout(openPay, 1000);
@@ -111,7 +111,7 @@ let NttdataController = class NttdataController {
             ]);
             if (!collect_request || !collect_req_status)
                 throw new common_1.NotFoundException('Order not found');
-            const data = JSON.parse(this.nttdataService.decrypt(encRes, collect_request.ntt_data.nttdata_hash_res_key, collect_request.ntt_data.nttdata_res_salt));
+            const data = JSON.parse(this.nttdataService.decrypt(encRes, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt));
             collect_request.gateway = collect_request_schema_1.Gateway.EDVIRON_NTTDATA;
             collect_request.ntt_data.ntt_atom_txn_id =
                 data?.payInstrument?.payDetails?.atomTxnId;
@@ -155,7 +155,7 @@ let NttdataController = class NttdataController {
             ]);
             if (!collect_request || !collect_req_status)
                 throw new common_1.NotFoundException('Order not found');
-            const data = JSON.parse(this.nttdataService.decrypt(encRes, collect_request.ntt_data.nttdata_hash_res_key, collect_request.ntt_data.nttdata_res_salt));
+            const data = JSON.parse(this.nttdataService.decrypt(encRes, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt));
             collect_request.gateway = collect_request_schema_1.Gateway.EDVIRON_NTTDATA;
             collect_request.ntt_data.ntt_atom_txn_id =
                 data?.payInstrument?.payDetails?.atomTxnId;
