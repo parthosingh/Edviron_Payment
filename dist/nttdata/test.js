@@ -1,0 +1,147 @@
+const log = {
+    "id": "evt_V2_c51e42283e6141faba673ed9992f03ff",
+    "date_created": "2025-05-09T05:29:17Z",
+    "content": {
+        "order": {
+            "udf4": "",
+            "resp_category": null,
+            "payer_vpa": "7053468609@ptyes",
+            "emi_details": {
+                "bank": null,
+                "monthly_payment": null,
+                "interest": null,
+                "conversion_details": null,
+                "principal_amount": null,
+                "additional_processing_fee_info": null,
+                "tenure": null,
+                "subvention_info": [],
+                "emi_type": null,
+                "processed_by": null
+            },
+            "txn_detail": {
+                "txn_flow_type": "QR",
+                "gateway": "HDFC_UPI",
+                "error_message": "",
+                "status": "CHARGED",
+                "last_updated": "2025-05-09T05:29:17Z",
+                "txn_amount": 1,
+                "txn_uuid": "mozdduNWVgnsdRtWZep",
+                "gateway_id": 501,
+                "error_code": null,
+                "metadata": { "payment_channel": "WEB" },
+                "surcharge_amount": null,
+                "currency": "INR",
+                "tax_amount": null,
+                "created": "2025-05-09T05:28:26Z",
+                "txn_amount_breakup": [{
+                        "sno": 1,
+                        "method": "ADD",
+                        "name": "BASE",
+                        "amount": 1
+                    }],
+                "express_checkout": false,
+                "offer_deduction_amount": null,
+                "redirect": true,
+                "order_id": "681d92584a6583de142f5bf3",
+                "remaining_refundable_amount": 1,
+                "txn_id": "46686-681d92584a6583de142f5bf3-1",
+                "net_amount": 1
+            },
+            "maximum_eligible_refund_amount": 1,
+            "udf8": "",
+            "udf3": "",
+            "udf6": "",
+            "offers": [],
+            "bank_error_code": "",
+            "status": "CHARGED",
+            "order_expiry": "2025-05-09T05:42:56Z",
+            "bank_error_message": "",
+            "payer_app_name": null,
+            "id": "ordeh_389e1091221a4985870406abba61f055",
+            "return_url": "http://localhost:4001/smartgateway/callback",
+            "last_updated": "2025-05-09T05:29:17Z",
+            "txn_uuid": "mozdduNWVgnsdRtWZep",
+            "gateway_id": 501,
+            "conflicted": false,
+            "metadata": {
+                "order_expiry": "2025-05-09T05:42:56Z",
+                "payment_page_client_id": "hdfcmaster",
+                "payment_links": {
+                    "mobile": "https://smartgateway.hdfcbank.com/payment-page/order/ordeh_389e1091221a4985870406abba61f055",
+                    "web": "https://smartgateway.hdfcbank.com/payment-page/order/ordeh_389e1091221a4985870406abba61f055",
+                    "iframe": "https://smartgateway.hdfcbank.com/payment-page/order/ordeh_389e1091221a4985870406abba61f055"
+                },
+                "merchant_payload": {
+                    "customerEmail": "",
+                    "customerPhone": ""
+                },
+                "payment_page_sdk_payload": {
+                    "firstName": "",
+                    "displayBusinessAs": "CHINMAYA VIDYALAYA",
+                    "currency": "INR",
+                    "service": "in.juspay.hyperpay",
+                    "description": "",
+                    "lastName": "",
+                    "amount": 1,
+                    "action": "paymentPage",
+                    "collectAvsInfo": false
+                }
+            },
+            "currency": "INR",
+            "date_created": "2025-05-09T05:27:56Z",
+            "resp_message": null,
+            "udf2": "",
+            "payment_links": {
+                "mobile": "https://smartgateway.hdfcbank.com/payment-page/order/ordeh_389e1091221a4985870406abba61f055",
+                "web": "https://smartgateway.hdfcbank.com/payment-page/order/ordeh_389e1091221a4985870406abba61f055",
+                "iframe": "https://smartgateway.hdfcbank.com/payment-page/order/ordeh_389e1091221a4985870406abba61f055"
+            },
+            "customer_email": null,
+            "customer_phone": null,
+            "udf5": "",
+            "status_id": 21,
+            "merchant_id": "46686",
+            "resp_code": null,
+            "udf9": "",
+            "amount": 1,
+            "gateway_reference_id": null,
+            "refunded": false,
+            "auth_type": "",
+            "order_id": "681d92584a6583de142f5bf3",
+            "payment_method": "UPI_QR",
+            "udf7": "",
+            "additional_info": {},
+            "upi": {
+                "txn_flow_type": "QR",
+                "payer_vpa": "7053468609@ptyes"
+            },
+            "udf10": "",
+            "payment_gateway_response": {
+                "epg_txn_id": "133421068005",
+                "network_error_code": "00",
+                "auth_ref_num": null,
+                "arn": null,
+                "eci": null,
+                "resp_message": "Transaction success",
+                "created": "2025-05-09T05:29:02Z",
+                "current_blocked_amount": null,
+                "rrn": "284664239772",
+                "umrn": null,
+                "resp_code": "00",
+                "network_error_message": null,
+                "gateway_merchant_id": "HDFC000037935248",
+                "auth_id_code": "NA",
+                "txn_id": "46686-681d92584a6583de142f5bf3-1"
+            },
+            "effective_amount": 1,
+            "txn_id": "46686-681d92584a6583de142f5bf3-1",
+            "product_id": "",
+            "customer_id": "46686",
+            "payment_method_type": "UPI",
+            "amount_refunded": 0,
+            "udf1": ""
+        }
+    },
+    "event_name": "ORDER_SUCCEEDED"
+};
+//# sourceMappingURL=test.js.map
