@@ -511,6 +511,7 @@ export class CcavenueService {
           status: TransactionStatus.FAILURE,
           status_code:'400',
           amount: order_status_result['order_amt'],
+          decrypt_res
         };
       }
       return {
