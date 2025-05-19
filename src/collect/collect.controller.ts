@@ -32,7 +32,7 @@ export class CollectController {
   constructor(
     private readonly collectService: CollectService,
     private readonly databaseService: DatabaseService,
-  ) {}
+  ) { }
   @Post('/')
   async collect(
     @Body()
@@ -59,7 +59,7 @@ export class CollectController {
       smartgateway_customer_id?: string | null;
       smart_gateway_api_key?: string | null;
       split_payments?: boolean;
-      pay_u_key?:string | null;
+      pay_u_key?: string | null;
       pay_u_salt: string | null;
       hdfc_razorpay_id?: string;
       hdfc_razorpay_secret?: string;
@@ -156,6 +156,78 @@ export class CollectController {
         throw new UnauthorizedException('JWT invalid');
       throw e;
     }
+  }
+
+  @Post('/pos')
+  async posCollect(
+    @Body()
+    body: {
+      amount: Number;
+      callbackUrl: string;
+      jwt: string;
+      school_id: string;
+      trustee_id: string;
+      platform_charges: string;
+      machine_name: string;
+      posmachine_id: string;
+      posmachinedevice_id: string;
+      posmachine_device_code: string;
+      additional_data?: Record<string, any>;
+      school_name?: string;
+      vendors_info?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+        },
+      ];
+    },
+  ) {
+    const {
+      amount,
+      callbackUrl,
+      jwt,
+      platform_charges,
+      additional_data = {},
+      school_id,
+      trustee_id,
+      school_name,
+      machine_name,
+      posmachine_id,
+      posmachinedevice_id,
+      posmachine_device_code,
+      vendors_info,
+    } = body;
+
+    if (!jwt) throw new BadRequestException('JWT not provided');
+    if (!amount) throw new BadRequestException('Amount not provided');
+    if (!callbackUrl)
+      throw new BadRequestException('Callback url not provided');
+
+    try {
+      let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
+      return sign(
+        await this.collectService.poscollect(
+          amount,
+          callbackUrl,
+          school_id,
+          trustee_id,
+          additional_data,
+          platform_charges,
+          machine_name,
+          posmachinedevice_id,
+          posmachine_device_code,
+          vendors_info
+        ),
+      );
+    } catch (e) {
+      console.log(e);
+      if (e.name === 'JsonWebTokenError')
+        throw new UnauthorizedException('JWT invalid');
+      throw e;
+    }
+
   }
 
   @Get('callback')

@@ -84,6 +84,7 @@ export class CollectRequestStatus {
   })
   error_details: error_details;
 
+
   _id: ObjectId;
 }
 

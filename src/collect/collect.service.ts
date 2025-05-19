@@ -3,6 +3,7 @@ import { DatabaseService } from 'src/database/database.service';
 import {
   CollectRequest,
   Gateway,
+  PosGateway,
 } from 'src/database/schemas/collect_request.schema';
 import { HdfcService } from 'src/hdfc/hdfc.service';
 import { PhonepeService } from 'src/phonepe/phonepe.service';
@@ -26,7 +27,7 @@ export class CollectService {
     private readonly hdfcRazorpay: HdfcRazorpayService,
     private readonly payuService: PayUService,
     private readonly hdfcSmartgatewayService: SmartgatewayService,
-  ) {}
+  ) { }
   async collect(
     amount: Number,
     callbackUrl: string,
@@ -131,9 +132,8 @@ export class CollectService {
         15 * 60 * 1000,
       );
       return {
-        url: `${process.env.URL}/pay-u/redirect?collect_id=${
-          request._id
-        }&school_name=${school_name?.split(' ').join('_')}`,
+        url: `${process.env.URL}/pay-u/redirect?collect_id=${request._id
+          }&school_name=${school_name?.split(' ').join('_')}`,
         request,
       };
     }
@@ -165,11 +165,10 @@ export class CollectService {
         await request.save();
       }
       return {
-        url: `${process.env.URL}/hdfc-razorpay/redirect?order_id=${
-          orderData.id
-        }&collect_id=${request._id}&school_name=${school_name
-          ?.split(' ')
-          .join('_')}`,
+        url: `${process.env.URL}/hdfc-razorpay/redirect?order_id=${orderData.id
+          }&collect_id=${request._id}&school_name=${school_name
+            ?.split(' ')
+            .join('_')}`,
         request,
       };
     }
@@ -190,12 +189,12 @@ export class CollectService {
     const transaction = (
       gateway === Gateway.PENDING
         ? await this.edvironPgService.collect(
-            request,
-            platform_charges,
-            school_name,
-            splitPayments || false,
-            vendor,
-          )
+          request,
+          platform_charges,
+          school_name,
+          splitPayments || false,
+          vendor,
+        )
         : await this.hdfcService.collect(request)
     )!;
     await this.databaseService.CollectRequestModel.updateOne(
@@ -209,6 +208,53 @@ export class CollectService {
     );
     return { url: transaction.url, request };
   }
+
+  async poscollect(
+    amount: Number,
+    callbackUrl: string,
+    school_id: string,
+    trustee_id: string,
+    additional_data?: {},
+    platform_charges?: string,
+    machine_name?: string,
+    posmachinedevice_id?: string,
+    posmachine_device_code?: string,
+    vendors_info?: [
+      {
+        vendor_id: string;
+        percentage?: number;
+        amount?: number;
+        name?: string;
+      },
+    ],
+  ) {
+    const gateway = machine_name === 'PAYTM' ? PosGateway.PAYTM : PosGateway.MOSAMBEE;
+    const request = await new this.databaseService.CollectRequestModel({
+      amount,
+      callbackUrl,
+      gateway: gateway,
+      school_id,
+      trustee_id,
+      additional_data: JSON.stringify(additional_data),
+      pos_machine_name: machine_name,
+      pos_machine_device_id: posmachinedevice_id,
+      pos_machine_device_code: posmachine_device_code,
+      isPosTransaction: true,
+    }).save();
+
+    await new this.databaseService.CollectRequestStatusModel({
+      collect_id: request._id,
+      status: PaymentStatus.PENDING,
+      order_amount: request.amount,
+      transaction_amount: request.amount,
+    }).save();
+
+    if (machine_name === PosGateway.PAYTM) {
+      
+    }
+
+  }
+
 
   async sendCallbackEmail(collect_id: string) {
     const htmlToSend = `

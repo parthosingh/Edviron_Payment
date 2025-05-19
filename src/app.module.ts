@@ -18,6 +18,8 @@ import { PayUModule } from './pay-u/pay-u.module';
 import { HdfcRazorpayModule } from './hdfc_razporpay/hdfc_razorpay.module';
 import { CashfreeService } from './cashfree/cashfree.service';
 import { CcavenueService } from './ccavenue/ccavenue.service';
+import { PosPaytmController } from './pos-paytm/pos-paytm.controller';
+import { PosPaytmService } from './pos-paytm/pos-paytm.service';
 
 @Module({
   imports: [
@@ -33,7 +35,7 @@ import { CcavenueService } from './ccavenue/ccavenue.service';
     HdfcRazorpayModule,
     SmartgatewayModule
   ],
-  controllers: [AppController, EasebuzzController, CashfreeController],
-  providers: [AppService, CashfreeService, EasebuzzService, CcavenueService],
+  controllers: [AppController, EasebuzzController, CashfreeController, PosPaytmController],
+  providers: [AppService, CashfreeService, EasebuzzService, CcavenueService, PosPaytmService],
 })
 export class AppModule {}

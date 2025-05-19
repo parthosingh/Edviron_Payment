@@ -6,13 +6,18 @@ export enum Gateway {
   HDFC = 'HDFC',
   EDVIRON_PG = 'EDVIRON_PG',
   EDVIRON_PAY_U = 'EDVIRON_PAY_U',
-  EDVIRON_CCAVENUE='EDVIRON_CCAVENUE',
-  EDVIRON_CASHFREE='EDVIRON_CASHFREE',
-  EDVIRON_EASEBUZZ='EDVIRON_EASEBUZZ',
-  PENDING='PENDING',
-  EXPIRED='EXPIRED',
+  EDVIRON_CCAVENUE = 'EDVIRON_CCAVENUE',
+  EDVIRON_CASHFREE = 'EDVIRON_CASHFREE',
+  EDVIRON_EASEBUZZ = 'EDVIRON_EASEBUZZ',
+  PENDING = 'PENDING',
+  EXPIRED = 'EXPIRED',
   EDVIRON_HDFC_RAZORPAY = 'EDVIRON_HDFC_RAZORPAY',
   SMART_GATEWAY = 'EDVIRON_SMARTGATEWAY',
+}
+
+export enum PosGateway {
+  PAYTM = 'PAYTM',
+  MOSAMBEE = 'MOSAMBEE'
 }
 
 @Schema()
@@ -143,6 +148,18 @@ export class CollectRequest {
 
   @Prop({ required: false })
   pay_u_salt: string;
+
+  @Prop({ required: false })
+  pos_machine_name: string;
+
+  @Prop({ required: false })
+  pos_machine_device_id: string;
+
+  @Prop({ required: false })
+  pos_machine_device_code: string;
+
+  @Prop({ required: false, default: false })
+  isPosTransaction: boolean;
 
   _id: ObjectId;
 }
