@@ -8,6 +8,7 @@ import {
   Query,
   Req,
   Res,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import * as jwt from 'jsonwebtoken';
@@ -377,6 +378,53 @@ export class CashfreeController {
         identifier: 'Cashfree',
       });
       throw new BadRequestException(error.message);
+    }
+  }
+
+  @Post('create-vba')
+  async createVBA(
+    @Body()
+    body: {
+      cf_x_client_id: string;
+      cf_x_clien_secret: string;
+      school_id: string;
+      token: string;
+      virtual_account_details: {
+        virtual_account_id: string;
+        virtual_account_name: string;
+        virtual_account_email: string;
+        virtual_account_phone: string;
+      };
+      bank_account_details: {
+        account_number: string;
+        ifsc_code: string;
+      };
+      notification_group: string;
+    },
+  ) {
+    const {
+      cf_x_clien_secret,
+      cf_x_client_id,
+      school_id,
+      token,
+      virtual_account_details,
+      bank_account_details,
+      notification_group,
+    } = body;
+    try {
+      const decodedToken = (await jwt.verify(token, process.env.KEY!)) as any;
+      if (decodedToken.school_id !== school_id) {
+        throw new UnauthorizedException('Invalid Token');
+      }
+      return await this.cashfreeService.createVBA(
+        cf_x_client_id,
+        cf_x_clien_secret,
+        virtual_account_details,
+        bank_account_details,
+        notification_group,
+      );
+    } catch (e) {
+      throw new BadRequestException(e.message);
     }
   }
 }
