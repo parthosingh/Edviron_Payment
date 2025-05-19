@@ -736,8 +736,41 @@ export class CashfreeService {
       gcl_use_case: string;
     },
   ):Promise<string> {
- 
-    return 'Merchant Rerquest Created Successfully on Cahfree'
+    const url = 'https://api.cashfree.com/partners/merchants';
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-partner-apikey': process.env.CASHFREE_API_KEY,
+    };
+    const data = {
+      merchant_id,
+      merchant_email,
+      merchant_name,
+      poc_phone,
+      merchant_site_url,
+      business_details,
+      website_details: {
+        ...website_details,
+      },
+      bank_account_details,
+      signatory_details,
+      additional_details,
+    };
+
+    const config = {
+      method: 'post',
+      url,
+      headers,
+      data,
+    };
+
+    try {
+      const response = await axios.request(config);
+      console.log('Cashfree response:', response.data);
+      return 'Merchant Request Created Successfully on Cashfree';
+    } catch (error) {
+      console.error('Cashfree API error:', error?.response?.data || error.message);
+      throw new Error('Cashfree API request failed');
+    }
   }
 }
 
