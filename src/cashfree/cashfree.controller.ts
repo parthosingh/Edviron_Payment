@@ -381,6 +381,16 @@ export class CashfreeController {
     }
   }
 
+  @Post('/webhook/vba-transaction')
+  async vbaWebhook(@Body() body: any,@Res() res: any) {
+    await this.databaseService.WebhooksModel.create({
+      body: JSON.stringify(body),
+      gateway: 'CASHFREE',
+      webhooktype: 'vba',
+    });
+    res.status(200).send('OK');
+  }
+
   @Post('create-vba')
   async createVBA(
     @Body()
@@ -416,6 +426,50 @@ export class CashfreeController {
         cf_x_clien_secret,
         virtual_account_details,
         notification_group,
+      );
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Post('v2/create-vba')
+  async createVBAV2(
+    @Body()
+    body: {
+      cf_x_client_id: string;
+      cf_x_clien_secret: string;
+      school_id: string;
+      token: string;
+      virtual_account_details: {
+        virtual_account_id: string;
+        virtual_account_name: string;
+        virtual_account_email: string;
+        virtual_account_phone: string;
+      };
+      notification_group: string;
+      amount: number;
+    },
+  ) {
+    const {
+      cf_x_clien_secret,
+      cf_x_client_id,
+      school_id,
+      token,
+      virtual_account_details,
+      notification_group,
+      amount,
+    } = body;
+    try {
+      const decodedToken = (await jwt.verify(token, process.env.KEY!)) as any;
+      if (decodedToken.school_id !== school_id) {
+        throw new UnauthorizedException('Invalid Token');
+      }
+      return await this.cashfreeService.createVBAV2(
+        cf_x_client_id,
+        cf_x_clien_secret,
+        virtual_account_details,
+        notification_group,
+        amount,
       );
     } catch (e) {
       throw new BadRequestException(e.message);

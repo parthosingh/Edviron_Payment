@@ -83,6 +83,9 @@ export class CollectRequest {
   @Prop({ required: false, default: false })
   sdkPayment: boolean;
 
+  @Prop({ required: false, default: false })
+  isVBAPayment: boolean;
+
   @Prop({ required: false, unique: true })
   custom_order_id: string;
   @Prop({ default: [] })
@@ -143,6 +146,9 @@ export class CollectRequest {
 
   @Prop({ required: false })
   pay_u_salt: string;
+
+  @Prop({ required: false })
+  vba_account_number: string;
 
   _id: ObjectId;
 }

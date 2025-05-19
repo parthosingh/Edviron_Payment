@@ -63,6 +63,8 @@ export class CollectController {
       pay_u_salt: string | null;
       hdfc_razorpay_id?: string;
       hdfc_razorpay_secret?: string;
+      isVBAPayment:boolean;
+      vba_account_number:string;
       hdfc_razorpay_mid?: string;
       vendors_info?: [
         {
@@ -103,6 +105,8 @@ export class CollectController {
       hdfc_razorpay_id,
       hdfc_razorpay_secret,
       hdfc_razorpay_mid,
+      isVBAPayment,
+      vba_account_number
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -148,6 +152,8 @@ export class CollectController {
           hdfc_razorpay_secret,
           hdfc_razorpay_mid,
           vendors_info,
+          isVBAPayment,
+          vba_account_number
         ),
       );
     } catch (e) {

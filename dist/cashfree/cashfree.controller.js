@@ -287,6 +287,14 @@ let CashfreeController = class CashfreeController {
             throw new common_1.BadRequestException(error.message);
         }
     }
+    async vbaWebhook(body, res) {
+        await this.databaseService.WebhooksModel.create({
+            body: JSON.stringify(body),
+            gateway: 'CASHFREE',
+            webhooktype: 'vba',
+        });
+        res.status(200).send('OK');
+    }
     async createVBA(body) {
         const { cf_x_clien_secret, cf_x_client_id, school_id, token, virtual_account_details, notification_group, } = body;
         try {
@@ -295,6 +303,19 @@ let CashfreeController = class CashfreeController {
                 throw new common_1.UnauthorizedException('Invalid Token');
             }
             return await this.cashfreeService.createVBA(cf_x_client_id, cf_x_clien_secret, virtual_account_details, notification_group);
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async createVBAV2(body) {
+        const { cf_x_clien_secret, cf_x_client_id, school_id, token, virtual_account_details, notification_group, amount, } = body;
+        try {
+            const decodedToken = (await jwt.verify(token, process.env.KEY));
+            if (decodedToken.school_id !== school_id) {
+                throw new common_1.UnauthorizedException('Invalid Token');
+            }
+            return await this.cashfreeService.createVBAV2(cf_x_client_id, cf_x_clien_secret, virtual_account_details, notification_group, amount);
         }
         catch (e) {
             throw new common_1.BadRequestException(e.message);
@@ -368,12 +389,27 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], CashfreeController.prototype, "testSecureWebhook", null);
 __decorate([
+    (0, common_1.Post)('/webhook/vba-transaction'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "vbaWebhook", null);
+__decorate([
     (0, common_1.Post)('create-vba'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CashfreeController.prototype, "createVBA", null);
+__decorate([
+    (0, common_1.Post)('v2/create-vba'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "createVBAV2", null);
 exports.CashfreeController = CashfreeController = __decorate([
     (0, common_1.Controller)('cashfree'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

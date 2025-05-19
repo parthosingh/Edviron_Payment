@@ -25,7 +25,7 @@ export declare class CollectService {
             amount?: number;
             name?: string;
         }
-    ]): Promise<{
+    ], isVBAPayment?: boolean, vba_account_number?: string): Promise<{
         url: string;
         request: CollectRequest;
     }>;

@@ -33,10 +33,7 @@ let CollectService = class CollectService {
         this.payuService = payuService;
         this.hdfcSmartgatewayService = hdfcSmartgatewayService;
     }
-    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, vendor) {
-        console.log(req_webhook_urls, 'webhook url');
-        console.log(webHook);
-        console.log(ccavenue_merchant_id, 'ccavenue', ccavenue_access_code, ccavenue_working_key);
+    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, vendor, isVBAPayment, vba_account_number) {
         if (custom_order_id) {
             const count = await this.databaseService.CollectRequestModel.countDocuments({
                 school_id,
@@ -69,6 +66,8 @@ let CollectService = class CollectService {
             ccavenue_working_key: ccavenue_working_key || null,
             pay_u_key: pay_u_key || null,
             pay_u_salt: pay_u_salt || null,
+            isVBAPayment: isVBAPayment || false,
+            vba_account_number: vba_account_number || 'NA'
         }).save();
         await new this.databaseService.CollectRequestStatusModel({
             collect_id: request._id,
