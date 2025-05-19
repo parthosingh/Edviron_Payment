@@ -169,7 +169,6 @@ export class CollectController {
       trustee_id: string;
       platform_charges: string;
       machine_name: string;
-      posmachine_id: string;
       posmachinedevice_id: string;
       posmachine_device_code: string;
       additional_data?: Record<string, any>;
@@ -194,7 +193,6 @@ export class CollectController {
       trustee_id,
       school_name,
       machine_name,
-      posmachine_id,
       posmachinedevice_id,
       posmachine_device_code,
       vendors_info,
