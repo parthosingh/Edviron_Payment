@@ -2466,14 +2466,19 @@ let EdvironPgController = class EdvironPgController {
         try {
             const request = await this.databaseService.CollectRequestModel.findById(collect_id);
             if (!request) {
-                throw new common_1.BadRequestException('Invalid Collect_id');
+                return {
+                    isSchoolVBA: false,
+                    isStudentVBA: false,
+                    virtual_account_number: '',
+                    virtual_account_ifsc: '',
+                };
             }
             if (!request.additional_data) {
                 return {
                     isSchoolVBA: false,
                     isStudentVBA: false,
-                    virtual_account_number: null,
-                    virtual_account_ifsc: null,
+                    virtual_account_number: '',
+                    virtual_account_ifsc: '',
                 };
             }
             const student_info = JSON.parse(request.additional_data);
@@ -2482,8 +2487,8 @@ let EdvironPgController = class EdvironPgController {
                 return {
                     isSchoolVBA: false,
                     isStudentVBA: false,
-                    virtual_account_number: null,
-                    virtual_account_ifsc: null,
+                    virtual_account_number: '',
+                    virtual_account_ifsc: '',
                 };
             }
             const payload = { student_id };
@@ -2501,7 +2506,12 @@ let EdvironPgController = class EdvironPgController {
             return response;
         }
         catch (e) {
-            throw new common_1.BadRequestException(e.message);
+            return {
+                isSchoolVBA: false,
+                isStudentVBA: false,
+                virtual_account_number: '',
+                virtual_account_ifsc: '',
+            };
         }
     }
 };
