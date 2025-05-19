@@ -48,4 +48,10 @@ export declare class CashfreeService {
         note: string;
     }>, client_id: string): Promise<any>;
     acceptDispute(disputeId: string, client_id: string): Promise<any>;
+    createVBA(cf_x_client_id: string, cf_x_clien_secret: string, virtual_account_details: {
+        virtual_account_id: string;
+        virtual_account_name: string;
+        virtual_account_email: string;
+        virtual_account_phone: string;
+    }, notification_group: string): Promise<any>;
 }

@@ -341,4 +341,5 @@ export declare class EdvironPgController {
         yearlyTotal?: undefined;
         monthlyReport?: undefined;
     }>;
+    getVba(collect_id: string): Promise<any>;
 }

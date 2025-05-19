@@ -395,10 +395,6 @@ export class CashfreeController {
         virtual_account_email: string;
         virtual_account_phone: string;
       };
-      bank_account_details: {
-        account_number: string;
-        ifsc_code: string;
-      };
       notification_group: string;
     },
   ) {
@@ -408,7 +404,6 @@ export class CashfreeController {
       school_id,
       token,
       virtual_account_details,
-      bank_account_details,
       notification_group,
     } = body;
     try {
@@ -420,7 +415,6 @@ export class CashfreeController {
         cf_x_client_id,
         cf_x_clien_secret,
         virtual_account_details,
-        bank_account_details,
         notification_group,
       );
     } catch (e) {

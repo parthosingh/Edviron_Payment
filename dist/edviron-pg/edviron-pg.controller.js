@@ -1029,7 +1029,7 @@ let EdvironPgController = class EdvironPgController {
     async bulkTransactions(body, res, req) {
         console.time('bulk-transactions-report');
         const { trustee_id, token, searchParams, isCustomSearch, seachFilter, isQRCode, gateway, } = body;
-        let { payment_modes, } = body;
+        let { payment_modes } = body;
         if (!token)
             throw new Error('Token not provided');
         if (payment_modes?.includes('upi')) {
@@ -2462,6 +2462,48 @@ let EdvironPgController = class EdvironPgController {
             return { error: 'Failed to generate report' };
         }
     }
+    async getVba(collect_id) {
+        try {
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request) {
+                throw new common_1.BadRequestException('Invalid Collect_id');
+            }
+            if (!request.additional_data) {
+                return {
+                    isSchoolVBA: false,
+                    isStudentVBA: false,
+                    virtual_account_number: null,
+                    virtual_account_ifsc: null,
+                };
+            }
+            const student_info = JSON.parse(request.additional_data);
+            const student_id = student_info.student_details?.student_id;
+            if (!student_id) {
+                return {
+                    isSchoolVBA: false,
+                    isStudentVBA: false,
+                    virtual_account_number: null,
+                    virtual_account_ifsc: null,
+                };
+            }
+            const payload = { student_id };
+            const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET, {
+                noTimestamp: true,
+            });
+            const config = {
+                method: 'get',
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-student-vba?student_id=${student_id}&token=${token}&school_id=${request.school_id}`,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+            const { data: response } = await axios_1.default.request(config);
+            return response;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -2838,6 +2880,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "genSchoolReport", null);
+__decorate([
+    (0, common_1.Get)('/vba-details'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getVba", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

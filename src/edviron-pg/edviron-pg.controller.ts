@@ -1451,19 +1451,17 @@ export class EdvironPgController {
       searchParams,
       isCustomSearch,
       seachFilter,
-      
+
       isQRCode,
       gateway,
     } = body;
-    let {
-      payment_modes,
-    } = body;
+    let { payment_modes } = body;
     if (!token) throw new Error('Token not provided');
 
-    if(payment_modes?.includes('upi')){
-      payment_modes = [...payment_modes, 'upi_credit_card']  //debit_card
+    if (payment_modes?.includes('upi')) {
+      payment_modes = [...payment_modes, 'upi_credit_card']; //debit_card
     }
-    
+
     try {
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 10;
@@ -3476,73 +3474,74 @@ export class EdvironPgController {
     @Body() body: { school_id: string; start_date: string; end_date: string },
   ) {
     const { school_id, start_date, end_date } = body;
-  
+
     const startOfDayUTC = new Date(
       await this.edvironPgService.convertISTStartToUTC(start_date),
     );
     const endOfDayUTC = new Date(
       await this.edvironPgService.convertISTEndToUTC(end_date),
     );
-  
+
     try {
-      const aggregation = await this.databaseService.CollectRequestModel.aggregate([
-        {
-          $match: {
-            school_id,
+      const aggregation =
+        await this.databaseService.CollectRequestModel.aggregate([
+          {
+            $match: {
+              school_id,
+            },
           },
-        },
-        {
-          $lookup: {
-            from: 'collectrequeststatuses',
-            localField: '_id',
-            foreignField: 'collect_id',
-            as: 'result',
+          {
+            $lookup: {
+              from: 'collectrequeststatuses',
+              localField: '_id',
+              foreignField: 'collect_id',
+              as: 'result',
+            },
           },
-        },
-        { $unwind: '$result' },
-        {
-          $match: {
-            'result.status': { $in: ['success', 'SUCCESS'] },
-            $or: [
-              {
-                'result.payment_time': {
-                  $ne: null,
-                  $gte: startOfDayUTC,
-                  $lte: endOfDayUTC,
+          { $unwind: '$result' },
+          {
+            $match: {
+              'result.status': { $in: ['success', 'SUCCESS'] },
+              $or: [
+                {
+                  'result.payment_time': {
+                    $ne: null,
+                    $gte: startOfDayUTC,
+                    $lte: endOfDayUTC,
+                  },
                 },
-              },
-              {
-                'result.payment_time': { $eq: null },
-              },
-              {
-                'result.updatedAt': {
-                  $gte: startOfDayUTC,
-                  $lte: endOfDayUTC,
+                {
+                  'result.payment_time': { $eq: null },
                 },
-              },
-            ],
+                {
+                  'result.updatedAt': {
+                    $gte: startOfDayUTC,
+                    $lte: endOfDayUTC,
+                  },
+                },
+              ],
+            },
           },
-        },
-        {
-          $addFields: {
-            year: { $year: '$result.updatedAt' },
-            month: { $month: '$result.updatedAt' },
+          {
+            $addFields: {
+              year: { $year: '$result.updatedAt' },
+              month: { $month: '$result.updatedAt' },
+            },
           },
-        },
-        {
-          $group: {
-            _id: { year: '$year', month: '$month' },
-            totalTransactions: { $sum: 1 },
-            totalVolume: { $sum: '$result.transaction_amount' },
+          {
+            $group: {
+              _id: { year: '$year', month: '$month' },
+              totalTransactions: { $sum: 1 },
+              totalVolume: { $sum: '$result.transaction_amount' },
+            },
           },
-        },
-        { $sort: { '_id.year': 1, '_id.month': 1 } },
-      ]);
-  
+          { $sort: { '_id.year': 1, '_id.month': 1 } },
+        ]);
+
       const monthlyMap = new Map();
       let yearlyTotalTransactions = 0;
       let yearlyTotalVolume = 0;
-  
+
       aggregation.forEach((item) => {
         const key = `${item._id.year}-${item._id.month}`;
         monthlyMap.set(key, item);
@@ -3553,15 +3552,15 @@ export class EdvironPgController {
       const start = new Date(start_date);
       const end = new Date(end_date);
       const monthlyReport = [];
-  
+
       const current = new Date(start.getFullYear(), start.getMonth(), 1);
       const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
-  
+
       while (current <= endMonth) {
         const year = current.getFullYear();
-        const month = current.getMonth() + 1; 
+        const month = current.getMonth() + 1;
         const key = `${year}-${month}`;
-  
+
         if (monthlyMap.has(key)) {
           monthlyReport.push(monthlyMap.get(key));
         } else {
@@ -3571,10 +3570,10 @@ export class EdvironPgController {
             totalVolume: 0,
           });
         }
-  
+
         current.setMonth(current.getMonth() + 1);
       }
-  
+
       return {
         yearlyTotal: {
           totalTransactions: yearlyTotalTransactions,
@@ -3587,5 +3586,49 @@ export class EdvironPgController {
       return { error: 'Failed to generate report' };
     }
   }
-   
+
+  @Get('/vba-details')
+  async getVba(@Query('collect_id') collect_id: string) {
+    try {
+      const request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!request) {
+        throw new BadRequestException('Invalid Collect_id');
+      }
+      if (!request.additional_data) {
+        return {
+          isSchoolVBA:false,
+          isStudentVBA: false,
+          virtual_account_number: null,
+          virtual_account_ifsc: null,
+        };
+      }
+      const student_info = JSON.parse(request.additional_data);
+      const student_id = student_info.student_details?.student_id; 
+      if (!student_id) {
+        return {
+          isSchoolVBA:false,
+          isStudentVBA: false,
+          virtual_account_number: null,
+          virtual_account_ifsc: null,
+        };
+      }
+      const payload = { student_id };
+      const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET!, {
+        noTimestamp: true,
+      });
+      const config = {
+        method: 'get',
+        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-student-vba?student_id=${student_id}&token=${token}&school_id=${request.school_id}`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      };
+
+      const {data:response}=await axios.request(config)
+      return response
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
 }

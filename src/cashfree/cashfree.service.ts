@@ -683,7 +683,6 @@ export class CashfreeService {
     }
   }
 
-  
   async createVBA(
     cf_x_client_id: string,
     cf_x_clien_secret: string,
@@ -693,13 +692,9 @@ export class CashfreeService {
       virtual_account_email: string;
       virtual_account_phone: string;
     },
-    bank_account_details: {
-      account_number: string;
-      ifsc_code: string;
-    },
     notification_group: string,
   ) {
-    const config = {
+     const config = {
       method: 'post',
       url: `https://api.cashfree.com/pg/vba`,
       maxBodyLength: Infinity,
@@ -712,14 +707,6 @@ export class CashfreeService {
       },
       data: {
         virtual_account_details,
-        remitter_lock_details: {
-          allowed_remitters: [
-            {
-              account_number: bank_account_details.account_number,
-              ifsc: bank_account_details.ifsc_code,
-            },
-          ],
-        },
         amount_lock_details: {
           min_amount: 1,
           max_amount: 99999999,
@@ -730,9 +717,16 @@ export class CashfreeService {
     };
 
     try {
-     const {data:response}=await axios.request(config)
-     return response
+      const { data: response } = await axios.request(config);
+      const details={
+        
+      }
+      return response;
     } catch (error) {
+      console.log(
+        error
+      );
+       
       console.error('Error:', error.response?.data || error.message);
       throw error;
     }
