@@ -359,4 +359,9 @@ exports.CashfreeController = CashfreeController = __decorate([
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
         cashfree_service_1.CashfreeService])
 ], CashfreeController);
+const u = {
+    data: { test_object: { test_key: 'test_value' } },
+    type: 'WEBHOOK',
+    event_time: '2025-05-20T10:24:38.589Z',
+};
 //# sourceMappingURL=cashfree.controller.js.map

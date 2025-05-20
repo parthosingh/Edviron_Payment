@@ -14,7 +14,9 @@ import {
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import * as moment from 'moment-timezone';
+import * as jwt from 'jsonwebtoken'
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
+import { promises } from 'dns';
 @Injectable()
 export class CashfreeService {
   constructor(
@@ -684,26 +686,25 @@ export class CashfreeService {
   }
 
   async createMerchant(
-    client_id: string,
-    merchant_id: string,
-    merchant_email: string,
-    merchant_name: string,
-    poc_phone: string,
+    merchant_id: string, //school_id
+    merchant_email: string, // kyc email
+    merchant_name: string,//school_name
+    poc_phone: string, // edviron
     merchant_site_url: string,//edviron
     business_details: {
-      business_legal_name: string;
-      business_type: string;
-      business_model: string;
-      business_category: string;
-      business_subcategory: string;
-      business_pan: string;
-      business_address: string;
-      business_city: string;
-      business_state: string;
-      business_postalcode: string;
-      business_country: string;
-      business_gstin: string;
-      business_cin: string;
+      business_legal_name: string; //req
+      business_type: string; //req
+      business_model: string; //req
+      business_category?: string | null;
+      business_subcategory?: string | null;
+      business_pan?: string | null;
+      business_address?: string | null;
+      business_city?: string | null;
+      business_state?: string | null;
+      business_postalcode?: string | null;
+      business_country?: string | null;
+      business_gstin?: string | null;
+      business_cin?: string | null;
     },
     website_details: {
       website_contact_us: string;
@@ -718,23 +719,13 @@ export class CashfreeService {
       // website_address: string;
     },
     bank_account_details: {
-      bank_account_number: string;
-      bank_ifsc: string;
+      bank_account_number?: string | null;
+      bank_ifsc?: string | null;
     },
     signatory_details: {
       signatory_name: string;
-      signatory_pan: string;
-    },
-    additional_details: {
-      payment_gateway_use_case: string;
-      payment_gateway_mcc: string;
-      exporter_type: string;
-      gcl_purpose_code: string;
-      import_export_code: number;
-      gcl_transaction_value: string;
-      gcl_transaction_volume: string;
-      gcl_use_case: string;
-    },
+      signatory_pan?: string;
+    }
   ):Promise<string> {
     const url = 'https://api.cashfree.com/partners/merchants';
     const headers = {
@@ -753,8 +744,13 @@ export class CashfreeService {
       },
       bank_account_details,
       signatory_details,
-      additional_details,
     };
+
+    console.log({
+      merchant_email,
+      poc_phone
+    });
+    
 
     const config = {
       method: 'post',
@@ -766,11 +762,107 @@ export class CashfreeService {
     try {
       const response = await axios.request(config);
       console.log('Cashfree response:', response.data);
+      return response.data
       return 'Merchant Request Created Successfully on Cashfree';
     } catch (error) {
       console.error('Cashfree API error:', error?.response?.data || error.message);
       throw new Error('Cashfree API request failed');
     }
+  }
+
+  async getMerchantInfo(school_id:string,kyc_mail:string):Promise<{merchant_id: string, //school_id
+    merchant_email: string, // kyc email
+    merchant_name: string,//school_name
+    poc_phone: string, // edviron
+    merchant_site_url: string,//edviron
+    business_details: {
+      business_legal_name: string; //req
+      business_type: string; //req
+      business_model: string; //req
+      business_category?: string | null;
+      business_subcategory?: string | null;
+      business_pan?: string | null;
+      business_address?: string | null;
+      business_city?: string | null;
+      business_state?: string | null;
+      business_postalcode?: string | null;
+      business_country?: string | null;
+      business_gstin?: string | null;
+      business_cin?: string | null;
+    },
+    website_details: {
+      website_contact_us: string;
+      website_privacy_policy: string;
+      website_refund_policy: string;
+      website_tnc: string;
+    },
+    bank_account_details: {
+      bank_account_number?: string | null;
+      bank_ifsc?: string | null;
+    },
+    signatory_details: {
+      signatory_name: string;
+      signatory_pan?: string;
+    }}>{
+    const token=jwt.sign({school_id},process.env.JWT_SECRET_FOR_INTRANET!)
+    const config={
+      method:'get',
+      maxBodyLength: Infinity,
+      url:`${process.env.MAIN_BACKEND}/api/trustee/get-school-kyc?school_id=${school_id}&token=${token}`,
+      headers:{
+        accept: 'application/json',
+      }
+    }
+    const {data:response}=await axios.request(config)
+    if(!response.legalName){
+      throw new BadRequestException('legalName required')
+    }
+    if(!response.businessCategory){
+      throw new BadRequestException('businessCategory is re')
+    }
+    if(!response.authSignatory?.auth_sighnatory_name_on_aadhar){
+      throw new BadRequestException('authSignatory?.auth_sighnatory_name_on_aadhar, required')
+    }
+    const school=await this.edvironPgService.getAllSchoolInfo(school_id)
+    console.log({school});
+    
+    const details={
+      merchant_id:response.school,
+      merchant_email:kyc_mail,
+      merchant_name:school.school_name,
+      poc_phone:'7000061754', //chaneg later
+      merchant_site_url:'https://www.edviron.com/',
+      business_details: {
+        business_legal_name: response.legalName,
+        business_type: response.businessCategory,
+        business_model: 'Both', //chnage later
+        business_category: response.businessCategory || null,
+        business_subcategory: response.businessSubCategory || null,
+        business_pan: response.businessProofDetails?.business_pan_number || null,
+        business_address: response.businessAddress?.address || null,
+        business_city: response.businessAddress?.city || null,
+        business_state: response.businessAddress?.state || null,
+        business_postalcode: response.businessAddress?.pincode || null,
+        business_country: 'INDIA',
+        business_gstin: response.gst_no || null,
+        business_cin: null,
+      },
+      website_details: {
+        website_contact_us: 'https://www.edviron.com/',
+        website_privacy_policy: 'https://www.edviron.com/',
+        website_refund_policy: 'https://www.edviron.com/',
+        website_tnc: 'https://www.edviron.com/', 
+      },
+      bank_account_details: {
+        bank_account_number: response.bankDetails?.account_number|| null,
+        bank_ifsc: response.bankDetails?.ifsc_code || null,
+      },
+      signatory_details: {
+        signatory_name: response.authSignatory?.auth_sighnatory_name_on_aadhar,
+        signatory_pan: response.authSignatory?.auth_sighnatory_pan_number || null,
+      },
+    }
+    return details
   }
 }
 

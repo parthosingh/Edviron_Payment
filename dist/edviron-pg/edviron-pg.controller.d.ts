@@ -325,4 +325,10 @@ export declare class EdvironPgController {
         url: string;
         trustee_id: string;
     }): Promise<any>;
+    approve(body: {
+        gateway: string;
+        school_id: string;
+        kyc_mail: string;
+        token: string;
+    }): Promise<string>;
 }

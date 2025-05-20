@@ -1029,7 +1029,7 @@ let EdvironPgController = class EdvironPgController {
     async bulkTransactions(body, res, req) {
         console.time('bulk-transactions-report');
         const { trustee_id, token, searchParams, isCustomSearch, seachFilter, isQRCode, gateway, } = body;
-        let { payment_modes, } = body;
+        let { payment_modes } = body;
         if (!token)
             throw new Error('Token not provided');
         if (payment_modes?.includes('upi')) {
@@ -2361,6 +2361,11 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async approve(body) {
+        const payload = await this.cashfreeService.getMerchantInfo(body.school_id, body.kyc_mail);
+        const { merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details, } = payload;
+        return await this.cashfreeService.createMerchant(merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details);
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -2730,6 +2735,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "testWebhook", null);
+__decorate([
+    (0, common_1.Post)('/approve-submerchant'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "approve", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

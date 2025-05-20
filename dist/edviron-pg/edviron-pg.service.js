@@ -530,6 +530,30 @@ let EdvironPgService = class EdvironPgService {
             console.log(e.message);
         }
     }
+    async getAllSchoolInfo(school_id) {
+        const payload = { school_id };
+        const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET, {
+            noTimestamp: true,
+        });
+        let config = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-school-all-data?token=${token}`,
+            headers: {
+                accept: 'application/json',
+                'content-type': 'application/json',
+                'x-api-version': '2023-08-01',
+            },
+        };
+        try {
+            const { data: info } = await axios_1.default.request(config);
+            console.log(info);
+            return info;
+        }
+        catch (e) {
+            console.log(e.message);
+        }
+    }
     async sendTransactionmail(email, request) {
         const collectReqStatus = await this.databaseService.CollectRequestStatusModel.findOne({
             collect_id: request._id,

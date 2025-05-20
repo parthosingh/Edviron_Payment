@@ -1451,19 +1451,17 @@ export class EdvironPgController {
       searchParams,
       isCustomSearch,
       seachFilter,
-      
+
       isQRCode,
       gateway,
     } = body;
-    let {
-      payment_modes,
-    } = body;
+    let { payment_modes } = body;
     if (!token) throw new Error('Token not provided');
 
-    if(payment_modes?.includes('upi')){
-      payment_modes = [...payment_modes, 'upi_credit_card']  //debit_card
+    if (payment_modes?.includes('upi')) {
+      payment_modes = [...payment_modes, 'upi_credit_card']; //debit_card
     }
-    
+
     try {
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 10;
@@ -3469,5 +3467,44 @@ export class EdvironPgController {
     } catch (e) {
       throw new BadRequestException(e.message);
     }
+  }
+
+  @Post('/approve-submerchant')
+  async approve(
+    @Body()
+    body: {
+      gateway: string;
+      school_id: string;
+      kyc_mail: string;
+      token: string;
+    },
+  ) {
+    const payload = await this.cashfreeService.getMerchantInfo(
+      body.school_id,
+      body.kyc_mail,
+    );
+    const {
+      merchant_id,
+      merchant_email,
+      merchant_name,
+      poc_phone,
+      merchant_site_url,
+      business_details,
+      website_details,
+      bank_account_details,
+      signatory_details,
+    } = payload;
+
+   return await this.cashfreeService.createMerchant(
+      merchant_id,
+      merchant_email,
+      merchant_name,
+      poc_phone,
+      merchant_site_url,
+      business_details,
+      website_details,
+      bank_account_details,
+      signatory_details,
+    )
   }
 }

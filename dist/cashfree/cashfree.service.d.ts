@@ -48,4 +48,66 @@ export declare class CashfreeService {
         note: string;
     }>, client_id: string): Promise<any>;
     acceptDispute(disputeId: string, client_id: string): Promise<any>;
+    createMerchant(merchant_id: string, merchant_email: string, merchant_name: string, poc_phone: string, merchant_site_url: string, business_details: {
+        business_legal_name: string;
+        business_type: string;
+        business_model: string;
+        business_category?: string | null;
+        business_subcategory?: string | null;
+        business_pan?: string | null;
+        business_address?: string | null;
+        business_city?: string | null;
+        business_state?: string | null;
+        business_postalcode?: string | null;
+        business_country?: string | null;
+        business_gstin?: string | null;
+        business_cin?: string | null;
+    }, website_details: {
+        website_contact_us: string;
+        website_privacy_policy: string;
+        website_refund_policy: string;
+        website_tnc: string;
+    }, bank_account_details: {
+        bank_account_number?: string | null;
+        bank_ifsc?: string | null;
+    }, signatory_details: {
+        signatory_name: string;
+        signatory_pan?: string;
+    }): Promise<string>;
+    getMerchantInfo(school_id: string, kyc_mail: string): Promise<{
+        merchant_id: string;
+        merchant_email: string;
+        merchant_name: string;
+        poc_phone: string;
+        merchant_site_url: string;
+        business_details: {
+            business_legal_name: string;
+            business_type: string;
+            business_model: string;
+            business_category?: string | null;
+            business_subcategory?: string | null;
+            business_pan?: string | null;
+            business_address?: string | null;
+            business_city?: string | null;
+            business_state?: string | null;
+            business_postalcode?: string | null;
+            business_country?: string | null;
+            business_gstin?: string | null;
+            business_cin?: string | null;
+        };
+        website_details: {
+            website_contact_us: string;
+            website_privacy_policy: string;
+            website_refund_policy: string;
+            website_tnc: string;
+        };
+        bank_account_details: {
+            bank_account_number?: string | null;
+            bank_ifsc?: string | null;
+        };
+        signatory_details: {
+            signatory_name: string;
+            signatory_pan?: string;
+        };
+    }>;
 }
