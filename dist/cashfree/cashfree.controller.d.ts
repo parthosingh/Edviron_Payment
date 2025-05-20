@@ -1,9 +1,11 @@
 import { DatabaseService } from 'src/database/database.service';
 import { CashfreeService } from './cashfree.service';
+import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 export declare class CashfreeController {
     private readonly databaseService;
     private readonly cashfreeService;
-    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService);
+    private readonly edvironPgService;
+    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService, edvironPgService: EdvironPgService);
     initiateRefund(body: any): Promise<any>;
     initiateSplitRefund(body: {
         token: string;
@@ -49,7 +51,7 @@ export declare class CashfreeController {
         sign: string;
     }): Promise<any>;
     testSecureWebhook(req: any, res: any): Promise<any>;
-    vbaWebhook(body: any, res: any): Promise<void>;
+    vbaWebhook(body: any, res: any): Promise<any>;
     createVBA(body: {
         cf_x_client_id: string;
         cf_x_clien_secret: string;

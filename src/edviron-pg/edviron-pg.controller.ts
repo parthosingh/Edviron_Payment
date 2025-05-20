@@ -1451,7 +1451,6 @@ export class EdvironPgController {
       searchParams,
       isCustomSearch,
       seachFilter,
-
       isQRCode,
       gateway,
     } = body;

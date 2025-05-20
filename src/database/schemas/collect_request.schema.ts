@@ -86,6 +86,9 @@ export class CollectRequest {
   @Prop({ required: false, default: false })
   isVBAPayment: boolean;
 
+  @Prop({ required: false, default: false })
+  isVBAPaymentComplete: boolean;
+
   @Prop({ required: false, unique: true })
   custom_order_id: string;
   @Prop({ default: [] })

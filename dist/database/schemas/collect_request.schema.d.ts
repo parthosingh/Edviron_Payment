@@ -61,6 +61,7 @@ export declare class CollectRequest {
     payment_data: string;
     sdkPayment: boolean;
     isVBAPayment: boolean;
+    isVBAPaymentComplete: boolean;
     custom_order_id: string;
     req_webhook_urls: string[];
     ccavenue_merchant_id: string;

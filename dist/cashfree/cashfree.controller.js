@@ -20,10 +20,13 @@ const cashfree_service_1 = require("./cashfree.service");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const sign_1 = require("../utils/sign");
 const webhooks_schema_1 = require("../database/schemas/webhooks.schema");
+const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
+const axios_1 = require("axios");
 let CashfreeController = class CashfreeController {
-    constructor(databaseService, cashfreeService) {
+    constructor(databaseService, cashfreeService, edvironPgService) {
         this.databaseService = databaseService;
         this.cashfreeService = cashfreeService;
+        this.edvironPgService = edvironPgService;
     }
     async initiateRefund(body) {
         const { collect_id, amount, refund_id } = body;
@@ -293,6 +296,140 @@ let CashfreeController = class CashfreeController {
             gateway: 'CASHFREE',
             webhooktype: 'vba',
         });
+        const { data } = body;
+        const { order, payment, customer_details, payment_gateway_details } = data;
+        const { payment_status, payment_amount, payment_message, payment_time, bank_reference, payment_method, payment_group, } = payment;
+        const { utr, credit_ref_no, remitter_account, remitter_name, remitter_ifsc, email, phone, vaccount_id, vaccount_number, } = payment_method.vba_transfer;
+        const { customer_name, customer_id, customer_email, customer_phone } = customer_details;
+        const { gateway_name, gateway_order_id, gateway_payment_id, gateway_status_code, gateway_order_reference_id, gateway_settlement, } = payment_gateway_details;
+        const request = await this.databaseService.CollectRequestModel.findOne({
+            vba_account_number: vaccount_number,
+        });
+        if (!request) {
+            return res.status(200).send('Request Not found');
+        }
+        const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: request._id,
+        });
+        if (!collectRequestStatus) {
+            return res.status(200).send('Request Not found');
+        }
+        if (payment_status === 'SUCCESS') {
+            request.isVBAPaymentComplete = true;
+            await request.save();
+        }
+        collectRequestStatus.transaction_amount = payment_amount;
+        collectRequestStatus.payment_method = payment_group;
+        collectRequestStatus.details = JSON.stringify(payment_method.vba_transfer);
+        collectRequestStatus.bank_reference = bank_reference;
+        collectRequestStatus.payment_time = payment_time;
+        collectRequestStatus.payment_message = payment_message;
+        await collectRequestStatus.save();
+        try {
+            const axios = require('axios');
+            const tokenData = {
+                school_id: request.school_id,
+                trustee_id: request.trustee_id,
+                order_amount: collectRequestStatus.order_amount,
+                transaction_amount: payment_amount,
+                platform_type: 'vba',
+                payment_mode: 'Others',
+                collect_id: request._id.toString(),
+            };
+            const _jwt = jwt.sign(tokenData, process.env.KEY, {
+                noTimestamp: true,
+            });
+            let data = JSON.stringify({
+                token: _jwt,
+                school_id: request.school_id,
+                trustee_id: request.trustee_id,
+                order_amount: collectRequestStatus.order_amount,
+                transaction_amount: payment_amount,
+                platform_type: 'vba',
+                payment_mode: 'Others',
+                collect_id: request._id,
+            });
+            let config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                },
+                data: data,
+            };
+            try {
+                const { data: commissionRes } = await axios.request(config);
+                console.log('Commission calculation response:', commissionRes);
+            }
+            catch (error) {
+                console.error('Error calculating commission:', error.message);
+            }
+        }
+        catch (e) { }
+        const webHookUrl = request.req_webhook_urls;
+        const webHookDataInfo = {
+            collect_id: request._id.toString(),
+            amount: request.amount,
+            status: payment_status,
+            trustee_id: request.trustee_id,
+            school_id: request.school_id,
+            req_webhook_urls: request.req_webhook_urls,
+            custom_order_id: request.custom_order_id || null,
+            createdAt: collectRequestStatus?.createdAt,
+            transaction_time: payment_time,
+            additional_data: request.additional_data,
+            details: collectRequestStatus.details,
+            transaction_amount: collectRequestStatus.transaction_amount,
+            bank_reference: collectRequestStatus.bank_reference,
+            payment_method: collectRequestStatus.payment_method,
+            payment_details: collectRequestStatus.details,
+            formattedDate: `${payment_time.getFullYear()}-${String(payment_time.getMonth() + 1).padStart(2, '0')}-${String(payment_time.getDate()).padStart(2, '0')}`,
+        };
+        if (webHookUrl !== null) {
+            console.log('calling webhook');
+            let webhook_key = null;
+            try {
+                const token = jwt.sign({ trustee_id: request.trustee_id.toString() }, process.env.KEY);
+                const config = {
+                    method: 'get',
+                    maxBodyLength: Infinity,
+                    url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-webhook-key?token=${token}&trustee_id=${request.trustee_id.toString()}`,
+                    headers: {
+                        accept: 'application/json',
+                        'content-type': 'application/json',
+                    },
+                };
+                const { data } = await axios_1.default.request(config);
+                webhook_key = data?.webhook_key;
+            }
+            catch (error) {
+                console.error('Error getting webhook key:', error.message);
+            }
+            if (request?.trustee_id.toString() === '66505181ca3e97e19f142075') {
+                console.log('Webhook called for webschool');
+                setTimeout(async () => {
+                    try {
+                        await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key);
+                    }
+                    catch (e) {
+                        console.log(`Error sending webhook to ${webHookUrl}:`, e.message);
+                    }
+                }, 60000);
+            }
+            else {
+                console.log('Webhook called for other schools');
+                console.log(webHookDataInfo);
+                try {
+                    await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key);
+                }
+                catch (e) {
+                    console.log(`Error sending webhook to ${webHookUrl}:`, e.message);
+                }
+            }
+        }
         res.status(200).send('OK');
     }
     async createVBA(body) {
@@ -413,6 +550,7 @@ __decorate([
 exports.CashfreeController = CashfreeController = __decorate([
     (0, common_1.Controller)('cashfree'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
-        cashfree_service_1.CashfreeService])
+        cashfree_service_1.CashfreeService,
+        edviron_pg_service_1.EdvironPgService])
 ], CashfreeController);
 //# sourceMappingURL=cashfree.controller.js.map
