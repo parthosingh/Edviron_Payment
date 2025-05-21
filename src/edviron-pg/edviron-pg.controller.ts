@@ -3593,37 +3593,65 @@ export class EdvironPgController {
         await this.databaseService.CollectRequestModel.findById(collect_id);
       if (!request) {
         return {
-          isSchoolVBA:false,
+          isSchoolVBA: false,
           isStudentVBA: false,
           virtual_account_number: '',
           virtual_account_ifsc: '',
+          finalAmount: 0,
+          beneficiary_bank_and_address:'',
+          beneficiary_name:'',
+          refrence_no: collect_id,
+          transaction_id: collect_id,
+          cutomer_name: '',
+          cutomer_no: '',
+          customer_email: '',
+          customer_id: '',
         };
       }
       if (!request.additional_data) {
         return {
-          isSchoolVBA:false,
+          isSchoolVBA: false,
           isStudentVBA: false,
           virtual_account_number: '',
           virtual_account_ifsc: '',
+          finalAmount: 0,
+          beneficiary_bank_and_address:'',
+          beneficiary_name:'',
+          refrence_no: collect_id,
+          transaction_id: collect_id,
+          cutomer_name: '',
+          cutomer_no: '',
+          customer_email: '',
+          customer_id: '',
         };
       }
       const student_info = JSON.parse(request.additional_data);
       const student_id = student_info.student_details?.student_id; 
-      if (!student_id) {
+      const vba_account_number=request.vba_account_number
+      if (!vba_account_number) {
         return {
-          isSchoolVBA:false,
+          isSchoolVBA: false,
           isStudentVBA: false,
           virtual_account_number: '',
           virtual_account_ifsc: '',
+          finalAmount: 0,
+          beneficiary_bank_and_address:'',
+          beneficiary_name:'',
+          refrence_no: collect_id,
+          transaction_id: collect_id,
+          cutomer_name: '',
+          cutomer_no: '',
+          customer_email: '',
+          customer_id: '',
         };
       }
-      const payload = { student_id };
+      const payload = { vba_account_number:request.vba_account_number };
       const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET!, {
         noTimestamp: true,
       });
       const config = {
         method: 'get',
-        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-student-vba?student_id=${student_id}&token=${token}&school_id=${request.school_id}`,
+        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-student-vba?student_id=${student_id}&token=${token}&vba_account_number=${request.vba_account_number}&amount=${request.amount}&collect_id=${collect_id}`,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -3633,10 +3661,19 @@ export class EdvironPgController {
       return response
     } catch (e) {
       return {
-        isSchoolVBA:false,
+        isSchoolVBA: false,
         isStudentVBA: false,
         virtual_account_number: '',
         virtual_account_ifsc: '',
+        finalAmount: 0,
+        beneficiary_bank_and_address:'',
+        beneficiary_name:'',
+        refrence_no: collect_id,
+        transaction_id: collect_id,
+        cutomer_name: '',
+        cutomer_no: '',
+        customer_email: '',
+        customer_id: '',
       };
     }
   }
