@@ -276,7 +276,6 @@ let EdvironPgController = class EdvironPgController {
         }
         collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
         await collectReq.save();
-        console.log('checking for autorefund', pendingCollectReq?.status);
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
         const status = webHookData.payment.payment_status;
         const payment_time = new Date(webHookData.payment.payment_time);
@@ -1089,12 +1088,10 @@ let EdvironPgController = class EdvironPgController {
                 })) {
                 throw new common_1.ForbiddenException('Request forged');
             }
-            console.log(collectQuery);
             console.time('fetching all transaction');
             const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
             let transactions = [];
             const orderIds = orders.map((order) => order._id);
-            console.log(orderIds.length);
             console.timeEnd('fetching all transaction');
             let query = {
                 collect_id: { $in: orderIds },
@@ -1361,6 +1358,7 @@ let EdvironPgController = class EdvironPgController {
                                 'collect_request.easebuzz_sub_merchant_id': 0,
                                 'collect_request.paymentIds': 0,
                                 'collect_request.deepLink': 0,
+                                'isVBAPaymentComplete': 0
                             },
                         },
                         {
@@ -1407,6 +1405,7 @@ let EdvironPgController = class EdvironPgController {
                                             reason: '$reason',
                                             gateway: '$gateway',
                                             capture_status: '$capture_status',
+                                            isVBAPaymentComplete: '$isVBAPaymentComplete'
                                         },
                                     ],
                                 },

@@ -316,13 +316,16 @@ let CashfreeController = class CashfreeController {
         }
         if (payment_status === 'SUCCESS') {
             request.isVBAPaymentComplete = true;
+            collectRequestStatus.isVBAPaymentComplete = true;
+            await collectRequestStatus.save();
             await request.save();
         }
         collectRequestStatus.transaction_amount = payment_amount;
-        collectRequestStatus.payment_method = payment_group;
+        collectRequestStatus.payment_method = 'vba';
+        collectRequestStatus.status = payment_status;
         collectRequestStatus.details = JSON.stringify(payment_method.vba_transfer);
         collectRequestStatus.bank_reference = bank_reference;
-        collectRequestStatus.payment_time = payment_time;
+        collectRequestStatus.payment_time = new Date(payment_time);
         collectRequestStatus.payment_message = payment_message;
         await collectRequestStatus.save();
         try {
@@ -386,7 +389,7 @@ let CashfreeController = class CashfreeController {
             bank_reference: collectRequestStatus.bank_reference,
             payment_method: collectRequestStatus.payment_method,
             payment_details: collectRequestStatus.details,
-            formattedDate: `${payment_time.getFullYear()}-${String(payment_time.getMonth() + 1).padStart(2, '0')}-${String(payment_time.getDate()).padStart(2, '0')}`,
+            formattedDate: `${collectRequestStatus.payment_time.getFullYear()}-${String(collectRequestStatus.payment_time.getMonth() + 1).padStart(2, '0')}-${String(collectRequestStatus.payment_time.getDate()).padStart(2, '0')}`,
         };
         if (webHookUrl !== null) {
             console.log('calling webhook');

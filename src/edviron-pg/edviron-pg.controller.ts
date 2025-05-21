@@ -407,7 +407,7 @@ export class EdvironPgController {
 
     // Auto Refund Code Replicate on easebuzz
 
-    console.log('checking for autorefund', pendingCollectReq?.status);
+  
     // try {
     //   if (
     //     pendingCollectReq &&
@@ -1530,7 +1530,6 @@ export class EdvironPgController {
         throw new ForbiddenException('Request forged');
       }
 
-      console.log(collectQuery);
 
       console.time('fetching all transaction');
       const orders =
@@ -1542,7 +1541,6 @@ export class EdvironPgController {
 
       let transactions: any[] = [];
       const orderIds = orders.map((order: any) => order._id);
-      console.log(orderIds.length);
 
       console.timeEnd('fetching all transaction');
       let query: any = {
@@ -1892,6 +1890,7 @@ export class EdvironPgController {
                 'collect_request.easebuzz_sub_merchant_id': 0,
                 'collect_request.paymentIds': 0,
                 'collect_request.deepLink': 0,
+                'isVBAPaymentComplete':0
               },
             },
             {
@@ -1938,6 +1937,7 @@ export class EdvironPgController {
                       reason: '$reason',
                       gateway: '$gateway',
                       capture_status: '$capture_status',
+                      isVBAPaymentComplete:'$isVBAPaymentComplete'
                     },
                   ],
                 },
