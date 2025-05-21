@@ -1250,6 +1250,7 @@ let EdvironPgController = class EdvironPgController {
                                 'collect_request.easebuzz_sub_merchant_id': 0,
                                 'collect_request.paymentIds': 0,
                                 'collect_request.deepLink': 0,
+                                'isVBAPaymentComplete': 0
                             },
                         },
                         {
@@ -1297,6 +1298,7 @@ let EdvironPgController = class EdvironPgController {
                                             reason: '$reason',
                                             gateway: '$gateway',
                                             capture_status: '$capture_status',
+                                            isVBAPaymentComplete: '$isVBAPaymentComplete'
                                         },
                                     ],
                                 },
@@ -2524,7 +2526,7 @@ let EdvironPgController = class EdvironPgController {
             });
             const config = {
                 method: 'get',
-                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-student-vba?student_id=${student_id}&token=${token}&vba_account_number=${request.vba_account_number}&amount=${request.amount}&collect_id=${collect_id}`,
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-student-vba?student_id=${student_id}&token=${token}&vba_account_number=${request.vba_account_number}&amount=${request.amount}&collect_id=${collect_id}&school_id=${request.school_id}`,
                 headers: {
                     'Content-Type': 'application/json',
                 },
