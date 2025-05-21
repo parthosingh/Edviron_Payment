@@ -51,6 +51,28 @@ export declare class CollectController {
             }
         ];
     }): Promise<any>;
+    posCollect(body: {
+        amount: Number;
+        callbackUrl: string;
+        jwt: string;
+        school_id: string;
+        trustee_id: string;
+        platform_charges: string;
+        split_payments?: boolean;
+        machine_name: string;
+        posmachinedevice_id: string;
+        posmachine_device_code: string;
+        additional_data?: Record<string, any>;
+        school_name?: string;
+        vendors_info?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+            }
+        ];
+    }): Promise<any>;
     callbackUrl(res: any, collect_id: string): Promise<void>;
 }
 export {};

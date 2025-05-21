@@ -34,7 +34,9 @@ export declare enum Gateway {
     PENDING = "PENDING",
     EXPIRED = "EXPIRED",
     EDVIRON_HDFC_RAZORPAY = "EDVIRON_HDFC_RAZORPAY",
-    SMART_GATEWAY = "EDVIRON_SMARTGATEWAY"
+    SMART_GATEWAY = "EDVIRON_SMARTGATEWAY",
+    PAYTM_POS = "PAYTM_POS",
+    MOSAMBEE_POS = "MOSAMBEE_POS"
 }
 export declare class PaymentIds {
     cashfree_id?: string | null;
@@ -87,6 +89,10 @@ export declare class CollectRequest {
     isQRPayment: boolean;
     pay_u_key: string;
     pay_u_salt: string;
+    pos_machine_name: string;
+    pos_machine_device_id: string;
+    pos_machine_device_code: string;
+    isPosTransaction: boolean;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;

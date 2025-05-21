@@ -84,6 +84,9 @@ export class CollectRequestStatus {
   })
   error_details: error_details;
 
+  @Prop({ required: false, default: false })
+  isPosTransaction: boolean;
+
 
   _id: ObjectId;
 }

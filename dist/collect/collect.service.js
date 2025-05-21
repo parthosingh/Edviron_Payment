@@ -22,8 +22,9 @@ const nodemailer = require("nodemailer");
 const hdfc_razorpay_service_1 = require("../hdfc_razporpay/hdfc_razorpay.service");
 const pay_u_service_1 = require("../pay-u/pay-u.service");
 const smartgateway_service_1 = require("../smartgateway/smartgateway.service");
+const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 let CollectService = class CollectService {
-    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService, hdfcRazorpay, payuService, hdfcSmartgatewayService) {
+    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService, hdfcRazorpay, payuService, hdfcSmartgatewayService, posPaytmService) {
         this.phonepeService = phonepeService;
         this.hdfcService = hdfcService;
         this.edvironPgService = edvironPgService;
@@ -32,6 +33,7 @@ let CollectService = class CollectService {
         this.hdfcRazorpay = hdfcRazorpay;
         this.payuService = payuService;
         this.hdfcSmartgatewayService = hdfcSmartgatewayService;
+        this.posPaytmService = posPaytmService;
     }
     async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, vendor) {
         console.log(req_webhook_urls, 'webhook url');
@@ -139,6 +141,31 @@ let CollectService = class CollectService {
         }, { new: true });
         return { url: transaction.url, request };
     }
+    async posCollect(amount, callbackUrl, school_id, trustee_id, machine_name, posmachinedevice_id, posmachine_device_code, additional_data, platform_charges, split_payments, vendors_info) {
+        const gateway = machine_name === 'PAYTM_POS' ? collect_request_schema_1.Gateway.PAYTM_POS : collect_request_schema_1.Gateway.MOSAMBEE_POS;
+        const request = await new this.databaseService.CollectRequestModel({
+            amount,
+            callbackUrl,
+            gateway: gateway,
+            school_id,
+            trustee_id,
+            additional_data: JSON.stringify(additional_data),
+            pos_machine_name: machine_name,
+            pos_machine_device_id: posmachinedevice_id,
+            pos_machine_device_code: posmachine_device_code,
+            isPosTransaction: true,
+        }).save();
+        await new this.databaseService.CollectRequestStatusModel({
+            collect_id: request._id,
+            status: collect_req_status_schema_1.PaymentStatus.PENDING,
+            order_amount: request.amount,
+            transaction_amount: request.amount,
+            isPosTransaction: true,
+        }).save();
+        if (machine_name === collect_request_schema_1.Gateway.PAYTM_POS) {
+            const response = await this.posPaytmService.createOrder(request);
+        }
+    }
     async sendCallbackEmail(collect_id) {
         const htmlToSend = `
     <html>
@@ -222,6 +249,7 @@ exports.CollectService = CollectService = __decorate([
         ccavenue_service_1.CcavenueService,
         hdfc_razorpay_service_1.HdfcRazorpayService,
         pay_u_service_1.PayUService,
-        smartgateway_service_1.SmartgatewayService])
+        smartgateway_service_1.SmartgatewayService,
+        pos_paytm_service_1.PosPaytmService])
 ], CollectService);
 //# sourceMappingURL=collect.service.js.map

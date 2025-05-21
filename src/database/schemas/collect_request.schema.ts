@@ -13,12 +13,11 @@ export enum Gateway {
   EXPIRED = 'EXPIRED',
   EDVIRON_HDFC_RAZORPAY = 'EDVIRON_HDFC_RAZORPAY',
   SMART_GATEWAY = 'EDVIRON_SMARTGATEWAY',
+  PAYTM_POS = 'PAYTM_POS',
+  MOSAMBEE_POS = 'MOSAMBEE_POS'
 }
 
-export enum PosGateway {
-  PAYTM = 'PAYTM',
-  MOSAMBEE = 'MOSAMBEE'
-}
+
 
 @Schema()
 export class PaymentIds {

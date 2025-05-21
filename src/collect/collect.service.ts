@@ -3,7 +3,6 @@ import { DatabaseService } from 'src/database/database.service';
 import {
   CollectRequest,
   Gateway,
-  PosGateway,
 } from 'src/database/schemas/collect_request.schema';
 import { HdfcService } from 'src/hdfc/hdfc.service';
 import { PhonepeService } from 'src/phonepe/phonepe.service';
@@ -16,6 +15,7 @@ import * as nodemailer from 'nodemailer';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 import { PayUService } from 'src/pay-u/pay-u.service';
 import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
+import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 @Injectable()
 export class CollectService {
   constructor(
@@ -27,6 +27,7 @@ export class CollectService {
     private readonly hdfcRazorpay: HdfcRazorpayService,
     private readonly payuService: PayUService,
     private readonly hdfcSmartgatewayService: SmartgatewayService,
+    private readonly posPaytmService: PosPaytmService,
   ) { }
   async collect(
     amount: Number,
@@ -209,16 +210,17 @@ export class CollectService {
     return { url: transaction.url, request };
   }
 
-  async poscollect(
+  async posCollect(
     amount: Number,
     callbackUrl: string,
     school_id: string,
     trustee_id: string,
+    machine_name: string,
+    posmachinedevice_id: string,
+    posmachine_device_code: string,
     additional_data?: {},
     platform_charges?: string,
-    machine_name?: string,
-    posmachinedevice_id?: string,
-    posmachine_device_code?: string,
+    split_payments?:boolean,
     vendors_info?: [
       {
         vendor_id: string;
@@ -228,7 +230,7 @@ export class CollectService {
       },
     ],
   ) {
-    const gateway = machine_name === 'PAYTM' ? PosGateway.PAYTM : PosGateway.MOSAMBEE;
+    const gateway = machine_name === 'PAYTM_POS' ? Gateway.PAYTM_POS : Gateway.MOSAMBEE_POS;
     const request = await new this.databaseService.CollectRequestModel({
       amount,
       callbackUrl,
@@ -247,10 +249,11 @@ export class CollectService {
       status: PaymentStatus.PENDING,
       order_amount: request.amount,
       transaction_amount: request.amount,
+      isPosTransaction: true,
     }).save();
 
-    if (machine_name === PosGateway.PAYTM) {
-      
+    if (machine_name === Gateway.PAYTM_POS) {
+      const response = await this.posPaytmService.createOrder(request)
     }
 
   }

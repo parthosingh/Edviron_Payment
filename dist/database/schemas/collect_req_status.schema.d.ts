@@ -33,6 +33,7 @@ export declare class CollectRequestStatus {
     payment_message: string;
     capture_status: string;
     error_details: error_details;
+    isPosTransaction: boolean;
     _id: ObjectId;
 }
 export type CollectRequestStatusDocument = CollectRequestStatus & Document;

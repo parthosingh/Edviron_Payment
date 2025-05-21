@@ -107,6 +107,10 @@ __decorate([
     }),
     __metadata("design:type", Object)
 ], CollectRequestStatus.prototype, "error_details", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], CollectRequestStatus.prototype, "isPosTransaction", void 0);
 exports.CollectRequestStatus = CollectRequestStatus = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequestStatus);

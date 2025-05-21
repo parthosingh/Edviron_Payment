@@ -44,6 +44,25 @@ let CollectController = class CollectController {
             throw e;
         }
     }
+    async posCollect(body) {
+        const { amount, callbackUrl, jwt, platform_charges, additional_data = {}, split_payments, school_id, trustee_id, school_name, machine_name, posmachinedevice_id, posmachine_device_code, vendors_info, } = body;
+        if (!jwt)
+            throw new common_1.BadRequestException('JWT not provided');
+        if (!amount)
+            throw new common_1.BadRequestException('Amount not provided');
+        if (!callbackUrl)
+            throw new common_1.BadRequestException('Callback url not provided');
+        try {
+            let decrypted = _jwt.verify(jwt, process.env.KEY);
+            return (0, sign_1.sign)(await this.collectService.posCollect(amount, callbackUrl, school_id, trustee_id, machine_name, posmachinedevice_id, posmachine_device_code, additional_data, platform_charges, split_payments, vendors_info));
+        }
+        catch (e) {
+            console.log(e);
+            if (e.name === 'JsonWebTokenError')
+                throw new common_1.UnauthorizedException('JWT invalid');
+            throw e;
+        }
+    }
     async callbackUrl(res, collect_id) {
         const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id);
         if (!collect_request) {
@@ -64,6 +83,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CollectController.prototype, "collect", null);
+__decorate([
+    (0, common_1.Post)('/pos'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CollectController.prototype, "posCollect", null);
 __decorate([
     (0, common_1.Get)('callback'),
     __param(0, (0, common_1.Res)()),

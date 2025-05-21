@@ -168,6 +168,7 @@ export class CollectController {
       school_id: string;
       trustee_id: string;
       platform_charges: string;
+      split_payments?: boolean;
       machine_name: string;
       posmachinedevice_id: string;
       posmachine_device_code: string;
@@ -189,6 +190,7 @@ export class CollectController {
       jwt,
       platform_charges,
       additional_data = {},
+      split_payments,
       school_id,
       trustee_id,
       school_name,
@@ -206,16 +208,17 @@ export class CollectController {
     try {
       let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
       return sign(
-        await this.collectService.poscollect(
+        await this.collectService.posCollect(
           amount,
           callbackUrl,
           school_id,
           trustee_id,
-          additional_data,
-          platform_charges,
           machine_name,
           posmachinedevice_id,
           posmachine_device_code,
+          additional_data,
+          platform_charges,
+          split_payments,
           vendors_info
         ),
       );
