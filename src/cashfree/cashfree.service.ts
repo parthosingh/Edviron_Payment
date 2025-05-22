@@ -744,6 +744,7 @@ export class CashfreeService {
     notification_group: string,
     amount:number
   ) {
+
      const config = {
       method: 'post',
       url: `https://api.cashfree.com/pg/vba`,
@@ -758,8 +759,8 @@ export class CashfreeService {
       data: {
         virtual_account_details,
         amount_lock_details: {
-          min_amount: amount,
-          max_amount: amount,
+          min_amount: amount.toFixed(2),
+          max_amount: amount.toFixed(2),
         },
         bank_codes: ['UTIB'],
         notification_group,
@@ -768,9 +769,6 @@ export class CashfreeService {
 
     try {
       const { data: response } = await axios.request(config);
-      const details={
-        
-      }
       return response;
     } catch (error) {
       console.log(
