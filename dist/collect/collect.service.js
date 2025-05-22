@@ -163,7 +163,7 @@ let CollectService = class CollectService {
             isPosTransaction: true,
         }).save();
         if (machine_name === collect_request_schema_1.Gateway.PAYTM_POS) {
-            const response = await this.posPaytmService.createOrder(request);
+            const response = await this.posPaytmService.collectPayment(request);
         }
     }
     async sendCallbackEmail(collect_id) {
