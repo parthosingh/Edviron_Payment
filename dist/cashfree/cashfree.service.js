@@ -596,8 +596,8 @@ let CashfreeService = class CashfreeService {
             data: {
                 virtual_account_details,
                 amount_lock_details: {
-                    min_amount: amount.toFixed(2),
-                    max_amount: amount.toFixed(2),
+                    min_amount: amount,
+                    max_amount: amount,
                 },
                 bank_codes: ['UTIB'],
                 notification_group,
@@ -605,6 +605,7 @@ let CashfreeService = class CashfreeService {
         };
         try {
             const { data: response } = await axios_1.default.request(config);
+            console.log(response);
             return response;
         }
         catch (error) {

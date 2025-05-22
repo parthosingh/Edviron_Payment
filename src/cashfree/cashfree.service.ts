@@ -759,21 +759,24 @@ export class CashfreeService {
       data: {
         virtual_account_details,
         amount_lock_details: {
-          min_amount: amount.toFixed(2),
-          max_amount: amount.toFixed(2),
+          min_amount: amount,
+          max_amount: amount,
         },
         bank_codes: ['UTIB'],
         notification_group,
       },
     };
-
+ 
     try {
       const { data: response } = await axios.request(config);
+      console.log(response);
+      
       return response;
-    } catch (error) {
+    } catch (error) { 
       console.log(
         error
       );
+        
        
       console.error('Error:', error.response?.data || error.message);
       throw error;
