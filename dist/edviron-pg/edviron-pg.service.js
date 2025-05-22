@@ -187,7 +187,7 @@ let EdvironPgService = class EdvironPgService {
                 easebuzz_pg = true;
             }
             let cf_payment_id = '';
-            if (request.clientId && !request.isVBAPayment) {
+            if (request.clientId) {
                 const { data: cashfreeRes } = await axios.request(config);
                 cf_payment_id = cashfreeRes.payment_session_id;
                 paymentInfo.cashfree_id = cf_payment_id || null;
