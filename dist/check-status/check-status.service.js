@@ -25,8 +25,9 @@ const cashfree_service_1 = require("../cashfree/cashfree.service");
 const pay_u_service_1 = require("../pay-u/pay-u.service");
 const hdfc_razorpay_service_1 = require("../hdfc_razporpay/hdfc_razorpay.service");
 const smartgateway_service_1 = require("../smartgateway/smartgateway.service");
+const nttdata_service_1 = require("../nttdata/nttdata.service");
 let CheckStatusService = class CheckStatusService {
-    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay, hdfcSmartgatewayService) {
+    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay, hdfcSmartgatewayService, nttdataService) {
         this.databaseService = databaseService;
         this.hdfcService = hdfcService;
         this.phonePeService = phonePeService;
@@ -37,6 +38,7 @@ let CheckStatusService = class CheckStatusService {
         this.payUService = payUService;
         this.hdfcRazorpay = hdfcRazorpay;
         this.hdfcSmartgatewayService = hdfcSmartgatewayService;
+        this.nttdataService = nttdataService;
     }
     async checkStatus(collect_request_id) {
         console.log('checking status for', collect_request_id);
@@ -153,12 +155,12 @@ let CheckStatusService = class CheckStatusService {
                 return await this.payUService.checkStatus(collectRequest._id.toString());
             case collect_request_schema_1.Gateway.EDVIRON_HDFC_RAZORPAY:
                 const EDVIRON_HDFC_RAZORPAY = await this.hdfcRazorpay.checkPaymentStatus(collect_request_id.toString(), collectRequest);
-                let order_status = "";
+                let order_status = '';
                 if (EDVIRON_HDFC_RAZORPAY.status.toUpperCase() === 'SUCCESS') {
-                    order_status = "SUCCESS";
+                    order_status = 'SUCCESS';
                 }
                 else {
-                    order_status = "PENDING";
+                    order_status = 'PENDING';
                 }
                 let statusCode;
                 if (EDVIRON_HDFC_RAZORPAY.status.toUpperCase() === 'SUCCESS') {
@@ -179,13 +181,19 @@ let CheckStatusService = class CheckStatusService {
                     details: {
                         payment_mode: EDVIRON_HDFC_RAZORPAY?.details?.payment_method,
                         bank_ref: EDVIRON_HDFC_RAZORPAY.details.bank_ref,
-                        payment_method: { mode: EDVIRON_HDFC_RAZORPAY?.details?.payment_mode, method: EDVIRON_HDFC_RAZORPAY?.details?.payment_methods },
+                        payment_method: {
+                            mode: EDVIRON_HDFC_RAZORPAY?.details?.payment_mode,
+                            method: EDVIRON_HDFC_RAZORPAY?.details?.payment_methods,
+                        },
                         transaction_time: Updateddate,
                         formattedTransactionDate: `${new Date(Updateddate).getFullYear()}-${String(new Date(Updateddate).getMonth() + 1).padStart(2, '0')}-${String(new Date(Updateddate).getDate()).padStart(2, '0')}`,
                         order_status: EDVIRON_HDFC_RAZORPAY.status,
                     },
                 };
                 return ehr_status_response;
+            case collect_request_schema_1.Gateway.EDVIRON_NTTDATA:
+                console.log('checking status for NTTDATA', collect_request_id);
+                return await this.nttdataService.getTransactionStatus(collect_request_id.toString());
             case collect_request_schema_1.Gateway.PENDING:
                 return await this.checkExpiry(collectRequest);
             case collect_request_schema_1.Gateway.EXPIRED:
@@ -283,6 +291,8 @@ let CheckStatusService = class CheckStatusService {
                 return status_response;
             case collect_request_schema_1.Gateway.EDVIRON_PAY_U:
                 return await this.payUService.checkStatus(collectRequest._id.toString());
+            case collect_request_schema_1.Gateway.EDVIRON_NTTDATA:
+                return await this.nttdataService.getTransactionStatus(collectRequest.toString());
             case collect_request_schema_1.Gateway.PENDING:
                 return await this.checkExpiry(collectRequest);
             case collect_request_schema_1.Gateway.EXPIRED:
@@ -445,6 +455,7 @@ exports.CheckStatusService = CheckStatusService = __decorate([
         cashfree_service_1.CashfreeService,
         pay_u_service_1.PayUService,
         hdfc_razorpay_service_1.HdfcRazorpayService,
-        smartgateway_service_1.SmartgatewayService])
+        smartgateway_service_1.SmartgatewayService,
+        nttdata_service_1.NttdataService])
 ], CheckStatusService);
 //# sourceMappingURL=check-status.service.js.map

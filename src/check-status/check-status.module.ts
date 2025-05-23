@@ -12,9 +12,7 @@ import { CashfreeModule } from 'src/cashfree/cashfree.module';
 import { PayUService } from 'src/pay-u/pay-u.service';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
-
-
- 
+import { NttdataService } from 'src/nttdata/nttdata.service';
 
 @Module({
   controllers: [CheckStatusController],
@@ -24,7 +22,8 @@ import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
     EasebuzzService,
     SmartgatewayService,
     PayUService, 
-    HdfcRazorpayService
+    HdfcRazorpayService,
+    NttdataService,
   ],
   imports: [
     DatabaseModule,

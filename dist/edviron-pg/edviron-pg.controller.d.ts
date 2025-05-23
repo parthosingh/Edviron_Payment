@@ -29,12 +29,14 @@ import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { PlatformCharge, rangeCharge } from 'src/database/schemas/platform.charges.schema';
+import { NttdataService } from 'src/nttdata/nttdata.service';
 export declare class EdvironPgController {
     private readonly edvironPgService;
     private readonly databaseService;
     private readonly easebuzzService;
     private readonly cashfreeService;
-    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService);
+    private readonly nttDataService;
+    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, nttDataService: NttdataService);
     handleRedirect(req: any, res: any): Promise<void>;
     handleSdkRedirect(req: any, res: any): Promise<any>;
     handleCallback(req: any, res: any): Promise<any>;

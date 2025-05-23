@@ -27,12 +27,14 @@ const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
 const qs = require("qs");
 const _jwt = require("jsonwebtoken");
+const nttdata_service_1 = require("../nttdata/nttdata.service");
 let EdvironPgController = class EdvironPgController {
-    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService) {
+    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService) {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
         this.easebuzzService = easebuzzService;
         this.cashfreeService = cashfreeService;
+        this.nttDataService = nttDataService;
     }
     async handleRedirect(req, res) {
         const wallet = req.query.wallet;
@@ -1580,6 +1582,10 @@ let EdvironPgController = class EdvironPgController {
             }
             const gateway = request.gateway;
             console.log(gateway);
+            if (gateway === collect_request_schema_1.Gateway.EDVIRON_NTTDATA) {
+                const refund = await this.nttDataService.initiateRefund(collect_id, amount);
+                return refund;
+            }
             if (gateway === collect_request_schema_1.Gateway.EDVIRON_PG) {
                 console.log('refunding fromcashfree');
                 const refunds = await this.cashfreeService.initiateRefund(refund_id, amount, collect_id);
@@ -2940,6 +2946,7 @@ exports.EdvironPgController = EdvironPgController = __decorate([
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
         database_service_1.DatabaseService,
         easebuzz_service_1.EasebuzzService,
-        cashfree_service_1.CashfreeService])
+        cashfree_service_1.CashfreeService,
+        nttdata_service_1.NttdataService])
 ], EdvironPgController);
 //# sourceMappingURL=edviron-pg.controller.js.map

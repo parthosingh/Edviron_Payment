@@ -24,6 +24,7 @@ var Gateway;
     Gateway["EXPIRED"] = "EXPIRED";
     Gateway["EDVIRON_HDFC_RAZORPAY"] = "EDVIRON_HDFC_RAZORPAY";
     Gateway["SMART_GATEWAY"] = "EDVIRON_SMARTGATEWAY";
+    Gateway["EDVIRON_NTTDATA"] = "EDVIRON_NTTDATA";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let PaymentIds = class PaymentIds {
 };
@@ -207,9 +208,23 @@ __decorate([
     __metadata("design:type", String)
 ], CollectRequest.prototype, "pay_u_salt", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: false }),
-    __metadata("design:type", String)
-], CollectRequest.prototype, "vba_account_number", void 0);
+    (0, mongoose_1.Prop)({
+        required: false,
+        type: {
+            nttdata_id: { type: String, required: false, default: null },
+            nttdata_secret: { type: String, required: false, default: null },
+            ntt_atom_token: { type: String, required: false, default: null },
+            ntt_atom_txn_id: { type: String, required: false, default: null },
+            nttdata_hash_req_key: { type: String, required: false, default: null },
+            nttdata_req_salt: { type: String, required: false, default: null },
+            nttdata_hash_res_key: { type: String, required: false, default: null },
+            nttdata_res_salt: { type: String, required: false, default: null },
+        },
+        _id: false,
+    }),
+    __metadata("design:type", Object)
+], CollectRequest.prototype, "ntt_data", void 0);
+
 exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequest);

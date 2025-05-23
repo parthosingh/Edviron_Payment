@@ -1,17 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { EasebuzzController } from './easebuzz.controller';
+import { NttdataController } from './nttdata.controller';
 
-describe('EasebuzzController', () => {
-  let controller: EasebuzzController;
+describe('NttdataController', () => {
+  let controller: NttdataController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [EasebuzzController],
+      controllers: [NttdataController],
     }).compile();
 
-    controller = module.get<EasebuzzController>(EasebuzzController);
+    controller = module.get<NttdataController>(NttdataController);
   });
-  //changes
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
