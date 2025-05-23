@@ -39,6 +39,8 @@ let CollectService = class CollectService {
         console.log(req_webhook_urls, 'webhook url');
         console.log(webHook);
         console.log(ccavenue_merchant_id, 'ccavenue', ccavenue_access_code, ccavenue_working_key);
+
+ 
         if (custom_order_id) {
             const count = await this.databaseService.CollectRequestModel.countDocuments({
                 school_id,
@@ -79,6 +81,8 @@ let CollectService = class CollectService {
                 nttdata_res_salt,
                 nttdata_req_salt,
             },
+            isVBAPayment: isVBAPayment || false,
+            vba_account_number: vba_account_number || 'NA'
         }).save();
         await new this.databaseService.CollectRequestStatusModel({
             collect_id: request._id,

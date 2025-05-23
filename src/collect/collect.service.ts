@@ -70,16 +70,9 @@ export class CollectService {
         name?: string;
       },
     ],
+    isVBAPayment?:boolean,
+    vba_account_number?:string
   ): Promise<{ url: string; request: CollectRequest }> {
-    console.log(req_webhook_urls, 'webhook url');
-    console.log(webHook);
-
-    console.log(
-      ccavenue_merchant_id,
-      'ccavenue',
-      ccavenue_access_code,
-      ccavenue_working_key,
-    );
 
     if (custom_order_id) {
       const count =
@@ -125,6 +118,8 @@ export class CollectService {
         nttdata_res_salt,
         nttdata_req_salt,
       },
+      isVBAPayment:isVBAPayment|| false,
+      vba_account_number:vba_account_number||'NA'
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({

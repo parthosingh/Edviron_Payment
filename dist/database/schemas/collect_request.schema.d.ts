@@ -71,6 +71,8 @@ export declare class CollectRequest {
     trustee_id: string;
     payment_data: string;
     sdkPayment: boolean;
+    isVBAPayment: boolean;
+    isVBAPaymentComplete: boolean;
     custom_order_id: string;
     req_webhook_urls: string[];
     ccavenue_merchant_id: string;
@@ -99,6 +101,7 @@ export declare class CollectRequest {
     pay_u_key: string;
     pay_u_salt: string;
     ntt_data: I_NTT_DATA;
+    vba_account_number: string;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;

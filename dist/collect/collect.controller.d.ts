@@ -41,6 +41,8 @@ export declare class CollectController {
         pay_u_salt: string | null;
         hdfc_razorpay_id?: string;
         hdfc_razorpay_secret?: string;
+        isVBAPayment: boolean;
+        vba_account_number: string;
         hdfc_razorpay_mid?: string;
         nttdata_id?: string | null;
         nttdata_secret?: string | null;

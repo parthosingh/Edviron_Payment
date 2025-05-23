@@ -339,6 +339,7 @@ let CcavenueService = class CcavenueService {
                     status: transactionStatus_1.TransactionStatus.FAILURE,
                     status_code: '400',
                     amount: order_status_result['order_amt'],
+                    decrypt_res
                 };
             }
             return {

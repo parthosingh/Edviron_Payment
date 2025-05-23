@@ -682,4 +682,104 @@ export class CashfreeService {
       );
     }
   }
+
+  async createVBA(
+    cf_x_client_id: string,
+    cf_x_clien_secret: string,
+    virtual_account_details: {
+      virtual_account_id: string;
+      virtual_account_name: string;
+      virtual_account_email: string;
+      virtual_account_phone: string;
+    },
+    notification_group: string,
+  ) {
+     const config = {
+      method: 'post',
+      url: `https://api.cashfree.com/pg/vba`,
+      maxBodyLength: Infinity,
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        'x-api-version': '2023-08-01',
+        'x-client-id': cf_x_client_id,
+        'x-client-secret': cf_x_clien_secret,
+      },
+      data: {
+        virtual_account_details,
+        amount_lock_details: {
+          min_amount: 1,
+          max_amount: 99999999,
+        },
+        bank_codes: ['UTIB'],
+        notification_group,
+      },
+    };
+
+    try {
+      const { data: response } = await axios.request(config);
+      const details={
+        
+      }
+      return response;
+    } catch (error) {
+      console.log(
+        error
+      );
+       
+      console.error('Error:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  async createVBAV2(
+    cf_x_client_id: string,
+    cf_x_clien_secret: string,
+    virtual_account_details: {
+      virtual_account_id: string;
+      virtual_account_name: string;
+      virtual_account_email: string;
+      virtual_account_phone: string;
+    },
+    notification_group: string,
+    amount:number
+  ) {
+
+     const config = {
+      method: 'post',
+      url: `https://api.cashfree.com/pg/vba`,
+      maxBodyLength: Infinity,
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        'x-api-version': '2023-08-01',
+        'x-client-id': cf_x_client_id,
+        'x-client-secret': cf_x_clien_secret,
+      },
+      data: {
+        virtual_account_details,
+        amount_lock_details: {
+          min_amount: amount,
+          max_amount: amount,
+        },
+        bank_codes: ['UTIB'],
+        notification_group,
+      },
+    };
+ 
+    try {
+      const { data: response } = await axios.request(config);
+      console.log(response);
+      
+      return response;
+    } catch (error) { 
+      console.log(
+        error
+      );
+        
+       
+      console.error('Error:', error.response?.data || error.message);
+      throw error;
+    }
+  }
 }
