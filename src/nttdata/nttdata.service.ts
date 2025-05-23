@@ -118,7 +118,8 @@ export class NttdataService {
       };
 
       const {data} = await axios.request(config);
-
+      console.log(data);
+      
       const encResponse = data?.split('&')?.[1]?.split('=')?.[1];
       if (!encResponse) {
         throw new Error('Encrypted token not found in NTT response');
