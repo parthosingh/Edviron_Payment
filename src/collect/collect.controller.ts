@@ -32,7 +32,7 @@ export class CollectController {
   constructor(
     private readonly collectService: CollectService,
     private readonly databaseService: DatabaseService,
-  ) { }
+  ) {}
   @Post('/')
   async collect(
     @Body()
@@ -63,8 +63,8 @@ export class CollectController {
       pay_u_salt: string | null;
       hdfc_razorpay_id?: string;
       hdfc_razorpay_secret?: string;
-      isVBAPayment:boolean;
-      vba_account_number:string;
+      isVBAPayment: boolean;
+      vba_account_number: string;
       hdfc_razorpay_mid?: string;
       nttdata_id?: string | null;
       nttdata_secret?: string | null;
@@ -73,6 +73,26 @@ export class CollectController {
       nttdata_res_salt?: string | null;
       nttdata_req_salt?: string | null;
       vendors_info?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+        },
+      ];
+      vendorgateway?: {
+        easebuzz: boolean;
+        cashfree: boolean;
+      };
+      easebuzzVendors?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+        },
+      ];
+      cashfreeVedors?: [
         {
           vendor_id: string;
           percentage?: number;
@@ -118,7 +138,10 @@ export class CollectController {
       nttdata_res_salt,
       nttdata_req_salt,
       isVBAPayment,
-      vba_account_number
+      vba_account_number,
+      vendorgateway,
+      easebuzzVendors,
+      cashfreeVedors,
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -170,8 +193,11 @@ export class CollectController {
           nttdata_res_salt,
           nttdata_req_salt,
           vendors_info,
+          vendorgateway,
+          easebuzzVendors,
+          cashfreeVedors,
           isVBAPayment,
-          vba_account_number
+          vba_account_number,
         ),
       );
     } catch (e) {

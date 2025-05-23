@@ -58,6 +58,26 @@ export declare class CollectController {
                 name?: string;
             }
         ];
+        vendorgateway?: {
+            easebuzz: boolean;
+            cashfree: boolean;
+        };
+        easebuzzVendors?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+            }
+        ];
+        cashfreeVedors?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+            }
+        ];
     }): Promise<any>;
     callbackUrl(res: any, collect_id: string): Promise<void>;
 }

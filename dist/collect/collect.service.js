@@ -35,7 +35,7 @@ let CollectService = class CollectService {
         this.hdfcSmartgatewayService = hdfcSmartgatewayService;
         this.nttdataService = nttdataService;
     }
-    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, nttdata_hash_req_key, nttdata_hash_res_key, nttdata_res_salt, nttdata_req_salt, vendor, isVBAPayment, vba_account_number) {
+    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, nttdata_hash_req_key, nttdata_hash_res_key, nttdata_res_salt, nttdata_req_salt, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, isVBAPayment, vba_account_number) {
         if (custom_order_id) {
             const count = await this.databaseService.CollectRequestModel.countDocuments({
                 school_id,
@@ -76,8 +76,10 @@ let CollectService = class CollectService {
                 nttdata_res_salt,
                 nttdata_req_salt,
             },
+            easebuzzVendors,
+            cashfreeVedors,
             isVBAPayment: isVBAPayment || false,
-            vba_account_number: vba_account_number || 'NA'
+            vba_account_number: vba_account_number || 'NA',
         }).save();
         await new this.databaseService.CollectRequestStatusModel({
             collect_id: request._id,
@@ -137,7 +139,9 @@ let CollectService = class CollectService {
                 request,
             };
         }
-        if (smartgateway_customer_id && smartgateway_merchant_id && smart_gateway_api_key) {
+        if (smartgateway_customer_id &&
+            smartgateway_merchant_id &&
+            smart_gateway_api_key) {
             request.smartgateway_customer_id = smartgateway_customer_id;
             request.smartgateway_merchant_id = smartgateway_merchant_id;
             request.smart_gateway_api_key = smart_gateway_api_key;
@@ -146,7 +150,7 @@ let CollectService = class CollectService {
             return { url: data?.url, request: data?.request };
         }
         const transaction = (gateway === collect_request_schema_1.Gateway.PENDING
-            ? await this.edvironPgService.collect(request, platform_charges, school_name, splitPayments || false, vendor)
+            ? await this.edvironPgService.collect(request, platform_charges, school_name, splitPayments || false, vendor, vendorgateway, easebuzzVendors, cashfreeVedors)
             : await this.hdfcService.collect(request));
         await this.databaseService.CollectRequestModel.updateOne({
             _id: request._id,

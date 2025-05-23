@@ -173,6 +173,14 @@ __decorate([
 ], CollectRequest.prototype, "vendors_info", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Array)
+], CollectRequest.prototype, "easebuzzVendors", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Array)
+], CollectRequest.prototype, "cashfreeVedors", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "hdfc_razorpay_id", void 0);
 __decorate([

@@ -28,7 +28,7 @@ export class CollectService {
     private readonly payuService: PayUService,
     private readonly hdfcSmartgatewayService: SmartgatewayService,
     private readonly nttdataService: NttdataService,
-  ) { }
+  ) {}
   async collect(
     amount: Number,
     callbackUrl: string,
@@ -70,10 +70,29 @@ export class CollectService {
         name?: string;
       },
     ],
-    isVBAPayment?:boolean,
-    vba_account_number?:string
+    vendorgateway?: {
+      easebuzz: boolean;
+      cashfree: boolean;
+    },
+    easebuzzVendors?: [
+      {
+        vendor_id: string;
+        percentage?: number;
+        amount?: number;
+        name?: string;
+      },
+    ],
+    cashfreeVedors?: [
+      {
+        vendor_id: string;
+        percentage?: number;
+        amount?: number;
+        name?: string;
+      },
+    ],
+    isVBAPayment?: boolean,
+    vba_account_number?: string,
   ): Promise<{ url: string; request: CollectRequest }> {
-
     if (custom_order_id) {
       const count =
         await this.databaseService.CollectRequestModel.countDocuments({
@@ -118,8 +137,10 @@ export class CollectService {
         nttdata_res_salt,
         nttdata_req_salt,
       },
-      isVBAPayment:isVBAPayment|| false,
-      vba_account_number:vba_account_number||'NA'
+      easebuzzVendors,
+      cashfreeVedors,
+      isVBAPayment: isVBAPayment || false,
+      vba_account_number: vba_account_number || 'NA',
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({
@@ -196,7 +217,11 @@ export class CollectService {
         request,
       };
     }
-    if (smartgateway_customer_id && smartgateway_merchant_id && smart_gateway_api_key) {
+    if (
+      smartgateway_customer_id &&
+      smartgateway_merchant_id &&
+      smart_gateway_api_key
+    ) {
       request.smartgateway_customer_id = smartgateway_customer_id;
       request.smartgateway_merchant_id = smartgateway_merchant_id;
       request.smart_gateway_api_key = smart_gateway_api_key;
@@ -205,7 +230,7 @@ export class CollectService {
         request,
         smartgateway_customer_id,
         smartgateway_merchant_id,
-        smart_gateway_api_key
+        smart_gateway_api_key,
       );
       return { url: data?.url, request: data?.request };
     }
@@ -218,6 +243,9 @@ export class CollectService {
             school_name,
             splitPayments || false,
             vendor,
+            vendorgateway,
+            easebuzzVendors,
+            cashfreeVedors
           )
         : await this.hdfcService.collect(request)
     )!;

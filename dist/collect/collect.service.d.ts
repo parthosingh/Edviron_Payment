@@ -27,6 +27,23 @@ export declare class CollectService {
             amount?: number;
             name?: string;
         }
+    ], vendorgateway?: {
+        easebuzz: boolean;
+        cashfree: boolean;
+    }, easebuzzVendors?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
+    ], cashfreeVedors?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
     ], isVBAPayment?: boolean, vba_account_number?: string): Promise<{
         url: string;
         request: CollectRequest;

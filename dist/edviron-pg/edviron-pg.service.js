@@ -31,7 +31,7 @@ let EdvironPgService = class EdvironPgService {
         this.databaseService = databaseService;
         this.cashfreeService = cashfreeService;
     }
-    async collect(request, platform_charges, school_name, splitPayments, vendor) {
+    async collect(request, platform_charges, school_name, splitPayments, vendor, vendorgateway, easebuzzVendors, cashfreeVedors) {
         try {
             let paymentInfo = {
                 cashfree_id: null,
@@ -66,8 +66,8 @@ let EdvironPgService = class EdvironPgService {
                 order_expiry_time: isoExpiryTime,
             });
             console.log(splitPayments, 'split pay');
-            if (splitPayments && vendor && vendor.length > 0) {
-                const vendor_data = vendor
+            if (splitPayments && cashfreeVedors && cashfreeVedors.length > 0) {
+                const vendor_data = cashfreeVedors
                     .filter(({ amount, percentage }) => {
                     return (amount && amount > 0) || (percentage && percentage > 0);
                 })
@@ -95,7 +95,7 @@ let EdvironPgService = class EdvironPgService {
                 collectReq.isSplitPayments = true;
                 collectReq.vendors_info = vendor;
                 await collectReq.save();
-                vendor.map(async (info) => {
+                cashfreeVedors.map(async (info) => {
                     const { vendor_id, percentage, amount, name } = info;
                     let split_amount = 0;
                     if (amount) {
@@ -171,7 +171,29 @@ let EdvironPgService = class EdvironPgService {
                 encodedParams.set('hash', hash);
                 encodedParams.set('request_flow', 'SEAMLESS');
                 encodedParams.set('sub_merchant_id', request.easebuzz_sub_merchant_id);
-                const options = {
+                let ezb_split_payments = {};
+                if (vendorgateway?.easebuzz &&
+                    easebuzzVendors &&
+                    easebuzzVendors.length > 0) {
+                    let vendorTotal = 0;
+                    easebuzzVendors.forEach((vendor) => {
+                        if (vendor.name && typeof vendor.amount === 'number') {
+                            ezb_split_payments[vendor.vendor_id] = vendor.amount;
+                            vendorTotal += vendor.amount;
+                        }
+                    });
+                    const remainingAmount = request.amount - vendorTotal;
+                    if (remainingAmount > 0) {
+                        ezb_split_payments[request.easebuzz_sub_merchant_id] = remainingAmount;
+                    }
+                    encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+                }
+                else {
+                    ezb_split_payments[request.easebuzz_sub_merchant_id] = request.amount;
+                    encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+                }
+                console.log(ezb_split_payments, 'easebuzz vendors');
+                const Ezboptions = {
                     method: 'POST',
                     url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
                     headers: {
@@ -180,10 +202,11 @@ let EdvironPgService = class EdvironPgService {
                     },
                     data: encodedParams,
                 };
-                const { data: easebuzzRes } = await axios.request(options);
+                const { data: easebuzzRes } = await axios.request(Ezboptions);
+                console.log(easebuzzRes, 'easebuzz data');
                 id = easebuzzRes.data;
                 paymentInfo.easebuzz_id = id || null;
-                await this.getQr(request._id.toString(), request);
+                await this.getQr(request._id.toString(), request, ezb_split_payments);
                 easebuzz_pg = true;
             }
             let cf_payment_id = '';
@@ -425,7 +448,7 @@ let EdvironPgService = class EdvironPgService {
             throw new common_1.BadRequestException('Error fetching payment details');
         }
     }
-    async getQr(collect_id, request) {
+    async getQr(collect_id, request, ezb_split_payments) {
         try {
             const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
             if (!collectReq) {
@@ -471,6 +494,8 @@ let EdvironPgService = class EdvironPgService {
             encodedParams.set('hash', hash);
             encodedParams.set('request_flow', 'SEAMLESS');
             encodedParams.set('sub_merchant_id', request.easebuzz_sub_merchant_id);
+            encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+            console.log({ ezb_split_payments });
             const options = {
                 method: 'POST',
                 url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
@@ -480,6 +505,7 @@ let EdvironPgService = class EdvironPgService {
                 },
                 data: encodedParams,
             };
+            console.log({ EzbConfig: options });
             const { data: easebuzzRes } = await axios_1.default.request(options);
             const access_key = easebuzzRes.data;
             console.log(access_key, 'access key');
@@ -497,6 +523,7 @@ let EdvironPgService = class EdvironPgService {
                 },
                 data: formData,
             };
+            console.log({ EzbQr: config });
             const response = await axios_1.default.request(config);
             console.log(response.data, 'res in qr code');
             await this.databaseService.CollectRequestModel.findByIdAndUpdate(collect_id, {

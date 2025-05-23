@@ -136,6 +136,16 @@ export class CollectRequest {
   ];
 
   @Prop({ required: false })
+  easebuzzVendors?: [
+    { vendor_id: string; percentage?: number; amount?: number; name?: string },
+  ];
+
+  @Prop({ required: false })
+  cashfreeVedors?: [
+    { vendor_id: string; percentage?: number; amount?: number; name?: string },
+  ];
+
+  @Prop({ required: false })
   hdfc_razorpay_id: string;
 
   @Prop({ required: false })
