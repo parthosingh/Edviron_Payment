@@ -224,7 +224,10 @@ __decorate([
     }),
     __metadata("design:type", Object)
 ], CollectRequest.prototype, "ntt_data", void 0);
-
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "vba_account_number", void 0);
 exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequest);
