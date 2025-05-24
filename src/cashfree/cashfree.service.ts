@@ -744,7 +744,8 @@ export class CashfreeService {
     notification_group: string,
     amount:number
   ) {
-
+    console.log({amount:Number(amount)});
+    
      const config = {
       method: 'post',
       url: `https://api.cashfree.com/pg/vba`,

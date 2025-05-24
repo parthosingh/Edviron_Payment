@@ -183,13 +183,6 @@ let EdvironPgService = class EdvironPgService {
                         }
                     });
                     const remainingAmount = request.amount - vendorTotal;
-                    if (remainingAmount > 0) {
-                        ezb_split_payments[request.easebuzz_sub_merchant_id] = remainingAmount;
-                    }
-                    encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
-                }
-                else {
-                    ezb_split_payments[request.easebuzz_sub_merchant_id] = request.amount;
                     encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
                 }
                 console.log(ezb_split_payments, 'easebuzz vendors');
@@ -525,7 +518,6 @@ let EdvironPgService = class EdvironPgService {
             };
             console.log({ EzbQr: config });
             const response = await axios_1.default.request(config);
-            console.log(response.data, 'res in qr code');
             await this.databaseService.CollectRequestModel.findByIdAndUpdate(collect_id, {
                 deepLink: response.data.qr_link,
             });

@@ -248,15 +248,15 @@ export class EdvironPgService implements GatewayService {
             }
           });
           const remainingAmount = request.amount - vendorTotal;
-          if (remainingAmount > 0) {
-            ezb_split_payments[request.easebuzz_sub_merchant_id] = remainingAmount;
-          }
+          // if (remainingAmount > 0) {
+          //   ezb_split_payments[request.easebuzz_sub_merchant_id] = remainingAmount;
+          // }
           encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
         }
-        else{
-          ezb_split_payments[request.easebuzz_sub_merchant_id] = request.amount;
-          encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
-        }
+        // else{
+        //   ezb_split_payments[request.easebuzz_sub_merchant_id] = request.amount;
+        //   encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+        // }
         console.log(ezb_split_payments,'easebuzz vendors');
         const Ezboptions = {
           method: 'POST',
@@ -266,7 +266,7 @@ export class EdvironPgService implements GatewayService {
             Accept: 'application/json',
           },
           data: encodedParams,
-        };
+        }; 
         // console.log({Ezboptions});
         
         const { data: easebuzzRes } = await axios.request(Ezboptions);
@@ -675,7 +675,7 @@ export class EdvironPgService implements GatewayService {
       console.log({EzbQr:config});
       
       const response = await axios.request(config);
-      console.log(response.data, 'res in qr code');
+      // console.log(response.data, 'res in qr code');
 
       await this.databaseService.CollectRequestModel.findByIdAndUpdate(
         collect_id,
