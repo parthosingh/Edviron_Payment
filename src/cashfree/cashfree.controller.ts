@@ -391,6 +391,7 @@ export class CashfreeController {
       gateway: 'CASHFREE',
       webhooktype: 'vba',
     });
+
     const { data } = body;
     const { order, payment, customer_details, payment_gateway_details } = data;
 
@@ -434,7 +435,7 @@ export class CashfreeController {
     if (!request) {
       return res.status(200).send('Request Not found');
     }
-
+    request.gateway=Gateway.EDVIRON_PG
     const collectRequestStatus =
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: request._id,
