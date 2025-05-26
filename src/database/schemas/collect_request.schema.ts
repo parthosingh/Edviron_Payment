@@ -48,6 +48,8 @@ export class PaymentIds {
   ccavenue_id?: string | null;
 }
 
+
+
 @Schema({ timestamps: true })
 export class CollectRequest {
   @Prop({ required: true })
@@ -172,6 +174,8 @@ export class CollectRequest {
   @Prop({ required: false })
   pay_u_salt: string;
 
+  @Prop({required:false})
+  easebuzz_split_label:string
 
   @Prop({
     required: false,
