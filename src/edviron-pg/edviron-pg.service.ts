@@ -248,15 +248,17 @@ export class EdvironPgService implements GatewayService {
             }
           });
           const remainingAmount = request.amount - vendorTotal;
+          // remainig balance will go to sub-merchant-id in split
           // if (remainingAmount > 0) {
           //   ezb_split_payments[request.easebuzz_sub_merchant_id] = remainingAmount;
           // }
           encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
         }
-        // else{
-        //   ezb_split_payments[request.easebuzz_sub_merchant_id] = request.amount;
-        //   encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
-        // }
+        // in case of split false 100% amount goes to sub merchant
+        else{
+          ezb_split_payments[request.easebuzz_sub_merchant_id] = request.amount;
+          encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+        }
         console.log(ezb_split_payments,'easebuzz vendors');
         const Ezboptions = {
           method: 'POST',
@@ -649,7 +651,7 @@ export class EdvironPgService implements GatewayService {
       console.log({EzbConfig:options});
       
       const { data: easebuzzRes } = await axios.request(options);
-      // console.log({easebuzzRes});
+      console.log({easebuzzRes});
       
       const access_key = easebuzzRes.data;
       console.log(access_key, 'access key');
@@ -672,7 +674,7 @@ export class EdvironPgService implements GatewayService {
         },
         data: formData,
       };
-      console.log({EzbQr:config});
+      // console.log({EzbQr:config});
       
       const response = await axios.request(config);
       // console.log(response.data, 'res in qr code');

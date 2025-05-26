@@ -185,6 +185,10 @@ let EdvironPgService = class EdvironPgService {
                     const remainingAmount = request.amount - vendorTotal;
                     encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
                 }
+                else {
+                    ezb_split_payments[request.easebuzz_sub_merchant_id] = request.amount;
+                    encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+                }
                 console.log(ezb_split_payments, 'easebuzz vendors');
                 const Ezboptions = {
                     method: 'POST',
@@ -500,6 +504,7 @@ let EdvironPgService = class EdvironPgService {
             };
             console.log({ EzbConfig: options });
             const { data: easebuzzRes } = await axios_1.default.request(options);
+            console.log({ easebuzzRes });
             const access_key = easebuzzRes.data;
             console.log(access_key, 'access key');
             console.log(collectReq.paymentIds);
@@ -516,7 +521,6 @@ let EdvironPgService = class EdvironPgService {
                 },
                 data: formData,
             };
-            console.log({ EzbQr: config });
             const response = await axios_1.default.request(config);
             await this.databaseService.CollectRequestModel.findByIdAndUpdate(collect_id, {
                 deepLink: response.data.qr_link,
