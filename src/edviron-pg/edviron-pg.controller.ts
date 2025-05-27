@@ -3507,4 +3507,28 @@ export class EdvironPgController {
       signatory_details,
     )
   }
+
+  @Post('/initiate-kyc')
+  async initiategatewayKyc(
+    @Body() body:{
+      school_id:string,
+      kyc_mail:string,
+      gateway:string
+    }
+  ){
+    const {
+      school_id,
+      kyc_mail,
+      gateway
+    }=body
+    try{
+      if(gateway==='CASHFREE'){
+        return await this.cashfreeService.initiateMerchantOnboarding(school_id,kyc_mail)
+      }
+    }catch(e){
+      console.log(e);
+      
+      throw new BadRequestException(e.message)
+    }
+  }
 }

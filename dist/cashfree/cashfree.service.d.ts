@@ -74,6 +74,8 @@ export declare class CashfreeService {
         signatory_name: string;
         signatory_pan?: string;
     }): Promise<string>;
+    initiateMerchantOnboarding(school_id: string, kyc_mail: string): Promise<string>;
+    uploadKycDocs(school_id: string): Promise<void>;
     getMerchantInfo(school_id: string, kyc_mail: string): Promise<{
         merchant_id: string;
         merchant_email: string;

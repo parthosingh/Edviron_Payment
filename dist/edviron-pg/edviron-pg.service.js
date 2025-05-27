@@ -547,7 +547,7 @@ let EdvironPgService = class EdvironPgService {
         };
         try {
             const { data: info } = await axios_1.default.request(config);
-            console.log(info);
+            console.log({ info });
             return info;
         }
         catch (e) {

@@ -14,7 +14,7 @@ import {
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import * as moment from 'moment-timezone';
-import * as jwt from 'jsonwebtoken'
+import * as jwt from 'jsonwebtoken';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { promises } from 'dns';
 @Injectable()
@@ -660,6 +660,7 @@ export class CashfreeService {
       );
     }
   }
+
   async acceptDispute(disputeId: string, client_id: string) {
     try {
       const config = {
@@ -688,9 +689,9 @@ export class CashfreeService {
   async createMerchant(
     merchant_id: string, //school_id
     merchant_email: string, // kyc email
-    merchant_name: string,//school_name
+    merchant_name: string, //school_name
     poc_phone: string, // edviron
-    merchant_site_url: string,//edviron
+    merchant_site_url: string, //edviron
     business_details: {
       business_legal_name: string; //req
       business_type: string; //req
@@ -725,8 +726,8 @@ export class CashfreeService {
     signatory_details: {
       signatory_name: string;
       signatory_pan?: string;
-    }
-  ):Promise<string> {
+    },
+  ): Promise<string> {
     const url = 'https://api.cashfree.com/partners/merchants';
     const headers = {
       'Content-Type': 'application/json',
@@ -748,9 +749,8 @@ export class CashfreeService {
 
     console.log({
       merchant_email,
-      poc_phone
+      poc_phone,
     });
-    
 
     const config = {
       method: 'post',
@@ -762,19 +762,82 @@ export class CashfreeService {
     try {
       const response = await axios.request(config);
       console.log('Cashfree response:', response.data);
-      return response.data
+      return response.data;
       return 'Merchant Request Created Successfully on Cashfree';
     } catch (error) {
-      console.error('Cashfree API error:', error?.response?.data || error.message);
+      console.error('Cashfree API error:', error);
       throw new Error('Cashfree API request failed');
     }
   }
 
-  async getMerchantInfo(school_id:string,kyc_mail:string):Promise<{merchant_id: string, //school_id
-    merchant_email: string, // kyc email
-    merchant_name: string,//school_name
-    poc_phone: string, // edviron
-    merchant_site_url: string,//edviron
+  async initiateMerchantOnboarding(school_id: string, kyc_mail: string) {
+    const kycInfo = await this.getMerchantInfo(school_id, kyc_mail);
+    const {
+      merchant_id,
+      merchant_email,
+      merchant_name,
+      poc_phone,
+      merchant_site_url,
+      business_details,
+      website_details,
+      bank_account_details,
+      signatory_details,
+    } = kycInfo;
+    console.log(kycInfo, 'kyc info');
+
+    const merchant = await this.createMerchant(
+      merchant_id,
+      merchant_email,
+      merchant_name,
+      poc_phone,
+      merchant_site_url,
+      business_details,
+      website_details,
+      bank_account_details,
+      signatory_details,
+    );
+    return merchant;
+  }
+
+  async uploadKycDocs(school_id: string) {
+    try {
+      const token = jwt.sign(
+        { school_id },
+        process.env.JWT_SECRET_FOR_INTRANET!,
+      );
+      const config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: `${process.env.MAIN_BACKEND}/api/trustee/get-school-kyc?school_id=${school_id}&token=${token}`,
+        headers: {
+          accept: 'application/json',
+        },
+      };
+      const { data: response } = await axios.request(config);
+      const businessproof_saecertificate=response.businessProof //businessproof_saecertificate
+      if(!businessproof_saecertificate){
+        throw new BadRequestException('business proof not found')
+      }
+      const bank_proof=response.bankProof //bank_statement
+      if(!bank_proof){
+        throw new BadRequestException('Bank proof not found')
+      }
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+    // Needed Docs
+    // businessproof_regproof	Other Government-Issued Registration Document
+  }
+
+  async getMerchantInfo(
+    school_id: string,
+    kyc_mail: string,
+  ): Promise<{
+    merchant_id: string; //school_id
+    merchant_email: string; // kyc email
+    merchant_name: string; //school_name
+    poc_phone: string; // edviron
+    merchant_site_url: string; //edviron
     business_details: {
       business_legal_name: string; //req
       business_type: string; //req
@@ -789,56 +852,60 @@ export class CashfreeService {
       business_country?: string | null;
       business_gstin?: string | null;
       business_cin?: string | null;
-    },
+    };
     website_details: {
       website_contact_us: string;
       website_privacy_policy: string;
       website_refund_policy: string;
       website_tnc: string;
-    },
+    };
     bank_account_details: {
       bank_account_number?: string | null;
       bank_ifsc?: string | null;
-    },
+    };
     signatory_details: {
       signatory_name: string;
       signatory_pan?: string;
-    }}>{
-    const token=jwt.sign({school_id},process.env.JWT_SECRET_FOR_INTRANET!)
-    const config={
-      method:'get',
+    };
+  }> {
+    const token = jwt.sign({ school_id }, process.env.JWT_SECRET_FOR_INTRANET!);
+    const config = {
+      method: 'get',
       maxBodyLength: Infinity,
-      url:`${process.env.MAIN_BACKEND}/api/trustee/get-school-kyc?school_id=${school_id}&token=${token}`,
-      headers:{
+      url: `${process.env.MAIN_BACKEND}/api/trustee/get-school-kyc?school_id=${school_id}&token=${token}`,
+      headers: {
         accept: 'application/json',
-      }
+      },
+    };
+    const { data: response } = await axios.request(config);
+    if (!response.legal_name) {
+      throw new BadRequestException('legalName required');
     }
-    const {data:response}=await axios.request(config)
-    if(!response.legalName){
-      throw new BadRequestException('legalName required')
+    if (!response.businessCategory) {
+      throw new BadRequestException('businessCategory is re');
     }
-    if(!response.businessCategory){
-      throw new BadRequestException('businessCategory is re')
+    if (!response.authSignatory?.auth_sighnatory_name_on_aadhar) {
+      throw new BadRequestException(
+        'authSignatory?.auth_sighnatory_name_on_aadhar, required',
+      );
     }
-    if(!response.authSignatory?.auth_sighnatory_name_on_aadhar){
-      throw new BadRequestException('authSignatory?.auth_sighnatory_name_on_aadhar, required')
-    }
-    const school=await this.edvironPgService.getAllSchoolInfo(school_id)
-    console.log({school});
-    
-    const details={
-      merchant_id:response.school,
-      merchant_email:kyc_mail,
-      merchant_name:school.school_name,
-      poc_phone:'7000061754', //chaneg later
-      merchant_site_url:'https://www.edviron.com/',
+    const school = await this.edvironPgService.getAllSchoolInfo(school_id);
+    console.log(school);
+
+    const details = {
+      merchant_id: response.school,
+      merchant_email: kyc_mail,
+      merchant_name: school.school_name,
+      poc_phone: '7000061754', //chaneg later
+      merchant_site_url: 'https://www.edviron.com/',
       business_details: {
-        business_legal_name: response.legalName,
+        business_legal_name: response.legal_name,
         business_type: response.businessCategory,
         business_model: 'Both', //chnage later
         business_category: response.businessCategory || null,
         business_subcategory: response.businessSubCategory || null,
-        business_pan: response.businessProofDetails?.business_pan_number || null,
+        business_pan:
+          response.businessProofDetails?.business_pan_number || null,
         business_address: response.businessAddress?.address || null,
         business_city: response.businessAddress?.city || null,
         business_state: response.businessAddress?.state || null,
@@ -851,19 +918,18 @@ export class CashfreeService {
         website_contact_us: 'https://www.edviron.com/',
         website_privacy_policy: 'https://www.edviron.com/',
         website_refund_policy: 'https://www.edviron.com/',
-        website_tnc: 'https://www.edviron.com/', 
+        website_tnc: 'https://www.edviron.com/',
       },
       bank_account_details: {
-        bank_account_number: response.bankDetails?.account_number|| null,
+        bank_account_number: response.bankDetails?.account_number || null,
         bank_ifsc: response.bankDetails?.ifsc_code || null,
       },
       signatory_details: {
         signatory_name: response.authSignatory?.auth_sighnatory_name_on_aadhar,
-        signatory_pan: response.authSignatory?.auth_sighnatory_pan_number || null,
+        signatory_pan:
+          response.authSignatory?.auth_sighnatory_pan_number || null,
       },
-    }
-    return details
+    };
+    return details;
   }
 }
-
-

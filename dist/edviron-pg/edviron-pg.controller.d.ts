@@ -331,4 +331,9 @@ export declare class EdvironPgController {
         kyc_mail: string;
         token: string;
     }): Promise<string>;
+    initiategatewayKyc(body: {
+        school_id: string;
+        kyc_mail: string;
+        gateway: string;
+    }): Promise<string | undefined>;
 }

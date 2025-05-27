@@ -2366,6 +2366,18 @@ let EdvironPgController = class EdvironPgController {
         const { merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details, } = payload;
         return await this.cashfreeService.createMerchant(merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details);
     }
+    async initiategatewayKyc(body) {
+        const { school_id, kyc_mail, gateway } = body;
+        try {
+            if (gateway === 'CASHFREE') {
+                return await this.cashfreeService.initiateMerchantOnboarding(school_id, kyc_mail);
+            }
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -2742,6 +2754,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "approve", null);
+__decorate([
+    (0, common_1.Post)('/initiate-kyc'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "initiategatewayKyc", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

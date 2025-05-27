@@ -672,9 +672,10 @@ export class EdvironPgService implements GatewayService {
         'x-api-version': '2023-08-01',
       },
     };
+    
     try {
       const { data: info } = await axios.request(config);
-      console.log(info);
+      console.log({info});
 
       return info;
     } catch (e) {

@@ -570,7 +570,7 @@ let CashfreeService = class CashfreeService {
         };
         console.log({
             merchant_email,
-            poc_phone
+            poc_phone,
         });
         const config = {
             method: 'post',
@@ -585,8 +585,40 @@ let CashfreeService = class CashfreeService {
             return 'Merchant Request Created Successfully on Cashfree';
         }
         catch (error) {
-            console.error('Cashfree API error:', error?.response?.data || error.message);
+            console.error('Cashfree API error:', error);
             throw new Error('Cashfree API request failed');
+        }
+    }
+    async initiateMerchantOnboarding(school_id, kyc_mail) {
+        const kycInfo = await this.getMerchantInfo(school_id, kyc_mail);
+        const { merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details, } = kycInfo;
+        console.log(kycInfo, 'kyc info');
+        const merchant = await this.createMerchant(merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details);
+        return merchant;
+    }
+    async uploadKycDocs(school_id) {
+        try {
+            const token = jwt.sign({ school_id }, process.env.JWT_SECRET_FOR_INTRANET);
+            const config = {
+                method: 'get',
+                maxBodyLength: Infinity,
+                url: `${process.env.MAIN_BACKEND}/api/trustee/get-school-kyc?school_id=${school_id}&token=${token}`,
+                headers: {
+                    accept: 'application/json',
+                },
+            };
+            const { data: response } = await axios_1.default.request(config);
+            const businessproof_saecertificate = response.businessProof;
+            if (!businessproof_saecertificate) {
+                throw new common_1.BadRequestException('business proof not found');
+            }
+            const bank_proof = response.bankProof;
+            if (!bank_proof) {
+                throw new common_1.BadRequestException('Bank proof not found');
+            }
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
         }
     }
     async getMerchantInfo(school_id, kyc_mail) {
@@ -597,10 +629,10 @@ let CashfreeService = class CashfreeService {
             url: `${process.env.MAIN_BACKEND}/api/trustee/get-school-kyc?school_id=${school_id}&token=${token}`,
             headers: {
                 accept: 'application/json',
-            }
+            },
         };
         const { data: response } = await axios_1.default.request(config);
-        if (!response.legalName) {
+        if (!response.legal_name) {
             throw new common_1.BadRequestException('legalName required');
         }
         if (!response.businessCategory) {
@@ -610,7 +642,7 @@ let CashfreeService = class CashfreeService {
             throw new common_1.BadRequestException('authSignatory?.auth_sighnatory_name_on_aadhar, required');
         }
         const school = await this.edvironPgService.getAllSchoolInfo(school_id);
-        console.log({ school });
+        console.log(school);
         const details = {
             merchant_id: response.school,
             merchant_email: kyc_mail,
@@ -618,7 +650,7 @@ let CashfreeService = class CashfreeService {
             poc_phone: '7000061754',
             merchant_site_url: 'https://www.edviron.com/',
             business_details: {
-                business_legal_name: response.legalName,
+                business_legal_name: response.legal_name,
                 business_type: response.businessCategory,
                 business_model: 'Both',
                 business_category: response.businessCategory || null,

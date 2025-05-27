@@ -22,20 +22,6 @@ export declare class CheckStatusService {
     private readonly hdfcRazorpay;
     constructor(databaseService: DatabaseService, hdfcService: HdfcService, phonePeService: PhonepeService, edvironPgService: EdvironPgService, ccavenueService: CcavenueService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, payUService: PayUService, hdfcRazorpay: HdfcRazorpayService);
     checkStatus(collect_request_id: String): Promise<{
-        status: any;
-        amount: number;
-        transaction_amount: number;
-        status_code: number;
-        details: {
-            payment_mode: any;
-            bank_ref: any;
-            payment_methods: {};
-            transaction_time: any;
-        };
-        mode: any;
-        net_amount_debit: any;
-        bank_ref_num: any;
-    } | {
         status: TransactionStatus;
         amount: number;
     } | {
@@ -53,6 +39,20 @@ export declare class CheckStatusService {
             formattedTransactionDate: string;
             order_status: any;
         };
+    } | {
+        status: any;
+        amount: number;
+        transaction_amount: number;
+        status_code: number;
+        details: {
+            payment_mode: any;
+            bank_ref: any;
+            payment_methods: {};
+            transaction_time: any;
+        };
+        mode: any;
+        net_amount_debit: any;
+        bank_ref_num: any;
     } | {
         status: string;
         statusCode: number;
@@ -108,6 +108,9 @@ export declare class CheckStatusService {
         details?: undefined;
     } | undefined>;
     checkStatusByOrderId(order_id: String, school_id: string): Promise<{
+        status: TransactionStatus;
+        amount: number;
+    } | {
         status: any;
         amount: number;
         transaction_amount: number;
@@ -121,9 +124,6 @@ export declare class CheckStatusService {
         mode: any;
         net_amount_debit: any;
         bank_ref_num: any;
-    } | {
-        status: TransactionStatus;
-        amount: number;
     } | "Invalid request" | {
         status: string;
         custom_order_id: string;
