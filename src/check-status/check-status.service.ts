@@ -86,6 +86,38 @@ export class CheckStatusService {
       };
     }
 
+    if (collectRequest.isVBAPaymentComplete) {
+      let status_code = '400';
+      if (collect_req_status.status.toUpperCase() === 'SUCCESS') {
+        status_code = '200';
+      }
+      const details = {
+        payment_mode: 'vba',
+        bank_ref: collect_req_status.bank_reference || null,
+        payment_methods: {
+          vba: {
+            channel: null,
+            vba_account: collectRequest.vba_account_number || null,
+          },
+        },
+        transaction_time: collect_req_status.payment_message,
+        formattedTransactionDate:  `${collect_req_status.payment_time.getFullYear()}-${String(
+              collect_req_status.payment_time.getMonth() + 1,
+            ).padStart(2, '0')}-${String(collect_req_status.payment_time.getDate()).padStart(2, '0')}`,
+        order_status: 'PAID',
+        isSettlementComplete: true,
+        transfer_utr: null,
+      };
+      return {
+        status: collect_req_status.status,
+        amount: collectRequest.amount,
+        transaction_amount: collect_req_status.transaction_amount,
+        status_code,
+        details: details,
+        custom_order_id: collectRequest.custom_order_id || null,
+      };
+    }
+
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
         return await this.hdfcService.checkStatus(collect_request_id);
@@ -120,7 +152,7 @@ export class CheckStatusService {
         } else {
           status_code = 400;
         }
-        const date = collect_req_status.updatedAt;
+        const date = collect_req_status.payment_time || collect_req_status.updatedAt;
         if (!date) {
           throw new Error('No date found in the transaction status');
         }
@@ -142,11 +174,11 @@ export class CheckStatusService {
         };
         return ezb_status_response;
       case Gateway.EDVIRON_CCAVENUE:
-        if(collectRequest.school_id==='6819e115e79a645e806c0a70'){
+        if (collectRequest.school_id === '6819e115e79a645e806c0a70') {
           return await this.ccavenueService.checkStatusProd(
             collectRequest,
             collect_request_id.toString(),
-          )
+          );
         }
         const res = await this.ccavenueService.checkStatus(
           collectRequest,
@@ -266,7 +298,37 @@ export class CheckStatusService {
     }
 
     const collectidString = collectRequest._id.toString();
-
+    if (collectRequest.isVBAPaymentComplete) {
+      let status_code = '400';
+      if (collect_req_status.status.toUpperCase() === 'SUCCESS') {
+        status_code = '200';
+      }
+      const details = {
+        payment_mode: 'vba',
+        bank_ref: collect_req_status.bank_reference || null,
+        payment_methods: {
+          vba: {
+            channel: null,
+            vba_account: collectRequest.vba_account_number || null,
+          },
+        },
+        transaction_time: collect_req_status.payment_message,
+        formattedTransactionDate:  `${collect_req_status.payment_time.getFullYear()}-${String(
+              collect_req_status.payment_time.getMonth() + 1,
+            ).padStart(2, '0')}-${String(collect_req_status.payment_time.getDate()).padStart(2, '0')}`,
+        order_status: 'PAID',
+        isSettlementComplete: true,
+        transfer_utr: null,
+      };
+      return {
+        status: collect_req_status.status,
+        amount: collectRequest.amount,
+        transaction_amount: collect_req_status.transaction_amount,
+        status_code,
+        details: details,
+        custom_order_id: collectRequest.custom_order_id || null,
+      };
+    }
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
         return await this.hdfcService.checkStatus(
@@ -325,11 +387,11 @@ export class CheckStatusService {
         };
         return ezb_status_response;
       case Gateway.EDVIRON_CCAVENUE:
-        if(collectRequest.school_id==='6819e115e79a645e806c0a70'){
+        if (collectRequest.school_id === '6819e115e79a645e806c0a70') {
           return await this.ccavenueService.checkStatusProd(
             collectRequest,
             collectidString,
-          )
+          );
         }
         const res = await this.ccavenueService.checkStatus(
           collectRequest,
@@ -539,5 +601,4 @@ export class CheckStatusService {
         };
     }
   }
-
 }

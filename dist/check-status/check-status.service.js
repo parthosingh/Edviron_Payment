@@ -83,6 +83,35 @@ let CheckStatusService = class CheckStatusService {
                 custom_order_id,
             };
         }
+        if (collectRequest.isVBAPaymentComplete) {
+            let status_code = '400';
+            if (collect_req_status.status.toUpperCase() === 'SUCCESS') {
+                status_code = '200';
+            }
+            const details = {
+                payment_mode: 'vba',
+                bank_ref: collect_req_status.bank_reference || null,
+                payment_methods: {
+                    vba: {
+                        channel: null,
+                        vba_account: collectRequest.vba_account_number || null,
+                    },
+                },
+                transaction_time: collect_req_status.payment_message,
+                formattedTransactionDate: `${collect_req_status.payment_time.getFullYear()}-${String(collect_req_status.payment_time.getMonth() + 1).padStart(2, '0')}-${String(collect_req_status.payment_time.getDate()).padStart(2, '0')}`,
+                order_status: 'PAID',
+                isSettlementComplete: true,
+                transfer_utr: null,
+            };
+            return {
+                status: collect_req_status.status,
+                amount: collectRequest.amount,
+                transaction_amount: collect_req_status.transaction_amount,
+                status_code,
+                details: details,
+                custom_order_id: collectRequest.custom_order_id || null,
+            };
+        }
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:
                 return await this.hdfcService.checkStatus(collect_request_id);
@@ -107,7 +136,7 @@ let CheckStatusService = class CheckStatusService {
                 else {
                     status_code = 400;
                 }
-                const date = collect_req_status.updatedAt;
+                const date = collect_req_status.payment_time || collect_req_status.updatedAt;
                 if (!date) {
                     throw new Error('No date found in the transaction status');
                 }
@@ -223,6 +252,35 @@ let CheckStatusService = class CheckStatusService {
             throw new common_1.NotFoundException('No status found for custom order id');
         }
         const collectidString = collectRequest._id.toString();
+        if (collectRequest.isVBAPaymentComplete) {
+            let status_code = '400';
+            if (collect_req_status.status.toUpperCase() === 'SUCCESS') {
+                status_code = '200';
+            }
+            const details = {
+                payment_mode: 'vba',
+                bank_ref: collect_req_status.bank_reference || null,
+                payment_methods: {
+                    vba: {
+                        channel: null,
+                        vba_account: collectRequest.vba_account_number || null,
+                    },
+                },
+                transaction_time: collect_req_status.payment_message,
+                formattedTransactionDate: `${collect_req_status.payment_time.getFullYear()}-${String(collect_req_status.payment_time.getMonth() + 1).padStart(2, '0')}-${String(collect_req_status.payment_time.getDate()).padStart(2, '0')}`,
+                order_status: 'PAID',
+                isSettlementComplete: true,
+                transfer_utr: null,
+            };
+            return {
+                status: collect_req_status.status,
+                amount: collectRequest.amount,
+                transaction_amount: collect_req_status.transaction_amount,
+                status_code,
+                details: details,
+                custom_order_id: collectRequest.custom_order_id || null,
+            };
+        }
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:
                 return await this.hdfcService.checkStatus(collectRequest._id.toString());
