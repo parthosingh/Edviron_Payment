@@ -17,6 +17,12 @@ import * as moment from 'moment-timezone';
 import * as jwt from 'jsonwebtoken';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { promises } from 'dns';
+import * as https from 'https';
+import * as stream from 'stream';
+import { promisify } from 'util';
+import FormData = require('form-data');
+import path from 'path';
+import * as mime from 'mime-types';
 @Injectable()
 export class CashfreeService {
   constructor(
@@ -799,6 +805,74 @@ export class CashfreeService {
     return merchant;
   }
 
+  async uploadKycDocs2(school_id: string) {
+    try {
+      const token = jwt.sign(
+        { school_id },
+        process.env.JWT_SECRET_FOR_INTRANET!,
+      );
+      const config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: `${process.env.MAIN_BACKEND}/api/trustee/get-school-kyc?school_id=${school_id}&token=${token}`,
+        headers: {
+          accept: 'application/json',
+        },
+      };
+      const { data: kycresponse } = await axios.request(config);
+      const businessproof_saecertificate = kycresponse.businessProof; //businessproof_saecertificate
+      const pipeline = promisify(stream.pipeline);
+      const bankProofUrl = kycresponse.bankProof;
+      const Businessproof_regproof = kycresponse.entityPan;
+      const Businessproof_saecertificate = kycresponse.businessProof;
+      if (kycresponse.businessSubCategory === 'Trust') {
+        const entityproof_trustdeed = kycresponse.businessProof;
+      }
+      if (kycresponse.businessSubCategory === 'Society') {
+        const Entityproof_societycertificate = kycresponse.businessProof;
+      }
+      console.log(kycresponse);
+
+      if (!bankProofUrl) {
+        throw new BadRequestException('Bank proof not found');
+      }
+
+      const response = await axios.get(bankProofUrl, {
+        responseType: 'stream',
+        httpsAgent: new https.Agent({ rejectUnauthorized: false }), // Optional, if URL is HTTPS with self-signed cert
+      });
+      const filename = await this.extractFilenameFromUrl(bankProofUrl);
+
+      const form = new FormData();
+      form.append('document_type', 'bank_statement');
+      form.append('file', response.data, {
+        filename: filename, // or .pdf based on content-type or URL extension
+        contentType: response.headers['content-type'],
+      });
+
+      const cashfreeResponse = await axios.post(
+        `https://api.cashfree.com/partners/merchants/${school_id}/documents`,
+        form,
+        {
+          headers: {
+            ...form.getHeaders(),
+            'x-partner-apikey':
+              'hMEYtP5hELxG944df6e6223f41e1fc2100c34cb2fb98321ad408',
+          },
+          maxBodyLength: Infinity,
+        },
+      );
+
+      return cashfreeResponse.data;
+    } catch (e) {
+      console.log(e);
+
+      throw new BadRequestException(e.message);
+    }
+    // Needed Docs
+    // businessproof_regproof	Other Government-Issued Registration Document
+  }
+
   async uploadKycDocs(school_id: string) {
     try {
       const token = jwt.sign(
@@ -813,20 +887,128 @@ export class CashfreeService {
           accept: 'application/json',
         },
       };
-      const { data: response } = await axios.request(config);
-      const businessproof_saecertificate=response.businessProof //businessproof_saecertificate
-      if(!businessproof_saecertificate){
-        throw new BadRequestException('business proof not found')
+      const { data: kycresponse } = await axios.request(config);
+
+      // Extract all document URLs with their document types here
+      const documentsToUpload: { url: string; docType: string }[] = [];
+
+      // Add bank proof
+      if (kycresponse.bankProof) {
+        documentsToUpload.push({
+          url: kycresponse.bankProof,
+          docType: 'bank_statement',
+        });
+      } else {
+        throw new BadRequestException('Bank proof not found');
       }
-      const bank_proof=response.bankProof //bank_statement
-      if(!bank_proof){
-        throw new BadRequestException('Bank proof not found')
+
+      // Add business proof - assuming type 'business_proof' or adjust as needed
+      if (kycresponse.businessProof) {
+        documentsToUpload.push({
+          url: kycresponse.businessProof,
+          docType: 'businessproof_saecertificate',
+        });
       }
-    } catch (e) {
+
+      if (kycresponse.affiliation) {
+        documentsToUpload.push({
+          url: kycresponse.affiliation,
+          docType: 'lobproof_education',
+        });
+      }
+
+      // Add entity PAN document
+      // if (kycresponse.entityPan) {
+      //   documentsToUpload.push({
+      //     url: kycresponse.entityPan,
+      //     docType: 'entity_pan',
+      //   });
+      // }
+
+      // Add trust deed or society certificate based on businessSubCategory
+      if (
+        kycresponse.businessSubCategory === 'Trust' &&
+        kycresponse.businessProof
+      ) {
+        documentsToUpload.push({
+          url: kycresponse.businessProof,
+          docType: 'entity_proof_trustdeed',
+        });
+      }
+      if (
+        kycresponse.businessSubCategory === 'Society' &&
+        kycresponse.businessProof
+      ) {
+        documentsToUpload.push({
+          url: kycresponse.businessProof,
+          docType: 'Entityproof_societycertificate',
+        });
+      }
+
+      // Function to extract filename from URL
+      const extractFilenameFromUrl = (url: string): string => {
+        try {
+          const pathname = new URL(url).pathname;
+          const segments = pathname.split('/');
+          return segments.pop() || 'file';
+        } catch {
+          return 'file';
+        }
+      };
+
+      // Upload each document sequentially and collect results
+      const uploadResults = [];
+
+      for (const doc of documentsToUpload) {
+        // Download the file stream
+        const response = await axios.get(doc.url, {
+          responseType: 'stream',
+          httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+        });
+
+        const filename = extractFilenameFromUrl(doc.url);
+
+        // Prepare form data
+        const form = new FormData();
+        form.append('document_type', doc.docType);
+        form.append('file', response.data, {
+          filename,
+          contentType: response.headers['content-type'],
+        });
+
+        // Call Cashfree API for this document
+        try{
+
+          const cashfreeResponse = await axios.post(
+            `https://api.cashfree.com/partners/merchants/${school_id}/documents`,
+            form,
+            {
+              headers: {
+                ...form.getHeaders(),
+                'x-partner-apikey':
+                  'hMEYtP5hELxG944df6e6223f41e1fc2100c34cb2fb98321ad408',
+              },
+              maxBodyLength: Infinity,
+            },
+          );
+          uploadResults.push({
+            document: doc.docType,
+            response: cashfreeResponse.data,
+          });
+        }catch(e){
+          console.log(form);
+          console.log(doc);
+          
+          
+        }
+
+      }
+
+      return uploadResults; // returns an array of results for each document uploaded
+    } catch (e: any) {
+      console.log(e);
       throw new BadRequestException(e.message);
     }
-    // Needed Docs
-    // businessproof_regproof	Other Government-Issued Registration Document
   }
 
   async getMerchantInfo(
@@ -931,5 +1113,32 @@ export class CashfreeService {
       },
     };
     return details;
+  }
+
+  async getFilenameFromUrlOrContentType(
+    url: string,
+    contentType: string | undefined,
+  ): Promise<string> {
+    // Try to get filename from URL path
+    const urlPath = new URL(url).pathname; // e.g. '/files/bankProof_123.pdf'
+    let filename = path.basename(urlPath); // e.g. 'bankProof_123.pdf'
+
+    // If filename has no extension, try to get from content-type
+    if (!filename || !filename.includes('.')) {
+      const ext = mime.extension(contentType || '') || 'bin'; // fallback extension
+      filename = `bankProof.${ext}`;
+    }
+
+    return filename;
+  }
+
+  async extractFilenameFromUrl(url: string) {
+    try {
+      const pathname = new URL(url).pathname; // "/6828bf8806b55fe0a96f4d6e/businessProof_6828bf8806b55fe0a96f4d6e.pdf"
+      const segments = pathname.split('/');
+      return segments.pop() || 'file'; // returns the last part or fallback 'file'
+    } catch {
+      return 'file'; // fallback if invalid URL
+    }
   }
 }

@@ -49,4 +49,10 @@ export declare class CashfreeController {
         sign: string;
     }): Promise<any>;
     testSecureWebhook(req: any, res: any): Promise<any>;
+    testUpload(body: {
+        school_id: string;
+    }): Promise<{
+        document: string;
+        response: any;
+    }[]>;
 }

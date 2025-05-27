@@ -379,6 +379,22 @@ export class CashfreeController {
       throw new BadRequestException(error.message);
     }
   }
+
+  @Post('upload-kyc')
+  async testUpload(
+    @Body() body:{
+      school_id:string
+    }
+  ){
+    try{
+      return await this.cashfreeService.uploadKycDocs(body.school_id)
+
+    }catch(e){
+      console.log(e);
+      throw new BadRequestException(e.message)
+      
+    }
+  }
 }
 
 const u = {

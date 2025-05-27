@@ -75,7 +75,11 @@ export declare class CashfreeService {
         signatory_pan?: string;
     }): Promise<string>;
     initiateMerchantOnboarding(school_id: string, kyc_mail: string): Promise<string>;
-    uploadKycDocs(school_id: string): Promise<void>;
+    uploadKycDocs2(school_id: string): Promise<any>;
+    uploadKycDocs(school_id: string): Promise<{
+        document: string;
+        response: any;
+    }[]>;
     getMerchantInfo(school_id: string, kyc_mail: string): Promise<{
         merchant_id: string;
         merchant_email: string;
@@ -112,4 +116,6 @@ export declare class CashfreeService {
             signatory_pan?: string;
         };
     }>;
+    getFilenameFromUrlOrContentType(url: string, contentType: string | undefined): Promise<string>;
+    extractFilenameFromUrl(url: string): Promise<string>;
 }
