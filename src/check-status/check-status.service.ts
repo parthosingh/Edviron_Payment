@@ -100,7 +100,7 @@ export class CheckStatusService {
             vba_account: collectRequest.vba_account_number || null,
           },
         },
-        transaction_time: collect_req_status.payment_message,
+        transaction_time: collect_req_status.payment_time,
         formattedTransactionDate:  `${collect_req_status.payment_time.getFullYear()}-${String(
               collect_req_status.payment_time.getMonth() + 1,
             ).padStart(2, '0')}-${String(collect_req_status.payment_time.getDate()).padStart(2, '0')}`,
@@ -162,7 +162,7 @@ export class CheckStatusService {
           custom_order_id,
           amount: parseInt(easebuzzStatus.msg.amount),
           details: {
-            payment_mode: collect_req_status.payment_method,
+            payment_mode: collect_req_status.payment_time,
             bank_ref: easebuzzStatus.msg.bank_ref_num,
             payment_method: { mode: easebuzzStatus.msg.mode },
             transaction_time: collect_req_status?.updatedAt,
@@ -301,7 +301,7 @@ export class CheckStatusService {
     if (collectRequest.isVBAPaymentComplete) {
       let status_code = '400';
       if (collect_req_status.status.toUpperCase() === 'SUCCESS') {
-        status_code = '200';
+        status_code = '200'; 
       }
       const details = {
         payment_mode: 'vba',

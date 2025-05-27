@@ -97,7 +97,7 @@ let CheckStatusService = class CheckStatusService {
                         vba_account: collectRequest.vba_account_number || null,
                     },
                 },
-                transaction_time: collect_req_status.payment_message,
+                transaction_time: collect_req_status.payment_time,
                 formattedTransactionDate: `${collect_req_status.payment_time.getFullYear()}-${String(collect_req_status.payment_time.getMonth() + 1).padStart(2, '0')}-${String(collect_req_status.payment_time.getDate()).padStart(2, '0')}`,
                 order_status: 'PAID',
                 isSettlementComplete: true,
@@ -146,7 +146,7 @@ let CheckStatusService = class CheckStatusService {
                     custom_order_id,
                     amount: parseInt(easebuzzStatus.msg.amount),
                     details: {
-                        payment_mode: collect_req_status.payment_method,
+                        payment_mode: collect_req_status.payment_time,
                         bank_ref: easebuzzStatus.msg.bank_ref_num,
                         payment_method: { mode: easebuzzStatus.msg.mode },
                         transaction_time: collect_req_status?.updatedAt,
