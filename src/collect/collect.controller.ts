@@ -32,7 +32,7 @@ export class CollectController {
   constructor(
     private readonly collectService: CollectService,
     private readonly databaseService: DatabaseService,
-  ) {}
+  ) { }
   @Post('/')
   async collect(
     @Body()
@@ -55,12 +55,23 @@ export class CollectController {
       ccavenue_merchant_id?: string;
       ccavenue_access_code?: string;
       ccavenue_working_key?: string;
+      smartgateway_merchant_id?: string | null;
+      smartgateway_customer_id?: string | null;
+      smart_gateway_api_key?: string | null;
       split_payments?: boolean;
-      pay_u_key?:string | null;
+      pay_u_key?: string | null;
       pay_u_salt: string | null;
       hdfc_razorpay_id?: string;
       hdfc_razorpay_secret?: string;
+      isVBAPayment:boolean;
+      vba_account_number:string;
       hdfc_razorpay_mid?: string;
+      nttdata_id?: string | null;
+      nttdata_secret?: string | null;
+      nttdata_hash_req_key?: string | null;
+      nttdata_hash_res_key?: string | null;
+      nttdata_res_salt?: string | null;
+      nttdata_req_salt?: string | null;
       vendors_info?: [
         {
           vendor_id: string;
@@ -90,6 +101,9 @@ export class CollectController {
       ccavenue_access_code,
       ccavenue_working_key,
       ccavenue_merchant_id,
+      smartgateway_merchant_id,
+      smartgateway_customer_id,
+      smart_gateway_api_key,
       split_payments,
       vendors_info,
       pay_u_key,
@@ -97,6 +111,14 @@ export class CollectController {
       hdfc_razorpay_id,
       hdfc_razorpay_secret,
       hdfc_razorpay_mid,
+      nttdata_id,
+      nttdata_secret,
+      nttdata_hash_req_key,
+      nttdata_hash_res_key,
+      nttdata_res_salt,
+      nttdata_req_salt,
+      isVBAPayment,
+      vba_account_number
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -132,13 +154,24 @@ export class CollectController {
           ccavenue_merchant_id,
           ccavenue_access_code,
           ccavenue_working_key,
+          smartgateway_customer_id,
+          smartgateway_merchant_id,
+          smart_gateway_api_key,
           split_payments || false,
           pay_u_key,
           pay_u_salt,
           hdfc_razorpay_id,
           hdfc_razorpay_secret,
           hdfc_razorpay_mid,
+          nttdata_id,
+          nttdata_secret,
+          nttdata_hash_req_key,
+          nttdata_hash_res_key,
+          nttdata_res_salt,
+          nttdata_req_salt,
           vendors_info,
+          isVBAPayment,
+          vba_account_number
         ),
       );
     } catch (e) {
@@ -168,5 +201,5 @@ export class CollectController {
     res.redirect(callbackUrl.toString());
     // const callback_url = `${collect_request?.callbackUrl}&status=cancelled&reason=dropped-by-user`;
     // res.redirect(callback_url);
-  } 
+  }
 }

@@ -33,7 +33,19 @@ export declare enum Gateway {
     EDVIRON_EASEBUZZ = "EDVIRON_EASEBUZZ",
     PENDING = "PENDING",
     EXPIRED = "EXPIRED",
-    EDVIRON_HDFC_RAZORPAY = "EDVIRON_HDFC_RAZORPAY"
+    EDVIRON_HDFC_RAZORPAY = "EDVIRON_HDFC_RAZORPAY",
+    SMART_GATEWAY = "EDVIRON_SMARTGATEWAY",
+    EDVIRON_NTTDATA = "EDVIRON_NTTDATA"
+}
+interface I_NTT_DATA {
+    nttdata_id: string;
+    nttdata_secret: string;
+    ntt_atom_token: string;
+    ntt_atom_txn_id: string;
+    nttdata_hash_req_key: string;
+    nttdata_req_salt: string;
+    nttdata_hash_res_key: string;
+    nttdata_res_salt: string;
 }
 export declare class PaymentIds {
     cashfree_id?: string | null;
@@ -59,11 +71,16 @@ export declare class CollectRequest {
     trustee_id: string;
     payment_data: string;
     sdkPayment: boolean;
+    isVBAPayment: boolean;
+    isVBAPaymentComplete: boolean;
     custom_order_id: string;
     req_webhook_urls: string[];
     ccavenue_merchant_id: string;
     ccavenue_access_code: string;
     ccavenue_working_key: string;
+    smartgateway_merchant_id: string;
+    smartgateway_customer_id: string;
+    smart_gateway_api_key: string;
     deepLink: string;
     paymentIds: PaymentIds;
     vendors_info?: [
@@ -83,6 +100,8 @@ export declare class CollectRequest {
     isQRPayment: boolean;
     pay_u_key: string;
     pay_u_salt: string;
+    ntt_data: I_NTT_DATA;
+    vba_account_number: string;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;
@@ -91,3 +110,4 @@ export declare const CollectRequestSchema: import("mongoose").Schema<CollectRequ
 }>, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, CollectRequest, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<CollectRequest>> & import("mongoose").FlatRecord<CollectRequest> & Required<{
     _id: import("mongoose").Schema.Types.ObjectId;
 }>>;
+export {};

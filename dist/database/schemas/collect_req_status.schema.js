@@ -96,6 +96,14 @@ __decorate([
     __metadata("design:type", String)
 ], CollectRequestStatus.prototype, "capture_status", void 0);
 __decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], CollectRequestStatus.prototype, "isVBAPaymentComplete", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: '' }),
+    __metadata("design:type", String)
+], CollectRequestStatus.prototype, "vbaOrderId", void 0);
+__decorate([
     (0, mongoose_1.Prop)({
         required: false,
         type: {
@@ -107,6 +115,24 @@ __decorate([
     }),
     __metadata("design:type", Object)
 ], CollectRequestStatus.prototype, "error_details", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        required: false,
+        type: {
+            utr: { type: String, required: false, default: null },
+            credit_ref_no: { type: String, required: false, default: null },
+            remitter_account: { type: String, required: false, default: null },
+            remitter_name: { type: String, required: false, default: null },
+            remitter_ifsc: { type: String, required: false, default: null },
+            email: { type: String, required: false, default: null },
+            phone: { type: String, required: false, default: null },
+            vaccount_id: { type: String, required: false, default: null },
+            vaccount_number: { type: String, required: false, default: null },
+        },
+        _id: false,
+    }),
+    __metadata("design:type", Object)
+], CollectRequestStatus.prototype, "vbaPaymentDetails", void 0);
 exports.CollectRequestStatus = CollectRequestStatus = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequestStatus);

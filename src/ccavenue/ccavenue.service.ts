@@ -395,4 +395,143 @@ export class CcavenueService {
       throw new UnprocessableEntityException(err.message);
     }
   }
+
+  async checkStatusProd(
+    collect_request: CollectRequest,
+    collect_request_id: string,
+  ): Promise<{
+    status: TransactionStatus;
+    amount: number;
+    transaction_amount?:number | null,
+    status_code?:string | null,
+    details?: any;
+    paymentInstrument?: string | null;
+    paymentInstrumentBank?: string | null;
+    decrypt_res?: any;
+    transaction_time?: string;
+    bank_ref?: string;
+  }> {
+    const { ccavenue_working_key, ccavenue_access_code } = collect_request;
+    console.log('data',{collect_request_id});
+     
+    const collectRequest =
+      await this.databaseService.CollectRequestModel.findById(
+        collect_request_id,
+      );
+
+    const encrypted_data: string = await this.encrypt(
+      JSON.stringify({ order_no: collect_request_id }),
+      ccavenue_working_key,
+    );
+    
+    const collectReqStatus =
+      await this.databaseService.CollectRequestStatusModel.findOne({
+        collect_id: collectRequest?._id,
+      });
+    const data = qs.stringify({
+      enc_request: encrypted_data,
+      access_code: ccavenue_access_code,
+      request_type: 'JSON',
+      command: 'orderStatusTracker',
+      order_no: collect_request_id,
+    });
+   
+    const config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: 'https://api.ccavenue.com/apis/servlet/DoWebTrans',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        data: data,
+      };
+
+    try {
+      console.log('ppp');
+      
+      const res:any = await axios.request(config);
+      console.log(res.data,'res');
+      
+      try{
+        await this.databaseService.ErrorLogsModel.create({
+         identifier:collect_request_id,
+         body:res.data || JSON.stringify(res.data)
+        })
+      }catch(e){
+
+      }
+      const params = new URLSearchParams(res.data);
+      const paramObject = Object.fromEntries(params.entries());
+
+      const decrypt_res = this.decrypt(
+        paramObject['enc_response'],
+        ccavenue_working_key,
+      );
+      
+      const order_status_result = JSON.parse(decrypt_res).Order_Status_Result;
+
+      const paymentInstrument = order_status_result['order_option_type'];
+      const paymentInstrumentBank = order_status_result['order_card_name'];
+
+      if (
+        (order_status_result['order_status'] === 'Shipped' ||
+          order_status_result['order_status'] === 'Successful') &&
+        Math.floor((collectRequest!['amount'] as any) - 0) ===
+          Math.floor(order_status_result['order_amt'])
+      ) {
+        return {
+          status: TransactionStatus.SUCCESS,
+          amount: order_status_result['order_amt'],
+          transaction_amount:Number(collectReqStatus?.transaction_amount) || null,
+          status_code:'200',
+          paymentInstrument,
+          paymentInstrumentBank,
+          decrypt_res,
+          transaction_time:
+            collectReqStatus?.updatedAt?.toISOString() || 'null',
+            details:{
+                payment_mode:collectReqStatus?.payment_method,
+                bank_ref:collectReqStatus?.bank_reference,
+                // payment_methods:
+                // collectReqStatus?.details &&
+                // JSON.parse(collectReqStatus.details as string),
+                transaction_time:
+                collectReqStatus?.updatedAt?.toISOString() || 'null',
+                status:TransactionStatus.SUCCESS,
+            },
+            
+          bank_ref: order_status_result['order_bank_ref_no'],
+        };
+      } else if (
+        order_status_result['order_status'] === 'Unsuccessful' ||
+        order_status_result['order_status'] === 'Aborted' ||
+        order_status_result['order_status'] === 'Invalid'
+      ) {
+        return {
+          status: TransactionStatus.FAILURE,
+          status_code:'400',
+          amount: order_status_result['order_amt'],
+          decrypt_res
+        };
+      }
+      return {
+        status: TransactionStatus.PENDING,
+        amount: order_status_result['order_amt'],
+        decrypt_res,
+      };
+    } catch (err) {
+      console.log(err.response.data);
+      if(err?.response?.data){
+        try{
+          await this.databaseService.ErrorLogsModel.create({
+           identifier:collect_request_id,
+           body:err.response.data
+          })
+        }catch(e){
+  
+        }
+      }
+      throw new UnprocessableEntityException(err.message);
+    }
+  }
 }

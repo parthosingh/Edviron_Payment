@@ -27,12 +27,14 @@ const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
 const qs = require("qs");
 const _jwt = require("jsonwebtoken");
+const nttdata_service_1 = require("../nttdata/nttdata.service");
 let EdvironPgController = class EdvironPgController {
-    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService) {
+    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService) {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
         this.easebuzzService = easebuzzService;
         this.cashfreeService = cashfreeService;
+        this.nttDataService = nttDataService;
     }
     async handleRedirect(req, res) {
         const wallet = req.query.wallet;
@@ -276,7 +278,6 @@ let EdvironPgController = class EdvironPgController {
         }
         collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
         await collectReq.save();
-        console.log('checking for autorefund', pendingCollectReq?.status);
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
         const status = webHookData.payment.payment_status;
         const payment_time = new Date(webHookData.payment.payment_time);
@@ -1089,12 +1090,10 @@ let EdvironPgController = class EdvironPgController {
                 })) {
                 throw new common_1.ForbiddenException('Request forged');
             }
-            console.log(collectQuery);
             console.time('fetching all transaction');
             const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
             let transactions = [];
             const orderIds = orders.map((order) => order._id);
-            console.log(orderIds.length);
             console.timeEnd('fetching all transaction');
             let query = {
                 collect_id: { $in: orderIds },
@@ -1253,6 +1252,7 @@ let EdvironPgController = class EdvironPgController {
                                 'collect_request.easebuzz_sub_merchant_id': 0,
                                 'collect_request.paymentIds': 0,
                                 'collect_request.deepLink': 0,
+                                'isVBAPaymentComplete': 0
                             },
                         },
                         {
@@ -1300,6 +1300,7 @@ let EdvironPgController = class EdvironPgController {
                                             reason: '$reason',
                                             gateway: '$gateway',
                                             capture_status: '$capture_status',
+                                            isVBAPaymentComplete: '$isVBAPaymentComplete'
                                         },
                                     ],
                                 },
@@ -1361,6 +1362,7 @@ let EdvironPgController = class EdvironPgController {
                                 'collect_request.easebuzz_sub_merchant_id': 0,
                                 'collect_request.paymentIds': 0,
                                 'collect_request.deepLink': 0,
+                                'isVBAPaymentComplete': 0
                             },
                         },
                         {
@@ -1407,6 +1409,7 @@ let EdvironPgController = class EdvironPgController {
                                             reason: '$reason',
                                             gateway: '$gateway',
                                             capture_status: '$capture_status',
+                                            isVBAPaymentComplete: '$isVBAPaymentComplete'
                                         },
                                     ],
                                 },
@@ -1579,6 +1582,10 @@ let EdvironPgController = class EdvironPgController {
             }
             const gateway = request.gateway;
             console.log(gateway);
+            if (gateway === collect_request_schema_1.Gateway.EDVIRON_NTTDATA) {
+                const refund = await this.nttDataService.initiateRefund(collect_id, amount);
+                return refund;
+            }
             if (gateway === collect_request_schema_1.Gateway.EDVIRON_PG) {
                 console.log('refunding fromcashfree');
                 const refunds = await this.cashfreeService.initiateRefund(refund_id, amount, collect_id);
@@ -2361,6 +2368,7 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+
     async approve(body) {
         const payload = await this.cashfreeService.getMerchantInfo(body.school_id, body.kyc_mail);
         const { merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details, } = payload;
@@ -2376,6 +2384,195 @@ let EdvironPgController = class EdvironPgController {
         catch (e) {
             console.log(e);
             throw new common_1.BadRequestException(e.message);
+
+    async genSchoolReport(body) {
+        const { school_id, start_date, end_date } = body;
+        const startOfDayUTC = new Date(await this.edvironPgService.convertISTStartToUTC(start_date));
+        const endOfDayUTC = new Date(await this.edvironPgService.convertISTEndToUTC(end_date));
+        try {
+            const aggregation = await this.databaseService.CollectRequestModel.aggregate([
+                {
+                    $match: {
+                        school_id,
+                    },
+                },
+                {
+                    $lookup: {
+                        from: 'collectrequeststatuses',
+                        localField: '_id',
+                        foreignField: 'collect_id',
+                        as: 'result',
+                    },
+                },
+                { $unwind: '$result' },
+                {
+                    $match: {
+                        'result.status': { $in: ['success', 'SUCCESS'] },
+                        $or: [
+                            {
+                                'result.payment_time': {
+                                    $ne: null,
+                                    $gte: startOfDayUTC,
+                                    $lte: endOfDayUTC,
+                                },
+                            },
+                            {
+                                'result.payment_time': { $eq: null },
+                            },
+                            {
+                                'result.updatedAt': {
+                                    $gte: startOfDayUTC,
+                                    $lte: endOfDayUTC,
+                                },
+                            },
+                        ],
+                    },
+                },
+                {
+                    $addFields: {
+                        year: { $year: '$result.updatedAt' },
+                        month: { $month: '$result.updatedAt' },
+                    },
+                },
+                {
+                    $group: {
+                        _id: { year: '$year', month: '$month' },
+                        totalTransactions: { $sum: 1 },
+                        totalVolume: { $sum: '$result.transaction_amount' },
+                    },
+                },
+                { $sort: { '_id.year': 1, '_id.month': 1 } },
+            ]);
+            const monthlyMap = new Map();
+            let yearlyTotalTransactions = 0;
+            let yearlyTotalVolume = 0;
+            aggregation.forEach((item) => {
+                const key = `${item._id.year}-${item._id.month}`;
+                monthlyMap.set(key, item);
+                yearlyTotalTransactions += item.totalTransactions;
+                yearlyTotalVolume += item.totalVolume;
+            });
+            const start = new Date(start_date);
+            const end = new Date(end_date);
+            const monthlyReport = [];
+            const current = new Date(start.getFullYear(), start.getMonth(), 1);
+            const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+            while (current <= endMonth) {
+                const year = current.getFullYear();
+                const month = current.getMonth() + 1;
+                const key = `${year}-${month}`;
+                if (monthlyMap.has(key)) {
+                    monthlyReport.push(monthlyMap.get(key));
+                }
+                else {
+                    monthlyReport.push({
+                        _id: { year, month },
+                        totalTransactions: 0,
+                        totalVolume: 0,
+                    });
+                }
+                current.setMonth(current.getMonth() + 1);
+            }
+            return {
+                yearlyTotal: {
+                    totalTransactions: yearlyTotalTransactions,
+                    totalVolume: yearlyTotalVolume,
+                },
+                monthlyReport,
+            };
+        }
+        catch (e) {
+            console.error('Error generating report:', e.message);
+            return { error: 'Failed to generate report' };
+        }
+    }
+    async getVba(collect_id) {
+        try {
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request) {
+                return {
+                    isSchoolVBA: false,
+                    isStudentVBA: false,
+                    virtual_account_number: '',
+                    virtual_account_ifsc: '',
+                    finalAmount: 0,
+                    beneficiary_bank_and_address: '',
+                    beneficiary_name: '',
+                    refrence_no: collect_id,
+                    transaction_id: collect_id,
+                    cutomer_name: '',
+                    cutomer_no: '',
+                    customer_email: '',
+                    customer_id: '',
+                };
+            }
+            if (!request.additional_data) {
+                return {
+                    isSchoolVBA: false,
+                    isStudentVBA: false,
+                    virtual_account_number: '',
+                    virtual_account_ifsc: '',
+                    finalAmount: 0,
+                    beneficiary_bank_and_address: '',
+                    beneficiary_name: '',
+                    refrence_no: collect_id,
+                    transaction_id: collect_id,
+                    cutomer_name: '',
+                    cutomer_no: '',
+                    customer_email: '',
+                    customer_id: '',
+                };
+            }
+            const student_info = JSON.parse(request.additional_data);
+            const student_id = student_info.student_details?.student_id;
+            const vba_account_number = request.vba_account_number;
+            if (!vba_account_number) {
+                return {
+                    isSchoolVBA: false,
+                    isStudentVBA: false,
+                    virtual_account_number: '',
+                    virtual_account_ifsc: '',
+                    finalAmount: 0,
+                    beneficiary_bank_and_address: '',
+                    beneficiary_name: '',
+                    refrence_no: collect_id,
+                    transaction_id: collect_id,
+                    cutomer_name: '',
+                    cutomer_no: '',
+                    customer_email: '',
+                    customer_id: '',
+                };
+            }
+            const payload = { vba_account_number: request.vba_account_number };
+            const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET, {
+                noTimestamp: true,
+            });
+            const config = {
+                method: 'get',
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-student-vba?student_id=${student_id}&token=${token}&vba_account_number=${request.vba_account_number}&amount=${request.amount}&collect_id=${collect_id}&school_id=${request.school_id}`,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+            const { data: response } = await axios_1.default.request(config);
+            return response;
+        }
+        catch (e) {
+            return {
+                isSchoolVBA: false,
+                isStudentVBA: false,
+                virtual_account_number: '',
+                virtual_account_ifsc: '',
+                finalAmount: 0,
+                beneficiary_bank_and_address: '',
+                beneficiary_name: '',
+                refrence_no: collect_id,
+                transaction_id: collect_id,
+                cutomer_name: '',
+                cutomer_no: '',
+                customer_email: '',
+                customer_id: '',
+            };
         }
     }
 };
@@ -2748,11 +2945,16 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "testWebhook", null);
 __decorate([
+
     (0, common_1.Post)('/approve-submerchant'),
+
+    (0, common_1.Post)('school-report-new'),
+
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
+
 ], EdvironPgController.prototype, "approve", null);
 __decorate([
     (0, common_1.Post)('/initiate-kyc'),
@@ -2761,11 +2963,22 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "initiategatewayKyc", null);
+
+], EdvironPgController.prototype, "genSchoolReport", null);
+__decorate([
+    (0, common_1.Get)('/vba-details'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getVba", null);
+
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
         database_service_1.DatabaseService,
         easebuzz_service_1.EasebuzzService,
-        cashfree_service_1.CashfreeService])
+        cashfree_service_1.CashfreeService,
+        nttdata_service_1.NttdataService])
 ], EdvironPgController);
 //# sourceMappingURL=edviron-pg.controller.js.map

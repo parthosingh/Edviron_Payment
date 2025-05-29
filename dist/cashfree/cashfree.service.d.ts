@@ -48,6 +48,7 @@ export declare class CashfreeService {
         note: string;
     }>, client_id: string): Promise<any>;
     acceptDispute(disputeId: string, client_id: string): Promise<any>;
+
     createMerchant(merchant_id: string, merchant_email: string, merchant_name: string, poc_phone: string, merchant_site_url: string, business_details: {
         business_legal_name: string;
         business_type: string;
@@ -118,4 +119,17 @@ export declare class CashfreeService {
     }>;
     getFilenameFromUrlOrContentType(url: string, contentType: string | undefined): Promise<string>;
     extractFilenameFromUrl(url: string): Promise<string>;
+    createVBA(cf_x_client_id: string, cf_x_clien_secret: string, virtual_account_details: {
+        virtual_account_id: string;
+        virtual_account_name: string;
+        virtual_account_email: string;
+        virtual_account_phone: string;
+    }, notification_group: string): Promise<any>;
+    createVBAV2(cf_x_client_id: string, cf_x_clien_secret: string, virtual_account_details: {
+        virtual_account_id: string;
+        virtual_account_name: string;
+        virtual_account_email: string;
+        virtual_account_phone: string;
+    }, notification_group: string, amount: number): Promise<any>;
+
 }

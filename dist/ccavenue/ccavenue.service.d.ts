@@ -23,4 +23,16 @@ export declare class CcavenueService {
         transaction_time?: string;
         bank_ref?: string;
     }>;
+    checkStatusProd(collect_request: CollectRequest, collect_request_id: string): Promise<{
+        status: TransactionStatus;
+        amount: number;
+        transaction_amount?: number | null;
+        status_code?: string | null;
+        details?: any;
+        paymentInstrument?: string | null;
+        paymentInstrumentBank?: string | null;
+        decrypt_res?: any;
+        transaction_time?: string;
+        bank_ref?: string;
+    }>;
 }

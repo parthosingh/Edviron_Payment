@@ -16,6 +16,8 @@ import * as moment from 'moment-timezone';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { PayUService } from 'src/pay-u/pay-u.service';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
+import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
+import { NttdataService } from 'src/nttdata/nttdata.service';
 @Injectable()
 export class CheckStatusService {
   constructor(
@@ -28,6 +30,8 @@ export class CheckStatusService {
     private readonly cashfreeService: CashfreeService,
     private readonly payUService: PayUService,
     private readonly hdfcRazorpay: HdfcRazorpayService,
+    private readonly hdfcSmartgatewayService: SmartgatewayService,
+    private readonly nttdataService: NttdataService,
   ) {}
   async checkStatus(collect_request_id: String) {
     console.log('checking status for', collect_request_id);
@@ -82,6 +86,38 @@ export class CheckStatusService {
       };
     }
 
+    if (collectRequest.isVBAPaymentComplete) {
+      let status_code = '400';
+      if (collect_req_status.status.toUpperCase() === 'SUCCESS') {
+        status_code = '200';
+      }
+      const details = {
+        payment_mode: 'vba',
+        bank_ref: collect_req_status.bank_reference || null,
+        payment_methods: {
+          vba: {
+            channel: null,
+            vba_account: collectRequest.vba_account_number || null,
+          },
+        },
+        transaction_time: collect_req_status.payment_time,
+        formattedTransactionDate:  `${collect_req_status.payment_time.getFullYear()}-${String(
+              collect_req_status.payment_time.getMonth() + 1,
+            ).padStart(2, '0')}-${String(collect_req_status.payment_time.getDate()).padStart(2, '0')}`,
+        order_status: 'PAID',
+        isSettlementComplete: true,
+        transfer_utr: null,
+      };
+      return {
+        status: collect_req_status.status,
+        amount: collectRequest.amount,
+        transaction_amount: collect_req_status.transaction_amount,
+        status_code,
+        details: details,
+        custom_order_id: collectRequest.custom_order_id || null,
+      };
+    }
+
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
         return await this.hdfcService.checkStatus(collect_request_id);
@@ -98,6 +134,13 @@ export class CheckStatusService {
           capture_status: collect_req_status.capture_status || 'PENDING',
         };
 
+      case Gateway.SMART_GATEWAY:
+        const data = await this.hdfcSmartgatewayService.checkStatus(
+          collectRequest._id.toString(),
+          collectRequest,
+        );
+        return data;
+
       case Gateway.EDVIRON_EASEBUZZ:
         const easebuzzStatus = await this.easebuzzService.statusResponse(
           collect_request_id.toString(),
@@ -109,7 +152,7 @@ export class CheckStatusService {
         } else {
           status_code = 400;
         }
-        const date = collect_req_status.updatedAt;
+        const date = collect_req_status.payment_time || collect_req_status.updatedAt;
         if (!date) {
           throw new Error('No date found in the transaction status');
         }
@@ -119,7 +162,7 @@ export class CheckStatusService {
           custom_order_id,
           amount: parseInt(easebuzzStatus.msg.amount),
           details: {
-            payment_mode: collect_req_status.payment_method,
+            payment_mode: collect_req_status.payment_time,
             bank_ref: easebuzzStatus.msg.bank_ref_num,
             payment_method: { mode: easebuzzStatus.msg.mode },
             transaction_time: collect_req_status?.updatedAt,
@@ -131,6 +174,12 @@ export class CheckStatusService {
         };
         return ezb_status_response;
       case Gateway.EDVIRON_CCAVENUE:
+        if (collectRequest.school_id === '6819e115e79a645e806c0a70') {
+          return await this.ccavenueService.checkStatusProd(
+            collectRequest,
+            collect_request_id.toString(),
+          );
+        }
         const res = await this.ccavenueService.checkStatus(
           collectRequest,
           collect_request_id.toString(),
@@ -161,16 +210,17 @@ export class CheckStatusService {
         );
 
       case Gateway.EDVIRON_HDFC_RAZORPAY:
-        const EDVIRON_HDFC_RAZORPAY = await this.hdfcRazorpay.checkPaymentStatus(
-          collect_request_id.toString(),
-          collectRequest,
-        );
+        const EDVIRON_HDFC_RAZORPAY =
+          await this.hdfcRazorpay.checkPaymentStatus(
+            collect_request_id.toString(),
+            collectRequest,
+          );
 
-        let order_status = ""
+        let order_status = '';
         if (EDVIRON_HDFC_RAZORPAY.status.toUpperCase() === 'SUCCESS') {
-          order_status = "SUCCESS"
+          order_status = 'SUCCESS';
         } else {
-          order_status = "PENDING"
+          order_status = 'PENDING';
         }
 
         let statusCode;
@@ -191,15 +241,28 @@ export class CheckStatusService {
           details: {
             payment_mode: EDVIRON_HDFC_RAZORPAY?.details?.payment_method,
             bank_ref: EDVIRON_HDFC_RAZORPAY.details.bank_ref,
-            payment_method: { mode: EDVIRON_HDFC_RAZORPAY?.details?.payment_mode, method: EDVIRON_HDFC_RAZORPAY?.details?.payment_methods },
+            payment_method: {
+              mode: EDVIRON_HDFC_RAZORPAY?.details?.payment_mode,
+              method: EDVIRON_HDFC_RAZORPAY?.details?.payment_methods,
+            },
             transaction_time: Updateddate,
-            formattedTransactionDate: `${new Date(Updateddate).getFullYear()}-${String(
+            formattedTransactionDate: `${new Date(
+              Updateddate,
+            ).getFullYear()}-${String(
               new Date(Updateddate).getMonth() + 1,
-            ).padStart(2, '0')}-${String(new Date(Updateddate).getDate()).padStart(2, '0')}`,
+            ).padStart(2, '0')}-${String(
+              new Date(Updateddate).getDate(),
+            ).padStart(2, '0')}`,
             order_status: EDVIRON_HDFC_RAZORPAY.status,
           },
         };
         return ehr_status_response;
+
+      case Gateway.EDVIRON_NTTDATA:
+        console.log('checking status for NTTDATA', collect_request_id);
+        return await this.nttdataService.getTransactionStatus(
+          collect_request_id.toString(),
+        );
 
       case Gateway.PENDING:
         return await this.checkExpiry(collectRequest);
@@ -235,7 +298,37 @@ export class CheckStatusService {
     }
 
     const collectidString = collectRequest._id.toString();
-
+    if (collectRequest.isVBAPaymentComplete) {
+      let status_code = '400';
+      if (collect_req_status.status.toUpperCase() === 'SUCCESS') {
+        status_code = '200'; 
+      }
+      const details = {
+        payment_mode: 'vba',
+        bank_ref: collect_req_status.bank_reference || null,
+        payment_methods: {
+          vba: {
+            channel: null,
+            vba_account: collectRequest.vba_account_number || null,
+          },
+        },
+        transaction_time: collect_req_status.payment_message,
+        formattedTransactionDate:  `${collect_req_status.payment_time.getFullYear()}-${String(
+              collect_req_status.payment_time.getMonth() + 1,
+            ).padStart(2, '0')}-${String(collect_req_status.payment_time.getDate()).padStart(2, '0')}`,
+        order_status: 'PAID',
+        isSettlementComplete: true,
+        transfer_utr: null,
+      };
+      return {
+        status: collect_req_status.status,
+        amount: collectRequest.amount,
+        transaction_amount: collect_req_status.transaction_amount,
+        status_code,
+        details: details,
+        custom_order_id: collectRequest.custom_order_id || null,
+      };
+    }
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
         return await this.hdfcService.checkStatus(
@@ -254,6 +347,13 @@ export class CheckStatusService {
           ...edv_response,
           edviron_order_id: collectRequest._id.toString(),
         };
+
+      case Gateway.SMART_GATEWAY:
+        const data = await this.hdfcSmartgatewayService.checkStatus(
+          collectRequest._id.toString(),
+          collectRequest,
+        );
+        return data;
 
       case Gateway.EDVIRON_EASEBUZZ:
         const easebuzzStatus = await this.easebuzzService.statusResponse(
@@ -287,6 +387,12 @@ export class CheckStatusService {
         };
         return ezb_status_response;
       case Gateway.EDVIRON_CCAVENUE:
+        if (collectRequest.school_id === '6819e115e79a645e806c0a70') {
+          return await this.ccavenueService.checkStatusProd(
+            collectRequest,
+            collectidString,
+          );
+        }
         const res = await this.ccavenueService.checkStatus(
           collectRequest,
           collectidString,
@@ -314,6 +420,10 @@ export class CheckStatusService {
       case Gateway.EDVIRON_PAY_U:
         return await this.payUService.checkStatus(
           collectRequest._id.toString(),
+        );
+      case Gateway.EDVIRON_NTTDATA:
+        return await this.nttdataService.getTransactionStatus(
+          collectRequest.toString(),
         );
       case Gateway.PENDING:
         return await this.checkExpiry(collectRequest);

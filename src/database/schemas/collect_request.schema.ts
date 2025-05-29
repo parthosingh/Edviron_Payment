@@ -12,6 +12,19 @@ export enum Gateway {
   PENDING='PENDING',
   EXPIRED='EXPIRED',
   EDVIRON_HDFC_RAZORPAY = 'EDVIRON_HDFC_RAZORPAY',
+  SMART_GATEWAY = 'EDVIRON_SMARTGATEWAY',
+  EDVIRON_NTTDATA = 'EDVIRON_NTTDATA',
+}
+
+interface I_NTT_DATA {
+  nttdata_id: string;
+  nttdata_secret: string;
+  ntt_atom_token: string;
+  ntt_atom_txn_id: string;
+  nttdata_hash_req_key: string;
+  nttdata_req_salt: string;
+  nttdata_hash_res_key: string;
+  nttdata_res_salt: string;
 }
 
 @Schema()
@@ -82,6 +95,12 @@ export class CollectRequest {
   @Prop({ required: false, default: false })
   sdkPayment: boolean;
 
+  @Prop({ required: false, default: false })
+  isVBAPayment: boolean;
+
+  @Prop({ required: false, default: false })
+  isVBAPaymentComplete: boolean;
+
   @Prop({ required: false, unique: true })
   custom_order_id: string;
   @Prop({ default: [] })
@@ -95,6 +114,15 @@ export class CollectRequest {
 
   @Prop({ required: false })
   ccavenue_working_key: string;
+
+  @Prop({ required: false })
+  smartgateway_merchant_id: string;
+
+  @Prop({ required: false })
+  smartgateway_customer_id: string;
+
+  @Prop({ required: false })
+  smart_gateway_api_key: string;
 
   @Prop({ required: false })
   deepLink: string;
@@ -133,6 +161,25 @@ export class CollectRequest {
 
   @Prop({ required: false })
   pay_u_salt: string;
+
+
+  @Prop({
+    required: false,
+    type: {
+      nttdata_id: { type: String, required: false, default: null },
+      nttdata_secret: { type: String, required: false, default: null },
+      ntt_atom_token: { type: String, required: false, default: null },
+      ntt_atom_txn_id: { type: String, required: false, default: null },
+      nttdata_hash_req_key: { type: String, required: false, default: null },
+      nttdata_req_salt: { type: String, required: false, default: null },
+      nttdata_hash_res_key: { type: String, required: false, default: null },
+      nttdata_res_salt: { type: String, required: false, default: null },
+    },
+    _id: false,
+  })
+  ntt_data: I_NTT_DATA;
+  @Prop({ required: false })
+  vba_account_number: string
 
   _id: ObjectId;
 }
