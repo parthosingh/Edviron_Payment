@@ -290,14 +290,15 @@ let CashfreeController = class CashfreeController {
             throw new common_1.BadRequestException(error.message);
         }
     }
-
     async testUpload(body) {
         try {
             return await this.cashfreeService.uploadKycDocs(body.school_id);
         }
         catch (e) {
             console.log(e);
-
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
     async vbaWebhook(body, res) {
         await this.databaseService.WebhooksModel.create({
             body: JSON.stringify(body),
@@ -467,7 +468,6 @@ let CashfreeController = class CashfreeController {
             return await this.cashfreeService.createVBAV2(cf_x_client_id, cf_x_clien_secret, virtual_account_details, notification_group, amount);
         }
         catch (e) {
-
             throw new common_1.BadRequestException(e.message);
         }
     }
@@ -538,6 +538,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], CashfreeController.prototype, "testSecureWebhook", null);
+__decorate([
+    (0, common_1.Post)('upload-kyc'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "testUpload", null);
 __decorate([
     (0, common_1.Post)('/webhook/vba-transaction'),
     __param(0, (0, common_1.Body)()),

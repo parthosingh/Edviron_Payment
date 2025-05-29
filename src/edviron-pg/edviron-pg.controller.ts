@@ -3542,7 +3542,9 @@ export class EdvironPgController {
       console.log(e);
       
       throw new BadRequestException(e.message)
-=
+    }
+  }
+
   @Post('school-report-new')
   async genSchoolReport(
     @Body() body: { school_id: string; start_date: string; end_date: string },

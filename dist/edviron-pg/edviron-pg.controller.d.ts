@@ -338,7 +338,6 @@ export declare class EdvironPgController {
         kyc_mail: string;
         gateway: string;
     }): Promise<string | undefined>;
-
     genSchoolReport(body: {
         school_id: string;
         start_date: string;
@@ -356,5 +355,4 @@ export declare class EdvironPgController {
         monthlyReport?: undefined;
     }>;
     getVba(collect_id: string): Promise<any>;
-
 }

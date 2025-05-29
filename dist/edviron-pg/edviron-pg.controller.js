@@ -2368,7 +2368,6 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
-
     async approve(body) {
         const payload = await this.cashfreeService.getMerchantInfo(body.school_id, body.kyc_mail);
         const { merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details, } = payload;
@@ -2384,7 +2383,8 @@ let EdvironPgController = class EdvironPgController {
         catch (e) {
             console.log(e);
             throw new common_1.BadRequestException(e.message);
-
+        }
+    }
     async genSchoolReport(body) {
         const { school_id, start_date, end_date } = body;
         const startOfDayUTC = new Date(await this.edvironPgService.convertISTStartToUTC(start_date));
@@ -2945,16 +2945,11 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "testWebhook", null);
 __decorate([
-
     (0, common_1.Post)('/approve-submerchant'),
-
-    (0, common_1.Post)('school-report-new'),
-
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
-
 ], EdvironPgController.prototype, "approve", null);
 __decorate([
     (0, common_1.Post)('/initiate-kyc'),
@@ -2963,7 +2958,12 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "initiategatewayKyc", null);
-
+__decorate([
+    (0, common_1.Post)('school-report-new'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "genSchoolReport", null);
 __decorate([
     (0, common_1.Get)('/vba-details'),
@@ -2972,7 +2972,6 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getVba", null);
-
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

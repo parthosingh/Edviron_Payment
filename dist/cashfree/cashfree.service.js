@@ -555,7 +555,6 @@ let CashfreeService = class CashfreeService {
             throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
         }
     }
-
     async createMerchant(merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details) {
         const url = 'https://api.cashfree.com/partners/merchants';
         const headers = {
@@ -587,7 +586,7 @@ let CashfreeService = class CashfreeService {
         };
         try {
             const response = await axios_1.default.request(config);
-            console.log('Cashfree response:', response.data);
+            await this.uploadKycDocs(merchant_id);
             return response.data;
             return 'Merchant Request Created Successfully on Cashfree';
         }
@@ -742,6 +741,7 @@ let CashfreeService = class CashfreeService {
                 catch (e) {
                     console.log(form);
                     console.log(doc);
+                    throw new common_1.BadRequestException(e.message);
                 }
             }
             return uploadResults;
@@ -828,7 +828,8 @@ let CashfreeService = class CashfreeService {
         }
         catch {
             return 'file';
-
+        }
+    }
     async createVBA(cf_x_client_id, cf_x_clien_secret, virtual_account_details, notification_group) {
         const config = {
             method: 'post',
@@ -892,7 +893,6 @@ let CashfreeService = class CashfreeService {
             console.log(error);
             console.error('Error:', error.response?.data || error.message);
             throw error;
-
         }
     }
 };

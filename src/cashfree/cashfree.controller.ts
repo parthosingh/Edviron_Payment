@@ -396,6 +396,8 @@ export class CashfreeController {
     }catch(e){
       console.log(e);
       throw new BadRequestException(e.message)
+    }
+  }
 
   @Post('/webhook/vba-transaction')
   async vbaWebhook(@Body() body: any, @Res() res: any) {
