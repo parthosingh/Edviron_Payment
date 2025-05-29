@@ -767,7 +767,7 @@ export class CashfreeService {
 
     try {
       const response = await axios.request(config);
-      console.log('Cashfree response:', response.data);
+      await this.uploadKycDocs(merchant_id)
       return response.data;
       return 'Merchant Request Created Successfully on Cashfree';
     } catch (error) {
@@ -862,7 +862,6 @@ export class CashfreeService {
           maxBodyLength: Infinity,
         },
       );
-
       return cashfreeResponse.data;
     } catch (e) {
       console.log(e);
@@ -998,7 +997,7 @@ export class CashfreeService {
         }catch(e){
           console.log(form);
           console.log(doc);
-          
+          throw new BadRequestException(e.message)
           
         }
 
