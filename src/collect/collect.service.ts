@@ -253,7 +253,7 @@ export class CollectService {
     }).save();
 
     if (machine_name === Gateway.PAYTM_POS) {
-      const response = await this.posPaytmService.collectPayment(request)
+      // const response = await this.posPaytmService.collectPayment(request)
     }
 
   }
