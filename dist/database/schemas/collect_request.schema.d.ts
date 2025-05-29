@@ -46,6 +46,13 @@ export declare class PaymentIds {
     easebuzz_dc_id?: string | null;
     ccavenue_id?: string | null;
 }
+export declare class paytmPos {
+    paytmMid?: string | null;
+    paytmTid?: string | null;
+    channel_id?: string | null;
+    paytm_merchant_key?: string | null;
+    device_id?: string | null;
+}
 export declare class CollectRequest {
     amount: number;
     createdAt?: Date;
@@ -93,6 +100,7 @@ export declare class CollectRequest {
     pos_machine_device_id: string;
     pos_machine_device_code: string;
     isPosTransaction: boolean;
+    paytmPos: paytmPos;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;

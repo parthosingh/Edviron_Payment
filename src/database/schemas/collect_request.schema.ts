@@ -14,10 +14,8 @@ export enum Gateway {
   EDVIRON_HDFC_RAZORPAY = 'EDVIRON_HDFC_RAZORPAY',
   SMART_GATEWAY = 'EDVIRON_SMARTGATEWAY',
   PAYTM_POS = 'PAYTM_POS',
-  MOSAMBEE_POS = 'MOSAMBEE_POS'
+  MOSAMBEE_POS = 'MOSAMBEE_POS',
 }
-
-
 
 @Schema()
 export class PaymentIds {
@@ -38,6 +36,24 @@ export class PaymentIds {
 
   @Prop({ type: String, required: false })
   ccavenue_id?: string | null;
+}
+
+@Schema()
+export class paytmPos {
+  @Prop({ type: String, required: false })
+  paytmMid?: string | null;
+
+  @Prop({ type: String, required: false })
+  paytmTid?: string | null;
+
+  @Prop({ type: String, required: false })
+  channel_id?: string | null;
+
+  @Prop({ type: String, required: false })
+  paytm_merchant_key?: string | null;
+
+  @Prop({ type: String, required: false })
+  device_id?: string | null;
 }
 
 @Schema({ timestamps: true })
@@ -159,6 +175,9 @@ export class CollectRequest {
 
   @Prop({ required: false, default: false })
   isPosTransaction: boolean;
+
+  @Prop({ type: paytmPos, required: false })
+  paytmPos: paytmPos;
 
   _id: ObjectId;
 }

@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CollectRequestSchema = exports.CollectRequest = exports.PaymentIds = exports.Gateway = void 0;
+exports.CollectRequestSchema = exports.CollectRequest = exports.paytmPos = exports.PaymentIds = exports.Gateway = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 var Gateway;
 (function (Gateway) {
@@ -57,6 +57,32 @@ __decorate([
 exports.PaymentIds = PaymentIds = __decorate([
     (0, mongoose_1.Schema)()
 ], PaymentIds);
+let paytmPos = class paytmPos {
+};
+exports.paytmPos = paytmPos;
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, required: false }),
+    __metadata("design:type", Object)
+], paytmPos.prototype, "paytmMid", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, required: false }),
+    __metadata("design:type", Object)
+], paytmPos.prototype, "paytmTid", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, required: false }),
+    __metadata("design:type", Object)
+], paytmPos.prototype, "channel_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, required: false }),
+    __metadata("design:type", Object)
+], paytmPos.prototype, "paytm_merchant_key", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, required: false }),
+    __metadata("design:type", Object)
+], paytmPos.prototype, "device_id", void 0);
+exports.paytmPos = paytmPos = __decorate([
+    (0, mongoose_1.Schema)()
+], paytmPos);
 let CollectRequest = class CollectRequest {
 };
 exports.CollectRequest = CollectRequest;
@@ -216,6 +242,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false, default: false }),
     __metadata("design:type", Boolean)
 ], CollectRequest.prototype, "isPosTransaction", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: paytmPos, required: false }),
+    __metadata("design:type", paytmPos)
+], CollectRequest.prototype, "paytmPos", void 0);
 exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequest);
