@@ -9,7 +9,7 @@ export declare class PosPaytmService {
             head: {
                 requestTimeStamp: string;
                 channelId: string;
-                checksum: string;
+                checksum: any;
             };
             body: {
                 paytmMid: string;
@@ -18,9 +18,7 @@ export declare class PosPaytmService {
                 merchantTransactionId: string;
                 merchantReferenceNo: string;
                 transactionAmount: string;
-                merchantExtendedInfo: {
-                    paymentMode: string;
-                };
+                callbackUrl: string;
             };
         };
         paytmResponse: any;
@@ -30,7 +28,7 @@ export declare class PosPaytmService {
             head: {
                 requestTimeStamp: string;
                 channelId: string;
-                checksum: string;
+                checksum: any;
             };
             body: {
                 paytmMid: string;
@@ -39,9 +37,7 @@ export declare class PosPaytmService {
                 merchantTransactionId: string;
                 merchantReferenceNo: string;
                 transactionAmount: string;
-                merchantExtendedInfo: {
-                    paymentMode: string;
-                };
+                callbackUrl: string;
             };
         };
         paytmResponse: any;

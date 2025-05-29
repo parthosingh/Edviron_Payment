@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PosPaytmService = void 0;
 const common_1 = require("@nestjs/common");
-const PaytmChecksum = require("paytmchecksum");
+const Paytm = require('paytmchecksum');
 const axios_1 = require("axios");
 const database_service_1 = require("../database/database.service");
 const mongoose_1 = require("mongoose");
@@ -30,21 +30,17 @@ let PosPaytmService = class PosPaytmService {
     }
     async initiatePOSPayment() {
         try {
-            const DateandTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
             const body = {
                 paytmMid: "yYLgEx27583498804201",
                 paytmTid: "70001853",
                 transactionDateTime: await this.fmt(await this.nowInIST()),
-                merchantTransactionId: "682eb334bb160d8d987bb36funique",
+                merchantTransactionId: "682eb334bb160d8d987bb36f",
                 merchantReferenceNo: "682eb334bb160d8d987bb36f",
                 transactionAmount: String(Math.round(1 * 100)),
-                merchantExtendedInfo: {
-                    paymentMode: 'All'
-                }
+                callbackUrl: `https://www.google.com/`,
             };
-            var checksum = await PaytmChecksum.generateSignature(JSON.stringify(body), "urflK0@0mthEgRo8");
-            console.log(checksum, "checksum");
-            var isVerifySignature = await PaytmChecksum.verifySignature(JSON.stringify(body), "urflK0@0mthEgRo8", checksum);
+            var checksum = await Paytm.generateSignature(body, "urflK0@0mthEgRo8");
+            var isVerifySignature = await Paytm.verifySignature(body, "urflK0@0mthEgRo8", checksum);
             if (!isVerifySignature) {
                 throw new common_1.BadRequestException('Checksum verification failed');
             }
@@ -101,7 +97,7 @@ let PosPaytmService = class PosPaytmService {
                 transactionDateTime: collectRequestStatus.payment_time.toISOString().slice(0, 19).replace('T', ' '),
                 merchantTransactionId: orderId,
             };
-            const checksum = await PaytmChecksum.generateSignature(JSON.stringify(body), process.env.PAYTM_MERCHANT_KEY || "n/a");
+            const checksum = await Paytm.generateSignature(JSON.stringify(body), process.env.PAYTM_MERCHANT_KEY || "n/a");
             const requestData = {
                 head: {
                     requestTimeStamp: collectRequestStatus.payment_time.toISOString().slice(0, 19).replace('T', ' '),

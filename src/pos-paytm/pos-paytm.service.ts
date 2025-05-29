@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Res } from '@nestjs/common';
 import { CollectRequestDocument } from 'src/database/schemas/collect_request.schema';
-import * as PaytmChecksum from 'paytmchecksum';
+// import * as PaytmChecksum from 'paytmchecksum';
+const Paytm = require('paytmchecksum');
 import axios from 'axios';
 import { DatabaseService } from 'src/database/database.service';
 import { Types } from 'mongoose';
@@ -27,26 +28,21 @@ export class PosPaytmService {
     // async initiatePOSPayment(collectRequest: CollectRequestDocument) {
     async initiatePOSPayment() {
         try {
-
-            const DateandTime = new Date().toISOString().slice(0, 19).replace('T', ' ')
             const body = {
-                // paytmMid: collectRequest.pos_machine_device_id, 
                 paytmMid: "yYLgEx27583498804201",
-                // paytmTid: collectRequest.pos_machine_device_code, 
                 paytmTid: "70001853",
                 transactionDateTime: await this.fmt(await this.nowInIST()),
-                merchantTransactionId: "682eb334bb160d8d987bb36funique",
+                merchantTransactionId: "682eb334bb160d8d987bb36f",
                 merchantReferenceNo: "682eb334bb160d8d987bb36f",
                 transactionAmount: String(Math.round(1 * 100)),
-                merchantExtendedInfo: {
-                    paymentMode: 'All'
-                }
-            }
+                callbackUrl : `https://www.google.com/`,
+            };
+
+
             var checksum =
-                await PaytmChecksum.generateSignature(JSON.stringify(body), "urflK0@0mthEgRo8");
-                console.log(checksum, "checksum")
+                await Paytm.generateSignature(body, "urflK0@0mthEgRo8");
             var isVerifySignature =
-                await PaytmChecksum.verifySignature(JSON.stringify(body), "urflK0@0mthEgRo8", checksum);
+                await Paytm.verifySignature(body, "urflK0@0mthEgRo8", checksum);
             if (!isVerifySignature) {
                 throw new BadRequestException('Checksum verification failed');
             }
@@ -61,7 +57,7 @@ export class PosPaytmService {
 
             const config = {
                 url: `${process.env.PAYTM_POS_BASEURL}/ecr/payment/request`,
-                // url: `https://securegw-edc.paytm.in/ecr/payment/request`,
+                // url: `https://securestage.paytmpayments.com/theia/api/v1/initiateTransaction?mid=yYLgEx27583498804201&orderId=ORDERID_98765555`,
                 method: 'post',
                 maxBodyLength: Infinity,
                 headers: {
@@ -121,12 +117,12 @@ export class PosPaytmService {
             }
             const body = {
                 paytmMid: collectRequest.pos_machine_device_id,
-                paytmTid: collectRequest.pos_machine_device_code, // Replace with actual terminal ID
+                paytmTid: collectRequest.pos_machine_device_code, 
                 transactionDateTime:
                     collectRequestStatus.payment_time.toISOString().slice(0, 19).replace('T', ' '),
                 merchantTransactionId: orderId,
             };
-            const checksum = await PaytmChecksum.generateSignature(
+            const checksum = await Paytm.generateSignature(
                 JSON.stringify(body),
                 process.env.PAYTM_MERCHANT_KEY || "n/a",
             );
