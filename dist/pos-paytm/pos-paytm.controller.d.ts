@@ -35,7 +35,6 @@ export declare class PosPaytmController {
                 merchantTransactionId: string;
                 merchantReferenceNo: string;
                 transactionAmount: string;
-                callbackUrl: string;
             };
         };
         paytmResponse: any;

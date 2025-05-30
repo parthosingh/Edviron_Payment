@@ -141,28 +141,32 @@ let CollectService = class CollectService {
         }, { new: true });
         return { url: transaction.url, request };
     }
-    async posCollect(amount, callbackUrl, school_id, trustee_id, machine_name, posmachinedevice_id, posmachine_device_code, additional_data, platform_charges, split_payments, vendors_info) {
+    async posCollect(amount, callbackUrl, school_id, trustee_id, machine_name, platform_charges, paytm_pos, additional_data, custom_order_id, req_webhook_urls, school_name) {
         const gateway = machine_name === 'PAYTM_POS' ? collect_request_schema_1.Gateway.PAYTM_POS : collect_request_schema_1.Gateway.MOSAMBEE_POS;
-        const request = await new this.databaseService.CollectRequestModel({
+        const request = await this.databaseService.CollectRequestModel.create({
             amount,
             callbackUrl,
             gateway: gateway,
+            req_webhook_urls,
             school_id,
             trustee_id,
             additional_data: JSON.stringify(additional_data),
-            pos_machine_name: machine_name,
-            pos_machine_device_id: posmachinedevice_id,
-            pos_machine_device_code: posmachine_device_code,
+            custom_order_id: custom_order_id || null,
             isPosTransaction: true,
-        }).save();
+        });
         await new this.databaseService.CollectRequestStatusModel({
             collect_id: request._id,
             status: collect_req_status_schema_1.PaymentStatus.PENDING,
             order_amount: request.amount,
             transaction_amount: request.amount,
-            isPosTransaction: true,
+            payment_method: null,
         }).save();
         if (machine_name === collect_request_schema_1.Gateway.PAYTM_POS) {
+            if (paytm_pos) {
+                request.paytmPos = paytm_pos;
+                request.save();
+            }
+            return await this.posPaytmService.initiatePOSPayment(request);
         }
     }
     async sendCallbackEmail(collect_id) {

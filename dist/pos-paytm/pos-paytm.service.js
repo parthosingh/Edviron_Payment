@@ -40,7 +40,6 @@ let PosPaytmService = class PosPaytmService {
                 merchantTransactionId: request._id.toString(),
                 merchantReferenceNo: request._id.toString(),
                 transactionAmount: String(Math.round(request.amount * 100)),
-                callbackUrl: request.callbackUrl,
             };
             var checksum = await Paytm.generateSignature(body, paytmPos.paytm_merchant_key);
             var isVerifySignature = await Paytm.verifySignature(body, paytmPos.paytm_merchant_key, checksum);
@@ -55,6 +54,7 @@ let PosPaytmService = class PosPaytmService {
                 },
                 body: body,
             };
+            console.log('Paytm POS Payment Request Data:', requestData);
             const config = {
                 url: `${process.env.PAYTM_POS_BASEURL}/ecr/payment/request`,
                 method: 'post',
@@ -65,14 +65,12 @@ let PosPaytmService = class PosPaytmService {
                 data: JSON.stringify(requestData),
             };
             const response = await axios_1.default.request(config);
-            console.log('Paytm POS Payment Response:', response.data);
             return {
                 requestSent: requestData,
                 paytmResponse: response.data,
             };
         }
         catch (error) {
-            console.log(error);
             throw new common_1.BadRequestException(error.message);
         }
     }

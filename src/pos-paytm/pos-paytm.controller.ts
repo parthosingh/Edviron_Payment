@@ -5,7 +5,7 @@ import * as _jwt from 'jsonwebtoken';
 @Controller('pos-paytm')
 export class PosPaytmController {
   constructor(private readonly posPaytmService: PosPaytmService) {}
-  @Post('initiate-payment')
+  @Post('/initiate-payment')
   async initiatePayment(
     @Body()
     body: {

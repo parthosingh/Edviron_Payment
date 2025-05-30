@@ -20,7 +20,6 @@ export declare class PosPaytmService {
                 merchantTransactionId: string;
                 merchantReferenceNo: string;
                 transactionAmount: string;
-                callbackUrl: string;
             };
         };
         paytmResponse: any;
@@ -45,7 +44,6 @@ export declare class PosPaytmService {
                 merchantTransactionId: string;
                 merchantReferenceNo: string;
                 transactionAmount: string;
-                callbackUrl: string;
             };
         };
         paytmResponse: any;

@@ -215,45 +215,47 @@ export class CollectService {
     callbackUrl: string,
     school_id: string,
     trustee_id: string,
-    machine_name: string,
-    posmachinedevice_id: string,
-    posmachine_device_code: string,
+    machine_name?: string,
+    platform_charges?: platformChange[],
+    paytm_pos?: {
+      paytmMid?: string;
+      paytmTid?: string;
+      channel_id?: string;
+      paytm_merchant_key?: string;
+      device_id?: string; //edviron
+    },
     additional_data?: {},
-    platform_charges?: string,
-    split_payments?:boolean,
-    vendors_info?: [
-      {
-        vendor_id: string;
-        percentage?: number;
-        amount?: number;
-        name?: string;
-      },
-    ],
+    custom_order_id?: string,
+    req_webhook_urls?: string[],
+    school_name?: string,
   ) {
     const gateway = machine_name === 'PAYTM_POS' ? Gateway.PAYTM_POS : Gateway.MOSAMBEE_POS;
-    const request = await new this.databaseService.CollectRequestModel({
+    const request = await this.databaseService.CollectRequestModel.create({
       amount,
       callbackUrl,
       gateway: gateway,
+      req_webhook_urls,
       school_id,
       trustee_id,
       additional_data: JSON.stringify(additional_data),
-      pos_machine_name: machine_name,
-      pos_machine_device_id: posmachinedevice_id,
-      pos_machine_device_code: posmachine_device_code,
+      custom_order_id: custom_order_id || null,
       isPosTransaction: true,
-    }).save();
+    });
 
     await new this.databaseService.CollectRequestStatusModel({
       collect_id: request._id,
       status: PaymentStatus.PENDING,
       order_amount: request.amount,
       transaction_amount: request.amount,
-      isPosTransaction: true,
+      payment_method: null,
     }).save();
 
     if (machine_name === Gateway.PAYTM_POS) {
-      // const response = await this.posPaytmService.collectPayment(request)
+      if (paytm_pos) {
+        request.paytmPos = paytm_pos;
+        request.save();
+      }
+      return await this.posPaytmService.initiatePOSPayment(request)
     }
 
   }

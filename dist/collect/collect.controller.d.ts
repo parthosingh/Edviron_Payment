@@ -57,21 +57,19 @@ export declare class CollectController {
         jwt: string;
         school_id: string;
         trustee_id: string;
-        platform_charges: string;
-        split_payments?: boolean;
-        machine_name: string;
-        posmachinedevice_id: string;
-        posmachine_device_code: string;
-        additional_data?: Record<string, any>;
+        machine_name?: string;
+        platform_charges?: platformChange[];
+        paytm_pos?: {
+            paytmMid?: string;
+            paytmTid?: string;
+            channel_id?: string;
+            paytm_merchant_key?: string;
+            device_id?: string;
+        };
+        additional_data?: {};
+        custom_order_id?: string;
+        req_webhook_urls?: string[];
         school_name?: string;
-        vendors_info?: [
-            {
-                vendor_id: string;
-                percentage?: number;
-                amount?: number;
-                name?: string;
-            }
-        ];
     }): Promise<any>;
     callbackUrl(res: any, collect_id: string): Promise<void>;
 }

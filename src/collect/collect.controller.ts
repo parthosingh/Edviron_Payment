@@ -167,37 +167,34 @@ export class CollectController {
       jwt: string;
       school_id: string;
       trustee_id: string;
-      platform_charges: string;
-      split_payments?: boolean;
-      machine_name: string;
-      posmachinedevice_id: string;
-      posmachine_device_code: string;
-      additional_data?: Record<string, any>;
+      machine_name?: string;
+      platform_charges?: platformChange[];
+      paytm_pos?: {
+        paytmMid?: string;
+        paytmTid?: string;
+        channel_id?: string;
+        paytm_merchant_key?: string;
+        device_id?: string; //edviron
+      };
+      additional_data?: {};
+      custom_order_id?: string;
+      req_webhook_urls?: string[];
       school_name?: string;
-      vendors_info?: [
-        {
-          vendor_id: string;
-          percentage?: number;
-          amount?: number;
-          name?: string;
-        },
-      ];
     },
   ) {
     const {
       amount,
       callbackUrl,
       jwt,
-      platform_charges,
-      additional_data = {},
-      split_payments,
       school_id,
       trustee_id,
-      school_name,
       machine_name,
-      posmachinedevice_id,
-      posmachine_device_code,
-      vendors_info,
+      paytm_pos,
+      platform_charges,
+      additional_data,
+      custom_order_id,
+      req_webhook_urls,
+      school_name,
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -207,6 +204,7 @@ export class CollectController {
 
     try {
       let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
+      console.log(decrypted, 'decrypted pos collect');
       return sign(
         await this.collectService.posCollect(
           amount,
@@ -214,12 +212,12 @@ export class CollectController {
           school_id,
           trustee_id,
           machine_name,
-          posmachinedevice_id,
-          posmachine_device_code,
-          additional_data,
           platform_charges,
-          split_payments,
-          vendors_info
+          paytm_pos,
+          additional_data,
+          custom_order_id,
+          req_webhook_urls,
+          school_name,
         ),
       );
     } catch (e) {

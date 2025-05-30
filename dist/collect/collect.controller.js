@@ -45,7 +45,7 @@ let CollectController = class CollectController {
         }
     }
     async posCollect(body) {
-        const { amount, callbackUrl, jwt, platform_charges, additional_data = {}, split_payments, school_id, trustee_id, school_name, machine_name, posmachinedevice_id, posmachine_device_code, vendors_info, } = body;
+        const { amount, callbackUrl, jwt, school_id, trustee_id, machine_name, paytm_pos, platform_charges, additional_data, custom_order_id, req_webhook_urls, school_name, } = body;
         if (!jwt)
             throw new common_1.BadRequestException('JWT not provided');
         if (!amount)
@@ -54,7 +54,8 @@ let CollectController = class CollectController {
             throw new common_1.BadRequestException('Callback url not provided');
         try {
             let decrypted = _jwt.verify(jwt, process.env.KEY);
-            return (0, sign_1.sign)(await this.collectService.posCollect(amount, callbackUrl, school_id, trustee_id, machine_name, posmachinedevice_id, posmachine_device_code, additional_data, platform_charges, split_payments, vendors_info));
+            console.log(decrypted, 'decrypted pos collect');
+            return (0, sign_1.sign)(await this.collectService.posCollect(amount, callbackUrl, school_id, trustee_id, machine_name, platform_charges, paytm_pos, additional_data, custom_order_id, req_webhook_urls, school_name));
         }
         catch (e) {
             console.log(e);

@@ -31,13 +31,29 @@ export declare class CollectService {
         url: string;
         request: CollectRequest;
     }>;
-    posCollect(amount: Number, callbackUrl: string, school_id: string, trustee_id: string, machine_name: string, posmachinedevice_id: string, posmachine_device_code: string, additional_data?: {}, platform_charges?: string, split_payments?: boolean, vendors_info?: [
-        {
-            vendor_id: string;
-            percentage?: number;
-            amount?: number;
-            name?: string;
-        }
-    ]): Promise<void>;
+    posCollect(amount: Number, callbackUrl: string, school_id: string, trustee_id: string, machine_name?: string, platform_charges?: platformChange[], paytm_pos?: {
+        paytmMid?: string;
+        paytmTid?: string;
+        channel_id?: string;
+        paytm_merchant_key?: string;
+        device_id?: string;
+    }, additional_data?: {}, custom_order_id?: string, req_webhook_urls?: string[], school_name?: string): Promise<{
+        requestSent: {
+            head: {
+                requestTimeStamp: string;
+                channelId: string | null | undefined;
+                checksum: any;
+            };
+            body: {
+                paytmMid: string | null | undefined;
+                paytmTid: string | null | undefined;
+                transactionDateTime: string;
+                merchantTransactionId: string;
+                merchantReferenceNo: string;
+                transactionAmount: string;
+            };
+        };
+        paytmResponse: any;
+    } | undefined>;
     sendCallbackEmail(collect_id: string): Promise<"mail sent successfully" | undefined>;
 }
