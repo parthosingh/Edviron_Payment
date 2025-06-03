@@ -63,7 +63,15 @@ export class CollectController {
       pay_u_salt: string | null;
       hdfc_razorpay_id?: string;
       hdfc_razorpay_secret?: string;
+      isVBAPayment:boolean;
+      vba_account_number:string;
       hdfc_razorpay_mid?: string;
+      nttdata_id?: string | null;
+      nttdata_secret?: string | null;
+      nttdata_hash_req_key?: string | null;
+      nttdata_hash_res_key?: string | null;
+      nttdata_res_salt?: string | null;
+      nttdata_req_salt?: string | null;
       vendors_info?: [
         {
           vendor_id: string;
@@ -103,6 +111,14 @@ export class CollectController {
       hdfc_razorpay_id,
       hdfc_razorpay_secret,
       hdfc_razorpay_mid,
+      nttdata_id,
+      nttdata_secret,
+      nttdata_hash_req_key,
+      nttdata_hash_res_key,
+      nttdata_res_salt,
+      nttdata_req_salt,
+      isVBAPayment,
+      vba_account_number
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -147,7 +163,15 @@ export class CollectController {
           hdfc_razorpay_id,
           hdfc_razorpay_secret,
           hdfc_razorpay_mid,
+          nttdata_id,
+          nttdata_secret,
+          nttdata_hash_req_key,
+          nttdata_hash_res_key,
+          nttdata_res_salt,
+          nttdata_req_salt,
           vendors_info,
+          isVBAPayment,
+          vba_account_number
         ),
       );
     } catch (e) {

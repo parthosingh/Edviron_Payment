@@ -20,6 +20,8 @@ import { CashfreeService } from './cashfree/cashfree.service';
 import { CcavenueService } from './ccavenue/ccavenue.service';
 import { PosPaytmController } from './pos-paytm/pos-paytm.controller';
 import { PosPaytmService } from './pos-paytm/pos-paytm.service';
+import { NttdataModule } from './nttdata/nttdata.module';
+
 
 @Module({
   imports: [
@@ -33,7 +35,8 @@ import { PosPaytmService } from './pos-paytm/pos-paytm.service';
     CashfreeModule,
     PayUModule,
     HdfcRazorpayModule,
-    SmartgatewayModule
+    SmartgatewayModule,
+    NttdataModule
   ],
   controllers: [AppController, EasebuzzController, CashfreeController, PosPaytmController],
   providers: [AppService, CashfreeService, EasebuzzService, CcavenueService, PosPaytmService],

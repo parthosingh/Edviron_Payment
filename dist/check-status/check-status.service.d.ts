@@ -11,6 +11,7 @@ import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { PayUService } from 'src/pay-u/pay-u.service';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
+import { NttdataService } from 'src/nttdata/nttdata.service';
 export declare class CheckStatusService {
     private readonly databaseService;
     private readonly hdfcService;
@@ -22,7 +23,8 @@ export declare class CheckStatusService {
     private readonly payUService;
     private readonly hdfcRazorpay;
     private readonly hdfcSmartgatewayService;
-    constructor(databaseService: DatabaseService, hdfcService: HdfcService, phonePeService: PhonepeService, edvironPgService: EdvironPgService, ccavenueService: CcavenueService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, payUService: PayUService, hdfcRazorpay: HdfcRazorpayService, hdfcSmartgatewayService: SmartgatewayService);
+    private readonly nttdataService;
+    constructor(databaseService: DatabaseService, hdfcService: HdfcService, phonePeService: PhonepeService, edvironPgService: EdvironPgService, ccavenueService: CcavenueService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, payUService: PayUService, hdfcRazorpay: HdfcRazorpayService, hdfcSmartgatewayService: SmartgatewayService, nttdataService: NttdataService);
     checkStatus(collect_request_id: String): Promise<any>;
     checkStatusByOrderId(order_id: String, school_id: string): Promise<any>;
     checkExpiry(request: CollectRequest): Promise<"Invalid request" | {

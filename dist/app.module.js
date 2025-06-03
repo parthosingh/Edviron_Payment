@@ -28,6 +28,7 @@ const cashfree_service_1 = require("./cashfree/cashfree.service");
 const ccavenue_service_1 = require("./ccavenue/ccavenue.service");
 const pos_paytm_controller_1 = require("./pos-paytm/pos-paytm.controller");
 const pos_paytm_service_1 = require("./pos-paytm/pos-paytm.service");
+const nttdata_module_1 = require("./nttdata/nttdata.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -44,7 +45,8 @@ exports.AppModule = AppModule = __decorate([
             cashfree_module_1.CashfreeModule,
             pay_u_module_1.PayUModule,
             hdfc_razorpay_module_1.HdfcRazorpayModule,
-            smartgateway_module_1.SmartgatewayModule
+            smartgateway_module_1.SmartgatewayModule,
+            nttdata_module_1.NttdataModule
         ],
         controllers: [app_controller_1.AppController, easebuzz_controller_1.EasebuzzController, cashfree_controller_1.CashfreeController, pos_paytm_controller_1.PosPaytmController],
         providers: [app_service_1.AppService, cashfree_service_1.CashfreeService, easebuzz_service_1.EasebuzzService, ccavenue_service_1.CcavenueService, pos_paytm_service_1.PosPaytmService],

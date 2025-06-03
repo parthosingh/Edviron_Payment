@@ -25,6 +25,10 @@ const smartgateway_service_1 = require("../smartgateway/smartgateway.service");
 const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 let CollectService = class CollectService {
     constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService, hdfcRazorpay, payuService, hdfcSmartgatewayService, posPaytmService) {
+const nttdata_service_1 = require("../nttdata/nttdata.service");
+let CollectService = class CollectService {
+    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService, hdfcRazorpay, payuService, hdfcSmartgatewayService, nttdataService) {
+
         this.phonepeService = phonepeService;
         this.hdfcService = hdfcService;
         this.edvironPgService = edvironPgService;
@@ -34,11 +38,9 @@ let CollectService = class CollectService {
         this.payuService = payuService;
         this.hdfcSmartgatewayService = hdfcSmartgatewayService;
         this.posPaytmService = posPaytmService;
+        this.nttdataService = nttdataService;
     }
-    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, vendor) {
-        console.log(req_webhook_urls, 'webhook url');
-        console.log(webHook);
-        console.log(ccavenue_merchant_id, 'ccavenue', ccavenue_access_code, ccavenue_working_key);
+    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, nttdata_hash_req_key, nttdata_hash_res_key, nttdata_res_salt, nttdata_req_salt, vendor, isVBAPayment, vba_account_number) {
         if (custom_order_id) {
             const count = await this.databaseService.CollectRequestModel.countDocuments({
                 school_id,
@@ -71,6 +73,16 @@ let CollectService = class CollectService {
             ccavenue_working_key: ccavenue_working_key || null,
             pay_u_key: pay_u_key || null,
             pay_u_salt: pay_u_salt || null,
+            ntt_data: {
+                nttdata_id,
+                nttdata_secret,
+                nttdata_hash_req_key,
+                nttdata_hash_res_key,
+                nttdata_res_salt,
+                nttdata_req_salt,
+            },
+            isVBAPayment: isVBAPayment || false,
+            vba_account_number: vba_account_number || 'NA'
         }).save();
         await new this.databaseService.CollectRequestStatusModel({
             collect_id: request._id,
@@ -79,6 +91,13 @@ let CollectService = class CollectService {
             transaction_amount: request.amount,
             payment_method: null,
         }).save();
+        if (nttdata_id && nttdata_secret) {
+            const { url, collect_req } = await this.nttdataService.createOrder(request);
+            setTimeout(() => {
+                this.nttdataService.terminateOrder(collect_req._id.toString());
+            }, 15 * 60 * 1000);
+            return { url, request: collect_req };
+        }
         if (pay_u_key && pay_u_salt) {
             setTimeout(async () => {
                 try {
@@ -254,5 +273,6 @@ exports.CollectService = CollectService = __decorate([
         pay_u_service_1.PayUService,
         smartgateway_service_1.SmartgatewayService,
         pos_paytm_service_1.PosPaytmService])
+        nttdata_service_1.NttdataService])
 ], CollectService);
 //# sourceMappingURL=collect.service.js.map

@@ -10,11 +10,12 @@ import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
 import { EdvironPgModule } from '../edviron-pg/edviron-pg.module';
 import { CollectController } from './collect.controller';
 import { CollectService } from './collect.service';
+import { NttdataService } from 'src/nttdata/nttdata.service';
 import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 
 @Module({
   controllers: [CollectController],
-  providers: [CollectService, CcavenueService, HdfcRazorpayService, PayUService, SmartgatewayService, PosPaytmService],
+  providers: [CollectService, CcavenueService, HdfcRazorpayService, PayUService, SmartgatewayService,NttdataService, PosPaytmService],
   imports: [
     PhonepeModule,
     DatabaseModule,

@@ -16,6 +16,8 @@ import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 import { PayUService } from 'src/pay-u/pay-u.service';
 import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
 import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
+import { NttdataService } from 'src/nttdata/nttdata.service';
+
 @Injectable()
 export class CollectService {
   constructor(
@@ -28,6 +30,8 @@ export class CollectService {
     private readonly payuService: PayUService,
     private readonly hdfcSmartgatewayService: SmartgatewayService,
     private readonly posPaytmService: PosPaytmService,
+    private readonly nttdataService: NttdataService,
+
   ) { }
   async collect(
     amount: Number,
@@ -56,6 +60,12 @@ export class CollectService {
     hdfc_razorpay_id?: string,
     hdfc_razorpay_secret?: string,
     hdfc_razorpay_mid?: string,
+    nttdata_id?: string | null,
+    nttdata_secret?: string | null,
+    nttdata_hash_req_key?: string | null,
+    nttdata_hash_res_key?: string | null,
+    nttdata_res_salt?: string | null,
+    nttdata_req_salt?: string | null,
     vendor?: [
       {
         vendor_id: string;
@@ -64,16 +74,9 @@ export class CollectService {
         name?: string;
       },
     ],
+    isVBAPayment?:boolean,
+    vba_account_number?:string
   ): Promise<{ url: string; request: CollectRequest }> {
-    console.log(req_webhook_urls, 'webhook url');
-    console.log(webHook);
-
-    console.log(
-      ccavenue_merchant_id,
-      'ccavenue',
-      ccavenue_access_code,
-      ccavenue_working_key,
-    );
 
     if (custom_order_id) {
       const count =
@@ -111,6 +114,16 @@ export class CollectService {
       ccavenue_working_key: ccavenue_working_key || null,
       pay_u_key: pay_u_key || null,
       pay_u_salt: pay_u_salt || null,
+      ntt_data: {
+        nttdata_id,
+        nttdata_secret,
+        nttdata_hash_req_key,
+        nttdata_hash_res_key,
+        nttdata_res_salt,
+        nttdata_req_salt,
+      },
+      isVBAPayment:isVBAPayment|| false,
+      vba_account_number:vba_account_number||'NA'
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({
@@ -120,6 +133,18 @@ export class CollectService {
       transaction_amount: request.amount,
       payment_method: null,
     }).save();
+
+    if (nttdata_id && nttdata_secret) {
+      const { url, collect_req } =
+        await this.nttdataService.createOrder(request);
+      setTimeout(
+        () => {
+          this.nttdataService.terminateOrder(collect_req._id.toString());
+        },
+        15 * 60 * 1000,
+      );
+      return { url, request: collect_req };
+    }
 
     if (pay_u_key && pay_u_salt) {
       setTimeout(

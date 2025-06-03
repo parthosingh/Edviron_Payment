@@ -27,12 +27,14 @@ const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
 const qs = require("qs");
 const _jwt = require("jsonwebtoken");
+const nttdata_service_1 = require("../nttdata/nttdata.service");
 let EdvironPgController = class EdvironPgController {
-    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService) {
+    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService) {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
         this.easebuzzService = easebuzzService;
         this.cashfreeService = cashfreeService;
+        this.nttDataService = nttDataService;
     }
     async handleRedirect(req, res) {
         const wallet = req.query.wallet;
@@ -276,7 +278,6 @@ let EdvironPgController = class EdvironPgController {
         }
         collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
         await collectReq.save();
-        console.log('checking for autorefund', pendingCollectReq?.status);
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
         const status = webHookData.payment.payment_status;
         const payment_time = new Date(webHookData.payment.payment_time);
@@ -1029,7 +1030,7 @@ let EdvironPgController = class EdvironPgController {
     async bulkTransactions(body, res, req) {
         console.time('bulk-transactions-report');
         const { trustee_id, token, searchParams, isCustomSearch, seachFilter, isQRCode, gateway, } = body;
-        let { payment_modes, } = body;
+        let { payment_modes } = body;
         if (!token)
             throw new Error('Token not provided');
         if (payment_modes?.includes('upi')) {
@@ -1089,12 +1090,10 @@ let EdvironPgController = class EdvironPgController {
                 })) {
                 throw new common_1.ForbiddenException('Request forged');
             }
-            console.log(collectQuery);
             console.time('fetching all transaction');
             const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
             let transactions = [];
             const orderIds = orders.map((order) => order._id);
-            console.log(orderIds.length);
             console.timeEnd('fetching all transaction');
             let query = {
                 collect_id: { $in: orderIds },
@@ -1253,6 +1252,7 @@ let EdvironPgController = class EdvironPgController {
                                 'collect_request.easebuzz_sub_merchant_id': 0,
                                 'collect_request.paymentIds': 0,
                                 'collect_request.deepLink': 0,
+                                'isVBAPaymentComplete': 0
                             },
                         },
                         {
@@ -1300,6 +1300,7 @@ let EdvironPgController = class EdvironPgController {
                                             reason: '$reason',
                                             gateway: '$gateway',
                                             capture_status: '$capture_status',
+                                            isVBAPaymentComplete: '$isVBAPaymentComplete'
                                         },
                                     ],
                                 },
@@ -1361,6 +1362,7 @@ let EdvironPgController = class EdvironPgController {
                                 'collect_request.easebuzz_sub_merchant_id': 0,
                                 'collect_request.paymentIds': 0,
                                 'collect_request.deepLink': 0,
+                                'isVBAPaymentComplete': 0
                             },
                         },
                         {
@@ -1407,6 +1409,7 @@ let EdvironPgController = class EdvironPgController {
                                             reason: '$reason',
                                             gateway: '$gateway',
                                             capture_status: '$capture_status',
+                                            isVBAPaymentComplete: '$isVBAPaymentComplete'
                                         },
                                     ],
                                 },
@@ -1579,6 +1582,10 @@ let EdvironPgController = class EdvironPgController {
             }
             const gateway = request.gateway;
             console.log(gateway);
+            if (gateway === collect_request_schema_1.Gateway.EDVIRON_NTTDATA) {
+                const refund = await this.nttDataService.initiateRefund(collect_id, amount);
+                return refund;
+            }
             if (gateway === collect_request_schema_1.Gateway.EDVIRON_PG) {
                 console.log('refunding fromcashfree');
                 const refunds = await this.cashfreeService.initiateRefund(refund_id, amount, collect_id);
@@ -2462,6 +2469,95 @@ let EdvironPgController = class EdvironPgController {
             return { error: 'Failed to generate report' };
         }
     }
+    async getVba(collect_id) {
+        try {
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request) {
+                return {
+                    isSchoolVBA: false,
+                    isStudentVBA: false,
+                    virtual_account_number: '',
+                    virtual_account_ifsc: '',
+                    finalAmount: 0,
+                    beneficiary_bank_and_address: '',
+                    beneficiary_name: '',
+                    refrence_no: collect_id,
+                    transaction_id: collect_id,
+                    cutomer_name: '',
+                    cutomer_no: '',
+                    customer_email: '',
+                    customer_id: '',
+                };
+            }
+            if (!request.additional_data) {
+                return {
+                    isSchoolVBA: false,
+                    isStudentVBA: false,
+                    virtual_account_number: '',
+                    virtual_account_ifsc: '',
+                    finalAmount: 0,
+                    beneficiary_bank_and_address: '',
+                    beneficiary_name: '',
+                    refrence_no: collect_id,
+                    transaction_id: collect_id,
+                    cutomer_name: '',
+                    cutomer_no: '',
+                    customer_email: '',
+                    customer_id: '',
+                };
+            }
+            const student_info = JSON.parse(request.additional_data);
+            const student_id = student_info.student_details?.student_id;
+            const vba_account_number = request.vba_account_number;
+            if (!vba_account_number) {
+                return {
+                    isSchoolVBA: false,
+                    isStudentVBA: false,
+                    virtual_account_number: '',
+                    virtual_account_ifsc: '',
+                    finalAmount: 0,
+                    beneficiary_bank_and_address: '',
+                    beneficiary_name: '',
+                    refrence_no: collect_id,
+                    transaction_id: collect_id,
+                    cutomer_name: '',
+                    cutomer_no: '',
+                    customer_email: '',
+                    customer_id: '',
+                };
+            }
+            const payload = { vba_account_number: request.vba_account_number };
+            const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET, {
+                noTimestamp: true,
+            });
+            const config = {
+                method: 'get',
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/get-student-vba?student_id=${student_id}&token=${token}&vba_account_number=${request.vba_account_number}&amount=${request.amount}&collect_id=${collect_id}&school_id=${request.school_id}`,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+            const { data: response } = await axios_1.default.request(config);
+            return response;
+        }
+        catch (e) {
+            return {
+                isSchoolVBA: false,
+                isStudentVBA: false,
+                virtual_account_number: '',
+                virtual_account_ifsc: '',
+                finalAmount: 0,
+                beneficiary_bank_and_address: '',
+                beneficiary_name: '',
+                refrence_no: collect_id,
+                transaction_id: collect_id,
+                cutomer_name: '',
+                cutomer_no: '',
+                customer_email: '',
+                customer_id: '',
+            };
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -2838,11 +2934,19 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "genSchoolReport", null);
+__decorate([
+    (0, common_1.Get)('/vba-details'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getVba", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
         database_service_1.DatabaseService,
         easebuzz_service_1.EasebuzzService,
-        cashfree_service_1.CashfreeService])
+        cashfree_service_1.CashfreeService,
+        nttdata_service_1.NttdataService])
 ], EdvironPgController);
 //# sourceMappingURL=edviron-pg.controller.js.map
