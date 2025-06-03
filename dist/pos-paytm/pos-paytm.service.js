@@ -40,7 +40,7 @@ let PosPaytmService = class PosPaytmService {
                 merchantTransactionId: request._id.toString(),
                 merchantReferenceNo: request._id.toString(),
                 transactionAmount: String(Math.round(request.amount * 100)),
-                callbackURL: request.callbackUrl,
+                callbackUrl: request.callbackUrl,
             };
             var checksum = await Paytm.generateSignature(body, paytmPos.paytm_merchant_key);
             var isVerifySignature = await Paytm.verifySignature(body, paytmPos.paytm_merchant_key, checksum);
