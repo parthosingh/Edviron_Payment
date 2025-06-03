@@ -51,6 +51,7 @@ export declare class CollectService {
                 merchantTransactionId: string;
                 merchantReferenceNo: string;
                 transactionAmount: string;
+                callbackUrl: string;
             };
         };
         paytmResponse: any;

@@ -1,10 +1,14 @@
-import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { PosPaytmService } from './pos-paytm.service';
 import { platformChange } from 'src/collect/collect.controller';
 import * as _jwt from 'jsonwebtoken';
+import { DatabaseService } from 'src/database/database.service';
 @Controller('pos-paytm')
 export class PosPaytmController {
-  constructor(private readonly posPaytmService: PosPaytmService) {}
+  constructor(
+    private readonly posPaytmService: PosPaytmService,
+    private readonly databaseService: DatabaseService,
+  ) {}
   @Post('/initiate-payment')
   async initiatePayment(
     @Body()
@@ -63,5 +67,22 @@ export class PosPaytmController {
     } catch (e) {
       throw new BadRequestException(e.message);
     }
+  }
+
+  @Post('callback')
+  async PosCallback(@Body() body: any) {
+    await this.databaseService.WebhooksModel.create({
+      gateway: 'POS_PAYTM',
+      body: JSON.stringify(body),
+    });
+
+    return true;
+  }
+
+  @Get('status')
+  async checkStatus(
+    @Query('collect_id') collect_id:string
+  ){
+    return await this.posPaytmService.getTransactionStatus(collect_id)
   }
 }

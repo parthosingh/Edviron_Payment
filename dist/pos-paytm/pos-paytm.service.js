@@ -40,6 +40,7 @@ let PosPaytmService = class PosPaytmService {
                 merchantTransactionId: request._id.toString(),
                 merchantReferenceNo: request._id.toString(),
                 transactionAmount: String(Math.round(request.amount * 100)),
+                callbackUrl: request.callbackUrl,
             };
             var checksum = await Paytm.generateSignature(body, paytmPos.paytm_merchant_key);
             var isVerifySignature = await Paytm.verifySignature(body, paytmPos.paytm_merchant_key, checksum);
@@ -71,6 +72,7 @@ let PosPaytmService = class PosPaytmService {
             };
         }
         catch (error) {
+            console.error('Error initiating POS payment:', error);
             throw new common_1.BadRequestException(error.message);
         }
     }
@@ -118,21 +120,17 @@ let PosPaytmService = class PosPaytmService {
                 throw new common_1.BadRequestException('collect request status not found');
             }
             const body = {
-                paytmMid: collectRequest.pos_machine_device_id,
-                paytmTid: collectRequest.pos_machine_device_code,
-                transactionDateTime: collectRequestStatus.payment_time
-                    .toISOString()
-                    .slice(0, 19)
-                    .replace('T', ' '),
+                paytmMid: collectRequest.paytmPos.paytmMid,
+                paytmTid: collectRequest.paytmPos.paytmTid,
+                transactionDateTime: await this.fmt(await this.nowInIST()),
                 merchantTransactionId: orderId,
             };
-            const checksum = await Paytm.generateSignature(JSON.stringify(body), process.env.PAYTM_MERCHANT_KEY || 'n/a');
+            console.log('debug 1', body);
+            const checksum = await Paytm.generateSignature(body, 'urflK0@0mthEgRo8');
+            console.log(checksum, 'checksum');
             const requestData = {
                 head: {
-                    requestTimeStamp: collectRequestStatus.payment_time
-                        .toISOString()
-                        .slice(0, 19)
-                        .replace('T', ' '),
+                    requestTimeStamp: await this.fmt(await this.nowInIST()),
                     channelId: 'RIL',
                     checksum: checksum,
                     version: '3.1',

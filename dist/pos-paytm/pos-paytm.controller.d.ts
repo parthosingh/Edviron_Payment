@@ -1,8 +1,10 @@
 import { PosPaytmService } from './pos-paytm.service';
 import { platformChange } from 'src/collect/collect.controller';
+import { DatabaseService } from 'src/database/database.service';
 export declare class PosPaytmController {
     private readonly posPaytmService;
-    constructor(posPaytmService: PosPaytmService);
+    private readonly databaseService;
+    constructor(posPaytmService: PosPaytmService, databaseService: DatabaseService);
     initiatePayment(body: {
         amount: Number;
         callbackUrl: string;
@@ -35,8 +37,11 @@ export declare class PosPaytmController {
                 merchantTransactionId: string;
                 merchantReferenceNo: string;
                 transactionAmount: string;
+                callbackUrl: string;
             };
         };
         paytmResponse: any;
     }>;
+    PosCallback(body: any): Promise<boolean>;
+    checkStatus(collect_id: string): Promise<any>;
 }
