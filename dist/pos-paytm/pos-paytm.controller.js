@@ -40,10 +40,18 @@ let PosPaytmController = class PosPaytmController {
         }
     }
     async PosCallback(body) {
-        await this.databaseService.WebhooksModel.create({
-            gateway: 'POS_PAYTM',
-            body: JSON.stringify(body),
-        });
+        try {
+            await this.databaseService.WebhooksModel.create({
+                gateway: 'POS_PAYTM',
+                body: JSON.stringify(body),
+            });
+        }
+        catch (e) {
+            await this.databaseService.WebhooksModel.create({
+                gateway: 'POS_PAYTM',
+                body: 'Error in callback saving',
+            });
+        }
         return true;
     }
     async checkStatus(collect_id) {

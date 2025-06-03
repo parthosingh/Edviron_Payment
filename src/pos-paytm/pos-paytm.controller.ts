@@ -71,10 +71,18 @@ export class PosPaytmController {
 
   @Post('callback')
   async PosCallback(@Body() body: any) {
-    await this.databaseService.WebhooksModel.create({
-      gateway: 'POS_PAYTM',
-      body: JSON.stringify(body),
-    });
+    try{
+
+      await this.databaseService.WebhooksModel.create({
+        gateway: 'POS_PAYTM',
+        body: JSON.stringify(body),
+      });
+    }catch(e){
+      await this.databaseService.WebhooksModel.create({
+        gateway: 'POS_PAYTM',
+        body: 'Error in callback saving',
+      });
+    }
 
     return true;
   }
