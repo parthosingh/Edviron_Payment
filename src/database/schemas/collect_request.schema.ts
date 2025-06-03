@@ -6,13 +6,15 @@ export enum Gateway {
   HDFC = 'HDFC',
   EDVIRON_PG = 'EDVIRON_PG',
   EDVIRON_PAY_U = 'EDVIRON_PAY_U',
-  EDVIRON_CCAVENUE='EDVIRON_CCAVENUE',
-  EDVIRON_CASHFREE='EDVIRON_CASHFREE',
-  EDVIRON_EASEBUZZ='EDVIRON_EASEBUZZ',
-  PENDING='PENDING',
-  EXPIRED='EXPIRED',
+  EDVIRON_CCAVENUE = 'EDVIRON_CCAVENUE',
+  EDVIRON_CASHFREE = 'EDVIRON_CASHFREE',
+  EDVIRON_EASEBUZZ = 'EDVIRON_EASEBUZZ',
+  PENDING = 'PENDING',
+  EXPIRED = 'EXPIRED',
   EDVIRON_HDFC_RAZORPAY = 'EDVIRON_HDFC_RAZORPAY',
   SMART_GATEWAY = 'EDVIRON_SMARTGATEWAY',
+  PAYTM_POS = 'PAYTM_POS',
+  MOSAMBEE_POS = 'MOSAMBEE_POS',
   EDVIRON_NTTDATA = 'EDVIRON_NTTDATA',
 }
 
@@ -46,6 +48,24 @@ export class PaymentIds {
 
   @Prop({ type: String, required: false })
   ccavenue_id?: string | null;
+}
+
+@Schema()
+export class paytmPos {
+  @Prop({ type: String, required: false })
+  paytmMid?: string | null;
+
+  @Prop({ type: String, required: false })
+  paytmTid?: string | null;
+
+  @Prop({ type: String, required: false })
+  channel_id?: string | null;
+
+  @Prop({ type: String, required: false })
+  paytm_merchant_key?: string | null;
+
+  @Prop({ type: String, required: false })
+  device_id?: string | null;
 }
 
 @Schema({ timestamps: true })
@@ -162,6 +182,20 @@ export class CollectRequest {
   @Prop({ required: false })
   pay_u_salt: string;
 
+  @Prop({ required: false })
+  pos_machine_name: string;
+
+  @Prop({ required: false })
+  pos_machine_device_id: string;
+
+  @Prop({ required: false })
+  pos_machine_device_code: string;
+
+  @Prop({ required: false, default: false })
+  isPosTransaction: boolean;
+
+  @Prop({ type: paytmPos, required: false })
+  paytmPos: paytmPos;
 
   @Prop({
     required: false,
