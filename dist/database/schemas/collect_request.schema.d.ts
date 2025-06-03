@@ -48,7 +48,6 @@ interface I_NTT_DATA {
     nttdata_req_salt: string;
     nttdata_hash_res_key: string;
     nttdata_res_salt: string;
-
 }
 export declare class PaymentIds {
     cashfree_id?: string | null;

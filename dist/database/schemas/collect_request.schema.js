@@ -255,6 +255,7 @@ __decorate([
     (0, mongoose_1.Prop)({ type: paytmPos, required: false }),
     __metadata("design:type", paytmPos)
 ], CollectRequest.prototype, "paytmPos", void 0);
+__decorate([
     (0, mongoose_1.Prop)({
         required: false,
         type: {

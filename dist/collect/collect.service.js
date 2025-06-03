@@ -23,12 +23,9 @@ const hdfc_razorpay_service_1 = require("../hdfc_razporpay/hdfc_razorpay.service
 const pay_u_service_1 = require("../pay-u/pay-u.service");
 const smartgateway_service_1 = require("../smartgateway/smartgateway.service");
 const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
-let CollectService = class CollectService {
-    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService, hdfcRazorpay, payuService, hdfcSmartgatewayService, posPaytmService) {
 const nttdata_service_1 = require("../nttdata/nttdata.service");
 let CollectService = class CollectService {
-    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService, hdfcRazorpay, payuService, hdfcSmartgatewayService, nttdataService) {
-
+    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService, hdfcRazorpay, payuService, hdfcSmartgatewayService, posPaytmService, nttdataService) {
         this.phonepeService = phonepeService;
         this.hdfcService = hdfcService;
         this.edvironPgService = edvironPgService;
@@ -272,7 +269,7 @@ exports.CollectService = CollectService = __decorate([
         hdfc_razorpay_service_1.HdfcRazorpayService,
         pay_u_service_1.PayUService,
         smartgateway_service_1.SmartgatewayService,
-        pos_paytm_service_1.PosPaytmService])
+        pos_paytm_service_1.PosPaytmService,
         nttdata_service_1.NttdataService])
 ], CollectService);
 //# sourceMappingURL=collect.service.js.map
