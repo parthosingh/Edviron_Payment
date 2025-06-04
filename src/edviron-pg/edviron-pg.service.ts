@@ -66,6 +66,7 @@ export class EdvironPgService implements GatewayService {
         name?: string;
       },
     ],
+    easebuzz_school_label?: string | null,
   ): Promise<Transaction | undefined> {
     try {
       let paymentInfo: PaymentIds = {
@@ -107,15 +108,13 @@ export class EdvironPgService implements GatewayService {
         },
         order_expiry_time: isoExpiryTime,
       });
-      console.log(splitPayments, 'split pay');
 
       if (splitPayments && cashfreeVedors && cashfreeVedors.length > 0) {
         const vendor_data = cashfreeVedors
           .filter(({ amount, percentage }) => {
             // Check if either amount is greater than 0 or percentage is greater than 0
             return (amount && amount > 0) || (percentage && percentage > 0);
-          })
-
+          }) 
           .map(({ vendor_id, percentage, amount }) => ({
             vendor_id,
             percentage,
@@ -138,7 +137,6 @@ export class EdvironPgService implements GatewayService {
           },
           order_splits: vendor_data,
         });
-        console.log(data, 'checking for data');
 
         collectReq.isSplitPayments = true;
         collectReq.vendors_info = vendor;
@@ -183,6 +181,11 @@ export class EdvironPgService implements GatewayService {
       let id = '';
       let easebuzz_pg = false;
       if (request.easebuzz_sub_merchant_id) {
+        if (!easebuzz_school_label) {
+          throw new BadRequestException(
+            `Split Information Not Configure Please contact tarun.k@edviron.com`,
+          );
+        }
         // Easebuzz pg data
         let productinfo = 'payment gateway customer';
         let firstname = 'customer';
@@ -222,7 +225,6 @@ export class EdvironPgService implements GatewayService {
           'amount',
           parseFloat(request.amount.toFixed(2)).toString(),
         );
-        // console.log(request.easebuzz_sub_merchant_id, 'sub merchant');
 
         encodedParams.set('productinfo', productinfo);
         encodedParams.set('firstname', firstname);
@@ -238,8 +240,9 @@ export class EdvironPgService implements GatewayService {
         if (
           vendorgateway?.easebuzz &&
           easebuzzVendors &&
+          easebuzz_school_label &&
           easebuzzVendors.length > 0
-        ) { 
+        ) {
           let vendorTotal = 0;
           easebuzzVendors.forEach((vendor: any) => {
             if (vendor.name && typeof vendor.amount === 'number') {
@@ -249,17 +252,23 @@ export class EdvironPgService implements GatewayService {
           });
           const remainingAmount = request.amount - vendorTotal;
           // remainig balance will go to sub-merchant-id in split
-          // if (remainingAmount > 0) {
-          //   ezb_split_payments[request.easebuzz_sub_merchant_id] = remainingAmount;
-          // }
-          encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+          if (remainingAmount > 0) {
+            ezb_split_payments[easebuzz_school_label] = remainingAmount;
+          }
+          encodedParams.set(
+            'split_payments',
+            JSON.stringify(ezb_split_payments),
+          );
         }
         // in case of split false 100% amount goes to sub merchant
-        else{
-          ezb_split_payments[request.easebuzz_sub_merchant_id] = request.amount;
-          encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+        else {
+          ezb_split_payments[easebuzz_school_label] = request.amount;
+          encodedParams.set(
+            'split_payments',
+            JSON.stringify(ezb_split_payments),
+          );
         }
-        console.log(ezb_split_payments,'easebuzz vendors');
+
         const Ezboptions = {
           method: 'POST',
           url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
@@ -268,17 +277,14 @@ export class EdvironPgService implements GatewayService {
             Accept: 'application/json',
           },
           data: encodedParams,
-        }; 
-        // console.log({Ezboptions});
-        
+        };
+
         const { data: easebuzzRes } = await axios.request(Ezboptions);
-        console.log(easebuzzRes,'easebuzz data');
-        
+
         id = easebuzzRes.data;
         paymentInfo.easebuzz_id = id || null;
-        await this.getQr(request._id.toString(), request,ezb_split_payments); // uncomment after fixing easebuzz QR code issue
+        await this.getQr(request._id.toString(), request, ezb_split_payments); // uncomment after fixing easebuzz QR code issue
         easebuzz_pg = true;
-        // console.log({ easebuzzRes, _id: request._id });
       }
 
       let cf_payment_id = '';
@@ -324,13 +330,11 @@ export class EdvironPgService implements GatewayService {
           id,
       };
     } catch (err) {
-      console.log(err);
       if (err.name === 'AxiosError')
         throw new BadRequestException(
           'Invalid client id or client secret ' +
             JSON.stringify(err.response.data),
         );
-      console.log(err);
     }
   }
   async checkStatus(
@@ -360,7 +364,6 @@ export class EdvironPgService implements GatewayService {
     try {
       const { data: cashfreeRes } = await axios.request(config);
 
-      // console.log(cashfreeRes, 'cashfree status response');
       const order_status_to_transaction_status_map = {
         ACTIVE: TransactionStatus.PENDING,
         PAID: TransactionStatus.SUCCESS,
@@ -373,7 +376,6 @@ export class EdvironPgService implements GatewayService {
           collect_id: collect_request_id,
         });
       if (!collect_status) {
-        console.log('No status found for custom order id', collect_request_id);
         throw new NotFoundException('No status found for custom order id');
       }
       let transaction_time = '';
@@ -438,7 +440,6 @@ export class EdvironPgService implements GatewayService {
         },
       };
     } catch (e) {
-      console.log(e);
       throw new BadRequestException(e.message);
     }
   }
@@ -456,7 +457,6 @@ export class EdvironPgService implements GatewayService {
     if (!requestStatus) {
       throw new Error('Collect Request Status not found');
     }
-    console.log('Terminating Order');
     if (request.gateway !== Gateway.PENDING) {
       if (request.isQRPayment && requestStatus.status === 'PENDING') {
         requestStatus.status = TransactionStatus.USER_DROPPED;
@@ -464,7 +464,6 @@ export class EdvironPgService implements GatewayService {
         requestStatus.reason = 'SESSION EXPIRED';
         await requestStatus.save();
       }
-      console.log(request.gateway, 'not Terminating');
       return true;
     }
     if (requestStatus.status === TransactionStatus.PENDING) {
@@ -472,7 +471,6 @@ export class EdvironPgService implements GatewayService {
       requestStatus.payment_message = 'SESSION EXPIRED';
       requestStatus.reason = 'SESSION EXPIRED';
       await requestStatus.save();
-      console.log(`Order terminated: ${request.gateway}`);
     }
 
     return true;
@@ -521,15 +519,12 @@ export class EdvironPgService implements GatewayService {
     };
 
     const { data: statusRes } = await axios.request(config);
-    console.log(statusRes);
+
     return statusRes;
   }
 
   async getPaymentDetails(school_id: string, startDate: string, mode: string) {
     try {
-      console.log({ school_id, startDate, mode });
-      console.log(mode.toUpperCase());
-
       const data =
         await this.databaseService.CollectRequestStatusModel.aggregate([
           {
@@ -569,16 +564,17 @@ export class EdvironPgService implements GatewayService {
             },
           },
         ]);
-      // console.log(data);
-
       return data;
     } catch (e) {
-      console.log(e);
       throw new BadRequestException('Error fetching payment details');
     }
   }
 
-  async getQr(collect_id: string, request: CollectRequest,ezb_split_payments:{ [key: string]: number }) {
+  async getQr(
+    collect_id: string,
+    request: CollectRequest,
+    ezb_split_payments: { [key: string]: number },
+  ) {
     try {
       const collectReq =
         await this.databaseService.CollectRequestModel.findById(request._id);
@@ -624,7 +620,6 @@ export class EdvironPgService implements GatewayService {
         'amount',
         parseFloat(request.amount.toFixed(2)).toString(),
       );
-      console.log(request.easebuzz_sub_merchant_id, 'sub merchant');
 
       encodedParams.set('productinfo', productinfo);
       encodedParams.set('firstname', firstname);
@@ -636,8 +631,6 @@ export class EdvironPgService implements GatewayService {
       encodedParams.set('request_flow', 'SEAMLESS');
       encodedParams.set('sub_merchant_id', request.easebuzz_sub_merchant_id);
       encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
-      console.log({ezb_split_payments});
-      
       const options = {
         method: 'POST',
         url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
@@ -648,18 +641,8 @@ export class EdvironPgService implements GatewayService {
         data: encodedParams,
       };
 
-      console.log({EzbConfig:options});
-      
       const { data: easebuzzRes } = await axios.request(options);
-      console.log({easebuzzRes});
-      
       const access_key = easebuzzRes.data;
-      console.log(access_key, 'access key');
-      console.log(collectReq.paymentIds);
-
-      // collectReq.paymentIds.easebuzz_upi_id = access_key;
-
-      // await collectReq.save();
       let formData = new FormData();
       formData.append('access_key', access_key);
       formData.append('payment_mode', `UPI`);
@@ -674,11 +657,7 @@ export class EdvironPgService implements GatewayService {
         },
         data: formData,
       };
-      // console.log({EzbQr:config});
-      
       const response = await axios.request(config);
-      // console.log(response.data, 'res in qr code');
-
       await this.databaseService.CollectRequestModel.findByIdAndUpdate(
         collect_id,
         {
@@ -686,7 +665,6 @@ export class EdvironPgService implements GatewayService {
         },
       );
     } catch (error) {
-      console.log(error);
       throw new Error(error.message);
     }
   }
@@ -709,7 +687,6 @@ export class EdvironPgService implements GatewayService {
     };
     try {
       const { data: info } = await axios.request(config);
-      console.log(info);
 
       return info;
     } catch (e) {
@@ -733,7 +710,6 @@ export class EdvironPgService implements GatewayService {
     const source = fs.readFileSync(filePath, 'utf-8').toString();
     const template = handlebars.compile(source);
     const student_data = JSON.parse(request.additional_data);
-    console.log(student_data);
 
     const { student_name, student_email, student_phone_no } =
       student_data.student_details;
@@ -825,9 +801,7 @@ export class EdvironPgService implements GatewayService {
               const currentIST = new Date().toLocaleString('en-US', {
                 timeZone: 'Asia/Kolkata',
               });
-              console.log('saving webhook logs to Database');
-              console.log(res.status, 'response');
-              console.log(res.data);
+
               const resDataString =
                 typeof res.data === 'string'
                   ? res.data
@@ -849,11 +823,6 @@ export class EdvironPgService implements GatewayService {
                 console.log('Error in saving webhook');
               }
             } catch (e) {
-              // console.log(
-              //   `Error in sending Webhook to ${url}`,
-              //   e.response.data,
-              //   e.response.status
-              // );
               if (e.response?.data) {
                 const currentIST = new Date().toLocaleString('en-US', {
                   timeZone: 'Asia/Kolkata',
@@ -996,12 +965,9 @@ export class EdvironPgService implements GatewayService {
       },
       data: data,
     };
-    console.log(config, 'config');
 
     try {
       const { data: Response } = await axios.request(config);
-      console.log(Response, 'Res');
-
       return Response;
     } catch (e) {
       if (e?.response?.data) {
@@ -1047,8 +1013,6 @@ export class EdvironPgService implements GatewayService {
       istStartDate.getTime() - 5 * 60 * 60 * 1000 - 30 * 60 * 1000,
     );
 
-    console.log('Converted date to UTC:', utcStartTime.toISOString());
-
     return utcStartTime.toISOString();
   }
 
@@ -1057,9 +1021,6 @@ export class EdvironPgService implements GatewayService {
 
     // Create the date at 23:59:59.999 IST (end of the given day in IST)
     const istEndDate = new Date(Date.UTC(year, month - 1, day, 18, 30, 9, 979));
-
-    console.log('Converted end date to UTC:', istEndDate.toISOString());
-
     return istEndDate.toISOString();
   }
 
@@ -1255,8 +1216,6 @@ export class EdvironPgService implements GatewayService {
     school_id?: string | null,
   ) {
     try {
-      console.log(start_date, end_date);
-
       const endOfDay = new Date(end_date);
       const startDates = new Date(start_date);
       const startOfDayUTC = new Date(
@@ -1297,11 +1256,6 @@ export class EdvironPgService implements GatewayService {
 
       const startDate = new Date(start_date);
       const endDate = end_date;
-
-      console.log(new Date(endDate), 'End date before adding hr');
-
-      console.log(endOfDay, 'end date after adding hr');
-
       if (startDate && endDate) {
         query = {
           ...query,
@@ -1313,11 +1267,8 @@ export class EdvironPgService implements GatewayService {
           },
         };
       }
-      // console.log(`getting transaction`);
 
       if ((status && status === 'SUCCESS') || status === 'PENDING') {
-        console.log('adding status to transaction');
-
         query = {
           ...query,
           status: { $in: [status.toUpperCase(), status.toLowerCase()] },
@@ -1455,10 +1406,6 @@ export class EdvironPgService implements GatewayService {
       const startDate = new Date(start_date);
       const endDate = end_date;
 
-      console.log(new Date(endDate), 'End date before adding hr');
-
-      console.log(endOfDay, 'end date after adding hr');
-
       if (startDate && endDate) {
         query = {
           ...query,
@@ -1484,11 +1431,8 @@ export class EdvironPgService implements GatewayService {
           ],
         };
       }
-      // console.log(`getting transaction`);
 
       if ((status && status === 'SUCCESS') || status === 'PENDING') {
-        console.log('adding status to transaction');
-
         query = {
           ...query,
           status: { $in: [status.toUpperCase(), status.toLowerCase()] },
@@ -1503,8 +1447,6 @@ export class EdvironPgService implements GatewayService {
           payment_method: { $in: mode },
         };
       }
-
-      console.log(query, 'qqq');
 
       transactions =
         await this.databaseService.CollectRequestStatusModel.aggregate([
@@ -1560,7 +1502,6 @@ export class EdvironPgService implements GatewayService {
         ]);
 
       console.timeEnd('transactionsCount');
-      console.log(transactions, 'sum of aggreagations');
 
       return {
         length: transactions.length,
@@ -1634,11 +1575,6 @@ export class EdvironPgService implements GatewayService {
       const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
       // Set hours, minutes, seconds, and milliseconds to the last moment of the day
       // endOfDay.setHours(23, 59, 59, 999);
-      console.log(end_date);
-
-      console.log(new Date(endDate), 'End date before adding hr');
-
-      console.log(endOfDay, 'end date after adding hr');
 
       if (startDate && endDate) {
         query = {
@@ -1649,10 +1585,8 @@ export class EdvironPgService implements GatewayService {
           },
         };
       }
-      console.log(`getting transaction`);
-      if ((status && status === 'SUCCESS') || status === 'PENDING') {
-        console.log('adding status to transaction');
 
+      if ((status && status === 'SUCCESS') || status === 'PENDING') {
         query = {
           ...query,
           status: { $regex: new RegExp(`^${status}$`, 'i') },

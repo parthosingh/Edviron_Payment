@@ -92,6 +92,7 @@ export class CollectService {
     ],
     isVBAPayment?: boolean,
     vba_account_number?: string,
+    easebuzz_school_label?:string | null
   ): Promise<{ url: string; request: CollectRequest }> {
     if (custom_order_id) {
       const count =
@@ -104,10 +105,7 @@ export class CollectService {
         throw new ConflictException('OrderId must be unique');
       }
     }
-    console.log('collect request for amount: ' + amount + ' received.', {
-      disabled_modes,
-    });
-
+    
     const gateway = clientId === 'edviron' ? Gateway.HDFC : Gateway.PENDING;
 
     const request = await new this.databaseService.CollectRequestModel({
@@ -151,6 +149,7 @@ export class CollectService {
       payment_method: null,
     }).save();
 
+    // ATOM NTTDATA-NON SEAMLESS
     if (nttdata_id && nttdata_secret) {
       const { url, collect_req } =
         await this.nttdataService.createOrder(request);
@@ -163,6 +162,7 @@ export class CollectService {
       return { url, request: collect_req };
     }
 
+    // PAY-U NON SEAMLESS
     if (pay_u_key && pay_u_salt) {
       setTimeout(
         async () => {
@@ -182,12 +182,13 @@ export class CollectService {
       };
     }
 
+    // CCAVENUE NONSEAMMLESS
     if (ccavenue_merchant_id) {
-      console.log('creating order with CCavenue');
       const transaction = await this.ccavenueService.createOrder(request);
       return { url: transaction.url, request };
     }
 
+    // HDFC NON SEAMLESS
     if (hdfc_razorpay_id && hdfc_razorpay_secret && hdfc_razorpay_mid) {
       request.hdfc_razorpay_id = hdfc_razorpay_id;
       request.hdfc_razorpay_secret = hdfc_razorpay_secret;
@@ -217,6 +218,8 @@ export class CollectService {
         request,
       };
     }
+
+    // HDFC SMART GATEWAY NON SEAMLESS
     if (
       smartgateway_customer_id &&
       smartgateway_merchant_id &&
@@ -245,7 +248,8 @@ export class CollectService {
             vendor,
             vendorgateway,
             easebuzzVendors,
-            cashfreeVedors
+            cashfreeVedors,
+            easebuzz_school_label
           )
         : await this.hdfcService.collect(request)
     )!;

@@ -72,6 +72,7 @@ export class CollectController {
       nttdata_hash_res_key?: string | null;
       nttdata_res_salt?: string | null;
       nttdata_req_salt?: string | null;
+      easebuzz_school_label?:string | null;
       vendors_info?: [
         {
           vendor_id: string;
@@ -142,6 +143,7 @@ export class CollectController {
       vendorgateway,
       easebuzzVendors,
       cashfreeVedors,
+      easebuzz_school_label
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -149,9 +151,7 @@ export class CollectController {
     if (!callbackUrl)
       throw new BadRequestException('Callback url not provided');
     try {
-      console.log(disabled_modes);
       let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
-      console.log(decrypted);
 
       // if (
       //   decrypted.amount !== amount || decrypted.callbackUrl !== callbackUrl
@@ -198,6 +198,7 @@ export class CollectController {
           cashfreeVedors,
           isVBAPayment,
           vba_account_number,
+          easebuzz_school_label
         ),
       );
     } catch (e) {

@@ -50,6 +50,7 @@ export declare class CollectController {
         nttdata_hash_res_key?: string | null;
         nttdata_res_salt?: string | null;
         nttdata_req_salt?: string | null;
+        easebuzz_school_label?: string | null;
         vendors_info?: [
             {
                 vendor_id: string;

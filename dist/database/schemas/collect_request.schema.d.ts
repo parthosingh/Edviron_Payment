@@ -116,6 +116,7 @@ export declare class CollectRequest {
     isQRPayment: boolean;
     pay_u_key: string;
     pay_u_salt: string;
+    easebuzz_split_label: string;
     ntt_data: I_NTT_DATA;
     vba_account_number: string;
     _id: ObjectId;

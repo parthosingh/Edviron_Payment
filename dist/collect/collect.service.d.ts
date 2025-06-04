@@ -44,7 +44,7 @@ export declare class CollectService {
             amount?: number;
             name?: string;
         }
-    ], isVBAPayment?: boolean, vba_account_number?: string): Promise<{
+    ], isVBAPayment?: boolean, vba_account_number?: string, easebuzz_school_label?: string | null): Promise<{
         url: string;
         request: CollectRequest;
     }>;

@@ -216,6 +216,10 @@ __decorate([
     __metadata("design:type", String)
 ], CollectRequest.prototype, "pay_u_salt", void 0);
 __decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "easebuzz_split_label", void 0);
+__decorate([
     (0, mongoose_1.Prop)({
         required: false,
         type: {
