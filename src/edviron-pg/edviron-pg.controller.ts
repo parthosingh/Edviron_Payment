@@ -3721,6 +3721,7 @@ export class EdvironPgController {
           trustee_id: request.trustee_id,
           gateway: request.gateway,
           bank_reference: requestStatus.bank_reference,
+          student_detail : request.additional_data
         }
       };
     } catch (error) {
