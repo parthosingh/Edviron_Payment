@@ -23,7 +23,7 @@ export class PayUController {
     private readonly payUService: PayUService,
     private readonly databaseService: DatabaseService,
     private readonly edvironPgService: EdvironPgService,
-  ) {}
+  ) { }
   @Get('/nb')
   async testPayment() {
     try {
@@ -398,7 +398,7 @@ export class PayUController {
             };
             break;
         }
-      } catch (e) {}
+      } catch (e) { }
 
       // Add Commssion for transactions
       if (status.toUpperCase() === 'SUCCESS') {
@@ -512,7 +512,7 @@ export class PayUController {
           );
         }
       }
-
+      await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
       return res.status(200).send('OK');
     } catch (error) {
       return res.status(400).send(error.message || 'Error in saving webhook');

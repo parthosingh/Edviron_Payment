@@ -781,6 +781,7 @@ export class EdvironPgController {
     //   // // const webHookSent = await axios.request(config);
     //   // console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
     // }
+    await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
     res.status(200).send('OK');
   }
 
@@ -1105,6 +1106,7 @@ export class EdvironPgController {
       }
     }
 
+    await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
     res.status(200).send('OK');
     return;
   }
@@ -3731,6 +3733,45 @@ export class EdvironPgController {
       }
       console.error('Internal Error:', error.message);
       throw new InternalServerErrorException(error.message || 'Something went wrong');
+    }
+  }
+
+  @Post('sendMail-after-transaction')
+  async sendMailAfterTransaction(
+    @Body() body: any,
+  ){
+    const { collect_id } = body;
+    try {
+      if (!collect_id) {
+        throw new BadRequestException('Collect ID is required');
+      };
+      const collectRequest =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collectRequest) {
+        throw new NotFoundException('Collect Request not found');
+      }
+     const getTransactionInfo = await this.edvironPgService.getSingleTransactionInfo(collect_id)
+      if (!getTransactionInfo) {
+        throw new NotFoundException('Transaction not found');
+      }
+      try {
+        const config = {
+          url : `${process.env.VANILLA_SERVICE_ENDPOINT}/business-alarm/send-mail-after-transaction`,
+          method: 'post',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          data : getTransactionInfo[0]
+        }
+        const response = await axios.request(config);
+      } catch (error) {
+        console.error('Error sending email:', error.message);
+        throw new BadRequestException('Failed to send email');
+      }
+      return 'Mail Send Successfully';
+    } catch (e) {
+      console.error(e);
+      throw new BadRequestException(e.message);
     }
   }
 }

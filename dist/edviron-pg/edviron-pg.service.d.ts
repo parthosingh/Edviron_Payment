@@ -116,4 +116,5 @@ export declare class EdvironPgService implements GatewayService {
         _id: import("mongoose").Schema.Types.ObjectId;
     }>)[]>;
     getSingleTransaction(collect_id: string): Promise<any>;
+    sendMailAfterTransaction(collect_id: string): Promise<boolean>;
 }

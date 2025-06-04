@@ -1760,4 +1760,42 @@ export class EdvironPgService implements GatewayService {
 
     return vendotTransaction[0];
   }
+
+   async sendMailAfterTransaction(
+      collect_id: string,
+    ){
+      try {
+        if (!collect_id) {
+          throw new BadRequestException('Collect ID is required');
+        };
+        const collectRequest =
+          await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!collectRequest) {
+          throw new NotFoundException('Collect Request not found');
+        }
+       const getTransactionInfo = await this.getSingleTransactionInfo(collect_id)
+        if (!getTransactionInfo) {
+          throw new NotFoundException('Transaction not found');
+        }
+        try {
+          const config = {
+            url : `${process.env.VANILLA_SERVICE_ENDPOINT}/business-alarm/send-mail-after-transaction`,
+            method: 'post',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            data : getTransactionInfo[0]
+          }
+          await axios.request(config);
+        } catch (error) {
+          console.error('Error sending email:', error.message);
+          throw new BadRequestException('Failed to send email');
+        }
+        return true;
+      } catch (e) {
+        console.error(e);
+        throw new BadRequestException(e.message);
+      }
+    }
+
 }

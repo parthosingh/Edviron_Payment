@@ -19,10 +19,12 @@ const database_service_1 = require("../database/database.service");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const mongoose_1 = require("mongoose");
+const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 let HdfcRazorpayController = class HdfcRazorpayController {
-    constructor(hdfcRazorpayService, databaseService) {
+    constructor(hdfcRazorpayService, databaseService, edvironPgService) {
         this.hdfcRazorpayService = hdfcRazorpayService;
         this.databaseService = databaseService;
+        this.edvironPgService = edvironPgService;
     }
     async handleCallback(body, collect_id, res) {
         try {
@@ -219,6 +221,7 @@ let HdfcRazorpayController = class HdfcRazorpayController {
                 upsert: true,
                 new: true,
             });
+            await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
             res.status(200).send('OK');
         }
         catch (e) {
@@ -257,6 +260,7 @@ __decorate([
 exports.HdfcRazorpayController = HdfcRazorpayController = __decorate([
     (0, common_1.Controller)('hdfc-razorpay'),
     __metadata("design:paramtypes", [hdfc_razorpay_service_1.HdfcRazorpayService,
-        database_service_1.DatabaseService])
+        database_service_1.DatabaseService,
+        edviron_pg_service_1.EdvironPgService])
 ], HdfcRazorpayController);
 //# sourceMappingURL=hdfc_razorpay.controller.js.map

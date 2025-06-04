@@ -14,12 +14,14 @@ import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { Types } from 'mongoose';
 import { log } from 'console';
+import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 
 @Controller('hdfc-razorpay')
 export class HdfcRazorpayController {
   constructor(
     private readonly hdfcRazorpayService: HdfcRazorpayService,
     private readonly databaseService: DatabaseService,
+    private readonly edvironPgService: EdvironPgService,
   ) { }
 
   @Post('/callback/:collect_id')
@@ -297,6 +299,7 @@ export class HdfcRazorpayController {
           },
         );
 
+      await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
       res.status(200).send('OK');
     } catch (e) {
       // console.log(e);

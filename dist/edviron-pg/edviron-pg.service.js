@@ -1390,6 +1390,42 @@ let EdvironPgService = class EdvironPgService {
         ]);
         return vendotTransaction[0];
     }
+    async sendMailAfterTransaction(collect_id) {
+        try {
+            if (!collect_id) {
+                throw new common_1.BadRequestException('Collect ID is required');
+            }
+            ;
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest) {
+                throw new common_1.NotFoundException('Collect Request not found');
+            }
+            const getTransactionInfo = await this.getSingleTransactionInfo(collect_id);
+            if (!getTransactionInfo) {
+                throw new common_1.NotFoundException('Transaction not found');
+            }
+            try {
+                const config = {
+                    url: `${process.env.VANILLA_SERVICE_ENDPOINT}/business-alarm/send-mail-after-transaction`,
+                    method: 'post',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    data: getTransactionInfo[0]
+                };
+                await axios_1.default.request(config);
+            }
+            catch (error) {
+                console.error('Error sending email:', error.message);
+                throw new common_1.BadRequestException('Failed to send email');
+            }
+            return true;
+        }
+        catch (e) {
+            console.error(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgService = EdvironPgService;
 exports.EdvironPgService = EdvironPgService = __decorate([
