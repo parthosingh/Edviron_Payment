@@ -182,6 +182,77 @@ export class CollectController {
     }
   }
 
+  @Post('/pos')
+  async posCollect(
+    @Body()
+    body: {
+      amount: Number;
+      callbackUrl: string;
+      jwt: string;
+      school_id: string;
+      trustee_id: string;
+      machine_name?: string;
+      platform_charges?: platformChange[];
+      paytm_pos?: {
+        paytmMid?: string;
+        paytmTid?: string;
+        channel_id?: string;
+        paytm_merchant_key?: string;
+        device_id?: string; //edviron
+      };
+      additional_data?: {};
+      custom_order_id?: string;
+      req_webhook_urls?: string[];
+      school_name?: string;
+    },
+  ) {
+    const {
+      amount,
+      callbackUrl,
+      jwt,
+      school_id,
+      trustee_id,
+      machine_name,
+      paytm_pos,
+      platform_charges,
+      additional_data,
+      custom_order_id,
+      req_webhook_urls,
+      school_name,
+    } = body;
+
+    if (!jwt) throw new BadRequestException('JWT not provided');
+    if (!amount) throw new BadRequestException('Amount not provided');
+    if (!callbackUrl)
+      throw new BadRequestException('Callback url not provided');
+
+    try {
+      let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
+      console.log(decrypted, 'decrypted pos collect');
+      return sign(
+        await this.collectService.posCollect(
+          amount,
+          callbackUrl,
+          school_id,
+          trustee_id,
+          machine_name,
+          platform_charges,
+          paytm_pos,
+          additional_data,
+          custom_order_id,
+          req_webhook_urls,
+          school_name,
+        ),
+      );
+    } catch (e) {
+      console.log(e);
+      if (e.name === 'JsonWebTokenError')
+        throw new UnauthorizedException('JWT invalid');
+      throw e;
+    }
+
+  }
+
   @Get('callback')
   async callbackUrl(
     @Res() res: any,

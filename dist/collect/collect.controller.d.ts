@@ -59,6 +59,26 @@ export declare class CollectController {
             }
         ];
     }): Promise<any>;
+    posCollect(body: {
+        amount: Number;
+        callbackUrl: string;
+        jwt: string;
+        school_id: string;
+        trustee_id: string;
+        machine_name?: string;
+        platform_charges?: platformChange[];
+        paytm_pos?: {
+            paytmMid?: string;
+            paytmTid?: string;
+            channel_id?: string;
+            paytm_merchant_key?: string;
+            device_id?: string;
+        };
+        additional_data?: {};
+        custom_order_id?: string;
+        req_webhook_urls?: string[];
+        school_name?: string;
+    }): Promise<any>;
     callbackUrl(res: any, collect_id: string): Promise<void>;
 }
 export {};

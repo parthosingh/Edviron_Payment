@@ -46,6 +46,7 @@ export declare class CollectRequestStatus {
     isVBAPaymentComplete: boolean;
     vbaOrderId: string;
     error_details: error_details;
+    isPosTransaction: boolean;
     vbaPaymentDetails: vbaPaymentDetails;
     _id: ObjectId;
 }
