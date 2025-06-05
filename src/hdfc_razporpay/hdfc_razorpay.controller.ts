@@ -42,9 +42,9 @@ export class HdfcRazorpayController {
         razorpay_signature: signature,
       } = body;
       console.log(body);
-      
+
       console.log(collect_id);
-      
+
       const collectRequest =
         await this.databaseService.CollectRequestModel.findById(collect_id);
       if (!collectRequest) throw new BadRequestException('Order Id not found');
@@ -159,7 +159,7 @@ export class HdfcRazorpayController {
       throw new BadRequestException(error.response?.data || error.message);
     }
   }
- 
+
   @Post('/webhook')
   async webhook(@Body() body: any, @Res() res: any) {
     const details = JSON.stringify(body);
@@ -299,7 +299,16 @@ export class HdfcRazorpayController {
           },
         );
 
-      await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
+      try {
+        await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
+      } catch (e) {
+        await this.databaseService.ErrorLogsModel.create({
+          source: 'sendMailAfterTransaction',
+          collect_id: collectIdObject,
+          error: e.message || e.toString(),
+          createdAt: new Date(),
+        });
+      }
       res.status(200).send('OK');
     } catch (e) {
       // console.log(e);

@@ -781,7 +781,16 @@ export class EdvironPgController {
     //   // // const webHookSent = await axios.request(config);
     //   // console.log(`webhook sent to ${webHookUrl} with data ${webHookSent}`);
     // }
-    await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
+    try {
+      await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
+    } catch (e) {
+      await this.databaseService.ErrorLogsModel.create({
+        source: 'sendMailAfterTransaction',
+        collect_id: collectIdObject,
+        error: e.message || e.toString(),
+        createdAt: new Date(),
+      });
+    }
     res.status(200).send('OK');
   }
 
@@ -1106,7 +1115,16 @@ export class EdvironPgController {
       }
     }
 
-    await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
+    try {
+      await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
+    } catch (e) {
+      await this.databaseService.ErrorLogsModel.create({
+        source: 'sendMailAfterTransaction',
+        collect_id: collectIdObject,
+        error: e.message || e.toString(),
+        createdAt: new Date(),
+      });
+    }
     res.status(200).send('OK');
     return;
   }
@@ -3723,7 +3741,7 @@ export class EdvironPgController {
           trustee_id: request.trustee_id,
           gateway: request.gateway,
           bank_reference: requestStatus.bank_reference,
-          student_detail : request.additional_data
+          student_detail: request.additional_data
         }
       };
     } catch (error) {
@@ -3739,7 +3757,7 @@ export class EdvironPgController {
   @Post('sendMail-after-transaction')
   async sendMailAfterTransaction(
     @Body() body: any,
-  ){
+  ) {
     const { collect_id } = body;
     try {
       if (!collect_id) {
@@ -3750,18 +3768,18 @@ export class EdvironPgController {
       if (!collectRequest) {
         throw new NotFoundException('Collect Request not found');
       }
-     const getTransactionInfo = await this.edvironPgService.getSingleTransactionInfo(collect_id)
+      const getTransactionInfo = await this.edvironPgService.getSingleTransactionInfo(collect_id)
       if (!getTransactionInfo) {
         throw new NotFoundException('Transaction not found');
       }
       try {
         const config = {
-          url : `${process.env.VANILLA_SERVICE_ENDPOINT}/business-alarm/send-mail-after-transaction`,
+          url: `${process.env.VANILLA_SERVICE_ENDPOINT}/business-alarm/send-mail-after-transaction`,
           method: 'post',
           headers: {
             'Content-Type': 'application/json',
           },
-          data : getTransactionInfo[0]
+          data: getTransactionInfo[0]
         }
         const response = await axios.request(config);
       } catch (error) {

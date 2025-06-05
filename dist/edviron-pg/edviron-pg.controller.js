@@ -474,7 +474,17 @@ let EdvironPgController = class EdvironPgController {
                 }
             }
         }
-        await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
+        try {
+            await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
+        }
+        catch (e) {
+            await this.databaseService.ErrorLogsModel.create({
+                source: 'sendMailAfterTransaction',
+                collect_id: collectIdObject,
+                error: e.message || e.toString(),
+                createdAt: new Date(),
+            });
+        }
         res.status(200).send('OK');
     }
     async easebuzzWebhook(body, res) {
@@ -750,7 +760,17 @@ let EdvironPgController = class EdvironPgController {
                 await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
             }
         }
-        await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
+        try {
+            await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
+        }
+        catch (e) {
+            await this.databaseService.ErrorLogsModel.create({
+                source: 'sendMailAfterTransaction',
+                collect_id: collectIdObject,
+                error: e.message || e.toString(),
+                createdAt: new Date(),
+            });
+        }
         res.status(200).send('OK');
         return;
     }
