@@ -93,4 +93,12 @@ export class PosPaytmController {
   ){
     return await this.posPaytmService.getTransactionStatus(collect_id)
   }
+
+  
+  @Post('refund')
+  async getRefund(
+    @Query('collect_id') collect_id:string
+  ){
+    return await this.posPaytmService.refund(collect_id)
+  }
 }

@@ -127,8 +127,7 @@ let PosPaytmService = class PosPaytmService {
                 merchantTransactionId: orderId,
             };
             console.log('debug 1', body);
-            const checksum = await Paytm.generateSignature(body, 'urflK0@0mthEgRo8');
-            console.log(checksum, 'checksum');
+            const checksum = await Paytm.generateSignature(body, collectRequest.paytmPos.paytm_merchant_key);
             const requestData = {
                 head: {
                     requestTimeStamp: await this.fmt(await this.nowInIST()),
@@ -140,6 +139,47 @@ let PosPaytmService = class PosPaytmService {
             };
             const config = {
                 url: `${process.env.PAYTM_POS_BASEURL}/ecr/V2/payment/status`,
+                method: 'post',
+                headers: { 'Content-Type': 'application/json' },
+                data: JSON.stringify(requestData),
+            };
+            const response = await axios_1.default.request(config);
+            return response.data;
+        }
+        catch (error) {
+            console.error('Error fetching transaction status:', error);
+            throw new common_1.BadRequestException('Failed to fetch transaction status.');
+        }
+    }
+    async refund(orderId) {
+        try {
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(orderId);
+            if (!collectRequest) {
+                throw new common_1.BadRequestException('collect request not found');
+            }
+            const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: new mongoose_1.Types.ObjectId(orderId),
+            });
+            if (!collectRequestStatus) {
+                throw new common_1.BadRequestException('collect request status not found');
+            }
+            const body = {
+                mid: collectRequest.paytmPos.paytmMid,
+                txnType: 'REFUND',
+                orderId: collectRequest._id.toString(),
+                txnId: orderId,
+                refId: orderId + '_REFUND',
+                refundAmount: collectRequest.amount,
+            };
+            const checksum = await Paytm.generateSignature(JSON.stringify(body), collectRequest.paytmPos.paytm_merchant_key);
+            const requestData = {
+                head: {
+                    signature: checksum,
+                },
+                body: body,
+            };
+            const config = {
+                url: `${process.env.PAYTM_POS_BASEURL}/refund/apply`,
                 method: 'post',
                 headers: { 'Content-Type': 'application/json' },
                 data: JSON.stringify(requestData),

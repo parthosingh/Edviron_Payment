@@ -24,7 +24,7 @@ export class PosPaytmService {
     async fmt(d: Date): Promise<string> {
         return d.toISOString().replace(/T/, ' ').replace(/\..+/, '');
     }
-    
+
     async initiatePOSPayment(
         request: CollectRequest
     ) {
@@ -43,7 +43,7 @@ export class PosPaytmService {
                 callbackUrl: request.callbackUrl,
             };
             console.log(body);
-            
+
             var checksum = await Paytm.generateSignature(body, paytmPos.paytm_merchant_key);
             var isVerifySignature = await Paytm.verifySignature(
                 body,
@@ -151,21 +151,19 @@ export class PosPaytmService {
             const body = {
                 paytmMid: collectRequest.paytmPos.paytmMid,
                 paytmTid: collectRequest.paytmPos.paytmTid,
-                transactionDateTime:await this.fmt(await this.nowInIST()),
+                transactionDateTime: await this.fmt(await this.nowInIST()),
                 merchantTransactionId: orderId,
             };
-            console.log('debug 1',body);
-            
+            console.log('debug 1', body);
+
             const checksum = await Paytm.generateSignature(
                 body,
-                'urflK0@0mthEgRo8',
+                collectRequest.paytmPos.paytm_merchant_key,
             );
 
-            console.log(checksum,'checksum');
-            
             const requestData = {
                 head: {
-                    requestTimeStamp:await this.fmt(await this.nowInIST()),
+                    requestTimeStamp: await this.fmt(await this.nowInIST()),
                     channelId: 'RIL',
                     checksum: checksum,
                     version: '3.1',
@@ -181,6 +179,52 @@ export class PosPaytmService {
             };
             const response = await axios.request(config);
 
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching transaction status:', error);
+            throw new BadRequestException('Failed to fetch transaction status.');
+        }
+    }
+
+    async refund(orderId: string) {
+        try {
+            const collectRequest =
+                await this.databaseService.CollectRequestModel.findById(orderId);
+            if (!collectRequest) {
+                throw new BadRequestException('collect request not found');
+            }
+            const collectRequestStatus =
+                await this.databaseService.CollectRequestStatusModel.findOne({
+                    collect_id: new Types.ObjectId(orderId),
+                });
+            if (!collectRequestStatus) {
+                throw new BadRequestException('collect request status not found');
+            }
+            const body = {
+                mid: collectRequest.paytmPos.paytmMid,
+                txnType: 'REFUND',
+                orderId : collectRequest._id.toString(),
+                txnId: orderId,
+                refId: orderId + '_REFUND',
+                refundAmount: collectRequest.amount,
+            };
+            const checksum = await Paytm.generateSignature(
+                JSON.stringify(body),
+                collectRequest.paytmPos.paytm_merchant_key,
+            );
+            const requestData = {
+                head: {
+                    signature: checksum,
+                },
+                body: body,
+            };
+            const config = {
+                url: `${process.env.PAYTM_POS_BASEURL}/refund/apply`,
+                method: 'post',
+                headers: { 'Content-Type': 'application/json' },
+                data: JSON.stringify(requestData),
+            };
+            const response = await axios.request(config);
             return response.data;
         } catch (error) {
             console.error('Error fetching transaction status:', error);

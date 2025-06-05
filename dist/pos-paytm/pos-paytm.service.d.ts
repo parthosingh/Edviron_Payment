@@ -51,4 +51,5 @@ export declare class PosPaytmService {
         paytmResponse: any;
     }>;
     getTransactionStatus(orderId: string): Promise<any>;
+    refund(orderId: string): Promise<any>;
 }
