@@ -169,7 +169,7 @@ let PosPaytmService = class PosPaytmService {
                 orderId: collectRequest._id.toString(),
                 txnId: orderId,
                 refId: orderId + '_REFUND',
-                refundAmount: collectRequest.amount,
+                refundAmount: collectRequest.amount.toFixed(2),
             };
             const checksum = await Paytm.generateSignature(JSON.stringify(body), collectRequest.paytmPos.paytm_merchant_key);
             const requestData = {

@@ -200,13 +200,14 @@ export class PosPaytmService {
             if (!collectRequestStatus) {
                 throw new BadRequestException('collect request status not found');
             }
+            // check if transaction is success 
             const body = {
                 mid: collectRequest.paytmPos.paytmMid,
                 txnType: 'REFUND',
                 orderId : collectRequest._id.toString(),
                 txnId: orderId,
                 refId: orderId + '_REFUND',
-                refundAmount: collectRequest.amount,
+                refundAmount: collectRequest.amount.toFixed(2),
             };
             const checksum = await Paytm.generateSignature(
                 JSON.stringify(body),
