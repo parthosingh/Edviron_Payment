@@ -28,13 +28,15 @@ const cashfree_service_1 = require("../cashfree/cashfree.service");
 const qs = require("qs");
 const _jwt = require("jsonwebtoken");
 const nttdata_service_1 = require("../nttdata/nttdata.service");
+const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 let EdvironPgController = class EdvironPgController {
-    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService) {
+    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService, posPaytmService) {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
         this.easebuzzService = easebuzzService;
         this.cashfreeService = cashfreeService;
         this.nttDataService = nttDataService;
+        this.posPaytmService = posPaytmService;
     }
     async handleRedirect(req, res) {
         const wallet = req.query.wallet;
@@ -982,6 +984,7 @@ let EdvironPgController = class EdvironPgController {
                         bank_reference: 1,
                         createdAt: 1,
                         updatedAt: 1,
+                        isPosTransaction: 1,
                     },
                 },
                 {
@@ -1601,6 +1604,11 @@ let EdvironPgController = class EdvironPgController {
                 console.log('init refund from easebuzz');
                 const refund = await this.easebuzzService.initiateRefund(collect_id, amount, refund_id);
                 console.log(refund);
+                return refund;
+            }
+            if (gateway === collect_request_schema_1.Gateway.PAYTM_POS) {
+                console.log('init refund from paytm pos');
+                const refund = await this.posPaytmService.refund(collect_id, amount, refund_id);
                 return refund;
             }
         }
@@ -3002,6 +3010,7 @@ exports.EdvironPgController = EdvironPgController = __decorate([
         database_service_1.DatabaseService,
         easebuzz_service_1.EasebuzzService,
         cashfree_service_1.CashfreeService,
-        nttdata_service_1.NttdataService])
+        nttdata_service_1.NttdataService,
+        pos_paytm_service_1.PosPaytmService])
 ], EdvironPgController);
 //# sourceMappingURL=edviron-pg.controller.js.map
