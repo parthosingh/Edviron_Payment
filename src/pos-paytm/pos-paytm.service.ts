@@ -186,28 +186,35 @@ export class PosPaytmService {
         }
     }
 
-    async refund(orderId: string) {
+    async refund(collect_id: string, refund_amount: number, refund_id: string) {
         try {
             const collectRequest =
-                await this.databaseService.CollectRequestModel.findById(orderId);
+                await this.databaseService.CollectRequestModel.findById(collect_id);
             if (!collectRequest) {
                 throw new BadRequestException('collect request not found');
             }
             const collectRequestStatus =
                 await this.databaseService.CollectRequestStatusModel.findOne({
-                    collect_id: new Types.ObjectId(orderId),
+                    collect_id: new Types.ObjectId(collect_id),
                 });
             if (!collectRequestStatus) {
                 throw new BadRequestException('collect request status not found');
             }
+            if (refund_amount > collectRequest.amount) {
+                throw new BadRequestException('Refund amount cannot be greater than transaction amount');
+            }
+            if (collectRequestStatus.status !== PaymentStatus.SUCCESS) {
+                throw new BadRequestException('Refund can only be processed for successful transactions');
+            }
+
             // check if transaction is success 
             const body = {
                 mid: collectRequest.paytmPos.paytmMid,
                 txnType: 'REFUND',
-                orderId : collectRequest._id.toString(),
-                txnId: orderId,
-                refId: orderId + '_REFUND',
-                refundAmount: collectRequest.amount.toFixed(2),
+                orderId: collectRequest._id.toString(),
+                txnId: collect_id,
+                refId: refund_id,
+                refundAmount: refund_amount.toFixed(2),
             };
             const checksum = await Paytm.generateSignature(
                 JSON.stringify(body),

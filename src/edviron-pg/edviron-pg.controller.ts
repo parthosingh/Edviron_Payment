@@ -33,6 +33,7 @@ import {
 } from 'src/database/schemas/platform.charges.schema';
 import * as _jwt from 'jsonwebtoken';
 import { NttdataService } from 'src/nttdata/nttdata.service';
+import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -42,6 +43,7 @@ export class EdvironPgController {
     private readonly easebuzzService: EasebuzzService,
     private readonly cashfreeService: CashfreeService,
     private readonly nttDataService: NttdataService,
+    private readonly posPaytmService: PosPaytmService,
   ) { }
   @Get('/redirect')
   async handleRedirect(@Req() req: any, @Res() res: any) {
@@ -1377,6 +1379,7 @@ export class EdvironPgController {
               bank_reference: 1,
               createdAt: 1,
               updatedAt: 1,
+              isPosTransaction:1,
             },
           },
           {
@@ -2241,6 +2244,19 @@ export class EdvironPgController {
 
         return refund;
       }
+
+      if(gateway === Gateway.PAYTM_POS){
+         console.log('init refund from paytm pos');
+
+        const refund = await this.posPaytmService.refund(
+          collect_id,
+          amount,
+          refund_id,
+        );
+
+        return refund;
+      }
+
     } catch (e) {
       throw new BadRequestException(e.message);
     }

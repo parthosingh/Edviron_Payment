@@ -44,5 +44,5 @@ export declare class PosPaytmController {
     }>;
     PosCallback(body: any): Promise<boolean>;
     checkStatus(collect_id: string): Promise<any>;
-    getRefund(collect_id: string): Promise<any>;
+    getRefund(collect_id: string, refund_amount: number, refund_id: string): Promise<any>;
 }

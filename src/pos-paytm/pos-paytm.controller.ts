@@ -97,10 +97,12 @@ export class PosPaytmController {
   
   @Post('refund')
   async getRefund(
-    @Query('collect_id') collect_id:string
+    @Query('collect_id') collect_id:string,
+    @Query('refund_amount') refund_amount:number,
+    @Query('refund_id') refund_id:string,
   ){
     // take refund amount from user 
     // refund amount cannot be greater than order amount 
-    return await this.posPaytmService.refund(collect_id)
+    return await this.posPaytmService.refund(collect_id, refund_amount, refund_id);
   }
 }

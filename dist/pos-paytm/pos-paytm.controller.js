@@ -57,8 +57,8 @@ let PosPaytmController = class PosPaytmController {
     async checkStatus(collect_id) {
         return await this.posPaytmService.getTransactionStatus(collect_id);
     }
-    async getRefund(collect_id) {
-        return await this.posPaytmService.refund(collect_id);
+    async getRefund(collect_id, refund_amount, refund_id) {
+        return await this.posPaytmService.refund(collect_id, refund_amount, refund_id);
     }
 };
 exports.PosPaytmController = PosPaytmController;
@@ -86,8 +86,10 @@ __decorate([
 __decorate([
     (0, common_1.Post)('refund'),
     __param(0, (0, common_1.Query)('collect_id')),
+    __param(1, (0, common_1.Query)('refund_amount')),
+    __param(2, (0, common_1.Query)('refund_id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Number, String]),
     __metadata("design:returntype", Promise)
 ], PosPaytmController.prototype, "getRefund", null);
 exports.PosPaytmController = PosPaytmController = __decorate([

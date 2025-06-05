@@ -151,25 +151,31 @@ let PosPaytmService = class PosPaytmService {
             throw new common_1.BadRequestException('Failed to fetch transaction status.');
         }
     }
-    async refund(orderId) {
+    async refund(collect_id, refund_amount, refund_id) {
         try {
-            const collectRequest = await this.databaseService.CollectRequestModel.findById(orderId);
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
             if (!collectRequest) {
                 throw new common_1.BadRequestException('collect request not found');
             }
             const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
-                collect_id: new mongoose_1.Types.ObjectId(orderId),
+                collect_id: new mongoose_1.Types.ObjectId(collect_id),
             });
             if (!collectRequestStatus) {
                 throw new common_1.BadRequestException('collect request status not found');
+            }
+            if (refund_amount > collectRequest.amount) {
+                throw new common_1.BadRequestException('Refund amount cannot be greater than transaction amount');
+            }
+            if (collectRequestStatus.status !== collect_req_status_schema_1.PaymentStatus.SUCCESS) {
+                throw new common_1.BadRequestException('Refund can only be processed for successful transactions');
             }
             const body = {
                 mid: collectRequest.paytmPos.paytmMid,
                 txnType: 'REFUND',
                 orderId: collectRequest._id.toString(),
-                txnId: orderId,
-                refId: orderId + '_REFUND',
-                refundAmount: collectRequest.amount.toFixed(2),
+                txnId: collect_id,
+                refId: refund_id,
+                refundAmount: refund_amount.toFixed(2),
             };
             const checksum = await Paytm.generateSignature(JSON.stringify(body), collectRequest.paytmPos.paytm_merchant_key);
             const requestData = {
