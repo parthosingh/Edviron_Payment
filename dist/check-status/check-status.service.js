@@ -26,8 +26,9 @@ const pay_u_service_1 = require("../pay-u/pay-u.service");
 const hdfc_razorpay_service_1 = require("../hdfc_razporpay/hdfc_razorpay.service");
 const smartgateway_service_1 = require("../smartgateway/smartgateway.service");
 const nttdata_service_1 = require("../nttdata/nttdata.service");
+const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 let CheckStatusService = class CheckStatusService {
-    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay, hdfcSmartgatewayService, nttdataService) {
+    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay, hdfcSmartgatewayService, nttdataService, posPaytmService) {
         this.databaseService = databaseService;
         this.hdfcService = hdfcService;
         this.phonePeService = phonePeService;
@@ -39,6 +40,7 @@ let CheckStatusService = class CheckStatusService {
         this.hdfcRazorpay = hdfcRazorpay;
         this.hdfcSmartgatewayService = hdfcSmartgatewayService;
         this.nttdataService = nttdataService;
+        this.posPaytmService = posPaytmService;
     }
     async checkStatus(collect_request_id) {
         console.log('checking status for', collect_request_id);
@@ -83,6 +85,35 @@ let CheckStatusService = class CheckStatusService {
                 custom_order_id,
             };
         }
+        if (collectRequest.isVBAPaymentComplete) {
+            let status_code = '400';
+            if (collect_req_status.status.toUpperCase() === 'SUCCESS') {
+                status_code = '200';
+            }
+            const details = {
+                payment_mode: 'vba',
+                bank_ref: collect_req_status.bank_reference || null,
+                payment_methods: {
+                    vba: {
+                        channel: null,
+                        vba_account: collectRequest.vba_account_number || null,
+                    },
+                },
+                transaction_time: collect_req_status.payment_time,
+                formattedTransactionDate: `${collect_req_status.payment_time.getFullYear()}-${String(collect_req_status.payment_time.getMonth() + 1).padStart(2, '0')}-${String(collect_req_status.payment_time.getDate()).padStart(2, '0')}`,
+                order_status: 'PAID',
+                isSettlementComplete: true,
+                transfer_utr: null,
+            };
+            return {
+                status: collect_req_status.status,
+                amount: collectRequest.amount,
+                transaction_amount: collect_req_status.transaction_amount,
+                status_code,
+                details: details,
+                custom_order_id: collectRequest.custom_order_id || null,
+            };
+        }
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:
                 return await this.hdfcService.checkStatus(collect_request_id);
@@ -107,7 +138,7 @@ let CheckStatusService = class CheckStatusService {
                 else {
                     status_code = 400;
                 }
-                const date = collect_req_status.updatedAt;
+                const date = collect_req_status.payment_time || collect_req_status.updatedAt;
                 if (!date) {
                     throw new Error('No date found in the transaction status');
                 }
@@ -117,7 +148,7 @@ let CheckStatusService = class CheckStatusService {
                     custom_order_id,
                     amount: parseInt(easebuzzStatus.msg.amount),
                     details: {
-                        payment_mode: collect_req_status.payment_method,
+                        payment_mode: collect_req_status.payment_time,
                         bank_ref: easebuzzStatus.msg.bank_ref_num,
                         payment_method: { mode: easebuzzStatus.msg.mode },
                         transaction_time: collect_req_status?.updatedAt,
@@ -196,6 +227,8 @@ let CheckStatusService = class CheckStatusService {
                 return await this.nttdataService.getTransactionStatus(collect_request_id.toString());
             case collect_request_schema_1.Gateway.PENDING:
                 return await this.checkExpiry(collectRequest);
+            case collect_request_schema_1.Gateway.PAYTM_POS:
+                return await this.posPaytmService.formattedStatu(collectRequest._id.toString());
             case collect_request_schema_1.Gateway.EXPIRED:
                 return {
                     status: collect_req_status_schema_1.PaymentStatus.USER_DROPPED,
@@ -223,6 +256,35 @@ let CheckStatusService = class CheckStatusService {
             throw new common_1.NotFoundException('No status found for custom order id');
         }
         const collectidString = collectRequest._id.toString();
+        if (collectRequest.isVBAPaymentComplete) {
+            let status_code = '400';
+            if (collect_req_status.status.toUpperCase() === 'SUCCESS') {
+                status_code = '200';
+            }
+            const details = {
+                payment_mode: 'vba',
+                bank_ref: collect_req_status.bank_reference || null,
+                payment_methods: {
+                    vba: {
+                        channel: null,
+                        vba_account: collectRequest.vba_account_number || null,
+                    },
+                },
+                transaction_time: collect_req_status.payment_message,
+                formattedTransactionDate: `${collect_req_status.payment_time.getFullYear()}-${String(collect_req_status.payment_time.getMonth() + 1).padStart(2, '0')}-${String(collect_req_status.payment_time.getDate()).padStart(2, '0')}`,
+                order_status: 'PAID',
+                isSettlementComplete: true,
+                transfer_utr: null,
+            };
+            return {
+                status: collect_req_status.status,
+                amount: collectRequest.amount,
+                transaction_amount: collect_req_status.transaction_amount,
+                status_code,
+                details: details,
+                custom_order_id: collectRequest.custom_order_id || null,
+            };
+        }
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:
                 return await this.hdfcService.checkStatus(collectRequest._id.toString());
@@ -264,6 +326,8 @@ let CheckStatusService = class CheckStatusService {
                     },
                 };
                 return ezb_status_response;
+            case collect_request_schema_1.Gateway.PAYTM_POS:
+                return await this.posPaytmService.formattedStatu(collectRequest._id.toString());
             case collect_request_schema_1.Gateway.EDVIRON_CCAVENUE:
                 if (collectRequest.school_id === '6819e115e79a645e806c0a70') {
                     return await this.ccavenueService.checkStatusProd(collectRequest, collectidString);
@@ -456,6 +520,7 @@ exports.CheckStatusService = CheckStatusService = __decorate([
         pay_u_service_1.PayUService,
         hdfc_razorpay_service_1.HdfcRazorpayService,
         smartgateway_service_1.SmartgatewayService,
-        nttdata_service_1.NttdataService])
+        nttdata_service_1.NttdataService,
+        pos_paytm_service_1.PosPaytmService])
 ], CheckStatusService);
 //# sourceMappingURL=check-status.service.js.map

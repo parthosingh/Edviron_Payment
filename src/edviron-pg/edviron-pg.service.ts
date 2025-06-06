@@ -235,7 +235,6 @@ export class EdvironPgService implements GatewayService {
         encodedParams.set('hash', hash);
         encodedParams.set('request_flow', 'SEAMLESS');
         encodedParams.set('sub_merchant_id', request.easebuzz_sub_merchant_id);
-
         let ezb_split_payments: { [key: string]: number } = {};
         if (
           vendorgateway?.easebuzz &&
@@ -255,6 +254,7 @@ export class EdvironPgService implements GatewayService {
           if (remainingAmount > 0) {
             ezb_split_payments[easebuzz_school_label] = remainingAmount;
           }
+
           encodedParams.set(
             'split_payments',
             JSON.stringify(ezb_split_payments),
@@ -270,6 +270,7 @@ export class EdvironPgService implements GatewayService {
         }
 
         const Ezboptions = {
+
           method: 'POST',
           url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
           headers: {
@@ -631,6 +632,7 @@ export class EdvironPgService implements GatewayService {
       encodedParams.set('request_flow', 'SEAMLESS');
       encodedParams.set('sub_merchant_id', request.easebuzz_sub_merchant_id);
       encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+
       const options = {
         method: 'POST',
         url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
@@ -646,7 +648,7 @@ export class EdvironPgService implements GatewayService {
       let formData = new FormData();
       formData.append('access_key', access_key);
       formData.append('payment_mode', `UPI`);
-      formData.append('upi_qr', 'true');
+      formData.append('upi_qr', 'true'); 
       formData.append('request_mode', 'SUVA');
 
       let config = {
@@ -1736,77 +1738,3 @@ export class EdvironPgService implements GatewayService {
     return vendotTransaction[0];
   }
 }
-
-const data = {
-  customer_details: {
-    customer_email: null,
-    customer_id: '7112AAA812234',
-    customer_name: null,
-    customer_phone: '9898989898',
-  },
-  order: {
-    order_amount: 8700,
-    order_currency: 'INR',
-    order_id: '678ccb5b12a7c6cd1b64e320',
-    order_tags: null,
-  },
-  payment: {
-    auth_id: null,
-    bank_reference: null,
-    cf_payment_id: 3425695002,
-    payment_amount: 8900.19,
-    payment_currency: 'INR',
-    payment_group: 'upi',
-    payment_message:
-      'User dropped and did not complete the two factor authentication',
-    payment_method: { upi: { channel: null, upi_id: null } },
-    payment_status: 'USER_DROPPED',
-    payment_time: '2025-01-19T15:22:31+05:30',
-  },
-  payment_gateway_details: {
-    gateway_name: 'CASHFREE',
-    gateway_order_id: '3694981450',
-    gateway_order_reference_id: 'null',
-    gateway_payment_id: '3425695002',
-    gateway_settlement: null,
-    gateway_status_code: null,
-  },
-  payment_offers: null,
-};
-
-const de = {
-  customer_details: {
-    customer_email: null,
-    customer_id: '7112AAA812234',
-    customer_name: null,
-    customer_phone: '9898989898',
-  },
-  order: {
-    order_amount: 8700,
-    order_currency: 'INR',
-    order_id: '678ccb5b12a7c6cd1b64e320',
-    order_tags: null,
-  },
-  payment: {
-    auth_id: null,
-    bank_reference: null,
-    cf_payment_id: 3425695419,
-    payment_amount: 8900.19,
-    payment_currency: 'INR',
-    payment_group: 'upi',
-    payment_message:
-      'User dropped and did not complete the two factor authentication',
-    payment_method: { upi: { channel: null, upi_id: null } },
-    payment_status: 'USER_DROPPED',
-    payment_time: '2025-01-19T15:22:40+05:30',
-  },
-  payment_gateway_details: {
-    gateway_name: 'CASHFREE',
-    gateway_order_id: '3694981450',
-    gateway_order_reference_id: 'null',
-    gateway_payment_id: '3425695419',
-    gateway_settlement: null,
-    gateway_status_code: null,
-  },
-  payment_offers: null,
-};

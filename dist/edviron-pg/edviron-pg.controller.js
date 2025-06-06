@@ -2558,6 +2558,54 @@ let EdvironPgController = class EdvironPgController {
             };
         }
     }
+    async getDisputesbyOrderId(collect_id) {
+        try {
+            if (!collect_id) {
+                throw new common_1.BadRequestException('send all details');
+            }
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request) {
+                throw new common_1.NotFoundException('Collect Request not found');
+            }
+            const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: request._id });
+            if (!requestStatus) {
+                throw new common_1.NotFoundException('Collect Request not found');
+            }
+            const client_id = request.clientId;
+            const cashfreeConfig = {
+                method: 'get',
+                url: `https://api.cashfree.com/pg/orders/${request._id}/disputes`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': client_id,
+                    'x-partner-apikey': process.env.CASHFREE_API_KEY,
+                },
+            };
+            const cashfreeResponse = await axios_1.default.request(cashfreeConfig);
+            return {
+                data: {
+                    cashfreeDispute: cashfreeResponse.data,
+                    custom_order_id: request.custom_order_id,
+                    collect_id: collect_id,
+                    school_id: request.school_id,
+                    trustee_id: request.trustee_id,
+                    gateway: request.gateway,
+                    bank_reference: requestStatus.bank_reference,
+                    student_detail: request.additional_data
+                }
+            };
+        }
+        catch (error) {
+            if (axios_1.default.isAxiosError(error)) {
+                console.error('Axios Error:', error.response?.data || error.message);
+                throw new common_1.BadRequestException(`External API error: ${error.response?.data?.message || error.message}`);
+            }
+            console.error('Internal Error:', error.message);
+            throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -2941,6 +2989,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getVba", null);
+__decorate([
+    (0, common_1.Get)('get-dispute-byOrderId'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getDisputesbyOrderId", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

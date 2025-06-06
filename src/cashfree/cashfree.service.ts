@@ -717,10 +717,7 @@ export class CashfreeService {
     };
 
     try {
-      const { data: response } = await axios.request(config);
-      const details={
-        
-      }
+      const { data: response } = await axios.request(config)
       return response;
     } catch (error) {
       console.log(

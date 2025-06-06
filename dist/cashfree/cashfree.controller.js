@@ -308,6 +308,7 @@ let CashfreeController = class CashfreeController {
         if (!request) {
             return res.status(200).send('Request Not found');
         }
+        request.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
         const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
             collect_id: request._id,
         });

@@ -344,4 +344,16 @@ export declare class EdvironPgController {
         monthlyReport?: undefined;
     }>;
     getVba(collect_id: string): Promise<any>;
+    getDisputesbyOrderId(collect_id: string): Promise<{
+        data: {
+            cashfreeDispute: any;
+            custom_order_id: string;
+            collect_id: string;
+            school_id: string;
+            trustee_id: string;
+            gateway: Gateway;
+            bank_reference: string;
+            student_detail: string;
+        };
+    }>;
 }

@@ -572,7 +572,6 @@ let CashfreeService = class CashfreeService {
         };
         try {
             const { data: response } = await axios_1.default.request(config);
-            const details = {};
             return response;
         }
         catch (error) {

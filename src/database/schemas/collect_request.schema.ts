@@ -6,13 +6,15 @@ export enum Gateway {
   HDFC = 'HDFC',
   EDVIRON_PG = 'EDVIRON_PG',
   EDVIRON_PAY_U = 'EDVIRON_PAY_U',
-  EDVIRON_CCAVENUE='EDVIRON_CCAVENUE',
-  EDVIRON_CASHFREE='EDVIRON_CASHFREE',
-  EDVIRON_EASEBUZZ='EDVIRON_EASEBUZZ',
-  PENDING='PENDING',
-  EXPIRED='EXPIRED',
+  EDVIRON_CCAVENUE = 'EDVIRON_CCAVENUE',
+  EDVIRON_CASHFREE = 'EDVIRON_CASHFREE',
+  EDVIRON_EASEBUZZ = 'EDVIRON_EASEBUZZ',
+  PENDING = 'PENDING',
+  EXPIRED = 'EXPIRED',
   EDVIRON_HDFC_RAZORPAY = 'EDVIRON_HDFC_RAZORPAY',
   SMART_GATEWAY = 'EDVIRON_SMARTGATEWAY',
+  PAYTM_POS = 'PAYTM_POS',
+  MOSAMBEE_POS = 'MOSAMBEE_POS',
   EDVIRON_NTTDATA = 'EDVIRON_NTTDATA',
 }
 
@@ -48,6 +50,24 @@ export class PaymentIds {
   ccavenue_id?: string | null;
 }
 
+
+@Schema()
+export class paytmPos {
+  @Prop({ type: String, required: false })
+  paytmMid?: string | null;
+
+  @Prop({ type: String, required: false })
+  paytmTid?: string | null;
+
+  @Prop({ type: String, required: false })
+  channel_id?: string | null;
+
+  @Prop({ type: String, required: false })
+  paytm_merchant_key?: string | null;
+
+  @Prop({ type: String, required: false })
+  device_id?: string | null;
+}
 
 
 @Schema({ timestamps: true })
@@ -177,6 +197,22 @@ export class CollectRequest {
   @Prop({required:false})
   easebuzz_split_label:string
 
+  @Prop({ required: false })
+  pos_machine_name: string;
+
+  @Prop({ required: false })
+  pos_machine_device_id: string;
+
+  @Prop({ required: false })
+  pos_machine_device_code: string;
+
+  @Prop({ required: false, default: false })
+  isPosTransaction: boolean;
+
+  @Prop({ type: paytmPos, required: false })
+  paytmPos: paytmPos;
+
+
   @Prop({
     required: false,
     type: {
@@ -193,7 +229,7 @@ export class CollectRequest {
   })
   ntt_data: I_NTT_DATA;
   @Prop({ required: false })
-  vba_account_number: string
+  vba_account_number: string;
 
   _id: ObjectId;
 }
@@ -201,3 +237,37 @@ export class CollectRequest {
 export type CollectRequestDocument = CollectRequest & Document;
 export const CollectRequestSchema =
   SchemaFactory.createForClass(CollectRequest);
+
+const dummy = {
+  head: {
+    responseTimestamp: '2025-06-0514:40:00',
+    checksum:
+      'c+g5rJCMNSsllk0VH5ZLdP/q52RH+B7Ly74EADiiSWekJtTwt2ad6MPbdyl4PbNpSpQR8GXz8/cLBas3x/Wfc2E9YrIUxlmdL3yG7D7loRw=',
+  },
+  body: {
+    paytmMid: 'yYLgEx27583498804201',
+    paytmTid: '70001853',
+    transactionDateTime: '2025-06-05 14:39:11',
+    merchantTransactionId: '68415eb7914304377e758613',
+    merchantReferenceNo: '68415eb7914304377e758613',
+    transactionAmount: '100',
+    acquirementId: '20250605011610000137394427929951634',
+    retrievalReferenceNo: '174911457722',
+    authCode: null,
+    issuerMaskCardNo: null,
+    issuingBankName: null,
+    bankResponseCode: '0',
+    bankResponseMessage: 'NA',
+    bankMid: 'yYLgEx27583498804201',
+    bankTid: null,
+    merchantExtendedInfo: null,
+    extendedInfo: null,
+    acquiringBank: 'RBL Bank',
+    resultInfo: {
+      resultStatus: 'SUCCESS',
+      resultCode: 'S',
+      resultMsg: 'Success',
+      resultCodeId: '0000',
+    },
+  },
+};

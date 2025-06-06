@@ -15,7 +15,9 @@ import * as nodemailer from 'nodemailer';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 import { PayUService } from 'src/pay-u/pay-u.service';
 import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
+import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { NttdataService } from 'src/nttdata/nttdata.service';
+
 @Injectable()
 export class CollectService {
   constructor(
@@ -27,8 +29,11 @@ export class CollectService {
     private readonly hdfcRazorpay: HdfcRazorpayService,
     private readonly payuService: PayUService,
     private readonly hdfcSmartgatewayService: SmartgatewayService,
+    private readonly posPaytmService: PosPaytmService,
     private readonly nttdataService: NttdataService,
+
   ) {}
+
   async collect(
     amount: Number,
     callbackUrl: string,
@@ -175,9 +180,8 @@ export class CollectService {
         15 * 60 * 1000,
       );
       return {
-        url: `${process.env.URL}/pay-u/redirect?collect_id=${
-          request._id
-        }&school_name=${school_name?.split(' ').join('_')}`,
+        url: `${process.env.URL}/pay-u/redirect?collect_id=${request._id
+          }&school_name=${school_name?.split(' ').join('_')}`,
         request,
       };
     }
@@ -210,11 +214,10 @@ export class CollectService {
         await request.save();
       }
       return {
-        url: `${process.env.URL}/hdfc-razorpay/redirect?order_id=${
-          orderData.id
-        }&collect_id=${request._id}&school_name=${school_name
-          ?.split(' ')
-          .join('_')}`,
+        url: `${process.env.URL}/hdfc-razorpay/redirect?order_id=${orderData.id
+          }&collect_id=${request._id}&school_name=${school_name
+            ?.split(' ')
+            .join('_')}`,
         request,
       };
     }
@@ -251,6 +254,7 @@ export class CollectService {
             cashfreeVedors,
             easebuzz_school_label
           )
+
         : await this.hdfcService.collect(request)
     )!;
     await this.databaseService.CollectRequestModel.updateOne(
@@ -264,6 +268,57 @@ export class CollectService {
     );
     return { url: transaction.url, request };
   }
+
+  async posCollect(
+    amount: Number,
+    callbackUrl: string,
+    school_id: string,
+    trustee_id: string,
+    machine_name?: string,
+    platform_charges?: platformChange[],
+    paytm_pos?: {
+      paytmMid?: string;
+      paytmTid?: string;
+      channel_id?: string;
+      paytm_merchant_key?: string;
+      device_id?: string; //edviron
+    },
+    additional_data?: {},
+    custom_order_id?: string,
+    req_webhook_urls?: string[],
+    school_name?: string,
+  ) {
+    const gateway = machine_name === 'PAYTM_POS' ? Gateway.PAYTM_POS : Gateway.MOSAMBEE_POS;
+    const request = await this.databaseService.CollectRequestModel.create({
+      amount,
+      callbackUrl,
+      gateway: gateway,
+      req_webhook_urls,
+      school_id,
+      trustee_id,
+      additional_data: JSON.stringify(additional_data),
+      custom_order_id: custom_order_id || null,
+      isPosTransaction: true,
+    });
+
+    await new this.databaseService.CollectRequestStatusModel({
+      collect_id: request._id,
+      status: PaymentStatus.PENDING,
+      order_amount: request.amount,
+      transaction_amount: request.amount,
+      payment_method: null,
+    }).save();
+
+    if (machine_name === Gateway.PAYTM_POS) {
+      if (paytm_pos) {
+        request.paytmPos = paytm_pos;
+        request.save();
+      }
+      return await this.posPaytmService.initiatePOSPayment(request)
+    }
+
+  }
+
 
   async sendCallbackEmail(collect_id: string) {
     const htmlToSend = `

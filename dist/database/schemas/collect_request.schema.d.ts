@@ -35,6 +35,8 @@ export declare enum Gateway {
     EXPIRED = "EXPIRED",
     EDVIRON_HDFC_RAZORPAY = "EDVIRON_HDFC_RAZORPAY",
     SMART_GATEWAY = "EDVIRON_SMARTGATEWAY",
+    PAYTM_POS = "PAYTM_POS",
+    MOSAMBEE_POS = "MOSAMBEE_POS",
     EDVIRON_NTTDATA = "EDVIRON_NTTDATA"
 }
 interface I_NTT_DATA {
@@ -54,6 +56,13 @@ export declare class PaymentIds {
     easebuzz_cc_id?: string | null;
     easebuzz_dc_id?: string | null;
     ccavenue_id?: string | null;
+}
+export declare class paytmPos {
+    paytmMid?: string | null;
+    paytmTid?: string | null;
+    channel_id?: string | null;
+    paytm_merchant_key?: string | null;
+    device_id?: string | null;
 }
 export declare class CollectRequest {
     amount: number;
@@ -117,6 +126,11 @@ export declare class CollectRequest {
     pay_u_key: string;
     pay_u_salt: string;
     easebuzz_split_label: string;
+    pos_machine_name: string;
+    pos_machine_device_id: string;
+    pos_machine_device_code: string;
+    isPosTransaction: boolean;
+    paytmPos: paytmPos;
     ntt_data: I_NTT_DATA;
     vba_account_number: string;
     _id: ObjectId;

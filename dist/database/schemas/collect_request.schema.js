@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CollectRequestSchema = exports.CollectRequest = exports.PaymentIds = exports.Gateway = void 0;
+exports.CollectRequestSchema = exports.CollectRequest = exports.paytmPos = exports.PaymentIds = exports.Gateway = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 var Gateway;
 (function (Gateway) {
@@ -24,6 +24,8 @@ var Gateway;
     Gateway["EXPIRED"] = "EXPIRED";
     Gateway["EDVIRON_HDFC_RAZORPAY"] = "EDVIRON_HDFC_RAZORPAY";
     Gateway["SMART_GATEWAY"] = "EDVIRON_SMARTGATEWAY";
+    Gateway["PAYTM_POS"] = "PAYTM_POS";
+    Gateway["MOSAMBEE_POS"] = "MOSAMBEE_POS";
     Gateway["EDVIRON_NTTDATA"] = "EDVIRON_NTTDATA";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let PaymentIds = class PaymentIds {
@@ -56,6 +58,32 @@ __decorate([
 exports.PaymentIds = PaymentIds = __decorate([
     (0, mongoose_1.Schema)()
 ], PaymentIds);
+let paytmPos = class paytmPos {
+};
+exports.paytmPos = paytmPos;
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, required: false }),
+    __metadata("design:type", Object)
+], paytmPos.prototype, "paytmMid", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, required: false }),
+    __metadata("design:type", Object)
+], paytmPos.prototype, "paytmTid", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, required: false }),
+    __metadata("design:type", Object)
+], paytmPos.prototype, "channel_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, required: false }),
+    __metadata("design:type", Object)
+], paytmPos.prototype, "paytm_merchant_key", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, required: false }),
+    __metadata("design:type", Object)
+], paytmPos.prototype, "device_id", void 0);
+exports.paytmPos = paytmPos = __decorate([
+    (0, mongoose_1.Schema)()
+], paytmPos);
 let CollectRequest = class CollectRequest {
 };
 exports.CollectRequest = CollectRequest;
@@ -218,7 +246,27 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
+
 ], CollectRequest.prototype, "easebuzz_split_label", void 0);
+
+], CollectRequest.prototype, "pos_machine_name", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "pos_machine_device_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "pos_machine_device_code", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], CollectRequest.prototype, "isPosTransaction", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: paytmPos, required: false }),
+    __metadata("design:type", paytmPos)
+], CollectRequest.prototype, "paytmPos", void 0);
+
 __decorate([
     (0, mongoose_1.Prop)({
         required: false,
@@ -244,4 +292,36 @@ exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequest);
 exports.CollectRequestSchema = mongoose_1.SchemaFactory.createForClass(CollectRequest);
+const dummy = {
+    head: {
+        responseTimestamp: '2025-06-0514:40:00',
+        checksum: 'c+g5rJCMNSsllk0VH5ZLdP/q52RH+B7Ly74EADiiSWekJtTwt2ad6MPbdyl4PbNpSpQR8GXz8/cLBas3x/Wfc2E9YrIUxlmdL3yG7D7loRw=',
+    },
+    body: {
+        paytmMid: 'yYLgEx27583498804201',
+        paytmTid: '70001853',
+        transactionDateTime: '2025-06-05 14:39:11',
+        merchantTransactionId: '68415eb7914304377e758613',
+        merchantReferenceNo: '68415eb7914304377e758613',
+        transactionAmount: '100',
+        acquirementId: '20250605011610000137394427929951634',
+        retrievalReferenceNo: '174911457722',
+        authCode: null,
+        issuerMaskCardNo: null,
+        issuingBankName: null,
+        bankResponseCode: '0',
+        bankResponseMessage: 'NA',
+        bankMid: 'yYLgEx27583498804201',
+        bankTid: null,
+        merchantExtendedInfo: null,
+        extendedInfo: null,
+        acquiringBank: 'RBL Bank',
+        resultInfo: {
+            resultStatus: 'SUCCESS',
+            resultCode: 'S',
+            resultMsg: 'Success',
+            resultCodeId: '0000',
+        },
+    },
+};
 //# sourceMappingURL=collect_request.schema.js.map
