@@ -213,7 +213,7 @@ let PosPaytmService = class PosPaytmService {
         const response = {
             status: body.resultInfo.resultStatus,
             amount: request.amount,
-            transaction_amount: body.transactionAmount,
+            transaction_amount: Number(body.transactionAmount / 100),
             status_code: statusCode,
             details: details,
             custom_order_id: request.custom_order_id || null,

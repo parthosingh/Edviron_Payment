@@ -253,7 +253,7 @@ export class PosPaytmController {
           {
             $set: {
               status: resultStatus,
-              transaction_amount: transactionAmount,
+              transaction_amount: Number(transactionAmount/100),
               payment_method,
               details: JSON.stringify(details),
               bank_reference: retrievalReferenceNo,
@@ -285,7 +285,7 @@ export class PosPaytmController {
             transaction_time: transactionDateTime,
             additional_data,
             details: requestStatus.details,
-            transaction_amount: requestStatus.transaction_amount,
+            transaction_amount:Number(transactionAmount/100),
             bank_reference: requestStatus.bank_reference,
             payment_method: requestStatus.payment_method,
             payment_details: requestStatus.details,
