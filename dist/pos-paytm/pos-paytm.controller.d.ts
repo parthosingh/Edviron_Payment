@@ -1,10 +1,12 @@
 import { PosPaytmService } from './pos-paytm.service';
 import { platformChange } from 'src/collect/collect.controller';
 import { DatabaseService } from 'src/database/database.service';
+import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 export declare class PosPaytmController {
     private readonly posPaytmService;
     private readonly databaseService;
-    constructor(posPaytmService: PosPaytmService, databaseService: DatabaseService);
+    private readonly edvironPgService;
+    constructor(posPaytmService: PosPaytmService, databaseService: DatabaseService, edvironPgService: EdvironPgService);
     initiatePayment(body: {
         amount: Number;
         callbackUrl: string;
@@ -42,6 +44,6 @@ export declare class PosPaytmController {
         };
         paytmResponse: any;
     }>;
-    PosCallback(body: any): Promise<boolean>;
+    PosCallback(body: any, res: any): Promise<true | undefined>;
     checkStatus(collect_id: string): Promise<any>;
 }

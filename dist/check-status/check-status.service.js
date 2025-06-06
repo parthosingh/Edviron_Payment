@@ -26,8 +26,9 @@ const pay_u_service_1 = require("../pay-u/pay-u.service");
 const hdfc_razorpay_service_1 = require("../hdfc_razporpay/hdfc_razorpay.service");
 const smartgateway_service_1 = require("../smartgateway/smartgateway.service");
 const nttdata_service_1 = require("../nttdata/nttdata.service");
+const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 let CheckStatusService = class CheckStatusService {
-    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay, hdfcSmartgatewayService, nttdataService) {
+    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay, hdfcSmartgatewayService, nttdataService, posPaytmService) {
         this.databaseService = databaseService;
         this.hdfcService = hdfcService;
         this.phonePeService = phonePeService;
@@ -39,6 +40,7 @@ let CheckStatusService = class CheckStatusService {
         this.hdfcRazorpay = hdfcRazorpay;
         this.hdfcSmartgatewayService = hdfcSmartgatewayService;
         this.nttdataService = nttdataService;
+        this.posPaytmService = posPaytmService;
     }
     async checkStatus(collect_request_id) {
         console.log('checking status for', collect_request_id);
@@ -225,6 +227,8 @@ let CheckStatusService = class CheckStatusService {
                 return await this.nttdataService.getTransactionStatus(collect_request_id.toString());
             case collect_request_schema_1.Gateway.PENDING:
                 return await this.checkExpiry(collectRequest);
+            case collect_request_schema_1.Gateway.PAYTM_POS:
+                return await this.posPaytmService.formattedStatu(collectRequest._id.toString());
             case collect_request_schema_1.Gateway.EXPIRED:
                 return {
                     status: collect_req_status_schema_1.PaymentStatus.USER_DROPPED,
@@ -322,6 +326,8 @@ let CheckStatusService = class CheckStatusService {
                     },
                 };
                 return ezb_status_response;
+            case collect_request_schema_1.Gateway.PAYTM_POS:
+                return await this.posPaytmService.formattedStatu(collectRequest._id.toString());
             case collect_request_schema_1.Gateway.EDVIRON_CCAVENUE:
                 if (collectRequest.school_id === '6819e115e79a645e806c0a70') {
                     return await this.ccavenueService.checkStatusProd(collectRequest, collectidString);
@@ -514,6 +520,7 @@ exports.CheckStatusService = CheckStatusService = __decorate([
         pay_u_service_1.PayUService,
         hdfc_razorpay_service_1.HdfcRazorpayService,
         smartgateway_service_1.SmartgatewayService,
-        nttdata_service_1.NttdataService])
+        nttdata_service_1.NttdataService,
+        pos_paytm_service_1.PosPaytmService])
 ], CheckStatusService);
 //# sourceMappingURL=check-status.service.js.map

@@ -280,4 +280,36 @@ exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequest);
 exports.CollectRequestSchema = mongoose_1.SchemaFactory.createForClass(CollectRequest);
+const dummy = {
+    head: {
+        responseTimestamp: '2025-06-0514:40:00',
+        checksum: 'c+g5rJCMNSsllk0VH5ZLdP/q52RH+B7Ly74EADiiSWekJtTwt2ad6MPbdyl4PbNpSpQR8GXz8/cLBas3x/Wfc2E9YrIUxlmdL3yG7D7loRw=',
+    },
+    body: {
+        paytmMid: 'yYLgEx27583498804201',
+        paytmTid: '70001853',
+        transactionDateTime: '2025-06-05 14:39:11',
+        merchantTransactionId: '68415eb7914304377e758613',
+        merchantReferenceNo: '68415eb7914304377e758613',
+        transactionAmount: '100',
+        acquirementId: '20250605011610000137394427929951634',
+        retrievalReferenceNo: '174911457722',
+        authCode: null,
+        issuerMaskCardNo: null,
+        issuingBankName: null,
+        bankResponseCode: '0',
+        bankResponseMessage: 'NA',
+        bankMid: 'yYLgEx27583498804201',
+        bankTid: null,
+        merchantExtendedInfo: null,
+        extendedInfo: null,
+        acquiringBank: 'RBL Bank',
+        resultInfo: {
+            resultStatus: 'SUCCESS',
+            resultCode: 'S',
+            resultMsg: 'Success',
+            resultCodeId: '0000',
+        },
+    },
+};
 //# sourceMappingURL=collect_request.schema.js.map
