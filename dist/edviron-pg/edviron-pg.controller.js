@@ -479,10 +479,10 @@ let EdvironPgController = class EdvironPgController {
         }
         catch (e) {
             await this.databaseService.ErrorLogsModel.create({
-                source: 'sendMailAfterTransaction',
-                collect_id: collectIdObject,
-                error: e.message || e.toString(),
-                createdAt: new Date(),
+                type: 'sendMailAfterTransaction',
+                des: collectIdObject.toString(),
+                identifier: 'EdvironPg webhook',
+                body: e.message || e.toString(),
             });
         }
         res.status(200).send('OK');
@@ -765,10 +765,10 @@ let EdvironPgController = class EdvironPgController {
         }
         catch (e) {
             await this.databaseService.ErrorLogsModel.create({
-                source: 'sendMailAfterTransaction',
-                collect_id: collectIdObject,
-                error: e.message || e.toString(),
-                createdAt: new Date(),
+                type: 'sendMailAfterTransaction',
+                des: collectIdObject.toString(),
+                identifier: 'EdvironPg webhook',
+                body: e.message || e.toString(),
             });
         }
         res.status(200).send('OK');

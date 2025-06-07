@@ -303,10 +303,10 @@ export class HdfcRazorpayController {
         await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
       } catch (e) {
         await this.databaseService.ErrorLogsModel.create({
-          source: 'sendMailAfterTransaction',
-          collect_id: collectIdObject,
-          error: e.message || e.toString(),
-          createdAt: new Date(),
+          type: 'sendMailAfterTransaction',
+          des: collectIdObject.toString(),
+          identifier: 'Hdfc razorpay webhook',
+          body: e.message || e.toString(),
         });
       }
       res.status(200).send('OK');

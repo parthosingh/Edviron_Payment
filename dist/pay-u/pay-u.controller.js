@@ -420,10 +420,10 @@ let PayUController = class PayUController {
             }
             catch (e) {
                 await this.databaseService.ErrorLogsModel.create({
-                    source: 'sendMailAfterTransaction',
-                    collect_id: collectIdObject,
-                    error: e.message || e.toString(),
-                    createdAt: new Date(),
+                    type: 'sendMailAfterTransaction',
+                    des: collectIdObject.toString(),
+                    identifier: 'pay u webhook',
+                    body: e.message || e.toString(),
                 });
             }
             return res.status(200).send('OK');
