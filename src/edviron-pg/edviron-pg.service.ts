@@ -660,6 +660,8 @@ export class EdvironPgService implements GatewayService {
         data: formData,
       };
       const response = await axios.request(config);
+      console.log(response.data);
+      
       await this.databaseService.CollectRequestModel.findByIdAndUpdate(
         collect_id,
         {
@@ -668,7 +670,7 @@ export class EdvironPgService implements GatewayService {
       );
     } catch (error) {
       throw new Error(error.message);
-    }
+    } 
   }
 
   async getSchoolInfo(school_id: string) {

@@ -195,15 +195,6 @@ let EdvironPgService = class EdvironPgService {
                     encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
                 }
                 const Ezboptions = {
-
-                if (request.school_id === '67b6bbcf735d7e4413e82b8e') {
-                    let ezb_split_payments = {};
-                    ezb_split_payments['LAKSHMIKANTHA EDUCATIONAL TRUST'] =
-                        request.amount;
-                    encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
-                }
-                const options = {
-
                     method: 'POST',
                     url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
                     headers: {
@@ -492,7 +483,6 @@ let EdvironPgService = class EdvironPgService {
             encodedParams.set('request_flow', 'SEAMLESS');
             encodedParams.set('sub_merchant_id', request.easebuzz_sub_merchant_id);
             encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
-
             const options = {
                 method: 'POST',
                 url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
@@ -518,6 +508,7 @@ let EdvironPgService = class EdvironPgService {
                 data: formData,
             };
             const response = await axios_1.default.request(config);
+            console.log(response.data);
             await this.databaseService.CollectRequestModel.findByIdAndUpdate(collect_id, {
                 deepLink: response.data.qr_link,
             });

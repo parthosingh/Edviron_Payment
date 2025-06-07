@@ -246,9 +246,10 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
-
 ], CollectRequest.prototype, "easebuzz_split_label", void 0);
-
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
 ], CollectRequest.prototype, "pos_machine_name", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
@@ -266,7 +267,6 @@ __decorate([
     (0, mongoose_1.Prop)({ type: paytmPos, required: false }),
     __metadata("design:type", paytmPos)
 ], CollectRequest.prototype, "paytmPos", void 0);
-
 __decorate([
     (0, mongoose_1.Prop)({
         required: false,
