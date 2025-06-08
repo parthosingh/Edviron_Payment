@@ -370,6 +370,7 @@ let EdvironPgController = class EdvironPgController {
                     $set: {
                         payment_time: payment_time,
                         status: webhookStatus,
+                        gateway: collect_request_schema_1.Gateway.EDVIRON_PG
                     },
                 });
             }
@@ -686,6 +687,27 @@ let EdvironPgController = class EdvironPgController {
             catch (e) {
                 console.log(`failed to save commision ${e.message}`);
             }
+        }
+        try {
+            if (collectReq.isSplitPayments) {
+                try {
+                    const vendor = await this.databaseService.VendorTransactionModel.updateMany({
+                        collect_id: collectReq._id,
+                    }, {
+                        $set: {
+                            payment_time: new Date(body.addedon),
+                            status: status,
+                            gateway: collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ
+                        },
+                    });
+                }
+                catch (e) {
+                    console.log('Error in updating vendor transactions');
+                }
+            }
+        }
+        catch (e) {
+            console.log(e);
         }
         const payment_time = new Date(body.addedon);
         const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
@@ -1252,7 +1274,7 @@ let EdvironPgController = class EdvironPgController {
                                 'collect_request.easebuzz_sub_merchant_id': 0,
                                 'collect_request.paymentIds': 0,
                                 'collect_request.deepLink': 0,
-                                'isVBAPaymentComplete': 0
+                                isVBAPaymentComplete: 0,
                             },
                         },
                         {
@@ -1300,7 +1322,7 @@ let EdvironPgController = class EdvironPgController {
                                             reason: '$reason',
                                             gateway: '$gateway',
                                             capture_status: '$capture_status',
-                                            isVBAPaymentComplete: '$isVBAPaymentComplete'
+                                            isVBAPaymentComplete: '$isVBAPaymentComplete',
                                         },
                                     ],
                                 },
@@ -1362,7 +1384,7 @@ let EdvironPgController = class EdvironPgController {
                                 'collect_request.easebuzz_sub_merchant_id': 0,
                                 'collect_request.paymentIds': 0,
                                 'collect_request.deepLink': 0,
-                                'isVBAPaymentComplete': 0
+                                isVBAPaymentComplete: 0,
                             },
                         },
                         {
@@ -1409,7 +1431,7 @@ let EdvironPgController = class EdvironPgController {
                                             reason: '$reason',
                                             gateway: '$gateway',
                                             capture_status: '$capture_status',
-                                            isVBAPaymentComplete: '$isVBAPaymentComplete'
+                                            isVBAPaymentComplete: '$isVBAPaymentComplete',
                                         },
                                     ],
                                 },
@@ -2567,7 +2589,9 @@ let EdvironPgController = class EdvironPgController {
             if (!request) {
                 throw new common_1.NotFoundException('Collect Request not found');
             }
-            const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: request._id });
+            const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: request._id,
+            });
             if (!requestStatus) {
                 throw new common_1.NotFoundException('Collect Request not found');
             }
@@ -2593,8 +2617,8 @@ let EdvironPgController = class EdvironPgController {
                     trustee_id: request.trustee_id,
                     gateway: request.gateway,
                     bank_reference: requestStatus.bank_reference,
-                    student_detail: request.additional_data
-                }
+                    student_detail: request.additional_data,
+                },
             };
         }
         catch (error) {

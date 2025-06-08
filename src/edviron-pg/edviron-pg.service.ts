@@ -114,7 +114,7 @@ export class EdvironPgService implements GatewayService {
           .filter(({ amount, percentage }) => {
             // Check if either amount is greater than 0 or percentage is greater than 0
             return (amount && amount > 0) || (percentage && percentage > 0);
-          }) 
+          })
           .map(({ vendor_id, percentage, amount }) => ({
             vendor_id,
             percentage,
@@ -243,12 +243,26 @@ export class EdvironPgService implements GatewayService {
           easebuzzVendors.length > 0
         ) {
           let vendorTotal = 0;
-          easebuzzVendors.forEach((vendor: any) => {
+          for (const vendor of easebuzzVendors) {
             if (vendor.name && typeof vendor.amount === 'number') {
               ezb_split_payments[vendor.vendor_id] = vendor.amount;
               vendorTotal += vendor.amount;
             }
-          });
+            if (!vendorgateway.cashfree) {
+              await new this.databaseService.VendorTransactionModel({
+                vendor_id: vendor.vendor_id,
+                amount: vendor.amount,
+                collect_id: request._id,
+                gateway: Gateway.EDVIRON_EASEBUZZ,
+                status: TransactionStatus.PENDING,
+                trustee_id: request.trustee_id,
+                school_id: request.school_id,
+                custom_order_id: request.custom_order_id || '',
+                name: vendor.name, // Ensure you assign the vendor's name
+              }).save();
+            }
+          }
+
           const remainingAmount = request.amount - vendorTotal;
           // remainig balance will go to sub-merchant-id in split
           if (remainingAmount > 0) {
@@ -270,7 +284,6 @@ export class EdvironPgService implements GatewayService {
         }
 
         const Ezboptions = {
-
           method: 'POST',
           url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
           headers: {
@@ -648,7 +661,7 @@ export class EdvironPgService implements GatewayService {
       let formData = new FormData();
       formData.append('access_key', access_key);
       formData.append('payment_mode', `UPI`);
-      formData.append('upi_qr', 'true'); 
+      formData.append('upi_qr', 'true');
       formData.append('request_mode', 'SUVA');
 
       let config = {
@@ -661,7 +674,7 @@ export class EdvironPgService implements GatewayService {
       };
       const response = await axios.request(config);
       console.log(response.data);
-      
+
       await this.databaseService.CollectRequestModel.findByIdAndUpdate(
         collect_id,
         {
@@ -670,7 +683,7 @@ export class EdvironPgService implements GatewayService {
       );
     } catch (error) {
       throw new Error(error.message);
-    } 
+    }
   }
 
   async getSchoolInfo(school_id: string) {

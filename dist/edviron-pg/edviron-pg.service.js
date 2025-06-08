@@ -178,12 +178,25 @@ let EdvironPgService = class EdvironPgService {
                     easebuzz_school_label &&
                     easebuzzVendors.length > 0) {
                     let vendorTotal = 0;
-                    easebuzzVendors.forEach((vendor) => {
+                    for (const vendor of easebuzzVendors) {
                         if (vendor.name && typeof vendor.amount === 'number') {
                             ezb_split_payments[vendor.vendor_id] = vendor.amount;
                             vendorTotal += vendor.amount;
                         }
-                    });
+                        if (!vendorgateway.cashfree) {
+                            await new this.databaseService.VendorTransactionModel({
+                                vendor_id: vendor.vendor_id,
+                                amount: vendor.amount,
+                                collect_id: request._id,
+                                gateway: collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ,
+                                status: transactionStatus_1.TransactionStatus.PENDING,
+                                trustee_id: request.trustee_id,
+                                school_id: request.school_id,
+                                custom_order_id: request.custom_order_id || '',
+                                name: vendor.name,
+                            }).save();
+                        }
+                    }
                     const remainingAmount = request.amount - vendorTotal;
                     if (remainingAmount > 0) {
                         ezb_split_payments[easebuzz_school_label] = remainingAmount;
