@@ -244,6 +244,7 @@ let CashfreeService = class CashfreeService {
                 },
             ]));
             const enrichedOrders = response.data
+                .filter((order) => order.order_id)
                 .map((order) => {
                 let customData = {};
                 let additionalData = {};

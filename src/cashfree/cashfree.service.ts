@@ -316,10 +316,12 @@ export class CashfreeService {
       // }));
 
       const enrichedOrders = response.data
-        // .filter((order: any) => order.order_id)
+        .filter((order: any) => order.order_id)
         .map((order: any) => {
           let customData: any = {};
           let additionalData: any = {};
+          // console.log(order,'or');
+          
           if (order.order_id) {
             customData = customOrderMap.get(order.order_id) || {};
             console.log(order, 'cd');
