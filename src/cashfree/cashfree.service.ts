@@ -322,18 +322,23 @@ export class CashfreeService {
           let additionalData: any = {};
           if (order.order_id) {
             customData = customOrderMap.get(order.order_id) || {};
-            additionalData = JSON.parse(customData?.additional_data);
+            console.log(order, 'cd');
+            try {
+              additionalData = JSON.parse(customData?.additional_data);
+            } catch {
+              additionalData = null;
+            }
           }
           return {
             ...order,
             custom_order_id: customData.custom_order_id || null,
             school_id: customData.school_id || null,
             student_id: additionalData?.student_details?.student_id || null,
-            student_name: additionalData.student_details?.student_name || null,
+            student_name: additionalData?.student_details?.student_name || null,
             student_email:
-              additionalData.student_details?.student_email || null,
+              additionalData?.student_details?.student_email || null,
             student_phone_no:
-              additionalData.student_details?.student_phone_no || null,
+              additionalData?.student_details?.student_phone_no || null,
           };
         });
 
@@ -694,7 +699,7 @@ export class CashfreeService {
     },
     notification_group: string,
   ) {
-     const config = {
+    const config = {
       method: 'post',
       url: `https://api.cashfree.com/pg/vba`,
       maxBodyLength: Infinity,
@@ -717,13 +722,11 @@ export class CashfreeService {
     };
 
     try {
-      const { data: response } = await axios.request(config)
+      const { data: response } = await axios.request(config);
       return response;
     } catch (error) {
-      console.log(
-        error
-      );
-       
+      console.log(error);
+
       console.error('Error:', error.response?.data || error.message);
       throw error;
     }
@@ -739,10 +742,9 @@ export class CashfreeService {
       virtual_account_phone: string;
     },
     notification_group: string,
-    amount:number
+    amount: number,
   ) {
-
-     const config = {
+    const config = {
       method: 'post',
       url: `https://api.cashfree.com/pg/vba`,
       maxBodyLength: Infinity,
@@ -763,18 +765,15 @@ export class CashfreeService {
         notification_group,
       },
     };
- 
+
     try {
       const { data: response } = await axios.request(config);
       console.log(response);
-      
+
       return response;
-    } catch (error) { 
-      console.log(
-        error
-      );
-        
-       
+    } catch (error) {
+      console.log(error);
+
       console.error('Error:', error.response?.data || error.message);
       throw error;
     }
