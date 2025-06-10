@@ -102,11 +102,13 @@ let NttdataService = class NttdataService {
                 throw new Error('Encrypted token not found in NTT response');
             }
             const { atomTokenId } = JSON.parse(this.decrypt(encResponse, ntt_data.nttdata_res_salt, ntt_data.nttdata_res_salt));
-            const updatedRequest = await this.databaseService.CollectRequestModel.findOneAndUpdate({ _id }, { $set: {
+            const updatedRequest = await this.databaseService.CollectRequestModel.findOneAndUpdate({ _id }, {
+                $set: {
                     'ntt_data.ntt_atom_token': atomTokenId,
                     'ntt_data.ntt_atom_txn_id': _id.toString(),
                     'gateway': collect_request_schema_1.Gateway.EDVIRON_NTTDATA,
-                } }, { new: true });
+                }
+            }, { new: true });
             if (!updatedRequest)
                 throw new common_1.BadRequestException('Orders not found');
             const url = `${process.env.URL}/nttdata/redirect?collect_id=${_id.toString()}`;
@@ -248,7 +250,7 @@ let NttdataService = class NttdataService {
                         signature: signature,
                         prodDetails: [
                             {
-                                prodName: "NSE",
+                                prodName: "SCHOOL",
                                 prodRefundId: "refund1",
                                 prodRefundAmount: amount
                             }
@@ -265,7 +267,7 @@ let NttdataService = class NttdataService {
             });
             const config = {
                 method: 'post',
-                url: `${process.env.NTT_AUTH_API_URL}/ots/payment/status?${form.toString()}`,
+                url: `https://payment.atomtech.in/ots/payment/refund?${form.toString()}`,
                 headers: {
                     'cache-control': 'no-cache',
                     'Content-Type': 'application/json',
@@ -277,6 +279,7 @@ let NttdataService = class NttdataService {
                 throw new Error('Encrypted token not found in NTT response');
             }
             const res = await JSON.parse(this.decrypt(encResponse, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt));
+            console.log(res);
             return res;
         }
         catch (error) {

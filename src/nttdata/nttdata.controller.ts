@@ -4,6 +4,7 @@ import {
   Get,
   NotFoundException,
   Post,
+  Query,
   Req,
   Res,
 } from '@nestjs/common';
@@ -18,7 +19,7 @@ export class NttdataController {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly nttdataService: NttdataService,
-  ) {}
+  ) { }
 
   @Get('/redirect')
   async nttdatapayPayment(@Req() req: any, @Res() res: any) {
@@ -88,9 +89,8 @@ export class NttdataController {
                         merchId: "${request?.ntt_data.nttdata_id || ''}",
                         custEmail: "${student_email}",
                         custMobile: "${student_phone_no}",
-                        returnUrl: "${
-                          process.env.URL
-                        }/nttdata/callback?collect_id=${collect_id}"
+                        returnUrl: "${process.env.URL
+        }/nttdata/callback?collect_id=${collect_id}"
                     };
                      new AtomPaynetz(options, 'prod');
                     }
@@ -120,16 +120,121 @@ export class NttdataController {
           collect_id: new Types.ObjectId(collect_id),
         }),
       ]);
-      
+      const callbackdata = {
+        payInstrument: {
+          merchDetails: {
+            merchId: 706008,
+            merchTxnId: '6847c551ab881e3baad248ad',
+            merchTxnDate: '2025-06-10T11:11:39'
+          },
+          payDetails: {
+            atomTxnId: 11000280891529,
+            prodDetails: [Array],
+            amount: 1,
+            surchargeAmount: 3.55,
+            totalAmount: 4.55,
+            custAccNo: '123456789012',
+            clientCode: '1234',
+            txnCurrency: 'INR',
+            signature: 'efd98ea25a101230b7bc9cd422cd28a06363c61acc6a61ac1f7170478fdc56843c4c9e234b0603db3f386eb27febc94db0fabb4e9947fc0bd42f170cba4faf0c',
+            txnInitDate: '2025-06-10 11:11:41',
+            txnCompleteDate: '2025-06-10 11:13:06'
+          },
+          payModeSpecificData: { subChannel: [Array], bankDetails: [Object] },
+          extras: {
+            udf1: 'udf1',
+            udf2: 'udf2',
+            udf3: 'udf3',
+            udf4: 'udf4',
+            udf5: 'udf5'
+          },
+          custDetails: {
+            custEmail: 'testing@edviron.com',
+            custMobile: '8888888888',
+            billingInfo: {}
+          },
+          responseDetails: {
+            statusCode: 'OTS0000',
+            message: 'SUCCESS',
+            description: 'AUTHORIZED'
+          }
+        }
+      }
+
       if (!collect_request || !collect_req_status)
         throw new NotFoundException('Order not found');
       const data = JSON.parse(
         this.nttdataService.decrypt(encRes, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt)
       );
+      // console.log(data, "callbackData")
+      // console.log(data.payInstrument.payModeSpecificData.subChannel, "subchannel")
+      // console.log(data.payInstrument.payModeSpecificData.bankDetails, "bank")
       collect_request.gateway = Gateway.EDVIRON_NTTDATA;
       collect_request.ntt_data.ntt_atom_txn_id =
         data?.payInstrument?.payDetails?.atomTxnId;
       await collect_request.save();
+
+      let details: any;
+      let payment_method = "";
+      let platform_type = "";
+      const subChannel = data.payInstrument?.payModeSpecificData?.subChannel?.[0];
+
+      switch (subChannel) {
+        case 'UP':
+          payment_method = 'upi';
+          platform_type = 'UPI';
+          details = {
+            app: {
+              channel: 'NA',
+              upi_id: data.payInstrument.payModeSpecificData.bankDetails,
+            },
+          };
+          break;
+        case 'CC':
+          payment_method = 'credit_card';
+          platform_type = 'CreditCard';
+          details = {
+            card: {
+              card_detail: data.payInstrument.payModeSpecificData.bankDetails,
+            },
+          };
+          break;
+
+        case 'DC':
+          payment_method = 'credit_card';
+          platform_type = 'CreditCard';
+          details = {
+            card: {
+              card_detail: data.payInstrument.payModeSpecificData.bankDetails,
+            },
+          };
+          break;
+
+        case 'NB':
+          payment_method = 'net_banking';
+          platform_type = 'netBanking';
+          details = {
+            netBanking: {
+              netbanking: data.payInstrument.payModeSpecificData.bankDetails,
+            },
+          };
+          break;
+
+        default:
+          payment_method = '';
+          platform_type = '';
+          details = {};
+          break;
+      }
+
+      collect_req_status.status = data.payInstrument.responseDetails.message
+      collect_req_status.transaction_amount = data.payInstrument.payDetails.totalAmount
+      collect_req_status.bank_reference = data.payInstrument.payModeSpecificData.bankDetails.bankTxnId
+      collect_req_status.payment_time = data.payInstrument.payDetails.txnCompleteDate
+      collect_req_status.payment_method = payment_method
+      collect_req_status.payment_message = data.payInstrument.responseDetails.description
+      collect_req_status.details =  JSON.stringify(details),
+      collect_req_status.save()
 
       const status = await this.nttdataService.getTransactionStatus(collect_id);
       const payment_status = status.status;
@@ -181,7 +286,7 @@ export class NttdataController {
       if (!collect_request || !collect_req_status)
         throw new NotFoundException('Order not found');
 
-      
+
       const data = JSON.parse(this.nttdataService.decrypt(encRes, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt));
 
       collect_request.gateway = Gateway.EDVIRON_NTTDATA;
@@ -229,11 +334,19 @@ export class NttdataController {
       const stringified_data = JSON.stringify(req.body);
       await this.databaseService.WebhooksModel.create({
         body: stringified_data,
-        gateway:'ntt_payment'
+        gateway: 'ntt_payment'
       });
       return res.sendStatus(200);
     } catch (error) {
       throw new BadRequestException(error.message || 'Something went wrong');
     }
+  }
+
+  @Post('initiate-Refund')
+  async initiateRefund(
+    @Query('collect_id') collect_id:string,
+    @Query('amount') amount:number
+  ){
+    await this.nttdataService.initiateRefund(collect_id, amount)
   }
 }
