@@ -54,7 +54,6 @@ export declare class CollectController {
         worldline_merchant_id?: string | null;
         worldline_encryption_key?: string | null;
         worldline_encryption_iV?: string | null;
-        worldline_scheme_code?: string[];
         vendors_info?: [
             {
                 vendor_id: string;

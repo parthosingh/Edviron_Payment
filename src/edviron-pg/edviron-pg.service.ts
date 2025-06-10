@@ -281,7 +281,7 @@ export class EdvironPgService implements GatewayService {
             'split_payments',
             JSON.stringify(ezb_split_payments),
           );
-        }
+        } 
 
         const Ezboptions = {
           method: 'POST',

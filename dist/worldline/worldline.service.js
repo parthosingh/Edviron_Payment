@@ -49,6 +49,7 @@ let WorldlineService = class WorldlineService {
             '-' +
             txnDate.getFullYear();
         const totalAmountPaisa = formattedAmount * 100;
+        console.log(request.worldline_vendors_info);
         const vendorDetails = request.worldline_vendors_info || [
             {
                 itemId: 'FIRST',
@@ -72,6 +73,7 @@ let WorldlineService = class WorldlineService {
             ];
         }
         else {
+            console.log(vendorDetails);
             items = vendorDetails.map((vendor, idx) => {
                 let amountInPaise;
                 if (vendor.amount !== undefined) {
@@ -99,6 +101,7 @@ let WorldlineService = class WorldlineService {
                 identifier: 'FIRST',
             });
         }
+        console.log({ items });
         const plainJson = {
             merchant: {
                 webhookEndpointURL: `${process.env.URL}/worldline/webhook`,

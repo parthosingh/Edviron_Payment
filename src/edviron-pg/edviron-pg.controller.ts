@@ -607,7 +607,7 @@ export class EdvironPgController {
     const updateReq =
       await this.databaseService.CollectRequestStatusModel.updateOne(
         {
-          collect_id: collectIdObject,
+          collect_id: collectIdObject, 
         },
         {
           $set: {

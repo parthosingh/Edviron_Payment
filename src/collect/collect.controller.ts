@@ -76,7 +76,6 @@ export class CollectController {
       worldline_merchant_id?: string | null;
       worldline_encryption_key?: string | null;
       worldline_encryption_iV?: string | null;
-      worldline_scheme_code?: string[];
       vendors_info?: [
         {
           vendor_id: string;
@@ -153,15 +152,13 @@ export class CollectController {
       nttdata_res_salt,
       nttdata_req_salt,
       isVBAPayment,
-      vba_account_number,
       vendorgateway,
       easebuzzVendors,
       cashfreeVedors,
-      easebuzz_school_label
+      easebuzz_school_label,
       worldline_merchant_id,
       worldline_encryption_key,
       worldline_encryption_iV,
-      worldline_scheme_code,
       vba_account_number,
       worldLine_vendors
     } = body;
@@ -215,15 +212,14 @@ export class CollectController {
           worldline_merchant_id,
           worldline_encryption_key,
           worldline_encryption_iV,
-          worldline_scheme_code,
           vendors_info,
           vendorgateway,
           easebuzzVendors,
           cashfreeVedors,
           isVBAPayment,
           vba_account_number,
-          easebuzz_school_label
-          worldLine_vendors
+          worldLine_vendors,
+          easebuzz_school_label,
         ),
       );
     } catch (e) {

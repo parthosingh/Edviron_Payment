@@ -71,7 +71,6 @@ export class CollectService {
     worldline_merchant_id?: string | null,
     worldline_encryption_key?: string | null,
     worldline_encryption_iV?: string | null,
-    worldline_scheme_code?: string[],
     vendor?: [
       {
         vendor_id: string;
@@ -81,18 +80,7 @@ export class CollectService {
         scheme_code?: string;
       },
     ],
-    isVBAPayment?: boolean,
-    vba_account_number?: string,
-    worldLine_vendors?: [
-      {
-        vendor_id: string;
-        percentage?: number;
-        amount?: number;
-        name?: string;
-        scheme_code?: string;
-      },
-    ],
-    vendorgateway?: {
+      vendorgateway?: {
       easebuzz: boolean;
       cashfree: boolean;
     },
@@ -114,6 +102,15 @@ export class CollectService {
     ],
     isVBAPayment?: boolean,
     vba_account_number?: string,
+    worldLine_vendors?: [
+      {
+        vendor_id: string;
+        percentage?: number;
+        amount?: number;
+        name?: string;
+        scheme_code?: string;
+      },
+    ],
     easebuzz_school_label?:string | null
   ): Promise<{ url: string; request: CollectRequest }> {
     if (custom_order_id) {
@@ -161,9 +158,8 @@ export class CollectService {
       cashfreeVedors,
       isVBAPayment: isVBAPayment || false,
       vba_account_number: vba_account_number || 'NA',
-      isVBAPayment: isVBAPayment || false,
-      vba_account_number: vba_account_number || 'NA',
-      worldline_vendors_info:worldLine_vendors
+      worldline_vendors_info:worldLine_vendors,
+      isSplitPayments:splitPayments || false
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({
@@ -270,6 +266,8 @@ export class CollectService {
             school_id: request.school_id,
             custom_order_id: request.custom_order_id || '',
             name,
+            worldline_vendors_info:worldLine_vendors
+            
           }).save();
         });
       }

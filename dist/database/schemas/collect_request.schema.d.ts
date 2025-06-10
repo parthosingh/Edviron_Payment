@@ -107,7 +107,6 @@ export declare class CollectRequest {
             name?: string;
         }
     ];
-
     easebuzzVendors?: [
         {
             vendor_id: string;
@@ -117,15 +116,20 @@ export declare class CollectRequest {
         }
     ];
     cashfreeVedors?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
+    ];
     worldline_vendors_info?: [
-
         {
             vendor_id: string;
             percentage?: number;
             amount?: number;
             name?: string;
             scheme_code?: string;
-
         }
     ];
     hdfc_razorpay_id: string;

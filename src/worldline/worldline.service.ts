@@ -62,7 +62,8 @@ export class WorldlineService {
       txnDate.getFullYear();
 
     const totalAmountPaisa = formattedAmount * 100;
-
+    console.log(request.worldline_vendors_info);
+    
     const vendorDetails: any = request.worldline_vendors_info || [
       {
         itemId: 'FIRST',
@@ -88,7 +89,10 @@ export class WorldlineService {
           identifier: 'FIRST',
         },
       ];
-    } else {
+    }
+     else {
+        console.log(vendorDetails);
+        
       items = vendorDetails.map(
         (
           vendor: {
@@ -117,11 +121,13 @@ export class WorldlineService {
       );
     }
 
+    
     const totalMappedAmount = items.reduce(
       (sum: any, item: any) => sum + parseFloat(item.amount),
       0,
     );
     const remainingAmount = (request.amount - totalMappedAmount).toFixed(2);
+
     if (parseFloat(remainingAmount) > 0) {
       items.push({
         itemId: 'FIRST',
@@ -130,6 +136,8 @@ export class WorldlineService {
         identifier: 'FIRST',
       });
     }
+
+        console.log({items});
     const plainJson = {
       merchant: {
         webhookEndpointURL: `${process.env.URL}/worldline/webhook`,
