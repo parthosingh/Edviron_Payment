@@ -477,11 +477,17 @@ export class CheckStatusService {
 
     // Convert milliseconds to minutes
     const differenceInMinutes = timeDifference / (1000 * 60);
-
+    const requestStatus=await this.databaseService.CollectRequestStatusModel.findOne({
+      collect_id:request._id
+    })
+    let paymentStatus:any=PaymentStatus.USER_DROPPED
+    if(requestStatus){
+      paymentStatus=requestStatus.status
+    }
     // Check if the difference is more than 20 minutes
-    if (differenceInMinutes > 20) {
+    if (differenceInMinutes > 25) {
       return {
-        status: PaymentStatus.USER_DROPPED,
+        status: paymentStatus,
         custom_order_id: request.custom_order_id || 'NA',
         amount: request.amount,
         status_code: 202,
