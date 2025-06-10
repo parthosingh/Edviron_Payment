@@ -16,6 +16,7 @@ export enum Gateway {
   PAYTM_POS = 'PAYTM_POS',
   MOSAMBEE_POS = 'MOSAMBEE_POS',
   EDVIRON_NTTDATA = 'EDVIRON_NTTDATA',
+  EDVIRON_WORLDLINE = 'EDVIRON_WORLDLINE',
 }
 
 interface I_NTT_DATA {
@@ -50,6 +51,12 @@ export class PaymentIds {
   ccavenue_id?: string | null;
 }
 
+interface I_WORLDLINE {
+  worldline_merchant_id: string;
+  worldline_encryption_key: string;
+  worldline_encryption_iV: string;
+  worldline_token: string;
+}
 
 @Schema()
 export class paytmPos {
@@ -167,6 +174,12 @@ export class CollectRequest {
     { vendor_id: string; percentage?: number; amount?: number; name?: string },
   ];
 
+  worldline_vendors_info?: [
+    { vendor_id: string; percentage?: number; amount?: number; name?: string, scheme_code?: string },
+  ];
+
+
+
   @Prop({ required: false })
   hdfc_razorpay_id: string;
 
@@ -228,6 +241,35 @@ export class CollectRequest {
     _id: false,
   })
   ntt_data: I_NTT_DATA;
+
+  @Prop({
+    required: false,
+    type: {
+      worldline_merchant_id: { type: String, required: false, default: null },
+      worldline_encryption_key: { type: String, required: false, default: null },
+      worldline_encryption_iV: { type: String, required: false, default: null },
+      worldline_token: { type: String, required: false, default: null },
+    },
+    _id: false,
+  })
+  worldline : I_WORLDLINE
+
+  // @Prop({ required: false })
+  // worldline_merchant_id: string;
+
+  // @Prop({ required: false })
+  // worldline_encryption_key: string;
+
+  // @Prop({ required: false })
+  // worldline_encryption_iV: string;
+
+
+  // @Prop({ required: false })
+  // worldline_scheme_code: string[];
+
+  @Prop({ required: false })
+  worldline_token: string;
+
   @Prop({ required: false })
   vba_account_number: string;
 

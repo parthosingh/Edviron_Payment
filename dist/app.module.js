@@ -29,6 +29,9 @@ const ccavenue_service_1 = require("./ccavenue/ccavenue.service");
 const pos_paytm_controller_1 = require("./pos-paytm/pos-paytm.controller");
 const pos_paytm_service_1 = require("./pos-paytm/pos-paytm.service");
 const nttdata_module_1 = require("./nttdata/nttdata.module");
+const worldline_module_1 = require("./worldline/worldline.module");
+const worldline_controller_1 = require("./worldline/worldline.controller");
+const worldline_service_1 = require("./worldline/worldline.service");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -46,10 +49,11 @@ exports.AppModule = AppModule = __decorate([
             pay_u_module_1.PayUModule,
             hdfc_razorpay_module_1.HdfcRazorpayModule,
             smartgateway_module_1.SmartgatewayModule,
-            nttdata_module_1.NttdataModule
+            nttdata_module_1.NttdataModule,
+            worldline_module_1.WorldlineModule
         ],
-        controllers: [app_controller_1.AppController, easebuzz_controller_1.EasebuzzController, cashfree_controller_1.CashfreeController, pos_paytm_controller_1.PosPaytmController],
-        providers: [app_service_1.AppService, cashfree_service_1.CashfreeService, easebuzz_service_1.EasebuzzService, ccavenue_service_1.CcavenueService, pos_paytm_service_1.PosPaytmService],
+        controllers: [app_controller_1.AppController, easebuzz_controller_1.EasebuzzController, cashfree_controller_1.CashfreeController, pos_paytm_controller_1.PosPaytmController, worldline_controller_1.WorldlineController],
+        providers: [app_service_1.AppService, cashfree_service_1.CashfreeService, easebuzz_service_1.EasebuzzService, ccavenue_service_1.CcavenueService, pos_paytm_service_1.PosPaytmService, worldline_service_1.WorldlineService],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

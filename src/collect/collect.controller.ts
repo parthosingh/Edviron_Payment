@@ -73,12 +73,26 @@ export class CollectController {
       nttdata_res_salt?: string | null;
       nttdata_req_salt?: string | null;
       easebuzz_school_label?:string | null;
+      worldline_merchant_id?: string | null;
+      worldline_encryption_key?: string | null;
+      worldline_encryption_iV?: string | null;
+      worldline_scheme_code?: string[];
       vendors_info?: [
         {
           vendor_id: string;
           percentage?: number;
           amount?: number;
           name?: string;
+          scheme_code?:string
+        },
+      ];
+      worldLine_vendors?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+          scheme_code?:string
         },
       ];
       vendorgateway?: {
@@ -144,6 +158,12 @@ export class CollectController {
       easebuzzVendors,
       cashfreeVedors,
       easebuzz_school_label
+      worldline_merchant_id,
+      worldline_encryption_key,
+      worldline_encryption_iV,
+      worldline_scheme_code,
+      vba_account_number,
+      worldLine_vendors
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -192,6 +212,10 @@ export class CollectController {
           nttdata_hash_res_key,
           nttdata_res_salt,
           nttdata_req_salt,
+          worldline_merchant_id,
+          worldline_encryption_key,
+          worldline_encryption_iV,
+          worldline_scheme_code,
           vendors_info,
           vendorgateway,
           easebuzzVendors,
@@ -199,6 +223,7 @@ export class CollectController {
           isVBAPayment,
           vba_account_number,
           easebuzz_school_label
+          worldLine_vendors
         ),
       );
     } catch (e) {

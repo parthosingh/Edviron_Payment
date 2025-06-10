@@ -231,7 +231,6 @@ let CashfreeService = class CashfreeService {
             const orderIds = response.data
                 .filter((order) => order.order_id !== null)
                 .map((order) => order.order_id);
-            console.log(response, 'response');
             const customOrders = await this.databaseService.CollectRequestModel.find({
                 _id: { $in: orderIds },
             });
@@ -243,24 +242,57 @@ let CashfreeService = class CashfreeService {
                     additional_data: doc.additional_data,
                 },
             ]));
-            const enrichedOrders = response.data
-                .map((order) => {
+            const enrichedOrders = await Promise.all(response.data
+                .filter((order) => order.order_id)
+                .map(async (order) => {
                 let customData = {};
                 let additionalData = {};
                 if (order.order_id) {
                     customData = customOrderMap.get(order.order_id) || {};
-                    additionalData = JSON.parse(customData?.additional_data);
+                    try {
+                        additionalData = JSON.parse(customData?.additional_data);
+                    }
+                    catch {
+                        additionalData = null;
+                    }
+                }
+                if (order.payment_group && order.payment_group === 'VBA_TRANSFER') {
+                    const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                        cf_payment_id: order.cf_payment_id,
+                    });
+                    if (requestStatus) {
+                        const req = await this.databaseService.CollectRequestModel.findById(requestStatus.collect_id);
+                        if (req) {
+                            try {
+                                additionalData = JSON.parse(req?.additional_data);
+                            }
+                            catch {
+                                additionalData = null;
+                            }
+                        }
+                    }
+                }
+                else {
+                    if (order.order_id) {
+                        customData = customOrderMap.get(order.order_id) || {};
+                        try {
+                            additionalData = JSON.parse(customData?.additional_data);
+                        }
+                        catch {
+                            additionalData = null;
+                        }
+                    }
                 }
                 return {
                     ...order,
                     custom_order_id: customData.custom_order_id || null,
                     school_id: customData.school_id || null,
                     student_id: additionalData?.student_details?.student_id || null,
-                    student_name: additionalData.student_details?.student_name || null,
-                    student_email: additionalData.student_details?.student_email || null,
-                    student_phone_no: additionalData.student_details?.student_phone_no || null,
+                    student_name: additionalData?.student_details?.student_name || null,
+                    student_email: additionalData?.student_details?.student_email || null,
+                    student_phone_no: additionalData?.student_details?.student_phone_no || null,
                 };
-            });
+            }));
             return {
                 cursor: response.cursor,
                 limit: response.limit,
