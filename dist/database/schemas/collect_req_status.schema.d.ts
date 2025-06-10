@@ -42,6 +42,7 @@ export declare class CollectRequestStatus {
     isAutoRefund: boolean;
     reason: string;
     payment_message: string;
+    cf_payment_id: string;
     capture_status: string;
     isVBAPaymentComplete: boolean;
     vbaOrderId: string;
