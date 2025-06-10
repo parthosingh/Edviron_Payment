@@ -18,6 +18,8 @@ import { PayUService } from 'src/pay-u/pay-u.service';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
 import { NttdataService } from 'src/nttdata/nttdata.service';
+import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
+import { WorldlineService } from 'src/worldline/worldline.service';
 @Injectable()
 export class CheckStatusService {
   constructor(
@@ -32,7 +34,9 @@ export class CheckStatusService {
     private readonly hdfcRazorpay: HdfcRazorpayService,
     private readonly hdfcSmartgatewayService: SmartgatewayService,
     private readonly nttdataService: NttdataService,
-  ) {}
+    private readonly posPaytmService: PosPaytmService,
+    private readonly worldlineService: WorldlineService,
+  ) { }
   async checkStatus(collect_request_id: String) {
     console.log('checking status for', collect_request_id);
     const collectRequest =
@@ -101,9 +105,11 @@ export class CheckStatusService {
           },
         },
         transaction_time: collect_req_status.payment_time,
-        formattedTransactionDate:  `${collect_req_status.payment_time.getFullYear()}-${String(
-              collect_req_status.payment_time.getMonth() + 1,
-            ).padStart(2, '0')}-${String(collect_req_status.payment_time.getDate()).padStart(2, '0')}`,
+        formattedTransactionDate: `${collect_req_status.payment_time.getFullYear()}-${String(
+          collect_req_status.payment_time.getMonth() + 1,
+        ).padStart(2, '0')}-${String(
+          collect_req_status.payment_time.getDate(),
+        ).padStart(2, '0')}`,
         order_status: 'PAID',
         isSettlementComplete: true,
         transfer_utr: null,
@@ -152,7 +158,8 @@ export class CheckStatusService {
         } else {
           status_code = 400;
         }
-        const date = collect_req_status.payment_time || collect_req_status.updatedAt;
+        const date =
+          collect_req_status.payment_time || collect_req_status.updatedAt;
         if (!date) {
           throw new Error('No date found in the transaction status');
         }
@@ -264,8 +271,18 @@ export class CheckStatusService {
           collect_request_id.toString(),
         );
 
+      case Gateway.EDVIRON_WORLDLINE:
+        console.log('checking status for EDVIRON_WORLDLINE', collect_request_id);
+        return await this.worldlineService.getStatus(
+          collect_request_id.toString(),
+        );
+
       case Gateway.PENDING:
         return await this.checkExpiry(collectRequest);
+      case Gateway.PAYTM_POS:
+        return await this.posPaytmService.formattedStatu(
+          collectRequest._id.toString(),
+        );
       case Gateway.EXPIRED:
         return {
           status: PaymentStatus.USER_DROPPED,
@@ -301,7 +318,7 @@ export class CheckStatusService {
     if (collectRequest.isVBAPaymentComplete) {
       let status_code = '400';
       if (collect_req_status.status.toUpperCase() === 'SUCCESS') {
-        status_code = '200'; 
+        status_code = '200';
       }
       const details = {
         payment_mode: 'vba',
@@ -313,9 +330,11 @@ export class CheckStatusService {
           },
         },
         transaction_time: collect_req_status.payment_message,
-        formattedTransactionDate:  `${collect_req_status.payment_time.getFullYear()}-${String(
-              collect_req_status.payment_time.getMonth() + 1,
-            ).padStart(2, '0')}-${String(collect_req_status.payment_time.getDate()).padStart(2, '0')}`,
+        formattedTransactionDate: `${collect_req_status.payment_time.getFullYear()}-${String(
+          collect_req_status.payment_time.getMonth() + 1,
+        ).padStart(2, '0')}-${String(
+          collect_req_status.payment_time.getDate(),
+        ).padStart(2, '0')}`,
         order_status: 'PAID',
         isSettlementComplete: true,
         transfer_utr: null,
@@ -355,6 +374,12 @@ export class CheckStatusService {
         );
         return data;
 
+      case Gateway.EDVIRON_WORLDLINE:
+        console.log('checking status for EDVIRON_WORLDLINE', collectRequest._id.toString());
+        return await this.worldlineService.getStatus(
+          collectRequest._id.toString(),
+        );
+
       case Gateway.EDVIRON_EASEBUZZ:
         const easebuzzStatus = await this.easebuzzService.statusResponse(
           collectidString,
@@ -386,6 +411,10 @@ export class CheckStatusService {
           },
         };
         return ezb_status_response;
+      case Gateway.PAYTM_POS:
+        return await this.posPaytmService.formattedStatu(
+          collectRequest._id.toString(),
+        );
       case Gateway.EDVIRON_CCAVENUE:
         if (collectRequest.school_id === '6819e115e79a645e806c0a70') {
           return await this.ccavenueService.checkStatusProd(
@@ -448,11 +477,17 @@ export class CheckStatusService {
 
     // Convert milliseconds to minutes
     const differenceInMinutes = timeDifference / (1000 * 60);
-
+    const requestStatus=await this.databaseService.CollectRequestStatusModel.findOne({
+      collect_id:request._id
+    })
+    let paymentStatus:any=PaymentStatus.USER_DROPPED
+    if(requestStatus){
+      paymentStatus=requestStatus.status
+    }
     // Check if the difference is more than 20 minutes
-    if (differenceInMinutes > 20) {
+    if (differenceInMinutes > 25) {
       return {
-        status: PaymentStatus.USER_DROPPED,
+        status: paymentStatus,
         custom_order_id: request.custom_order_id || 'NA',
         amount: request.amount,
         status_code: 202,

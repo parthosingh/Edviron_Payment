@@ -12,6 +12,8 @@ import { PayUService } from 'src/pay-u/pay-u.service';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
 import { NttdataService } from 'src/nttdata/nttdata.service';
+import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
+import { WorldlineService } from 'src/worldline/worldline.service';
 export declare class CheckStatusService {
     private readonly databaseService;
     private readonly hdfcService;
@@ -24,11 +26,13 @@ export declare class CheckStatusService {
     private readonly hdfcRazorpay;
     private readonly hdfcSmartgatewayService;
     private readonly nttdataService;
-    constructor(databaseService: DatabaseService, hdfcService: HdfcService, phonePeService: PhonepeService, edvironPgService: EdvironPgService, ccavenueService: CcavenueService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, payUService: PayUService, hdfcRazorpay: HdfcRazorpayService, hdfcSmartgatewayService: SmartgatewayService, nttdataService: NttdataService);
+    private readonly posPaytmService;
+    private readonly worldlineService;
+    constructor(databaseService: DatabaseService, hdfcService: HdfcService, phonePeService: PhonepeService, edvironPgService: EdvironPgService, ccavenueService: CcavenueService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, payUService: PayUService, hdfcRazorpay: HdfcRazorpayService, hdfcSmartgatewayService: SmartgatewayService, nttdataService: NttdataService, posPaytmService: PosPaytmService, worldlineService: WorldlineService);
     checkStatus(collect_request_id: String): Promise<any>;
     checkStatusByOrderId(order_id: String, school_id: string): Promise<any>;
     checkExpiry(request: CollectRequest): Promise<"Invalid request" | {
-        status: string;
+        status: any;
         custom_order_id: string;
         amount: number;
         status_code: number;
@@ -36,8 +40,9 @@ export declare class CheckStatusService {
     checkStatusV2(collect_request_id: String): Promise<"Invalid request" | {
         status: TransactionStatus;
         amount: number;
-    } | {
+
         status: string;
+
         custom_order_id: string;
         amount: number;
         status_code: number;

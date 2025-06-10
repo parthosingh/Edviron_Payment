@@ -17,6 +17,8 @@ import { PayUService } from 'src/pay-u/pay-u.service';
 import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
 import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { NttdataService } from 'src/nttdata/nttdata.service';
+import { WorldlineService } from 'src/worldline/worldline.service';
+import { TransactionStatus } from 'src/types/transactionStatus';
 
 @Injectable()
 export class CollectService {
@@ -31,8 +33,8 @@ export class CollectService {
     private readonly hdfcSmartgatewayService: SmartgatewayService,
     private readonly posPaytmService: PosPaytmService,
     private readonly nttdataService: NttdataService,
-
-  ) { }
+    private readonly worldLineService: WorldlineService,
+  ) {}
   async collect(
     amount: Number,
     callbackUrl: string,
@@ -66,7 +68,23 @@ export class CollectService {
     nttdata_hash_res_key?: string | null,
     nttdata_res_salt?: string | null,
     nttdata_req_salt?: string | null,
+    worldline_merchant_id?: string | null,
+    worldline_encryption_key?: string | null,
+    worldline_encryption_iV?: string | null,
     vendor?: [
+      {
+        vendor_id: string;
+        percentage?: number;
+        amount?: number;
+        name?: string;
+        scheme_code?: string;
+      },
+    ],
+      vendorgateway?: {
+      easebuzz: boolean;
+      cashfree: boolean;
+    },
+    easebuzzVendors?: [
       {
         vendor_id: string;
         percentage?: number;
@@ -74,10 +92,27 @@ export class CollectService {
         name?: string;
       },
     ],
-    isVBAPayment?:boolean,
-    vba_account_number?:string
+    cashfreeVedors?: [
+      {
+        vendor_id: string;
+        percentage?: number;
+        amount?: number;
+        name?: string;
+      },
+    ],
+    isVBAPayment?: boolean,
+    vba_account_number?: string,
+    worldLine_vendors?: [
+      {
+        vendor_id: string;
+        percentage?: number;
+        amount?: number;
+        name?: string;
+        scheme_code?: string;
+      },
+    ],
+    easebuzz_school_label?:string | null
   ): Promise<{ url: string; request: CollectRequest }> {
-
     if (custom_order_id) {
       const count =
         await this.databaseService.CollectRequestModel.countDocuments({
@@ -89,10 +124,7 @@ export class CollectService {
         throw new ConflictException('OrderId must be unique');
       }
     }
-    console.log('collect request for amount: ' + amount + ' received.', {
-      disabled_modes,
-    });
-
+    
     const gateway = clientId === 'edviron' ? Gateway.HDFC : Gateway.PENDING;
 
     const request = await new this.databaseService.CollectRequestModel({
@@ -122,8 +154,12 @@ export class CollectService {
         nttdata_res_salt,
         nttdata_req_salt,
       },
-      isVBAPayment:isVBAPayment|| false,
-      vba_account_number:vba_account_number||'NA'
+      easebuzzVendors,
+      cashfreeVedors,
+      isVBAPayment: isVBAPayment || false,
+      vba_account_number: vba_account_number || 'NA',
+      worldline_vendors_info:worldLine_vendors,
+      isSplitPayments:splitPayments || false
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({
@@ -134,6 +170,7 @@ export class CollectService {
       payment_method: null,
     }).save();
 
+    // ATOM NTTDATA-NON SEAMLESS
     if (nttdata_id && nttdata_secret) {
       const { url, collect_req } =
         await this.nttdataService.createOrder(request);
@@ -146,6 +183,7 @@ export class CollectService {
       return { url, request: collect_req };
     }
 
+    // PAY-U NON SEAMLESS
     if (pay_u_key && pay_u_salt) {
       setTimeout(
         async () => {
@@ -158,18 +196,20 @@ export class CollectService {
         15 * 60 * 1000,
       );
       return {
-        url: `${process.env.URL}/pay-u/redirect?collect_id=${request._id
-          }&school_name=${school_name?.split(' ').join('_')}`,
+        url: `${process.env.URL}/pay-u/redirect?collect_id=${
+          request._id
+        }&school_name=${school_name?.split(' ').join('_')}`,
         request,
       };
     }
 
+    // CCAVENUE NONSEAMMLESS
     if (ccavenue_merchant_id) {
-      console.log('creating order with CCavenue');
       const transaction = await this.ccavenueService.createOrder(request);
       return { url: transaction.url, request };
     }
 
+    // HDFC NON SEAMLESS
     if (hdfc_razorpay_id && hdfc_razorpay_secret && hdfc_razorpay_mid) {
       request.hdfc_razorpay_id = hdfc_razorpay_id;
       request.hdfc_razorpay_secret = hdfc_razorpay_secret;
@@ -191,14 +231,78 @@ export class CollectService {
         await request.save();
       }
       return {
-        url: `${process.env.URL}/hdfc-razorpay/redirect?order_id=${orderData.id
-          }&collect_id=${request._id}&school_name=${school_name
-            ?.split(' ')
-            .join('_')}`,
+        url: `${process.env.URL}/hdfc-razorpay/redirect?order_id=${
+          orderData.id
+        }&collect_id=${request._id}&school_name=${school_name
+          ?.split(' ')
+          .join('_')}`,
         request,
       };
     }
-    if (smartgateway_customer_id && smartgateway_merchant_id && smart_gateway_api_key) {
+
+
+    if (
+      worldline_merchant_id &&
+      worldline_encryption_key &&
+      worldline_encryption_iV
+    ) {
+      if (splitPayments && worldLine_vendors && worldLine_vendors.length > 0) {        
+        worldLine_vendors.map(async (info) => {
+          const { vendor_id, percentage, amount, name } = info;
+          let split_amount = 0;
+          if (amount) {
+            split_amount = amount;
+          }
+          if (percentage && percentage !== 0) {
+            split_amount = (request.amount * percentage) / 100;
+          }
+          await new this.databaseService.VendorTransactionModel({
+            vendor_id: vendor_id,
+            amount: split_amount,
+            collect_id: request._id,
+            gateway: Gateway.EDVIRON_WORLDLINE,
+            status: TransactionStatus.PENDING,
+            trustee_id: request.trustee_id,
+            school_id: request.school_id,
+            custom_order_id: request.custom_order_id || '',
+            name,
+            worldline_vendors_info:worldLine_vendors
+            
+          }).save();
+        });
+      }
+      if (!request.worldline) {
+        request.worldline = {
+          worldline_merchant_id: worldline_merchant_id,
+          worldline_encryption_key: worldline_encryption_key,
+          worldline_encryption_iV: worldline_encryption_iV,
+          worldline_token: '',
+        };
+      
+      } else {
+        request.worldline.worldline_merchant_id = worldline_merchant_id;
+        request.worldline.worldline_encryption_key = worldline_encryption_key;
+        request.worldline.worldline_encryption_iV = worldline_encryption_iV;
+        if (!request.worldline.worldline_token) {
+          request.worldline.worldline_token = '';
+        }
+      }
+      await request.save();
+
+      const { url, collect_req } =
+        // await this.worldLineService.createOrder(request);
+        await this.worldLineService.SingleUrlIntegeration(request);
+      return { url, request: collect_req };
+    }
+
+
+      
+    // HDFC SMART GATEWAY NON SEAMLESS
+    if (
+      smartgateway_customer_id &&
+      smartgateway_merchant_id &&
+      smart_gateway_api_key
+    ) {
       request.smartgateway_customer_id = smartgateway_customer_id;
       request.smartgateway_merchant_id = smartgateway_merchant_id;
       request.smart_gateway_api_key = smart_gateway_api_key;
@@ -207,7 +311,7 @@ export class CollectService {
         request,
         smartgateway_customer_id,
         smartgateway_merchant_id,
-        smart_gateway_api_key
+        smart_gateway_api_key,
       );
       return { url: data?.url, request: data?.request };
     }
@@ -215,12 +319,17 @@ export class CollectService {
     const transaction = (
       gateway === Gateway.PENDING
         ? await this.edvironPgService.collect(
-          request,
-          platform_charges,
-          school_name,
-          splitPayments || false,
-          vendor,
-        )
+            request,
+            platform_charges,
+            school_name,
+            splitPayments || false,
+            vendor,
+            vendorgateway,
+            easebuzzVendors,
+            cashfreeVedors,
+            easebuzz_school_label
+          )
+
         : await this.hdfcService.collect(request)
     )!;
     await this.databaseService.CollectRequestModel.updateOne(
@@ -254,7 +363,8 @@ export class CollectService {
     req_webhook_urls?: string[],
     school_name?: string,
   ) {
-    const gateway = machine_name === 'PAYTM_POS' ? Gateway.PAYTM_POS : Gateway.MOSAMBEE_POS;
+    const gateway =
+      machine_name === 'PAYTM_POS' ? Gateway.PAYTM_POS : Gateway.MOSAMBEE_POS;
     const request = await this.databaseService.CollectRequestModel.create({
       amount,
       callbackUrl,
@@ -280,11 +390,9 @@ export class CollectService {
         request.paytmPos = paytm_pos;
         request.save();
       }
-      return await this.posPaytmService.initiatePOSPayment(request)
+      return await this.posPaytmService.initiatePOSPayment(request);
     }
-
   }
-
 
   async sendCallbackEmail(collect_id: string) {
     const htmlToSend = `

@@ -26,8 +26,10 @@ const pay_u_service_1 = require("../pay-u/pay-u.service");
 const hdfc_razorpay_service_1 = require("../hdfc_razporpay/hdfc_razorpay.service");
 const smartgateway_service_1 = require("../smartgateway/smartgateway.service");
 const nttdata_service_1 = require("../nttdata/nttdata.service");
+const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
+const worldline_service_1 = require("../worldline/worldline.service");
 let CheckStatusService = class CheckStatusService {
-    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay, hdfcSmartgatewayService, nttdataService) {
+    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay, hdfcSmartgatewayService, nttdataService, posPaytmService, worldlineService) {
         this.databaseService = databaseService;
         this.hdfcService = hdfcService;
         this.phonePeService = phonePeService;
@@ -39,6 +41,8 @@ let CheckStatusService = class CheckStatusService {
         this.hdfcRazorpay = hdfcRazorpay;
         this.hdfcSmartgatewayService = hdfcSmartgatewayService;
         this.nttdataService = nttdataService;
+        this.posPaytmService = posPaytmService;
+        this.worldlineService = worldlineService;
     }
     async checkStatus(collect_request_id) {
         console.log('checking status for', collect_request_id);
@@ -223,8 +227,13 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.EDVIRON_NTTDATA:
                 console.log('checking status for NTTDATA', collect_request_id);
                 return await this.nttdataService.getTransactionStatus(collect_request_id.toString());
+            case collect_request_schema_1.Gateway.EDVIRON_WORLDLINE:
+                console.log('checking status for EDVIRON_WORLDLINE', collect_request_id);
+                return await this.worldlineService.getStatus(collect_request_id.toString());
             case collect_request_schema_1.Gateway.PENDING:
                 return await this.checkExpiry(collectRequest);
+            case collect_request_schema_1.Gateway.PAYTM_POS:
+                return await this.posPaytmService.formattedStatu(collectRequest._id.toString());
             case collect_request_schema_1.Gateway.EXPIRED:
                 return {
                     status: collect_req_status_schema_1.PaymentStatus.USER_DROPPED,
@@ -295,6 +304,9 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.SMART_GATEWAY:
                 const data = await this.hdfcSmartgatewayService.checkStatus(collectRequest._id.toString(), collectRequest);
                 return data;
+            case collect_request_schema_1.Gateway.EDVIRON_WORLDLINE:
+                console.log('checking status for EDVIRON_WORLDLINE', collectRequest._id.toString());
+                return await this.worldlineService.getStatus(collectRequest._id.toString());
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
                 const easebuzzStatus = await this.easebuzzService.statusResponse(collectidString, collectRequest);
                 let status_code;
@@ -322,6 +334,8 @@ let CheckStatusService = class CheckStatusService {
                     },
                 };
                 return ezb_status_response;
+            case collect_request_schema_1.Gateway.PAYTM_POS:
+                return await this.posPaytmService.formattedStatu(collectRequest._id.toString());
             case collect_request_schema_1.Gateway.EDVIRON_CCAVENUE:
                 if (collectRequest.school_id === '6819e115e79a645e806c0a70') {
                     return await this.ccavenueService.checkStatusProd(collectRequest, collectidString);
@@ -370,9 +384,16 @@ let CheckStatusService = class CheckStatusService {
         }
         const timeDifference = currentTime.getTime() - createdAt.getTime();
         const differenceInMinutes = timeDifference / (1000 * 60);
-        if (differenceInMinutes > 20) {
+        const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: request._id
+        });
+        let paymentStatus = collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
+        if (requestStatus) {
+            paymentStatus = requestStatus.status;
+        }
+        if (differenceInMinutes > 25) {
             return {
-                status: collect_req_status_schema_1.PaymentStatus.USER_DROPPED,
+                status: paymentStatus,
                 custom_order_id: request.custom_order_id || 'NA',
                 amount: request.amount,
                 status_code: 202,
@@ -514,6 +535,8 @@ exports.CheckStatusService = CheckStatusService = __decorate([
         pay_u_service_1.PayUService,
         hdfc_razorpay_service_1.HdfcRazorpayService,
         smartgateway_service_1.SmartgatewayService,
-        nttdata_service_1.NttdataService])
+        nttdata_service_1.NttdataService,
+        pos_paytm_service_1.PosPaytmService,
+        worldline_service_1.WorldlineService])
 ], CheckStatusService);
 //# sourceMappingURL=check-status.service.js.map
