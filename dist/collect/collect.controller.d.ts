@@ -50,12 +50,17 @@ export declare class CollectController {
         nttdata_hash_res_key?: string | null;
         nttdata_res_salt?: string | null;
         nttdata_req_salt?: string | null;
+        worldline_merchant_id?: string | null;
+        worldline_encryption_key?: string | null;
+        worldline_encryption_iV?: string | null;
+        worldline_scheme_code?: string[];
         vendors_info?: [
             {
                 vendor_id: string;
                 percentage?: number;
                 amount?: number;
                 name?: string;
+                scheme_code?: string;
             }
         ];
     }): Promise<any>;

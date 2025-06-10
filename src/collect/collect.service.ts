@@ -17,6 +17,8 @@ import { PayUService } from 'src/pay-u/pay-u.service';
 import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
 import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { NttdataService } from 'src/nttdata/nttdata.service';
+import { WorldlineService } from 'src/worldline/worldline.service';
+import { TransactionStatus } from 'src/types/transactionStatus';
 
 @Injectable()
 export class CollectService {
@@ -31,6 +33,7 @@ export class CollectService {
     private readonly hdfcSmartgatewayService: SmartgatewayService,
     private readonly posPaytmService: PosPaytmService,
     private readonly nttdataService: NttdataService,
+    private readonly worldLineService: WorldlineService,
 
   ) { }
   async collect(
@@ -66,16 +69,21 @@ export class CollectService {
     nttdata_hash_res_key?: string | null,
     nttdata_res_salt?: string | null,
     nttdata_req_salt?: string | null,
+    worldline_merchant_id?: string | null,
+    worldline_encryption_key?: string | null,
+    worldline_encryption_iV?: string | null,
+    worldline_scheme_code?: string[],
     vendor?: [
       {
         vendor_id: string;
         percentage?: number;
         amount?: number;
         name?: string;
+        scheme_code?:string
       },
     ],
-    isVBAPayment?:boolean,
-    vba_account_number?:string
+    isVBAPayment?: boolean,
+    vba_account_number?: string
   ): Promise<{ url: string; request: CollectRequest }> {
 
     if (custom_order_id) {
@@ -122,8 +130,8 @@ export class CollectService {
         nttdata_res_salt,
         nttdata_req_salt,
       },
-      isVBAPayment:isVBAPayment|| false,
-      vba_account_number:vba_account_number||'NA'
+      isVBAPayment: isVBAPayment || false,
+      vba_account_number: vba_account_number || 'NA'
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({
@@ -198,6 +206,71 @@ export class CollectService {
         request,
       };
     }
+
+    if (worldline_merchant_id && worldline_encryption_key && worldline_encryption_iV ) {
+      if (splitPayments && vendor && vendor.length > 0) {
+        const vendor_data = vendor
+          .filter(({ amount, percentage }) => {
+            // Check if either amount is greater than 0 or percentage is greater than 0
+            return (amount && amount > 0) || (percentage && percentage > 0);
+          })
+
+          .map(({ vendor_id, percentage, amount }) => ({
+            vendor_id,
+            percentage,
+            amount,
+          }));
+
+       
+        request.isSplitPayments = true;
+        request.worldline_vendors_info = vendor;
+        await request.save();
+
+        vendor.map(async (info) => {
+          const { vendor_id, percentage, amount, name } = info;
+          let split_amount = 0;
+          if (amount) {
+            split_amount = amount;
+          }
+          if (percentage && percentage !== 0) {
+            split_amount = (request.amount * percentage) / 100;
+          }
+          await new this.databaseService.VendorTransactionModel({
+            vendor_id: vendor_id,
+            amount: split_amount,
+            collect_id: request._id,
+            gateway: Gateway.EDVIRON_WORLDLINE,
+            status: TransactionStatus.PENDING,
+            trustee_id: request.trustee_id,
+            school_id: request.school_id,
+            custom_order_id: request.custom_order_id || '',
+            name,
+          }).save();
+        });
+      }
+      if (!request.worldline) {
+        request.worldline = {
+          worldline_merchant_id: worldline_merchant_id,
+          worldline_encryption_key: worldline_encryption_key,
+          worldline_encryption_iV: worldline_encryption_iV,
+          worldline_token: '', 
+        };
+      } else {
+        request.worldline.worldline_merchant_id = worldline_merchant_id;
+        request.worldline.worldline_encryption_key = worldline_encryption_key;
+        request.worldline.worldline_encryption_iV = worldline_encryption_iV;
+        if (!request.worldline.worldline_token) {
+          request.worldline.worldline_token = '';
+        }
+      }
+      await request.save();
+
+      const { url, collect_req } =
+        // await this.worldLineService.createOrder(request);
+        await this.worldLineService.SingleUrlIntegeration(request);
+      return { url, request: collect_req };
+    }
+
     if (smartgateway_customer_id && smartgateway_merchant_id && smart_gateway_api_key) {
       request.smartgateway_customer_id = smartgateway_customer_id;
       request.smartgateway_merchant_id = smartgateway_merchant_id;

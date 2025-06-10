@@ -21,6 +21,9 @@ import { CcavenueService } from './ccavenue/ccavenue.service';
 import { PosPaytmController } from './pos-paytm/pos-paytm.controller';
 import { PosPaytmService } from './pos-paytm/pos-paytm.service';
 import { NttdataModule } from './nttdata/nttdata.module';
+import { WorldlineModule } from './worldline/worldline.module';
+import { WorldlineController } from './worldline/worldline.controller';
+import { WorldlineService } from './worldline/worldline.service';
 
 
 @Module({
@@ -36,9 +39,10 @@ import { NttdataModule } from './nttdata/nttdata.module';
     PayUModule,
     HdfcRazorpayModule,
     SmartgatewayModule,
-    NttdataModule
+    NttdataModule,
+    WorldlineModule
   ],
-  controllers: [AppController, EasebuzzController, CashfreeController, PosPaytmController],
-  providers: [AppService, CashfreeService, EasebuzzService, CcavenueService, PosPaytmService],
+  controllers: [AppController, EasebuzzController, CashfreeController, PosPaytmController, WorldlineController],
+  providers: [AppService, CashfreeService, EasebuzzService, CcavenueService, PosPaytmService, WorldlineService],
 })
 export class AppModule {}
