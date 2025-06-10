@@ -63,8 +63,8 @@ export class CollectController {
       pay_u_salt: string | null;
       hdfc_razorpay_id?: string;
       hdfc_razorpay_secret?: string;
-      isVBAPayment:boolean;
-      vba_account_number:string;
+      isVBAPayment: boolean;
+      vba_account_number: string;
       hdfc_razorpay_mid?: string;
       nttdata_id?: string | null;
       nttdata_secret?: string | null;
@@ -72,12 +72,17 @@ export class CollectController {
       nttdata_hash_res_key?: string | null;
       nttdata_res_salt?: string | null;
       nttdata_req_salt?: string | null;
+      worldline_merchant_id?: string | null;
+      worldline_encryption_key?: string | null;
+      worldline_encryption_iV?: string | null;
+      worldline_scheme_code?: string[];
       vendors_info?: [
         {
           vendor_id: string;
           percentage?: number;
           amount?: number;
           name?: string;
+          scheme_code?:string
         },
       ];
     },
@@ -118,6 +123,10 @@ export class CollectController {
       nttdata_res_salt,
       nttdata_req_salt,
       isVBAPayment,
+      worldline_merchant_id,
+      worldline_encryption_key,
+      worldline_encryption_iV,
+      worldline_scheme_code,
       vba_account_number
     } = body;
 
@@ -169,6 +178,10 @@ export class CollectController {
           nttdata_hash_res_key,
           nttdata_res_salt,
           nttdata_req_salt,
+          worldline_merchant_id,
+          worldline_encryption_key,
+          worldline_encryption_iV,
+          worldline_scheme_code,
           vendors_info,
           isVBAPayment,
           vba_account_number

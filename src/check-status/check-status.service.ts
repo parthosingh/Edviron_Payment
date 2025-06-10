@@ -19,6 +19,7 @@ import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
 import { NttdataService } from 'src/nttdata/nttdata.service';
 import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
+import { WorldlineService } from 'src/worldline/worldline.service';
 @Injectable()
 export class CheckStatusService {
   constructor(
@@ -34,7 +35,8 @@ export class CheckStatusService {
     private readonly hdfcSmartgatewayService: SmartgatewayService,
     private readonly nttdataService: NttdataService,
     private readonly posPaytmService: PosPaytmService,
-  ) {}
+    private readonly worldlineService: WorldlineService,
+  ) { }
   async checkStatus(collect_request_id: String) {
     console.log('checking status for', collect_request_id);
     const collectRequest =
@@ -269,6 +271,12 @@ export class CheckStatusService {
           collect_request_id.toString(),
         );
 
+      case Gateway.EDVIRON_WORLDLINE:
+        console.log('checking status for EDVIRON_WORLDLINE', collect_request_id);
+        return await this.worldlineService.getStatus(
+          collect_request_id.toString(),
+        );
+
       case Gateway.PENDING:
         return await this.checkExpiry(collectRequest);
       case Gateway.PAYTM_POS:
@@ -365,6 +373,12 @@ export class CheckStatusService {
           collectRequest,
         );
         return data;
+
+      case Gateway.EDVIRON_WORLDLINE:
+        console.log('checking status for EDVIRON_WORLDLINE', collectRequest._id.toString());
+        return await this.worldlineService.getStatus(
+          collectRequest._id.toString(),
+        );
 
       case Gateway.EDVIRON_EASEBUZZ:
         const easebuzzStatus = await this.easebuzzService.statusResponse(

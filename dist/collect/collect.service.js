@@ -24,8 +24,10 @@ const pay_u_service_1 = require("../pay-u/pay-u.service");
 const smartgateway_service_1 = require("../smartgateway/smartgateway.service");
 const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 const nttdata_service_1 = require("../nttdata/nttdata.service");
+const worldline_service_1 = require("../worldline/worldline.service");
+const transactionStatus_1 = require("../types/transactionStatus");
 let CollectService = class CollectService {
-    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService, hdfcRazorpay, payuService, hdfcSmartgatewayService, posPaytmService, nttdataService) {
+    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService, hdfcRazorpay, payuService, hdfcSmartgatewayService, posPaytmService, nttdataService, worldLineService) {
         this.phonepeService = phonepeService;
         this.hdfcService = hdfcService;
         this.edvironPgService = edvironPgService;
@@ -36,8 +38,9 @@ let CollectService = class CollectService {
         this.hdfcSmartgatewayService = hdfcSmartgatewayService;
         this.posPaytmService = posPaytmService;
         this.nttdataService = nttdataService;
+        this.worldLineService = worldLineService;
     }
-    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, nttdata_hash_req_key, nttdata_hash_res_key, nttdata_res_salt, nttdata_req_salt, vendor, isVBAPayment, vba_account_number) {
+    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, nttdata_hash_req_key, nttdata_hash_res_key, nttdata_res_salt, nttdata_req_salt, worldline_merchant_id, worldline_encryption_key, worldline_encryption_iV, worldline_scheme_code, vendor, isVBAPayment, vba_account_number) {
         if (custom_order_id) {
             const count = await this.databaseService.CollectRequestModel.countDocuments({
                 school_id,
@@ -138,6 +141,62 @@ let CollectService = class CollectService {
                     .join('_')}`,
                 request,
             };
+        }
+        if (worldline_merchant_id && worldline_encryption_key && worldline_encryption_iV) {
+            if (splitPayments && vendor && vendor.length > 0) {
+                const vendor_data = vendor
+                    .filter(({ amount, percentage }) => {
+                    return (amount && amount > 0) || (percentage && percentage > 0);
+                })
+                    .map(({ vendor_id, percentage, amount }) => ({
+                    vendor_id,
+                    percentage,
+                    amount,
+                }));
+                request.isSplitPayments = true;
+                request.worldline_vendors_info = vendor;
+                await request.save();
+                vendor.map(async (info) => {
+                    const { vendor_id, percentage, amount, name } = info;
+                    let split_amount = 0;
+                    if (amount) {
+                        split_amount = amount;
+                    }
+                    if (percentage && percentage !== 0) {
+                        split_amount = (request.amount * percentage) / 100;
+                    }
+                    await new this.databaseService.VendorTransactionModel({
+                        vendor_id: vendor_id,
+                        amount: split_amount,
+                        collect_id: request._id,
+                        gateway: collect_request_schema_1.Gateway.EDVIRON_WORLDLINE,
+                        status: transactionStatus_1.TransactionStatus.PENDING,
+                        trustee_id: request.trustee_id,
+                        school_id: request.school_id,
+                        custom_order_id: request.custom_order_id || '',
+                        name,
+                    }).save();
+                });
+            }
+            if (!request.worldline) {
+                request.worldline = {
+                    worldline_merchant_id: worldline_merchant_id,
+                    worldline_encryption_key: worldline_encryption_key,
+                    worldline_encryption_iV: worldline_encryption_iV,
+                    worldline_token: '',
+                };
+            }
+            else {
+                request.worldline.worldline_merchant_id = worldline_merchant_id;
+                request.worldline.worldline_encryption_key = worldline_encryption_key;
+                request.worldline.worldline_encryption_iV = worldline_encryption_iV;
+                if (!request.worldline.worldline_token) {
+                    request.worldline.worldline_token = '';
+                }
+            }
+            await request.save();
+            const { url, collect_req } = await this.worldLineService.SingleUrlIntegeration(request);
+            return { url, request: collect_req };
         }
         if (smartgateway_customer_id && smartgateway_merchant_id && smart_gateway_api_key) {
             request.smartgateway_customer_id = smartgateway_customer_id;
@@ -270,6 +329,7 @@ exports.CollectService = CollectService = __decorate([
         pay_u_service_1.PayUService,
         smartgateway_service_1.SmartgatewayService,
         pos_paytm_service_1.PosPaytmService,
-        nttdata_service_1.NttdataService])
+        nttdata_service_1.NttdataService,
+        worldline_service_1.WorldlineService])
 ], CollectService);
 //# sourceMappingURL=collect.service.js.map

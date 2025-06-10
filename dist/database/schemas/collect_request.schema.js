@@ -27,6 +27,7 @@ var Gateway;
     Gateway["PAYTM_POS"] = "PAYTM_POS";
     Gateway["MOSAMBEE_POS"] = "MOSAMBEE_POS";
     Gateway["EDVIRON_NTTDATA"] = "EDVIRON_NTTDATA";
+    Gateway["EDVIRON_WORLDLINE"] = "EDVIRON_WORLDLINE";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let PaymentIds = class PaymentIds {
 };
@@ -201,6 +202,10 @@ __decorate([
 ], CollectRequest.prototype, "vendors_info", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Array)
+], CollectRequest.prototype, "worldline_vendors_info", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "hdfc_razorpay_id", void 0);
 __decorate([
@@ -272,6 +277,23 @@ __decorate([
     }),
     __metadata("design:type", Object)
 ], CollectRequest.prototype, "ntt_data", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        required: false,
+        type: {
+            worldline_merchant_id: { type: String, required: false, default: null },
+            worldline_encryption_key: { type: String, required: false, default: null },
+            worldline_encryption_iV: { type: String, required: false, default: null },
+            worldline_token: { type: String, required: false, default: null },
+        },
+        _id: false,
+    }),
+    __metadata("design:type", Object)
+], CollectRequest.prototype, "worldline", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "worldline_token", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
