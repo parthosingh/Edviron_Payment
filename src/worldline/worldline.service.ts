@@ -56,11 +56,16 @@ export class WorldlineService {
 
         const totalAmountPaisa = formattedAmount * 100;
 
-        const vendorDetails = request.worldline_vendors_info;
+        const vendorDetails:any = request.worldline_vendors_info || [{
+                itemId: "FIRST",
+                amount: `${amount}`,
+                comAmt: "0",
+                identifier: "FIRST"
+            }];
 
-        if (!vendorDetails) {
-            throw new BadRequestException('schemacode not found')
-        }
+        // if (!vendorDetails) {
+        //     throw new BadRequestException('schemacode not found')
+        // }
         const totalSchemes = vendorDetails.length;
         const baseAmount = Math.floor(totalAmountPaisa / totalSchemes);
         const extraPaisa = totalAmountPaisa % totalSchemes;

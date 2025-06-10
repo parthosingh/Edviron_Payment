@@ -47,10 +47,12 @@ let WorldlineService = class WorldlineService {
             (txnDate.getMonth() + 1).toString().padStart(2, '0') + '-' +
             txnDate.getFullYear();
         const totalAmountPaisa = formattedAmount * 100;
-        const vendorDetails = request.worldline_vendors_info;
-        if (!vendorDetails) {
-            throw new common_1.BadRequestException('schemacode not found');
-        }
+        const vendorDetails = request.worldline_vendors_info || [{
+                itemId: "FIRST",
+                amount: `${amount}`,
+                comAmt: "0",
+                identifier: "FIRST"
+            }];
         const totalSchemes = vendorDetails.length;
         const baseAmount = Math.floor(totalAmountPaisa / totalSchemes);
         const extraPaisa = totalAmountPaisa % totalSchemes;
