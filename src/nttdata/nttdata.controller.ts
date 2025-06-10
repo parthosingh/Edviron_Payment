@@ -4,6 +4,7 @@ import {
   Get,
   NotFoundException,
   Post,
+  Query,
   Req,
   Res,
 } from '@nestjs/common';
@@ -18,7 +19,7 @@ export class NttdataController {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly nttdataService: NttdataService,
-  ) {}
+  ) { }
 
   @Get('/redirect')
   async nttdatapayPayment(@Req() req: any, @Res() res: any) {
@@ -88,9 +89,8 @@ export class NttdataController {
                         merchId: "${request?.ntt_data.nttdata_id || ''}",
                         custEmail: "${student_email}",
                         custMobile: "${student_phone_no}",
-                        returnUrl: "${
-                          process.env.URL
-                        }/nttdata/callback?collect_id=${collect_id}"
+                        returnUrl: "${process.env.URL
+        }/nttdata/callback?collect_id=${collect_id}"
                     };
                      new AtomPaynetz(options, 'prod');
                     }
@@ -120,7 +120,7 @@ export class NttdataController {
           collect_id: new Types.ObjectId(collect_id),
         }),
       ]);
-      
+
       if (!collect_request || !collect_req_status)
         throw new NotFoundException('Order not found');
       const data = JSON.parse(
@@ -181,7 +181,7 @@ export class NttdataController {
       if (!collect_request || !collect_req_status)
         throw new NotFoundException('Order not found');
 
-      
+
       const data = JSON.parse(this.nttdataService.decrypt(encRes, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt));
 
       collect_request.gateway = Gateway.EDVIRON_NTTDATA;
@@ -229,11 +229,20 @@ export class NttdataController {
       const stringified_data = JSON.stringify(req.body);
       await this.databaseService.WebhooksModel.create({
         body: stringified_data,
-        gateway:'ntt_payment'
+        gateway: 'ntt_payment'
       });
       return res.sendStatus(200);
     } catch (error) {
       throw new BadRequestException(error.message || 'Something went wrong');
     }
+  }
+
+  @Post('initiate-Refund')
+  async initiateRefund(
+    @Query('collect_id') collect_id: string,
+    @Query('amount') amount: number,
+    @Query('refund_id') refund_id: string,
+  ) {
+    return await this.nttdataService.initiateRefund(collect_id, amount, refund_id)
   }
 }

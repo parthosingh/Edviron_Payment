@@ -19,5 +19,5 @@ export declare class NttdataService {
     }>;
     terminateOrder(collect_id: string): Promise<boolean>;
     generateSignature(signature: any, secretKey: string): Promise<string>;
-    initiateRefund(collect_request_id: string, amount: number): Promise<any>;
+    initiateRefund(collect_request_id: string, amount: number, refund_id: string): Promise<any>;
 }

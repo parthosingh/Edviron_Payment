@@ -200,6 +200,9 @@ let NttdataController = class NttdataController {
             throw new common_1.BadRequestException(error.message || 'Something went wrong');
         }
     }
+    async initiateRefund(collect_id, amount, refund_id) {
+        return await this.nttdataService.initiateRefund(collect_id, amount, refund_id);
+    }
 };
 exports.NttdataController = NttdataController;
 __decorate([
@@ -234,6 +237,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], NttdataController.prototype, "handleWebhook", null);
+__decorate([
+    (0, common_1.Post)('initiate-Refund'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __param(1, (0, common_1.Query)('amount')),
+    __param(2, (0, common_1.Query)('refund_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Number, String]),
+    __metadata("design:returntype", Promise)
+], NttdataController.prototype, "initiateRefund", null);
 exports.NttdataController = NttdataController = __decorate([
     (0, common_1.Controller)('nttdata'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
