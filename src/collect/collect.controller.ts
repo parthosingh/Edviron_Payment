@@ -85,6 +85,15 @@ export class CollectController {
           scheme_code?:string
         },
       ];
+      worldLine_vendors?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+          scheme_code?:string
+        },
+      ];
     },
   ) {
     const {
@@ -127,7 +136,8 @@ export class CollectController {
       worldline_encryption_key,
       worldline_encryption_iV,
       worldline_scheme_code,
-      vba_account_number
+      vba_account_number,
+      worldLine_vendors
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -184,7 +194,8 @@ export class CollectController {
           worldline_scheme_code,
           vendors_info,
           isVBAPayment,
-          vba_account_number
+          vba_account_number,
+          worldLine_vendors
         ),
       );
     } catch (e) {

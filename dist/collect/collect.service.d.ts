@@ -32,7 +32,15 @@ export declare class CollectService {
             name?: string;
             scheme_code?: string;
         }
-    ], isVBAPayment?: boolean, vba_account_number?: string): Promise<{
+    ], isVBAPayment?: boolean, vba_account_number?: string, worldLine_vendors?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+            scheme_code?: string;
+        }
+    ]): Promise<{
         url: string;
         request: CollectRequest;
     }>;

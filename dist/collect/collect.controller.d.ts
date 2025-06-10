@@ -63,6 +63,15 @@ export declare class CollectController {
                 scheme_code?: string;
             }
         ];
+        worldLine_vendors?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+                scheme_code?: string;
+            }
+        ];
     }): Promise<any>;
     posCollect(body: {
         amount: Number;
