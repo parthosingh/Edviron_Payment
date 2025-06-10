@@ -76,6 +76,7 @@ export class paytmPos {
   device_id?: string | null;
 }
 
+
 @Schema({ timestamps: true })
 export class CollectRequest {
   @Prop({ required: true })
@@ -164,9 +165,19 @@ export class CollectRequest {
   ];
 
   @Prop({ required: false })
+  easebuzzVendors?: [
+    { vendor_id: string; percentage?: number; amount?: number; name?: string },
+  ];
+
+  @Prop({ required: false })
+  cashfreeVedors?: [
+    { vendor_id: string; percentage?: number; amount?: number; name?: string },
+  ];
+
   worldline_vendors_info?: [
     { vendor_id: string; percentage?: number; amount?: number; name?: string, scheme_code?: string },
   ];
+
 
 
   @Prop({ required: false })
@@ -196,6 +207,9 @@ export class CollectRequest {
   @Prop({ required: false })
   pay_u_salt: string;
 
+  @Prop({required:false})
+  easebuzz_split_label:string
+
   @Prop({ required: false })
   pos_machine_name: string;
 
@@ -210,6 +224,7 @@ export class CollectRequest {
 
   @Prop({ type: paytmPos, required: false })
   paytmPos: paytmPos;
+
 
   @Prop({
     required: false,

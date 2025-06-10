@@ -32,7 +32,7 @@ export class CollectController {
   constructor(
     private readonly collectService: CollectService,
     private readonly databaseService: DatabaseService,
-  ) { }
+  ) {}
   @Post('/')
   async collect(
     @Body()
@@ -72,6 +72,7 @@ export class CollectController {
       nttdata_hash_res_key?: string | null;
       nttdata_res_salt?: string | null;
       nttdata_req_salt?: string | null;
+      easebuzz_school_label?:string | null;
       worldline_merchant_id?: string | null;
       worldline_encryption_key?: string | null;
       worldline_encryption_iV?: string | null;
@@ -92,6 +93,26 @@ export class CollectController {
           amount?: number;
           name?: string;
           scheme_code?:string
+        },
+      ];
+      vendorgateway?: {
+        easebuzz: boolean;
+        cashfree: boolean;
+      };
+      easebuzzVendors?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+        },
+      ];
+      cashfreeVedors?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
         },
       ];
     },
@@ -132,6 +153,11 @@ export class CollectController {
       nttdata_res_salt,
       nttdata_req_salt,
       isVBAPayment,
+      vba_account_number,
+      vendorgateway,
+      easebuzzVendors,
+      cashfreeVedors,
+      easebuzz_school_label
       worldline_merchant_id,
       worldline_encryption_key,
       worldline_encryption_iV,
@@ -145,9 +171,7 @@ export class CollectController {
     if (!callbackUrl)
       throw new BadRequestException('Callback url not provided');
     try {
-      console.log(disabled_modes);
       let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
-      console.log(decrypted);
 
       // if (
       //   decrypted.amount !== amount || decrypted.callbackUrl !== callbackUrl
@@ -193,8 +217,12 @@ export class CollectController {
           worldline_encryption_iV,
           worldline_scheme_code,
           vendors_info,
+          vendorgateway,
+          easebuzzVendors,
+          cashfreeVedors,
           isVBAPayment,
           vba_account_number,
+          easebuzz_school_label
           worldLine_vendors
         ),
       );

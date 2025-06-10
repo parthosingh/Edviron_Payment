@@ -613,6 +613,7 @@ let CashfreeService = class CashfreeService {
         }
     }
     async createVBAV2(cf_x_client_id, cf_x_clien_secret, virtual_account_details, notification_group, amount) {
+        console.log({ amount: Number(amount) });
         const config = {
             method: 'post',
             url: `https://api.cashfree.com/pg/vba`,

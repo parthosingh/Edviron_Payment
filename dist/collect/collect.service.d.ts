@@ -32,15 +32,26 @@ export declare class CollectService {
             name?: string;
             scheme_code?: string;
         }
-    ], isVBAPayment?: boolean, vba_account_number?: string, worldLine_vendors?: [
+    ], vendorgateway?: {
+        easebuzz: boolean;
+        cashfree: boolean;
+    }, easebuzzVendors?: [
+
         {
             vendor_id: string;
             percentage?: number;
             amount?: number;
             name?: string;
-            scheme_code?: string;
         }
-    ]): Promise<{
+    ], cashfreeVedors?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
+    ], isVBAPayment?: boolean, vba_account_number?: string, easebuzz_school_label?: string | null): Promise<{
+
         url: string;
         request: CollectRequest;
     }>;

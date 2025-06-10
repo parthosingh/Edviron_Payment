@@ -92,6 +92,29 @@ export class CollectService {
         scheme_code?: string;
       },
     ],
+    vendorgateway?: {
+      easebuzz: boolean;
+      cashfree: boolean;
+    },
+    easebuzzVendors?: [
+      {
+        vendor_id: string;
+        percentage?: number;
+        amount?: number;
+        name?: string;
+      },
+    ],
+    cashfreeVedors?: [
+      {
+        vendor_id: string;
+        percentage?: number;
+        amount?: number;
+        name?: string;
+      },
+    ],
+    isVBAPayment?: boolean,
+    vba_account_number?: string,
+    easebuzz_school_label?:string | null
   ): Promise<{ url: string; request: CollectRequest }> {
     if (custom_order_id) {
       const count =
@@ -104,10 +127,7 @@ export class CollectService {
         throw new ConflictException('OrderId must be unique');
       }
     }
-    console.log('collect request for amount: ' + amount + ' received.', {
-      disabled_modes,
-    });
-
+    
     const gateway = clientId === 'edviron' ? Gateway.HDFC : Gateway.PENDING;
 
     const request = await new this.databaseService.CollectRequestModel({
@@ -137,6 +157,10 @@ export class CollectService {
         nttdata_res_salt,
         nttdata_req_salt,
       },
+      easebuzzVendors,
+      cashfreeVedors,
+      isVBAPayment: isVBAPayment || false,
+      vba_account_number: vba_account_number || 'NA',
       isVBAPayment: isVBAPayment || false,
       vba_account_number: vba_account_number || 'NA',
       worldline_vendors_info:worldLine_vendors
@@ -150,6 +174,7 @@ export class CollectService {
       payment_method: null,
     }).save();
 
+    // ATOM NTTDATA-NON SEAMLESS
     if (nttdata_id && nttdata_secret) {
       const { url, collect_req } =
         await this.nttdataService.createOrder(request);
@@ -162,6 +187,7 @@ export class CollectService {
       return { url, request: collect_req };
     }
 
+    // PAY-U NON SEAMLESS
     if (pay_u_key && pay_u_salt) {
       setTimeout(
         async () => {
@@ -181,12 +207,13 @@ export class CollectService {
       };
     }
 
+    // CCAVENUE NONSEAMMLESS
     if (ccavenue_merchant_id) {
-      console.log('creating order with CCavenue');
       const transaction = await this.ccavenueService.createOrder(request);
       return { url: transaction.url, request };
     }
 
+    // HDFC NON SEAMLESS
     if (hdfc_razorpay_id && hdfc_razorpay_secret && hdfc_razorpay_mid) {
       request.hdfc_razorpay_id = hdfc_razorpay_id;
       request.hdfc_razorpay_secret = hdfc_razorpay_secret;
@@ -217,14 +244,13 @@ export class CollectService {
       };
     }
 
+
     if (
       worldline_merchant_id &&
       worldline_encryption_key &&
       worldline_encryption_iV
     ) {
-      if (splitPayments && worldLine_vendors && worldLine_vendors.length > 0) {
-        
-
+      if (splitPayments && worldLine_vendors && worldLine_vendors.length > 0) {        
         worldLine_vendors.map(async (info) => {
           const { vendor_id, percentage, amount, name } = info;
           let split_amount = 0;
@@ -271,6 +297,9 @@ export class CollectService {
       return { url, request: collect_req };
     }
 
+
+      
+    // HDFC SMART GATEWAY NON SEAMLESS
     if (
       smartgateway_customer_id &&
       smartgateway_merchant_id &&
@@ -297,7 +326,12 @@ export class CollectService {
             school_name,
             splitPayments || false,
             vendor,
+            vendorgateway,
+            easebuzzVendors,
+            cashfreeVedors,
+            easebuzz_school_label
           )
+
         : await this.hdfcService.collect(request)
     )!;
     await this.databaseService.CollectRequestModel.updateOne(
