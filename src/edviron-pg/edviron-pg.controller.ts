@@ -33,6 +33,7 @@ import {
 } from 'src/database/schemas/platform.charges.schema';
 import * as _jwt from 'jsonwebtoken';
 import { NttdataService } from 'src/nttdata/nttdata.service';
+import { WorldlineService } from 'src/worldline/worldline.service';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -42,7 +43,8 @@ export class EdvironPgController {
     private readonly easebuzzService: EasebuzzService,
     private readonly cashfreeService: CashfreeService,
     private readonly nttDataService: NttdataService,
-  ) {}
+    private readonly worldlineService: WorldlineService,
+  ) { }
   @Get('/redirect')
   async handleRedirect(@Req() req: any, @Res() res: any) {
     const wallet = req.query.wallet;
@@ -72,15 +74,12 @@ export class EdvironPgController {
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://pg.edviron.com?session_id=${
-                      req.query.session_id
-                    }&collect_request_id=${
-                      req.query.collect_request_id
-                    }&amount=${
-                      req.query.amount
-                    }${disable_modes}&platform_charges=${encodeURIComponent(
-                      req.query.platform_charges,
-                    )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}&school_id=${school_id}";
+                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id
+      }&collect_request_id=${req.query.collect_request_id
+      }&amount=${req.query.amount
+      }${disable_modes}&platform_charges=${encodeURIComponent(
+        req.query.platform_charges,
+      )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}&school_id=${school_id}";
                 }
             </script>`,
     );
@@ -176,15 +175,12 @@ export class EdvironPgController {
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "${
-                      process.env.PG_FRONTEND
-                    }?session_id=${sessionId}&collect_request_id=${
-                      req.query.collect_id
-                    }&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(
-                      platform_charges,
-                    )}&is_blank=${isBlank}&amount=${amount}&school_name=${
-                      info.school_name
-                    }&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}";
+                    location.href = "${process.env.PG_FRONTEND
+      }?session_id=${sessionId}&collect_request_id=${req.query.collect_id
+      }&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(
+        platform_charges,
+      )}&is_blank=${isBlank}&amount=${amount}&school_name=${info.school_name
+      }&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}";
                 }
             </script>`,
     );
@@ -596,7 +592,7 @@ export class EdvironPgController {
               $set: {
                 payment_time: payment_time,
                 status: webhookStatus,
-                gateway:Gateway.EDVIRON_PG
+                gateway: Gateway.EDVIRON_PG
               },
             },
           );
@@ -607,7 +603,7 @@ export class EdvironPgController {
     const updateReq =
       await this.databaseService.CollectRequestStatusModel.updateOne(
         {
-          collect_id: collectIdObject, 
+          collect_id: collectIdObject,
         },
         {
           $set: {
@@ -685,9 +681,8 @@ export class EdvironPgController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${
-            process.env.VANILLA_SERVICE_ENDPOINT
-          }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+          url: `${process.env.VANILLA_SERVICE_ENDPOINT
+            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
@@ -1040,7 +1035,7 @@ export class EdvironPgController {
                 $set: {
                   payment_time: new Date(body.addedon),
                   status: status,
-                  gateway:Gateway.EDVIRON_EASEBUZZ
+                  gateway: Gateway.EDVIRON_EASEBUZZ
                 },
               },
             );
@@ -1479,10 +1474,10 @@ export class EdvironPgController {
         throw new ForbiddenException('Request forged');
       }
 
-      const request=await this.databaseService.CollectRequestModel.findOne({
-        custom_order_id:order_id
+      const request = await this.databaseService.CollectRequestModel.findOne({
+        custom_order_id: order_id
       })
-      if(!request){
+      if (!request) {
         throw new BadRequestException('Invalid Order id')
       }
 
@@ -2217,7 +2212,7 @@ export class EdvironPgController {
 
   // https://payements.edviron.com/edviron-pg/easebuzz/settlement
   @Post('easebuzz/settlement')
-  async easebuzzSettlement(@Body() body: any) {}
+  async easebuzzSettlement(@Body() body: any) { }
 
   // @Get('/payments-info')
   // async getpaymentsInfo(@Query('collect_id') collect_id: string) {
@@ -2372,6 +2367,14 @@ export class EdvironPgController {
 
       if (gateway === Gateway.EDVIRON_NTTDATA) {
         const refund = await this.nttDataService.initiateRefund(
+          collect_id,
+          amount,
+        );
+        return refund;
+      }
+
+      if (gateway === Gateway.EDVIRON_WORLDLINE) {
+        const refund = await this.worldlineService.initiateRefund(
           collect_id,
           amount,
         );
@@ -2617,11 +2620,11 @@ export class EdvironPgController {
       ...(custom_id && { custom_order_id: custom_id }),
       ...(start_date &&
         end_date && {
-          updatedAt: {
-            $gte: new Date(start_date),
-            $lte: new Date(new Date(end_date).setHours(23, 59, 59, 999)),
-          },
-        }),
+        updatedAt: {
+          $gte: new Date(start_date),
+          $lte: new Date(new Date(end_date).setHours(23, 59, 59, 999)),
+        },
+      }),
     };
 
     return await this.edvironPgService.getVendorTransactions(
@@ -3134,7 +3137,7 @@ export class EdvironPgController {
       //     note,
       //   )
       // }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   @Get('get-order-payment-link')
@@ -3339,9 +3342,9 @@ export class EdvironPgController {
       let selectedCharge = schoolMdr.platform_charges.find(
         (charge) =>
           charge.payment_mode.toLocaleLowerCase() ===
-            payment_mode.toLocaleLowerCase() &&
+          payment_mode.toLocaleLowerCase() &&
           charge.platform_type.toLocaleLowerCase() ===
-            platform_type.toLocaleLowerCase(),
+          platform_type.toLocaleLowerCase(),
       );
 
       if (!selectedCharge) {
@@ -3403,7 +3406,7 @@ export class EdvironPgController {
     platformCharges.platform_charges.forEach((platformCharge) => {
       if (
         platformCharge.platform_type.toLowerCase() ===
-          platform_type.toLowerCase() &&
+        platform_type.toLowerCase() &&
         platformCharge.payment_mode.toLowerCase() === payment_mode.toLowerCase()
       ) {
         throw new BadRequestException('MDR already present');
@@ -3601,9 +3604,8 @@ export class EdvironPgController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${
-            process.env.VANILLA_SERVICE_ENDPOINT
-          }/main-backend/get-webhook-key?token=${token}&trustee_id=${'65d43e124174f07e3e3f8966'}`,
+          url: `${process.env.VANILLA_SERVICE_ENDPOINT
+            }/main-backend/get-webhook-key?token=${token}&trustee_id=${'65d43e124174f07e3e3f8966'}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
@@ -3896,8 +3898,7 @@ export class EdvironPgController {
       if (axios.isAxiosError(error)) {
         console.error('Axios Error:', error.response?.data || error.message);
         throw new BadRequestException(
-          `External API error: ${
-            error.response?.data?.message || error.message
+          `External API error: ${error.response?.data?.message || error.message
           }`,
         );
       }

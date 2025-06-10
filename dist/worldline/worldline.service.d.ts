@@ -15,4 +15,5 @@ export declare class WorldlineService {
     decryptAES256Hex(hexData: string, encryptionKey: string, iv: string): Promise<string>;
     getStatus(collect_id: string): Promise<any>;
     formatWorldlinePaymentStatusResponse(response: any, collectRequest: CollectRequest): Promise<any>;
+    initiateRefund(collect_request_id: string, amount: number): Promise<any>;
 }

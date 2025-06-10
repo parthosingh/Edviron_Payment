@@ -383,6 +383,9 @@ let WorldlineController = class WorldlineController {
             throw new common_1.BadRequestException(error.message || 'Something went wrong');
         }
     }
+    async initiateRefund(collect_id, amount) {
+        return await this.worldlineService.initiateRefund(collect_id, amount);
+    }
 };
 exports.WorldlineController = WorldlineController;
 __decorate([
@@ -417,6 +420,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], WorldlineController.prototype, "handleWebhook", null);
+__decorate([
+    (0, common_1.Post)('initiate-refund'),
+    __param(0, (0, common_1.Query)("collect_id")),
+    __param(1, (0, common_1.Query)('amount')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Number]),
+    __metadata("design:returntype", Promise)
+], WorldlineController.prototype, "initiateRefund", null);
 exports.WorldlineController = WorldlineController = __decorate([
     (0, common_1.Controller)('worldline'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

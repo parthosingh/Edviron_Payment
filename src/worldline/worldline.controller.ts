@@ -5,6 +5,7 @@ import {
   Get,
   NotFoundException,
   Post,
+  Query,
   Req,
   Res,
 } from '@nestjs/common';
@@ -463,4 +464,13 @@ export class WorldlineController {
       throw new BadRequestException(error.message || 'Something went wrong');
     }
   }
+
+  @Post('initiate-refund')
+  async initiateRefund(
+    @Query("collect_id") collect_id:string,
+    @Query ('amount') amount : number
+  ) {
+    return await this.worldlineService.initiateRefund(collect_id, amount)
+  }
+
 }
