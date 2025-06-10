@@ -120,46 +120,6 @@ export class NttdataController {
           collect_id: new Types.ObjectId(collect_id),
         }),
       ]);
-      const callbackdata = {
-        payInstrument: {
-          merchDetails: {
-            merchId: 706008,
-            merchTxnId: '6847c551ab881e3baad248ad',
-            merchTxnDate: '2025-06-10T11:11:39'
-          },
-          payDetails: {
-            atomTxnId: 11000280891529,
-            prodDetails: [Array],
-            amount: 1,
-            surchargeAmount: 3.55,
-            totalAmount: 4.55,
-            custAccNo: '123456789012',
-            clientCode: '1234',
-            txnCurrency: 'INR',
-            signature: 'efd98ea25a101230b7bc9cd422cd28a06363c61acc6a61ac1f7170478fdc56843c4c9e234b0603db3f386eb27febc94db0fabb4e9947fc0bd42f170cba4faf0c',
-            txnInitDate: '2025-06-10 11:11:41',
-            txnCompleteDate: '2025-06-10 11:13:06'
-          },
-          payModeSpecificData: { subChannel: [Array], bankDetails: [Object] },
-          extras: {
-            udf1: 'udf1',
-            udf2: 'udf2',
-            udf3: 'udf3',
-            udf4: 'udf4',
-            udf5: 'udf5'
-          },
-          custDetails: {
-            custEmail: 'testing@edviron.com',
-            custMobile: '8888888888',
-            billingInfo: {}
-          },
-          responseDetails: {
-            statusCode: 'OTS0000',
-            message: 'SUCCESS',
-            description: 'AUTHORIZED'
-          }
-        }
-      }
 
       if (!collect_request || !collect_req_status)
         throw new NotFoundException('Order not found');
