@@ -126,6 +126,15 @@ export class NttdataController {
       const data = JSON.parse(
         this.nttdataService.decrypt(encRes, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt)
       );
+
+      try {
+        await this.databaseService.WebhooksModel.create({
+          body: JSON.stringify(data),
+          gateway: 'ntt_callback'
+        });
+      } catch (error) {
+        console.log(error.message)
+      }
       // console.log(data, "callbackData")
       // console.log(data.payInstrument.payModeSpecificData.subChannel, "subchannel")
       // console.log(data.payInstrument.payModeSpecificData.bankDetails, "bank")
