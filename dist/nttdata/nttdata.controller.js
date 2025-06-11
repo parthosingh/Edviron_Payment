@@ -115,7 +115,7 @@ let NttdataController = class NttdataController {
             try {
                 await this.databaseService.WebhooksModel.create({
                     body: JSON.stringify(data),
-                    gateway: 'ntt_callback'
+                    gateway: 'ntt_callback',
                 });
             }
             catch (error) {
@@ -126,8 +126,8 @@ let NttdataController = class NttdataController {
                 data?.payInstrument?.payDetails?.atomTxnId;
             await collect_request.save();
             let details;
-            let payment_method = "";
-            let platform_type = "";
+            let payment_method = '';
+            let platform_type = '';
             const subChannel = data.payInstrument?.payModeSpecificData?.subChannel?.[0];
             switch (subChannel) {
                 case 'UP':
@@ -136,7 +136,17 @@ let NttdataController = class NttdataController {
                     details = {
                         app: {
                             channel: 'NA',
-                            upi_id: data.payInstrument.payModeSpecificData.bankDetails,
+                            upi_id: 'NA',
+                        },
+                    };
+                    break;
+                case 'BQ':
+                    payment_method = 'upi';
+                    platform_type = 'UPI';
+                    details = {
+                        app: {
+                            channel: 'NA',
+                            upi_id: 'NA',
                         },
                     };
                     break;
@@ -173,14 +183,19 @@ let NttdataController = class NttdataController {
                     details = {};
                     break;
             }
+            console.log({ details });
             collect_req_status.status = data?.payInstrument?.responseDetails?.message;
-            collect_req_status.transaction_amount = data?.payInstrument?.payDetails?.totalAmount;
-            collect_req_status.bank_reference = data?.payInstrument?.payModeSpecificData?.bankDetails?.bankTxnId;
-            collect_req_status.payment_time = data?.payInstrument?.payDetails?.txnCompleteDate;
+            collect_req_status.transaction_amount =
+                data?.payInstrument?.payDetails?.totalAmount;
+            collect_req_status.bank_reference =
+                data?.payInstrument?.payModeSpecificData?.bankDetails?.bankTxnId;
+            collect_req_status.payment_time =
+                data?.payInstrument?.payDetails?.txnCompleteDate;
             collect_req_status.payment_method = payment_method;
-            collect_req_status.payment_message = data?.payInstrument?.responseDetails?.description;
-            collect_req_status.details = JSON.stringify(details),
-                await collect_req_status.save();
+            collect_req_status.payment_message =
+                data?.payInstrument?.responseDetails?.description;
+            collect_req_status.details = JSON.stringify(details);
+            await collect_req_status.save();
             const status = await this.nttdataService.getTransactionStatus(collect_id);
             const payment_status = status.status;
             if (payment_status === collect_req_status_schema_1.PaymentStatus.SUCCESS) {
@@ -224,7 +239,7 @@ let NttdataController = class NttdataController {
             try {
                 await this.databaseService.WebhooksModel.create({
                     body: JSON.stringify(data),
-                    gateway: 'ntt_callback'
+                    gateway: 'ntt_callback',
                 });
             }
             catch (error) {
@@ -266,7 +281,7 @@ let NttdataController = class NttdataController {
             const stringified_data = JSON.stringify(req.body);
             await this.databaseService.WebhooksModel.create({
                 body: stringified_data,
-                gateway: 'ntt_payment'
+                gateway: 'ntt_payment',
             });
             return res.sendStatus(200);
         }

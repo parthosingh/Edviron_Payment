@@ -27,7 +27,7 @@ let NttdataService = class NttdataService {
     }
     encrypt(text, ENC_KEY, REQ_SALT) {
         const derivedKey = crypto.pbkdf2Sync(Buffer.from(ENC_KEY, 'utf8'), Buffer.from(REQ_SALT, 'utf8'), 65536, 32, 'sha512');
-        const cipher = crypto.createCipheriv("aes-256-cbc", derivedKey, this.IV);
+        const cipher = crypto.createCipheriv('aes-256-cbc', derivedKey, this.IV);
         let encrypted = cipher.update(text, 'utf8');
         encrypted = Buffer.concat([encrypted, cipher.final()]);
         return encrypted.toString('hex');
@@ -37,7 +37,7 @@ let NttdataService = class NttdataService {
         const ressalt = Buffer.from(RES_SALT, 'utf8');
         const derivedKey = crypto.pbkdf2Sync(respassword, ressalt, 65536, 32, 'sha512');
         const encryptedText = Buffer.from(text, 'hex');
-        const decipher = crypto.createDecipheriv("aes-256-cbc", derivedKey, this.IV);
+        const decipher = crypto.createDecipheriv('aes-256-cbc', derivedKey, this.IV);
         let decrypted = decipher.update(encryptedText);
         decrypted = Buffer.concat([decrypted, decipher.final()]);
         return decrypted.toString();
@@ -106,8 +106,8 @@ let NttdataService = class NttdataService {
                 $set: {
                     'ntt_data.ntt_atom_token': atomTokenId,
                     'ntt_data.ntt_atom_txn_id': _id.toString(),
-                    'gateway': collect_request_schema_1.Gateway.EDVIRON_NTTDATA,
-                }
+                    gateway: collect_request_schema_1.Gateway.EDVIRON_NTTDATA,
+                },
             }, { new: true });
             if (!updatedRequest)
                 throw new common_1.BadRequestException('Orders not found');
@@ -232,13 +232,18 @@ let NttdataService = class NttdataService {
             if (amount > collect_request.amount) {
                 throw new common_1.BadRequestException("Refund amount can't be greater than order amount");
             }
-            const signaturevalue = collect_request.ntt_data.nttdata_id + collect_request.ntt_data.nttdata_secret + collect_request_id + amount + 'INR' + 'REFUNDINIT';
+            const signaturevalue = collect_request.ntt_data.nttdata_id +
+                collect_request.ntt_data.nttdata_secret +
+                collect_request_id +
+                amount +
+                'INR' +
+                'REFUNDINIT';
             const signature = await this.generateSignature(signaturevalue, collect_request.ntt_data.nttdata_hash_req_key);
             const payload = {
                 payInstrument: {
                     headDetails: {
                         api: 'REFUNDINIT',
-                        source: "OTS"
+                        source: 'OTS',
                     },
                     merchDetails: {
                         merchId: collect_request.ntt_data.nttdata_id,
@@ -250,12 +255,12 @@ let NttdataService = class NttdataService {
                         signature: signature,
                         prodDetails: [
                             {
-                                prodName: "SCHOOL",
-                                prodRefundId: "refund1",
-                                prodRefundAmount: amount
-                            }
+                                prodName: 'SCHOOL',
+                                prodRefundId: 'refund1',
+                                prodRefundAmount: amount,
+                            },
                         ],
-                        txnCurrency: "INR",
+                        txnCurrency: 'INR',
                         totalRefundAmount: amount,
                     },
                 },
@@ -282,7 +287,7 @@ let NttdataService = class NttdataService {
             try {
                 await this.databaseService.WebhooksModel.create({
                     body: JSON.stringify(res),
-                    gateway: 'ntt_refund'
+                    gateway: 'ntt_refund',
                 });
             }
             catch (error) {
@@ -300,4 +305,102 @@ exports.NttdataService = NttdataService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [database_service_1.DatabaseService])
 ], NttdataService);
+const y = {
+    payInstrument: {
+        merchDetails: {
+            merchId: 706008,
+            merchTxnId: '68491ff04aaab7058c6a68a8',
+            merchTxnDate: '2025-06-11T11:49:52',
+        },
+        payDetails: {
+            atomTxnId: 11000281049693,
+            prodDetails: [{ prodName: 'SCHOOL', prodAmount: 1 }],
+            amount: 1,
+            surchargeAmount: 3.54,
+            totalAmount: 4.54,
+            custAccNo: '123456789012',
+            clientCode: '1234',
+            txnCurrency: 'INR',
+            signature: 'eca9dd326ef178fca01233ccb17b12a865b2c3c26732170417aa22dba05a3ab9d8e30590bb160740c7ce0777f2ae0b532e8a4c15218dd7281031c7355d5b391a',
+            txnInitDate: '2025-06-11 11:49:52',
+            txnCompleteDate: '2025-06-11 11:50:03',
+        },
+        payModeSpecificData: {
+            subChannel: ['BQ'],
+            bankDetails: {
+                otsBankId: 3,
+                bankTxnId: '552807062865',
+                authId: '552807062865',
+                otsBankName: 'ICICI Bank',
+                scheme: 'upi',
+            },
+        },
+        extras: {
+            udf1: 'udf1',
+            udf2: 'udf2',
+            udf3: 'udf3',
+            udf4: 'udf4',
+            udf5: 'udf5',
+        },
+        custDetails: {
+            custEmail: 'testing@edviron.com',
+            custMobile: '8888888888',
+            billingInfo: {},
+        },
+        responseDetails: {
+            statusCode: 'OTS0000',
+            message: 'SUCCESS',
+            description: 'TRANSACTION IS SUCCESS',
+        },
+    },
+};
+const u = {
+    payInstrument: {
+        merchDetails: {
+            merchId: 706008,
+            merchTxnId: '684920b2fe60d9996d98283f',
+            merchTxnDate: '2025-06-11T11:52:57',
+        },
+        payDetails: {
+            atomTxnId: 11000281049911,
+            prodDetails: [{ prodName: 'SCHOOL', prodAmount: 1 }],
+            amount: 1,
+            surchargeAmount: 3.54,
+            totalAmount: 4.54,
+            custAccNo: '123456789012',
+            clientCode: '1234',
+            txnCurrency: 'INR',
+            signature: 'bfe3e9d38fa124d11b86cb02f6aa93b87e1901c69f1f955ce40bfe5cd4c008e4853ae69949fc135685d510f1f5afeb691e3f79ef63a4b290b67c9dac1e8da27e',
+            txnInitDate: '2025-06-11 11:52:57',
+            txnCompleteDate: '2025-06-11 11:53:06',
+        },
+        payModeSpecificData: {
+            subChannel: ['BQ'],
+            bankDetails: {
+                otsBankId: 3,
+                bankTxnId: '552821067140',
+                authId: '552821067140',
+                otsBankName: 'ICICI Bank',
+                scheme: 'upi',
+            },
+        },
+        extras: {
+            udf1: 'udf1',
+            udf2: 'udf2',
+            udf3: 'udf3',
+            udf4: 'udf4',
+            udf5: 'udf5',
+        },
+        custDetails: {
+            custEmail: 'testing@edviron.com',
+            custMobile: '8888888888',
+            billingInfo: {},
+        },
+        responseDetails: {
+            statusCode: 'OTS0000',
+            message: 'SUCCESS',
+            description: 'TRANSACTION IS SUCCESS',
+        },
+    },
+};
 //# sourceMappingURL=nttdata.service.js.map
