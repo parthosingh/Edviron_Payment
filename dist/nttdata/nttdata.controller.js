@@ -289,10 +289,8 @@ let NttdataController = class NttdataController {
             throw new common_1.BadRequestException(error.message || 'Something went wrong');
         }
     }
-
-    async initiateRefund(collect_id, amount) {
-        await this.nttdataService.initiateRefund(collect_id, amount);
-
+    async initiateRefund(collect_id, amount, refund_id) {
+        return await this.nttdataService.initiateRefund(collect_id, amount, refund_id);
     }
 };
 exports.NttdataController = NttdataController;
@@ -335,9 +333,6 @@ __decorate([
     __param(2, (0, common_1.Query)('refund_id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Number, String]),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Number]),
-
     __metadata("design:returntype", Promise)
 ], NttdataController.prototype, "initiateRefund", null);
 exports.NttdataController = NttdataController = __decorate([

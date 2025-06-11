@@ -9,5 +9,4 @@ export declare class NttdataController {
     handleCallbackGet(req: any, res: any): Promise<any>;
     handleWebhook(req: any, res: any): Promise<any>;
     initiateRefund(collect_id: string, amount: number, refund_id: string): Promise<any>;
-    initiateRefund(collect_id: string, amount: number): Promise<void>;
 }
