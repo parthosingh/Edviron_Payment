@@ -106,8 +106,10 @@ let NttdataService = class NttdataService {
                 $set: {
                     'ntt_data.ntt_atom_token': atomTokenId,
                     'ntt_data.ntt_atom_txn_id': _id.toString(),
-                    gateway: collect_request_schema_1.Gateway.EDVIRON_NTTDATA,
-                },
+
+                    'gateway': collect_request_schema_1.Gateway.EDVIRON_NTTDATA,
+                }
+
             }, { new: true });
             if (!updatedRequest)
                 throw new common_1.BadRequestException('Orders not found');
@@ -223,7 +225,7 @@ let NttdataService = class NttdataService {
         hmac.update(data);
         return hmac.digest('hex');
     }
-    async initiateRefund(collect_request_id, amount) {
+    async initiateRefund(collect_request_id, amount, refund_id) {
         try {
             const collect_request = await this.databaseService.CollectRequestModel.findById(collect_request_id);
             if (!collect_request) {
@@ -232,13 +234,22 @@ let NttdataService = class NttdataService {
             if (amount > collect_request.amount) {
                 throw new common_1.BadRequestException("Refund amount can't be greater than order amount");
             }
-            const signaturevalue = collect_request.ntt_data.nttdata_id +
-                collect_request.ntt_data.nttdata_secret +
+            const ntt_data = collect_request.ntt_data;
+            if (!ntt_data.nttdata_id ||
+                !ntt_data.nttdata_secret ||
+                !ntt_data.nttdata_hash_req_key ||
+                !ntt_data.nttdata_req_salt ||
+                !ntt_data.nttdata_res_salt) {
+                throw new common_1.BadRequestException('NTT Data keys are missing or invalid');
+            }
+            const signaturevalue = ntt_data.nttdata_id +
+                ntt_data.nttdata_secret +
                 collect_request_id +
-                amount +
+                Number(amount).toFixed(2) +
                 'INR' +
                 'REFUNDINIT';
-            const signature = await this.generateSignature(signaturevalue, collect_request.ntt_data.nttdata_hash_req_key);
+            const signature = await this.generateSignature(signaturevalue, ntt_data.nttdata_hash_req_key);
+
             const payload = {
                 payInstrument: {
                     headDetails: {
@@ -246,36 +257,39 @@ let NttdataService = class NttdataService {
                         source: 'OTS',
                     },
                     merchDetails: {
-                        merchId: collect_request.ntt_data.nttdata_id,
-                        password: collect_request.ntt_data.nttdata_secret,
-                        merchTxnId: collect_request_id,
+                        merchId: ntt_data.nttdata_id,
+                        password: ntt_data.nttdata_secret,
+                        merchTxnId: collect_request_id.toString(),
                     },
                     payDetails: {
-                        atomTxnId: collect_request.ntt_data.ntt_atom_token,
                         signature: signature,
+                        atomTxnId: ntt_data.ntt_atom_txn_id,
+                        totalRefundAmount: `${Number(amount).toFixed(2)}`,
+                        txnCurrency: 'INR',
                         prodDetails: [
                             {
-                                prodName: 'SCHOOL',
+
                                 prodRefundId: 'refund1',
                                 prodRefundAmount: amount,
                             },
                         ],
                         txnCurrency: 'INR',
                         totalRefundAmount: amount,
+
                     },
                 },
             };
-            const encData = this.encrypt(JSON.stringify(payload), collect_request.ntt_data.nttdata_req_salt, collect_request.ntt_data.nttdata_req_salt);
+            const encData = this.encrypt(JSON.stringify(payload), ntt_data.nttdata_req_salt, ntt_data.nttdata_req_salt);
             const form = new URLSearchParams({
-                merchId: collect_request.ntt_data.nttdata_id,
+                merchId: ntt_data.nttdata_id,
                 encData,
             });
             const config = {
                 method: 'post',
-                url: `https://payment.atomtech.in/ots/payment/refund?${form.toString()}`,
+                url: `${process.env.NTT_AUTH_API_URL}/ots/payment/refund?${form.toString()}`,
+
                 headers: {
-                    'cache-control': 'no-cache',
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 },
             };
             const { data: paymentStatusRes } = await axios_1.default.request(config);
@@ -283,6 +297,7 @@ let NttdataService = class NttdataService {
             if (!encResponse) {
                 throw new Error('Encrypted token not found in NTT response');
             }
+
             const res = await JSON.parse(this.decrypt(encResponse, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt));
             try {
                 await this.databaseService.WebhooksModel.create({

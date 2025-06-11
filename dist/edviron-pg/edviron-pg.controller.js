@@ -1748,7 +1748,7 @@ let EdvironPgController = class EdvironPgController {
             const gateway = request.gateway;
             console.log(gateway);
             if (gateway === collect_request_schema_1.Gateway.EDVIRON_NTTDATA) {
-                const refund = await this.nttDataService.initiateRefund(collect_id, amount);
+                const refund = await this.nttDataService.initiateRefund(collect_id, amount, refund_id);
                 return refund;
             }
             if (gateway === collect_request_schema_1.Gateway.EDVIRON_PG) {

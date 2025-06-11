@@ -2394,6 +2394,7 @@ export class EdvironPgController {
         const refund = await this.nttDataService.initiateRefund(
           collect_id,
           amount,
+          refund_id
         );
         return refund;
       }
