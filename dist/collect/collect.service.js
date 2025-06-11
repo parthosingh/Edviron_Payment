@@ -40,7 +40,7 @@ let CollectService = class CollectService {
         this.nttdataService = nttdataService;
         this.worldLineService = worldLineService;
     }
-    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, nttdata_hash_req_key, nttdata_hash_res_key, nttdata_res_salt, nttdata_req_salt, worldline_merchant_id, worldline_encryption_key, worldline_encryption_iV, worldline_scheme_code, vendor, isVBAPayment, vba_account_number) {
+    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, nttdata_hash_req_key, nttdata_hash_res_key, nttdata_res_salt, nttdata_req_salt, worldline_merchant_id, worldline_encryption_key, worldline_encryption_iV, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, isVBAPayment, vba_account_number, worldLine_vendors, easebuzz_school_label) {
         if (custom_order_id) {
             const count = await this.databaseService.CollectRequestModel.countDocuments({
                 school_id,
@@ -50,9 +50,6 @@ let CollectService = class CollectService {
                 throw new common_1.ConflictException('OrderId must be unique');
             }
         }
-        console.log('collect request for amount: ' + amount + ' received.', {
-            disabled_modes,
-        });
         const gateway = clientId === 'edviron' ? collect_request_schema_1.Gateway.HDFC : collect_request_schema_1.Gateway.PENDING;
         const request = await new this.databaseService.CollectRequestModel({
             amount,
@@ -81,8 +78,12 @@ let CollectService = class CollectService {
                 nttdata_res_salt,
                 nttdata_req_salt,
             },
+            easebuzzVendors,
+            cashfreeVedors,
             isVBAPayment: isVBAPayment || false,
-            vba_account_number: vba_account_number || 'NA'
+            vba_account_number: vba_account_number || 'NA',
+            worldline_vendors_info: worldLine_vendors,
+            isSplitPayments: splitPayments || false
         }).save();
         await new this.databaseService.CollectRequestStatusModel({
             collect_id: request._id,
@@ -113,7 +114,6 @@ let CollectService = class CollectService {
             };
         }
         if (ccavenue_merchant_id) {
-            console.log('creating order with CCavenue');
             const transaction = await this.ccavenueService.createOrder(request);
             return { url: transaction.url, request };
         }
@@ -142,21 +142,11 @@ let CollectService = class CollectService {
                 request,
             };
         }
-        if (worldline_merchant_id && worldline_encryption_key && worldline_encryption_iV) {
-            if (splitPayments && vendor && vendor.length > 0) {
-                const vendor_data = vendor
-                    .filter(({ amount, percentage }) => {
-                    return (amount && amount > 0) || (percentage && percentage > 0);
-                })
-                    .map(({ vendor_id, percentage, amount }) => ({
-                    vendor_id,
-                    percentage,
-                    amount,
-                }));
-                request.isSplitPayments = true;
-                request.worldline_vendors_info = vendor;
-                await request.save();
-                vendor.map(async (info) => {
+        if (worldline_merchant_id &&
+            worldline_encryption_key &&
+            worldline_encryption_iV) {
+            if (splitPayments && worldLine_vendors && worldLine_vendors.length > 0) {
+                worldLine_vendors.map(async (info) => {
                     const { vendor_id, percentage, amount, name } = info;
                     let split_amount = 0;
                     if (amount) {
@@ -175,6 +165,7 @@ let CollectService = class CollectService {
                         school_id: request.school_id,
                         custom_order_id: request.custom_order_id || '',
                         name,
+                        worldline_vendors_info: worldLine_vendors
                     }).save();
                 });
             }
@@ -198,7 +189,9 @@ let CollectService = class CollectService {
             const { url, collect_req } = await this.worldLineService.SingleUrlIntegeration(request);
             return { url, request: collect_req };
         }
-        if (smartgateway_customer_id && smartgateway_merchant_id && smart_gateway_api_key) {
+        if (smartgateway_customer_id &&
+            smartgateway_merchant_id &&
+            smart_gateway_api_key) {
             request.smartgateway_customer_id = smartgateway_customer_id;
             request.smartgateway_merchant_id = smartgateway_merchant_id;
             request.smart_gateway_api_key = smart_gateway_api_key;
@@ -207,7 +200,7 @@ let CollectService = class CollectService {
             return { url: data?.url, request: data?.request };
         }
         const transaction = (gateway === collect_request_schema_1.Gateway.PENDING
-            ? await this.edvironPgService.collect(request, platform_charges, school_name, splitPayments || false, vendor)
+            ? await this.edvironPgService.collect(request, platform_charges, school_name, splitPayments || false, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, easebuzz_school_label)
             : await this.hdfcService.collect(request));
         await this.databaseService.CollectRequestModel.updateOne({
             _id: request._id,

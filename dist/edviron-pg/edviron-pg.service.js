@@ -31,7 +31,7 @@ let EdvironPgService = class EdvironPgService {
         this.databaseService = databaseService;
         this.cashfreeService = cashfreeService;
     }
-    async collect(request, platform_charges, school_name, splitPayments, vendor) {
+    async collect(request, platform_charges, school_name, splitPayments, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, easebuzz_school_label) {
         try {
             let paymentInfo = {
                 cashfree_id: null,
@@ -65,9 +65,8 @@ let EdvironPgService = class EdvironPgService {
                 },
                 order_expiry_time: isoExpiryTime,
             });
-            console.log(splitPayments, 'split pay');
-            if (splitPayments && vendor && vendor.length > 0) {
-                const vendor_data = vendor
+            if (splitPayments && cashfreeVedors && cashfreeVedors.length > 0) {
+                const vendor_data = cashfreeVedors
                     .filter(({ amount, percentage }) => {
                     return (amount && amount > 0) || (percentage && percentage > 0);
                 })
@@ -91,11 +90,10 @@ let EdvironPgService = class EdvironPgService {
                     },
                     order_splits: vendor_data,
                 });
-                console.log(data, 'checking for data');
                 collectReq.isSplitPayments = true;
                 collectReq.vendors_info = vendor;
                 await collectReq.save();
-                vendor.map(async (info) => {
+                cashfreeVedors.map(async (info) => {
                     const { vendor_id, percentage, amount, name } = info;
                     let split_amount = 0;
                     if (amount) {
@@ -133,6 +131,9 @@ let EdvironPgService = class EdvironPgService {
             let id = '';
             let easebuzz_pg = false;
             if (request.easebuzz_sub_merchant_id) {
+                if (!easebuzz_school_label) {
+                    throw new common_1.BadRequestException(`Split Information Not Configure Please contact tarun.k@edviron.com`);
+                }
                 let productinfo = 'payment gateway customer';
                 let firstname = 'customer';
                 let email = 'noreply@edviron.com';
@@ -171,13 +172,42 @@ let EdvironPgService = class EdvironPgService {
                 encodedParams.set('hash', hash);
                 encodedParams.set('request_flow', 'SEAMLESS');
                 encodedParams.set('sub_merchant_id', request.easebuzz_sub_merchant_id);
-                if (request.school_id === '67b6bbcf735d7e4413e82b8e') {
-                    let ezb_split_payments = {};
-                    ezb_split_payments['LAKSHMIKANTHA EDUCATIONAL TRUST'] =
-                        request.amount;
+                let ezb_split_payments = {};
+                if (vendorgateway?.easebuzz &&
+                    easebuzzVendors &&
+                    easebuzz_school_label &&
+                    easebuzzVendors.length > 0) {
+                    let vendorTotal = 0;
+                    for (const vendor of easebuzzVendors) {
+                        if (vendor.name && typeof vendor.amount === 'number') {
+                            ezb_split_payments[vendor.vendor_id] = vendor.amount;
+                            vendorTotal += vendor.amount;
+                        }
+                        if (!vendorgateway.cashfree) {
+                            await new this.databaseService.VendorTransactionModel({
+                                vendor_id: vendor.vendor_id,
+                                amount: vendor.amount,
+                                collect_id: request._id,
+                                gateway: collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ,
+                                status: transactionStatus_1.TransactionStatus.PENDING,
+                                trustee_id: request.trustee_id,
+                                school_id: request.school_id,
+                                custom_order_id: request.custom_order_id || '',
+                                name: vendor.name,
+                            }).save();
+                        }
+                    }
+                    const remainingAmount = request.amount - vendorTotal;
+                    if (remainingAmount > 0) {
+                        ezb_split_payments[easebuzz_school_label] = remainingAmount;
+                    }
                     encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
                 }
-                const options = {
+                else {
+                    ezb_split_payments[easebuzz_school_label] = request.amount;
+                    encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+                }
+                const Ezboptions = {
                     method: 'POST',
                     url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
                     headers: {
@@ -186,10 +216,10 @@ let EdvironPgService = class EdvironPgService {
                     },
                     data: encodedParams,
                 };
-                const { data: easebuzzRes } = await axios.request(options);
+                const { data: easebuzzRes } = await axios.request(Ezboptions);
                 id = easebuzzRes.data;
                 paymentInfo.easebuzz_id = id || null;
-                await this.getQr(request._id.toString(), request);
+                await this.getQr(request._id.toString(), request, ezb_split_payments);
                 easebuzz_pg = true;
             }
             let cf_payment_id = '';
@@ -230,11 +260,9 @@ let EdvironPgService = class EdvironPgService {
             };
         }
         catch (err) {
-            console.log(err);
             if (err.name === 'AxiosError')
                 throw new common_1.BadRequestException('Invalid client id or client secret ' +
                     JSON.stringify(err.response.data));
-            console.log(err);
         }
     }
     async checkStatus(collect_request_id, collect_request) {
@@ -263,7 +291,6 @@ let EdvironPgService = class EdvironPgService {
                 collect_id: collect_request_id,
             });
             if (!collect_status) {
-                console.log('No status found for custom order id', collect_request_id);
                 throw new common_1.NotFoundException('No status found for custom order id');
             }
             let transaction_time = '';
@@ -310,7 +337,6 @@ let EdvironPgService = class EdvironPgService {
             };
         }
         catch (e) {
-            console.log(e);
             throw new common_1.BadRequestException(e.message);
         }
     }
@@ -325,7 +351,6 @@ let EdvironPgService = class EdvironPgService {
         if (!requestStatus) {
             throw new Error('Collect Request Status not found');
         }
-        console.log('Terminating Order');
         if (request.gateway !== collect_request_schema_1.Gateway.PENDING) {
             if (request.isQRPayment && requestStatus.status === 'PENDING') {
                 requestStatus.status = transactionStatus_1.TransactionStatus.USER_DROPPED;
@@ -333,7 +358,6 @@ let EdvironPgService = class EdvironPgService {
                 requestStatus.reason = 'SESSION EXPIRED';
                 await requestStatus.save();
             }
-            console.log(request.gateway, 'not Terminating');
             return true;
         }
         if (requestStatus.status === transactionStatus_1.TransactionStatus.PENDING) {
@@ -341,7 +365,6 @@ let EdvironPgService = class EdvironPgService {
             requestStatus.payment_message = 'SESSION EXPIRED';
             requestStatus.reason = 'SESSION EXPIRED';
             await requestStatus.save();
-            console.log(`Order terminated: ${request.gateway}`);
         }
         return true;
     }
@@ -379,13 +402,10 @@ let EdvironPgService = class EdvironPgService {
             data: data,
         };
         const { data: statusRes } = await axios.request(config);
-        console.log(statusRes);
         return statusRes;
     }
     async getPaymentDetails(school_id, startDate, mode) {
         try {
-            console.log({ school_id, startDate, mode });
-            console.log(mode.toUpperCase());
             const data = await this.databaseService.CollectRequestStatusModel.aggregate([
                 {
                     $match: {
@@ -427,11 +447,10 @@ let EdvironPgService = class EdvironPgService {
             return data;
         }
         catch (e) {
-            console.log(e);
             throw new common_1.BadRequestException('Error fetching payment details');
         }
     }
-    async getQr(collect_id, request) {
+    async getQr(collect_id, request, ezb_split_payments) {
         try {
             const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
             if (!collectReq) {
@@ -467,7 +486,6 @@ let EdvironPgService = class EdvironPgService {
             encodedParams.set('key', process.env.EASEBUZZ_KEY);
             encodedParams.set('txnid', upi_collect_id);
             encodedParams.set('amount', parseFloat(request.amount.toFixed(2)).toString());
-            console.log(request.easebuzz_sub_merchant_id, 'sub merchant');
             encodedParams.set('productinfo', productinfo);
             encodedParams.set('firstname', firstname);
             encodedParams.set('phone', '9898989898');
@@ -477,12 +495,7 @@ let EdvironPgService = class EdvironPgService {
             encodedParams.set('hash', hash);
             encodedParams.set('request_flow', 'SEAMLESS');
             encodedParams.set('sub_merchant_id', request.easebuzz_sub_merchant_id);
-            if (request.school_id === '67b6bbcf735d7e4413e82b8e') {
-                let ezb_split_payments = {};
-                ezb_split_payments['LAKSHMIKANTHA EDUCATIONAL TRUST'] =
-                    request.amount;
-                encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
-            }
+            encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
             const options = {
                 method: 'POST',
                 url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
@@ -494,8 +507,6 @@ let EdvironPgService = class EdvironPgService {
             };
             const { data: easebuzzRes } = await axios_1.default.request(options);
             const access_key = easebuzzRes.data;
-            console.log(access_key, 'access key');
-            console.log(collectReq.paymentIds);
             let formData = new FormData();
             formData.append('access_key', access_key);
             formData.append('payment_mode', `UPI`);
@@ -510,13 +521,12 @@ let EdvironPgService = class EdvironPgService {
                 data: formData,
             };
             const response = await axios_1.default.request(config);
-            console.log(response.data, 'res in qr code');
+            console.log(response.data);
             await this.databaseService.CollectRequestModel.findByIdAndUpdate(collect_id, {
                 deepLink: response.data.qr_link,
             });
         }
         catch (error) {
-            console.log(error);
             throw new Error(error.message);
         }
     }
@@ -537,7 +547,6 @@ let EdvironPgService = class EdvironPgService {
         };
         try {
             const { data: info } = await axios_1.default.request(config);
-            console.log(info);
             return info;
         }
         catch (e) {
@@ -556,7 +565,6 @@ let EdvironPgService = class EdvironPgService {
         const source = fs.readFileSync(filePath, 'utf-8').toString();
         const template = handlebars.compile(source);
         const student_data = JSON.parse(request.additional_data);
-        console.log(student_data);
         const { student_name, student_email, student_phone_no } = student_data.student_details;
         const replacements = {
             transactionId: request._id.toString(),
@@ -633,9 +641,6 @@ let EdvironPgService = class EdvironPgService {
                             const currentIST = new Date().toLocaleString('en-US', {
                                 timeZone: 'Asia/Kolkata',
                             });
-                            console.log('saving webhook logs to Database');
-                            console.log(res.status, 'response');
-                            console.log(res.data);
                             const resDataString = typeof res.data === 'string'
                                 ? res.data
                                 : JSON.stringify(res.data) || 'undefined';
@@ -776,10 +781,8 @@ let EdvironPgService = class EdvironPgService {
             },
             data: data,
         };
-        console.log(config, 'config');
         try {
             const { data: Response } = await axios.request(config);
-            console.log(Response, 'Res');
             return Response;
         }
         catch (e) {
@@ -817,13 +820,11 @@ let EdvironPgService = class EdvironPgService {
         const [year, month, day] = dateStr.split('-').map(Number);
         const istStartDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
         const utcStartTime = new Date(istStartDate.getTime() - 5 * 60 * 60 * 1000 - 30 * 60 * 1000);
-        console.log('Converted date to UTC:', utcStartTime.toISOString());
         return utcStartTime.toISOString();
     }
     async convertISTEndToUTC(dateStr) {
         const [year, month, day] = dateStr.split('-').map(Number);
         const istEndDate = new Date(Date.UTC(year, month - 1, day, 18, 30, 9, 979));
-        console.log('Converted end date to UTC:', istEndDate.toISOString());
         return istEndDate.toISOString();
     }
     async getVendorTransactions(query, limit, page) {
@@ -974,7 +975,6 @@ let EdvironPgService = class EdvironPgService {
     }
     async getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id) {
         try {
-            console.log(start_date, end_date);
             const endOfDay = new Date(end_date);
             const startDates = new Date(start_date);
             const startOfDayUTC = new Date(await this.convertISTStartToUTC(start_date));
@@ -1001,8 +1001,6 @@ let EdvironPgService = class EdvironPgService {
             };
             const startDate = new Date(start_date);
             const endDate = end_date;
-            console.log(new Date(endDate), 'End date before adding hr');
-            console.log(endOfDay, 'end date after adding hr');
             if (startDate && endDate) {
                 query = {
                     ...query,
@@ -1013,7 +1011,6 @@ let EdvironPgService = class EdvironPgService {
                 };
             }
             if ((status && status === 'SUCCESS') || status === 'PENDING') {
-                console.log('adding status to transaction');
                 query = {
                     ...query,
                     status: { $in: [status.toUpperCase(), status.toLowerCase()] },
@@ -1113,8 +1110,6 @@ let EdvironPgService = class EdvironPgService {
             };
             const startDate = new Date(start_date);
             const endDate = end_date;
-            console.log(new Date(endDate), 'End date before adding hr');
-            console.log(endOfDay, 'end date after adding hr');
             if (startDate && endDate) {
                 query = {
                     ...query,
@@ -1141,7 +1136,6 @@ let EdvironPgService = class EdvironPgService {
                 };
             }
             if ((status && status === 'SUCCESS') || status === 'PENDING') {
-                console.log('adding status to transaction');
                 query = {
                     ...query,
                     status: { $in: [status.toUpperCase(), status.toLowerCase()] },
@@ -1155,7 +1149,6 @@ let EdvironPgService = class EdvironPgService {
                     payment_method: { $in: mode },
                 };
             }
-            console.log(query, 'qqq');
             transactions =
                 await this.databaseService.CollectRequestStatusModel.aggregate([
                     {
@@ -1199,7 +1192,6 @@ let EdvironPgService = class EdvironPgService {
                     },
                 ]);
             console.timeEnd('transactionsCount');
-            console.log(transactions, 'sum of aggreagations');
             return {
                 length: transactions.length,
                 transactions,
@@ -1238,9 +1230,6 @@ let EdvironPgService = class EdvironPgService {
             const endDate = end_date;
             const endOfDay = new Date(endDate);
             const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
-            console.log(end_date);
-            console.log(new Date(endDate), 'End date before adding hr');
-            console.log(endOfDay, 'end date after adding hr');
             if (startDate && endDate) {
                 query = {
                     ...query,
@@ -1250,9 +1239,7 @@ let EdvironPgService = class EdvironPgService {
                     },
                 };
             }
-            console.log(`getting transaction`);
             if ((status && status === 'SUCCESS') || status === 'PENDING') {
-                console.log('adding status to transaction');
                 query = {
                     ...query,
                     status: { $regex: new RegExp(`^${status}$`, 'i') },
