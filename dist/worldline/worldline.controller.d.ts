@@ -8,4 +8,5 @@ export declare class WorldlineController {
     handleCallbackPost(req: any, res: any): Promise<any>;
     handleCallbackRest(req: any, res: any): Promise<any>;
     handleWebhook(req: any, res: any): Promise<any>;
+    initiateRefund(collect_id: string, amount: number): Promise<any>;
 }

@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorldlineService = void 0;
 const common_1 = require("@nestjs/common");
 const axios_1 = require("axios");
+const mongoose_1 = require("mongoose");
 const database_service_1 = require("../database/database.service");
 const transactionStatus_1 = require("../types/transactionStatus");
 const sign_1 = require("../utils/sign");
@@ -364,6 +365,64 @@ let WorldlineService = class WorldlineService {
         }
         catch (error) {
             throw new common_1.BadRequestException(error.response?.data || error.message);
+        }
+    }
+    async initiateRefund(collect_request_id, amount) {
+        try {
+            const collect_request = await this.databaseService.CollectRequestModel.findById(collect_request_id);
+            if (!collect_request) {
+                throw new common_1.BadRequestException('Order not found');
+            }
+            const collect_request_status = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: new mongoose_1.Types.ObjectId(collect_request_id) });
+            if (!collect_request_status) {
+                throw new common_1.BadRequestException('Order status not found');
+            }
+            if (amount > collect_request.amount) {
+                throw new common_1.BadRequestException("Refund amount can't be greater than order amount");
+            }
+            const createdAt = collect_request.createdAt ? new Date(collect_request.createdAt) : new Date();
+            const formattedDate = createdAt.getDate().toString().padStart(2, '0') +
+                '-' +
+                (createdAt.getMonth() + 1).toString().padStart(2, '0') +
+                '-' +
+                createdAt.getFullYear();
+            const plainJson = {
+                merchant: {
+                    identifier: collect_request.worldline.worldline_merchant_id
+                },
+                transaction: {
+                    amount: 1,
+                    identifier: collect_request.worldline.worldline_merchant_id,
+                    dateTime: formattedDate,
+                    requestType: "R",
+                    token: "",
+                    reference: collect_request_status.bank_reference
+                }
+            };
+            const encryptedData = await this.encryptTxthdnMsg(JSON.stringify(plainJson), collect_request.worldline.worldline_encryption_key, collect_request.worldline.worldline_encryption_iV);
+            try {
+                const config = {
+                    method: 'post',
+                    url: `${process.env.WORLDLINE_URL}/PaymentGateway/merchant2.pg/${collect_request.worldline.worldline_merchant_id}`,
+                    headers: {
+                        'Content-Type': 'text/plain',
+                    },
+                    data: encryptedData,
+                };
+                const response = await axios_1.default.request(config);
+                let recieveHexData = response.data;
+                const decryptedData = await this.decryptAES256Hex(recieveHexData, collect_request.worldline.worldline_encryption_key, collect_request.worldline.worldline_encryption_iV);
+                const parsedData = JSON.parse(decryptedData);
+                return parsedData;
+            }
+            catch (error) {
+                console.error('Worldline Error:', error.message);
+                throw error.message;
+            }
+        }
+        catch (error) {
+            console.error('Worldline Error:', error.message);
+            throw error.message;
         }
     }
 };

@@ -28,13 +28,15 @@ const cashfree_service_1 = require("../cashfree/cashfree.service");
 const qs = require("qs");
 const _jwt = require("jsonwebtoken");
 const nttdata_service_1 = require("../nttdata/nttdata.service");
+const worldline_service_1 = require("../worldline/worldline.service");
 let EdvironPgController = class EdvironPgController {
-    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService) {
+    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService, worldlineService) {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
         this.easebuzzService = easebuzzService;
         this.cashfreeService = cashfreeService;
         this.nttDataService = nttDataService;
+        this.worldlineService = worldlineService;
     }
     async handleRedirect(req, res) {
         const wallet = req.query.wallet;
@@ -1751,6 +1753,10 @@ let EdvironPgController = class EdvironPgController {
                 const refund = await this.nttDataService.initiateRefund(collect_id, amount, refund_id);
                 return refund;
             }
+            if (gateway === collect_request_schema_1.Gateway.EDVIRON_WORLDLINE) {
+                const refund = await this.worldlineService.initiateRefund(collect_id, amount);
+                return refund;
+            }
             if (gateway === collect_request_schema_1.Gateway.EDVIRON_PG) {
                 console.log('refunding fromcashfree');
                 const refunds = await this.cashfreeService.initiateRefund(refund_id, amount, collect_id);
@@ -3220,6 +3226,7 @@ exports.EdvironPgController = EdvironPgController = __decorate([
         database_service_1.DatabaseService,
         easebuzz_service_1.EasebuzzService,
         cashfree_service_1.CashfreeService,
-        nttdata_service_1.NttdataService])
+        nttdata_service_1.NttdataService,
+        worldline_service_1.WorldlineService])
 ], EdvironPgController);
 //# sourceMappingURL=edviron-pg.controller.js.map

@@ -5,10 +5,11 @@ import { DatabaseModule } from '../database/database.module';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeModule } from 'src/cashfree/cashfree.module';
 import { NttdataService } from 'src/nttdata/nttdata.service';
+import { WorldlineService } from 'src/worldline/worldline.service';
 
 @Module({
   controllers: [EdvironPgController],
-  providers: [EdvironPgService, EasebuzzService, NttdataService],
+  providers: [EdvironPgService, EasebuzzService, NttdataService, WorldlineService],
   imports: [
     DatabaseModule,
     forwardRef(() => CashfreeModule), // Use forwardRef to avoid circular dependency
