@@ -187,14 +187,14 @@ export class NttdataController {
           break;
       }
 
-      collect_req_status.status = data.payInstrument.responseDetails.message
-      collect_req_status.transaction_amount = data.payInstrument.payDetails.totalAmount
-      collect_req_status.bank_reference = data.payInstrument.payModeSpecificData.bankDetails.bankTxnId
-      collect_req_status.payment_time = data.payInstrument.payDetails.txnCompleteDate
+      collect_req_status.status = data?.payInstrument?.responseDetails?.message
+      collect_req_status.transaction_amount = data?.payInstrument?.payDetails?.totalAmount
+      collect_req_status.bank_reference = data?.payInstrument?.payModeSpecificData?.bankDetails?.bankTxnId
+      collect_req_status.payment_time = data?.payInstrument?.payDetails?.txnCompleteDate
       collect_req_status.payment_method = payment_method
-      collect_req_status.payment_message = data.payInstrument.responseDetails.description
+      collect_req_status.payment_message = data?.payInstrument?.responseDetails?.description
       collect_req_status.details = JSON.stringify(details),
-        collect_req_status.save()
+      await  collect_req_status.save()
 
       const status = await this.nttdataService.getTransactionStatus(collect_id);
       const payment_status = status.status;
