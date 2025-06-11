@@ -475,6 +475,17 @@ let EdvironPgController = class EdvironPgController {
                 }
             }
         }
+        try {
+            await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
+        }
+        catch (e) {
+            await this.databaseService.ErrorLogsModel.create({
+                type: 'sendMailAfterTransaction',
+                des: collectIdObject.toString(),
+                identifier: 'EdvironPg webhook',
+                body: e.message || e.toString(),
+            });
+        }
         res.status(200).send('OK');
     }
     async easebuzzWebhook(body, res) {
@@ -770,6 +781,17 @@ let EdvironPgController = class EdvironPgController {
                 console.log('Webhook called for other schools');
                 await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
             }
+        }
+        try {
+            await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
+        }
+        catch (e) {
+            await this.databaseService.ErrorLogsModel.create({
+                type: 'sendMailAfterTransaction',
+                des: collectIdObject.toString(),
+                identifier: 'EdvironPg webhook',
+                body: e.message || e.toString(),
+            });
         }
         res.status(200).send('OK');
         return;
@@ -2751,6 +2773,43 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
         }
     }
+    async sendMailAfterTransaction(body) {
+        const { collect_id } = body;
+        try {
+            if (!collect_id) {
+                throw new common_1.BadRequestException('Collect ID is required');
+            }
+            ;
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest) {
+                throw new common_1.NotFoundException('Collect Request not found');
+            }
+            const getTransactionInfo = await this.edvironPgService.getSingleTransactionInfo(collect_id);
+            if (!getTransactionInfo) {
+                throw new common_1.NotFoundException('Transaction not found');
+            }
+            try {
+                const config = {
+                    url: `${process.env.VANILLA_SERVICE_ENDPOINT}/business-alarm/send-mail-after-transaction`,
+                    method: 'post',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    data: getTransactionInfo[0]
+                };
+                const response = await axios_1.default.request(config);
+            }
+            catch (error) {
+                console.error('Error sending email:', error.message);
+                throw new common_1.BadRequestException('Failed to send email');
+            }
+            return 'Mail Send Successfully';
+        }
+        catch (e) {
+            console.error(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -3148,6 +3207,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getDisputesbyOrderId", null);
+__decorate([
+    (0, common_1.Post)('sendMail-after-transaction'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "sendMailAfterTransaction", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

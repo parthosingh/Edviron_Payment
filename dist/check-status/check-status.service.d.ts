@@ -37,11 +37,12 @@ export declare class CheckStatusService {
         amount: number;
         status_code: number;
     }>;
-    checkStatusV2(collect_request_id: String): Promise<{
+    checkStatusV2(collect_request_id: String): Promise<"Invalid request" | {
         status: TransactionStatus;
         amount: number;
-    } | "Invalid request" | {
-        status: any;
+
+        status: string;
+
         custom_order_id: string;
         amount: number;
         status_code: number;
