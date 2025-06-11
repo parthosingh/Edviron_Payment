@@ -363,4 +363,5 @@ export declare class EdvironPgController {
             student_detail: string;
         };
     }>;
+    sendMailAfterTransaction(body: any): Promise<string>;
 }
