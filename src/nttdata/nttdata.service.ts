@@ -2,7 +2,10 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import * as crypto from 'crypto';
 import axios from 'axios';
-import { CollectRequest, Gateway } from 'src/database/schemas/collect_request.schema';
+import {
+  CollectRequest,
+  Gateway,
+} from 'src/database/schemas/collect_request.schema';
 import { calculateSHA512Hash, generateSignature } from 'src/utils/sign';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { Types } from 'mongoose';
@@ -10,11 +13,10 @@ import e from 'express';
 
 @Injectable()
 export class NttdataService {
-
   private readonly IV = Buffer.from([
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
   ]);
-  constructor(private readonly databaseService: DatabaseService) { }
+  constructor(private readonly databaseService: DatabaseService) {}
 
   encrypt(text: string, ENC_KEY: any, REQ_SALT: any): string {
     const derivedKey = crypto.pbkdf2Sync(
@@ -24,7 +26,7 @@ export class NttdataService {
       32,
       'sha512',
     );
-    const cipher = crypto.createCipheriv("aes-256-cbc", derivedKey, this.IV);
+    const cipher = crypto.createCipheriv('aes-256-cbc', derivedKey, this.IV);
     let encrypted = cipher.update(text, 'utf8');
     encrypted = Buffer.concat([encrypted, cipher.final()]);
     return encrypted.toString('hex');
@@ -42,7 +44,7 @@ export class NttdataService {
     );
     const encryptedText = Buffer.from(text, 'hex');
     const decipher = crypto.createDecipheriv(
-      "aes-256-cbc",
+      'aes-256-cbc',
       derivedKey,
       this.IV,
     );
@@ -100,9 +102,11 @@ export class NttdataService {
 
     try {
       const encData = this.encrypt(
-        JSON.stringify(payload), ntt_data.nttdata_req_salt, ntt_data.nttdata_req_salt
+        JSON.stringify(payload),
+        ntt_data.nttdata_req_salt,
+        ntt_data.nttdata_req_salt,
       );
-      
+
       const form = new URLSearchParams({
         encData,
         merchId: ntt_data.nttdata_id,
@@ -117,31 +121,39 @@ export class NttdataService {
         data: form.toString(),
       };
 
-      const {data} = await axios.request(config);
+      const { data } = await axios.request(config);
       console.log(data);
-      
+
       const encResponse = data?.split('&')?.[1]?.split('=')?.[1];
       if (!encResponse) {
         throw new Error('Encrypted token not found in NTT response');
       }
-      const { atomTokenId } = JSON.parse(this.decrypt
-        (encResponse, ntt_data.nttdata_res_salt, ntt_data.nttdata_res_salt)
+      const { atomTokenId } = JSON.parse(
+        this.decrypt(
+          encResponse,
+          ntt_data.nttdata_res_salt,
+          ntt_data.nttdata_res_salt,
+        ),
       );
 
       const updatedRequest =
         await this.databaseService.CollectRequestModel.findOneAndUpdate(
           { _id },
-          {  $set: {
-            'ntt_data.ntt_atom_token': atomTokenId,
-            'ntt_data.ntt_atom_txn_id': _id.toString(),
-            'gateway': Gateway.EDVIRON_NTTDATA,
-          } }, 
+          {
+            $set: {
+              'ntt_data.ntt_atom_token': atomTokenId,
+              'ntt_data.ntt_atom_txn_id': _id.toString(),
+              gateway: Gateway.EDVIRON_NTTDATA,
+            },
+          },
           { new: true },
         );
 
       if (!updatedRequest) throw new BadRequestException('Orders not found');
 
-      const url = `${process.env.URL}/nttdata/redirect?collect_id=${_id.toString()}`;
+      const url = `${
+        process.env.URL
+      }/nttdata/redirect?collect_id=${_id.toString()}`;
       return { url, collect_req: updatedRequest };
     } catch (error) {
       throw new BadRequestException(error?.message || 'Something went wrong');
@@ -173,6 +185,7 @@ export class NttdataService {
         formattedAmount.toFixed(2),
         'INR',
         'TXNVERIFICATION',
+        coll_req.ntt_data,
       );
 
       const payload = {
@@ -196,7 +209,9 @@ export class NttdataService {
         },
       };
       const encData = this.encrypt(
-        JSON.stringify(payload), coll_req.ntt_data.nttdata_req_salt, coll_req.ntt_data.nttdata_req_salt
+        JSON.stringify(payload),
+        coll_req.ntt_data.nttdata_req_salt,
+        coll_req.ntt_data.nttdata_req_salt,
       );
       const form = new URLSearchParams({
         merchId: coll_req.ntt_data.nttdata_id,
@@ -204,8 +219,9 @@ export class NttdataService {
       });
       const config = {
         method: 'post',
-        url: `${process.env.NTT_AUTH_API_URL
-          }/ots/payment/status?${form.toString()}`,
+        url: `${
+          process.env.NTT_AUTH_API_URL
+        }/ots/payment/status?${form.toString()}`,
         headers: {
           'cache-control': 'no-cache',
           'Content-Type': 'application/json',
@@ -217,7 +233,13 @@ export class NttdataService {
       if (!encResponse) {
         throw new Error('Encrypted token not found in NTT response');
       }
-      const res = await JSON.parse(this.decrypt(encResponse, coll_req.ntt_data.nttdata_res_salt, coll_req.ntt_data.nttdata_res_salt));
+      const res = await JSON.parse(
+        this.decrypt(
+          encResponse,
+          coll_req.ntt_data.nttdata_res_salt,
+          coll_req.ntt_data.nttdata_res_salt,
+        ),
+      );
       const { payInstrument } = res;
       const responseData = payInstrument[payInstrument.length - 1];
       const { payDetails, payModeSpecificData, responseDetails } = responseData;
@@ -264,8 +286,7 @@ export class NttdataService {
     }
   }
 
-  
-  async generateSignature(signature:any, secretKey:string) {
+  async generateSignature(signature: any, secretKey: string) {
     const data = signature;
     const hmac = crypto.createHmac('sha512', secretKey);
     hmac.update(data);
@@ -286,15 +307,24 @@ export class NttdataService {
           "Refund amount can't be greater than order amount",
         );
       }
-      const signaturevalue = collect_request.ntt_data.nttdata_id + collect_request.ntt_data.nttdata_secret + collect_request_id + amount + 'INR' + 'REFUNDINIT'
+      const signaturevalue =
+        collect_request.ntt_data.nttdata_id +
+        collect_request.ntt_data.nttdata_secret +
+        collect_request_id +
+        amount +
+        'INR' +
+        'REFUNDINIT';
 
-    const signature = await this.generateSignature(signaturevalue, collect_request.ntt_data.nttdata_hash_req_key)
-    
+      const signature = await this.generateSignature(
+        signaturevalue,
+        collect_request.ntt_data.nttdata_hash_req_key,
+      );
+
       const payload = {
         payInstrument: {
           headDetails: {
             api: 'REFUNDINIT',
-            source: "OTS"
+            source: 'OTS',
           },
           merchDetails: {
             merchId: collect_request.ntt_data.nttdata_id,
@@ -303,22 +333,24 @@ export class NttdataService {
           },
           payDetails: {
             atomTxnId: collect_request.ntt_data.ntt_atom_token,
-            signature:signature,
-            prodDetails : [
+            signature: signature,
+            prodDetails: [
               {
-                prodName: "NSE",
-                prodRefundId: "refund1",
-                prodRefundAmount: amount
-              }
+                prodName: 'SCHOOL',
+                prodRefundId: 'refund1',
+                prodRefundAmount: amount,
+              },
             ],
-            txnCurrency : "INR",
-            totalRefundAmount : amount,
+            txnCurrency: 'INR',
+            totalRefundAmount: amount,
           },
         },
       };
 
       const encData = this.encrypt(
-        JSON.stringify(payload), collect_request.ntt_data.nttdata_req_salt, collect_request.ntt_data.nttdata_req_salt
+        JSON.stringify(payload),
+        collect_request.ntt_data.nttdata_req_salt,
+        collect_request.ntt_data.nttdata_req_salt,
       );
       const form = new URLSearchParams({
         merchId: collect_request.ntt_data.nttdata_id,
@@ -326,8 +358,7 @@ export class NttdataService {
       });
       const config = {
         method: 'post',
-        url: `${process.env.NTT_AUTH_API_URL
-          }/ots/payment/status?${form.toString()}`,
+        url: `https://payment.atomtech.in/ots/payment/refund?${form.toString()}`,
         headers: {
           'cache-control': 'no-cache',
           'Content-Type': 'application/json',
@@ -335,19 +366,130 @@ export class NttdataService {
       };
       const { data: paymentStatusRes } = await axios.request(config);
       const encResponse = paymentStatusRes?.split('&')?.[0]?.split('=')?.[1];
-
       if (!encResponse) {
         throw new Error('Encrypted token not found in NTT response');
       }
-      const res = await JSON.parse(this.decrypt
-        (encResponse, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt)
+      const res = await JSON.parse(
+        this.decrypt(
+          encResponse,
+          collect_request.ntt_data.nttdata_res_salt,
+          collect_request.ntt_data.nttdata_res_salt,
+        ),
       );
 
+      try {
+        await this.databaseService.WebhooksModel.create({
+          body: JSON.stringify(res),
+          gateway: 'ntt_refund',
+        });
+      } catch (error) {
+        throw new BadRequestException(error.message);
+      }
       return res;
-
     } catch (error) {
       throw new BadRequestException(error?.message || 'Something went wrong');
     }
   }
-
 }
+
+const y = {
+  payInstrument: {
+    merchDetails: {
+      merchId: 706008,
+      merchTxnId: '68491ff04aaab7058c6a68a8',
+      merchTxnDate: '2025-06-11T11:49:52',
+    },
+    payDetails: {
+      atomTxnId: 11000281049693,
+      prodDetails: [{ prodName: 'SCHOOL', prodAmount: 1 }],
+      amount: 1,
+      surchargeAmount: 3.54,
+      totalAmount: 4.54,
+      custAccNo: '123456789012',
+      clientCode: '1234',
+      txnCurrency: 'INR',
+      signature:
+        'eca9dd326ef178fca01233ccb17b12a865b2c3c26732170417aa22dba05a3ab9d8e30590bb160740c7ce0777f2ae0b532e8a4c15218dd7281031c7355d5b391a',
+      txnInitDate: '2025-06-11 11:49:52',
+      txnCompleteDate: '2025-06-11 11:50:03',
+    },
+    payModeSpecificData: {
+      subChannel: ['BQ'],
+      bankDetails: {
+        otsBankId: 3,
+        bankTxnId: '552807062865',
+        authId: '552807062865',
+        otsBankName: 'ICICI Bank',
+        scheme: 'upi',
+      },
+    },
+    extras: {
+      udf1: 'udf1',
+      udf2: 'udf2',
+      udf3: 'udf3',
+      udf4: 'udf4',
+      udf5: 'udf5',
+    },
+    custDetails: {
+      custEmail: 'testing@edviron.com',
+      custMobile: '8888888888',
+      billingInfo: {},
+    },
+    responseDetails: {
+      statusCode: 'OTS0000',
+      message: 'SUCCESS',
+      description: 'TRANSACTION IS SUCCESS',
+    },
+  },
+};
+
+const u = {
+  payInstrument: {
+    merchDetails: {
+      merchId: 706008,
+      merchTxnId: '684920b2fe60d9996d98283f',
+      merchTxnDate: '2025-06-11T11:52:57',
+    },
+    payDetails: {
+      atomTxnId: 11000281049911,
+      prodDetails: [{ prodName: 'SCHOOL', prodAmount: 1 }],
+      amount: 1,
+      surchargeAmount: 3.54,
+      totalAmount: 4.54,
+      custAccNo: '123456789012',
+      clientCode: '1234',
+      txnCurrency: 'INR',
+      signature:
+        'bfe3e9d38fa124d11b86cb02f6aa93b87e1901c69f1f955ce40bfe5cd4c008e4853ae69949fc135685d510f1f5afeb691e3f79ef63a4b290b67c9dac1e8da27e',
+      txnInitDate: '2025-06-11 11:52:57',
+      txnCompleteDate: '2025-06-11 11:53:06',
+    },
+    payModeSpecificData: {
+      subChannel: ['BQ'],
+      bankDetails: {
+        otsBankId: 3,
+        bankTxnId: '552821067140',
+        authId: '552821067140',
+        otsBankName: 'ICICI Bank',
+        scheme: 'upi',
+      },
+    },
+    extras: {
+      udf1: 'udf1',
+      udf2: 'udf2',
+      udf3: 'udf3',
+      udf4: 'udf4',
+      udf5: 'udf5',
+    },
+    custDetails: {
+      custEmail: 'testing@edviron.com',
+      custMobile: '8888888888',
+      billingInfo: {},
+    },
+    responseDetails: {
+      statusCode: 'OTS0000',
+      message: 'SUCCESS',
+      description: 'TRANSACTION IS SUCCESS',
+    },
+  },
+};
