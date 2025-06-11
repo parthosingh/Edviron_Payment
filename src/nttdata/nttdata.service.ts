@@ -342,7 +342,15 @@ export class NttdataService {
       const res = await JSON.parse(this.decrypt
         (encResponse, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt)
       );
-console.log(res)
+
+      try {
+        await this.databaseService.WebhooksModel.create({
+          body: JSON.stringify(res),
+          gateway: 'ntt_refund'
+        });
+      } catch (error) {
+        throw new BadRequestException(error.message)
+      }
       return res;
 
     } catch (error) {
