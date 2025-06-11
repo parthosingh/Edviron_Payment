@@ -32,7 +32,7 @@ export declare class CheckStatusService {
     checkStatus(collect_request_id: String): Promise<any>;
     checkStatusByOrderId(order_id: String, school_id: string): Promise<any>;
     checkExpiry(request: CollectRequest): Promise<"Invalid request" | {
-        status: string;
+        status: any;
         custom_order_id: string;
         amount: number;
         status_code: number;
@@ -42,6 +42,8 @@ export declare class CheckStatusService {
         amount: number;
     } | {
         status: string;
+    } | "Invalid request" | {
+        status: any;
         custom_order_id: string;
         amount: number;
         status_code: number;

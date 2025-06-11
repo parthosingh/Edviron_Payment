@@ -63,10 +63,9 @@ const decrypt = async (encryptedData, key, iv) => {
     return decrypted;
 };
 exports.decrypt = decrypt;
-const generateSignature = (merchID, password, merchTxnID, amount, txnCurrency, txnType) => {
-    const resHashKey = process.env.NTT_REQUEST_HASH_KEY;
+const generateSignature = (merchID, password, merchTxnID, amount, txnCurrency, txnType, coll_req) => {
     const signatureString = merchID + password + merchTxnID + amount + txnCurrency + txnType;
-    const hmac = crypto.createHmac('sha512', resHashKey);
+    const hmac = crypto.createHmac('sha512', coll_req.nttdata_hash_req_key);
     const data = hmac.update(signatureString);
     const gen_hmac = data.digest('hex');
     return gen_hmac;

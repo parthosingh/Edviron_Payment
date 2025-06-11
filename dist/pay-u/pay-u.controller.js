@@ -415,6 +415,17 @@ let PayUController = class PayUController {
                     await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);
                 }
             }
+            try {
+                await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
+            }
+            catch (e) {
+                await this.databaseService.ErrorLogsModel.create({
+                    type: 'sendMailAfterTransaction',
+                    des: collectIdObject.toString(),
+                    identifier: 'pay u webhook',
+                    body: e.message || e.toString(),
+                });
+            }
             return res.status(200).send('OK');
         }
         catch (error) {
