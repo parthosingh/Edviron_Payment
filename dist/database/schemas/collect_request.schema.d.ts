@@ -107,6 +107,22 @@ export declare class CollectRequest {
             name?: string;
         }
     ];
+    easebuzzVendors?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
+    ];
+    cashfreeVedors?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
+    ];
     worldline_vendors_info?: [
         {
             vendor_id: string;
@@ -125,6 +141,7 @@ export declare class CollectRequest {
     isQRPayment: boolean;
     pay_u_key: string;
     pay_u_salt: string;
+    easebuzz_split_label: string;
     pos_machine_name: string;
     pos_machine_device_id: string;
     pos_machine_device_code: string;

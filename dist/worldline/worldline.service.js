@@ -28,9 +28,9 @@ let WorldlineService = class WorldlineService {
         const parsedData = JSON.parse(additional_data);
         const studentEmail = parsedData?.student_details?.student_email || 'testemail@email.com';
         const studentPhone = parsedData?.student_details?.student_phone_no || '8888888888';
-        const tokendata = `${worldline_merchant_id}|${_id.toString()}|${formattedAmount}|${""}|${""}|${""}|${""}|${""}|${""}|${""}|${""}|${""}|${""}|${""}|${""}|${""}|${request.worldline.worldline_encryption_key}`;
+        const tokendata = `${worldline_merchant_id}|${_id.toString()}|${formattedAmount}|${''}|${''}|${''}|${''}|${''}|${''}|${''}|${''}|${''}|${''}|${''}|${''}|${''}|${request.worldline.worldline_encryption_key}`;
         const token = await (0, sign_1.calculateSHA512Hash)(tokendata);
-        const updatedRequest = await this.databaseService.CollectRequestModel.findOneAndUpdate({ _id }, { $set: { 'worldlineToken': token } }, { new: true });
+        const updatedRequest = await this.databaseService.CollectRequestModel.findOneAndUpdate({ _id }, { $set: { worldlineToken: token } }, { new: true });
         if (!updatedRequest)
             throw new common_1.BadRequestException('Orders not found');
         const url = `${process.env.URL}/worldline/redirect?collect_id=${_id.toString()}`;
@@ -43,146 +43,161 @@ let WorldlineService = class WorldlineService {
         const txnDate = new Date();
         const formattedAmount = Math.round(parseFloat(amount.toString()) * 100) / 100;
         const clnt_txn_ref = _id.toString();
-        const formattedDate = txnDate.getDate().toString().padStart(2, '0') + '-' +
-            (txnDate.getMonth() + 1).toString().padStart(2, '0') + '-' +
+        const formattedDate = txnDate.getDate().toString().padStart(2, '0') +
+            '-' +
+            (txnDate.getMonth() + 1).toString().padStart(2, '0') +
+            '-' +
             txnDate.getFullYear();
         const totalAmountPaisa = formattedAmount * 100;
-        const vendorDetails = request.worldline_vendors_info || [{
-                itemId: "FIRST",
+        console.log(request.worldline_vendors_info);
+        const vendorDetails = request.worldline_vendors_info || [
+            {
+                itemId: 'FIRST',
                 amount: `${amount}`,
-                comAmt: "0",
-                identifier: "FIRST"
-            }];
+                comAmt: '0',
+                identifier: 'FIRST',
+            },
+        ];
         const totalSchemes = vendorDetails.length;
         const baseAmount = Math.floor(totalAmountPaisa / totalSchemes);
         const extraPaisa = totalAmountPaisa % totalSchemes;
         let items;
         if (!vendorDetails.length) {
-            items = [{
-                    itemId: "FIRST",
+            items = [
+                {
+                    itemId: 'FIRST',
                     amount: `${amount}`,
-                    comAmt: "0",
-                    identifier: "FIRST"
-                }];
+                    comAmt: '0',
+                    identifier: 'FIRST',
+                },
+            ];
         }
         else {
+            console.log(vendorDetails);
             items = vendorDetails.map((vendor, idx) => {
                 let amountInPaise;
-                if (vendor.percentage !== undefined) {
-                    amountInPaise = Math.round((formattedAmount * 100) * (vendor.percentage / 100));
-                }
-                else if (vendor.amount !== undefined) {
+                if (vendor.amount !== undefined) {
                     amountInPaise = Math.round(vendor.amount * 100);
                 }
                 else {
                     amountInPaise = idx < extraPaisa ? baseAmount + 1 : baseAmount;
                 }
-                ;
                 const amount = (amountInPaise / 100).toFixed(2);
                 return {
                     itemId: vendor.scheme_code,
                     amount: `${amount}`,
-                    comAmt: "0",
-                    identifier: vendor.scheme_code
+                    comAmt: '0',
+                    identifier: vendor.scheme_code,
                 };
             });
         }
+        const totalMappedAmount = items.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+        const remainingAmount = (request.amount - totalMappedAmount).toFixed(2);
+        if (parseFloat(remainingAmount) > 0) {
+            items.push({
+                itemId: 'FIRST',
+                amount: `${remainingAmount}`,
+                comAmt: '0',
+                identifier: 'FIRST',
+            });
+        }
+        console.log({ items });
         const plainJson = {
             merchant: {
                 webhookEndpointURL: `${process.env.URL}/worldline/webhook`,
-                responseType: "",
+                responseType: '',
                 responseEndpointURL: `${process.env.URL}/worldline/rest/callback/?collect_id=${clnt_txn_ref}`,
-                description: "",
+                description: '',
                 identifier: `${worldline_merchant_id}`,
-                webhookType: "payment.captured"
+                webhookType: 'payment.captured',
             },
             cart: {
                 item: items,
-                reference: "",
-                identifier: "",
-                description: ""
+                reference: '',
+                identifier: '',
+                description: '',
             },
             payment: {
                 method: {
-                    token: "",
-                    type: ""
+                    token: '',
+                    type: '',
                 },
                 instrument: {
-                    expiry: { year: "", month: "", dateTime: "" },
-                    provider: "",
-                    iFSC: "",
+                    expiry: { year: '', month: '', dateTime: '' },
+                    provider: '',
+                    iFSC: '',
                     holder: {
-                        name: "",
+                        name: '',
                         address: {
-                            country: "",
-                            street: "",
-                            state: "",
-                            city: "",
-                            zipCode: "",
-                            county: ""
-                        }
+                            country: '',
+                            street: '',
+                            state: '',
+                            city: '',
+                            zipCode: '',
+                            county: '',
+                        },
                     },
-                    bIC: "",
-                    type: "",
-                    action: "",
-                    mICR: "",
-                    verificationCode: "",
-                    iBAN: "",
-                    processor: "",
-                    issuance: { year: "", month: "", dateTime: "" },
-                    alias: "",
-                    identifier: "",
-                    token: "",
-                    authentication: { token: "", type: "", subType: "" },
-                    subType: "",
-                    issuer: "",
-                    acquirer: ""
+                    bIC: '',
+                    type: '',
+                    action: '',
+                    mICR: '',
+                    verificationCode: '',
+                    iBAN: '',
+                    processor: '',
+                    issuance: { year: '', month: '', dateTime: '' },
+                    alias: '',
+                    identifier: '',
+                    token: '',
+                    authentication: { token: '', type: '', subType: '' },
+                    subType: '',
+                    issuer: '',
+                    acquirer: '',
                 },
                 instruction: {
-                    occurrence: "",
-                    amount: "",
-                    frequency: "",
-                    type: "",
-                    description: "",
-                    action: "N",
-                    limit: "",
-                    endDateTime: "",
-                    debitDay: "",
-                    debitFlag: "N",
-                    identifier: "",
-                    reference: "",
-                    startDateTime: "",
-                    validity: ""
-                }
+                    occurrence: '',
+                    amount: '',
+                    frequency: '',
+                    type: '',
+                    description: '',
+                    action: 'N',
+                    limit: '',
+                    endDateTime: '',
+                    debitDay: '',
+                    debitFlag: 'N',
+                    identifier: '',
+                    reference: '',
+                    startDateTime: '',
+                    validity: '',
+                },
             },
             transaction: {
-                deviceIdentifier: "web",
-                smsSending: "N",
+                deviceIdentifier: 'web',
+                smsSending: 'N',
                 amount: `${formattedAmount}`,
-                forced3DSCall: "Y",
-                type: "SALE",
-                description: "",
-                currency: "INR",
-                isRegistration: "Y",
+                forced3DSCall: 'Y',
+                type: 'SALE',
+                description: '',
+                currency: 'INR',
+                isRegistration: 'Y',
                 identifier: `${clnt_txn_ref}`,
                 dateTime: `${formattedDate}`,
-                token: "",
-                securityToken: "",
-                subType: "DEBIT",
-                requestType: "T",
-                reference: "",
-                merchantInitiated: "N",
-                tenureId: ""
+                token: '',
+                securityToken: '',
+                subType: 'DEBIT',
+                requestType: 'T',
+                reference: '',
+                merchantInitiated: 'N',
+                tenureId: '',
             },
             consumer: {
-                mobileNumber: "9876543210",
-                emailID: "test@test.com",
-                identifier: "c9",
-                accountNo: "",
-                accountType: "",
-                accountHolderName: "",
-                aadharNo: ""
-            }
+                mobileNumber: '9876543210',
+                emailID: 'test@test.com',
+                identifier: 'c9',
+                accountNo: '',
+                accountType: '',
+                accountHolderName: '',
+                aadharNo: '',
+            },
         };
         const encryptedData = await this.encryptTxthdnMsg(JSON.stringify(plainJson), worldline_encryption_key, worldline_encryption_iV);
         try {
@@ -229,8 +244,10 @@ let WorldlineService = class WorldlineService {
         const { worldline, createdAt, amount } = collectRequest;
         const { worldline_merchant_id, worldline_encryption_key, worldline_encryption_iV, } = worldline || {};
         const safeCreatedAt = createdAt ?? new Date();
-        const formattedDate = safeCreatedAt.getDate().toString().padStart(2, '0') + '-' +
-            (safeCreatedAt.getMonth() + 1).toString().padStart(2, '0') + '-' +
+        const formattedDate = safeCreatedAt.getDate().toString().padStart(2, '0') +
+            '-' +
+            (safeCreatedAt.getMonth() + 1).toString().padStart(2, '0') +
+            '-' +
             safeCreatedAt.getFullYear();
         const plainJson = {
             merchant: {
@@ -239,10 +256,10 @@ let WorldlineService = class WorldlineService {
             transaction: {
                 identifier: `${collect_id}`,
                 dateTime: `${formattedDate}`,
-                requestType: "O",
-                token: "",
-                reference: "",
-            }
+                requestType: 'O',
+                token: '',
+                reference: '',
+            },
         };
         const encryptedData = await this.encryptTxthdnMsg(JSON.stringify(plainJson), worldline_encryption_key, worldline_encryption_iV);
         try {
@@ -276,7 +293,8 @@ let WorldlineService = class WorldlineService {
             if (!collectRequestStatus) {
                 throw new common_1.BadRequestException('Collect request not found');
             }
-            const status = response?.paymentMethod?.paymentTransaction?.statusMessage.toUpperCase() || 'PENDING';
+            const status = response?.paymentMethod?.paymentTransaction?.statusMessage.toUpperCase() ||
+                'PENDING';
             const statusCode = status === transactionStatus_1.TransactionStatus.SUCCESS
                 ? 200
                 : status === transactionStatus_1.TransactionStatus.FAILURE
@@ -292,8 +310,15 @@ let WorldlineService = class WorldlineService {
                     payment_mode: response?.paymentMethod?.paymentTransaction?.errorMessage || null,
                     payment_methods: {},
                     transaction_time: response?.paymentMethod?.paymentTransaction?.dateTime || null,
-                    formattedTransactionDate: response?.paymentMethod?.paymentTransaction?.dateTime
-                        ? new Date(response?.paymentMethod?.paymentTransaction?.dateTime.split(' ')[0].split('-').reverse().join('-')).toISOString().split('T')[0]
+                    formattedTransactionDate: response?.paymentMethod?.paymentTransaction
+                        ?.dateTime
+                        ? new Date(response?.paymentMethod?.paymentTransaction?.dateTime
+                            .split(' ')[0]
+                            .split('-')
+                            .reverse()
+                            .join('-'))
+                            .toISOString()
+                            .split('T')[0]
                         : null,
                     order_status: status === transactionStatus_1.TransactionStatus.SUCCESS ? 'PAID' : 'PENDING',
                     service_charge: response?.fee ? response?.fee : null,

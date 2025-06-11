@@ -19,7 +19,7 @@ export class WorldlineController {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly worldlineService: WorldlineService,
-  ) { }
+  ) {}
 
   @Get('redirect')
   async worldlinePayment(@Req() req: any, @Res() res: any) {
@@ -118,7 +118,6 @@ export class WorldlineController {
         </body>
         </html>
         `);
-
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -127,24 +126,40 @@ export class WorldlineController {
   @Post('/callback')
   async handleCallbackPost(@Req() req: any, @Res() res: any) {
     const { collect_id } = req.query;
+    try {
+      const saveWebhook = await this.databaseService.WebhooksModel.create({
+        gateway: 'wordline',
+        body: JSON.stringify(req.body),
+      });
+    } catch (e) {
+      console.log(e);
+    }
+    console.log(req.body, 'req');
+
     const msg = req.body.msg;
     const collectRequest =
       await this.databaseService.CollectRequestModel.findById(collect_id);
     if (!collectRequest) {
       throw new BadRequestException('Error in collect request');
     }
-    const decryptMessage =
-      await this.worldlineService.decryptAES256Hex(msg, collectRequest.worldline.worldline_encryption_key, collectRequest.worldline.worldline_encryption_iV);
-      
+    const decryptMessage = await this.worldlineService.decryptAES256Hex(
+      msg,
+      collectRequest.worldline.worldline_encryption_key,
+      collectRequest.worldline.worldline_encryption_iV,
+    );
+
     const parsedMessage = JSON.parse(decryptMessage);
-    let status = parsedMessage?.paymentMethod?.paymentTransaction?.statusMessage || "";
+    let status =
+      parsedMessage?.paymentMethod?.paymentTransaction?.statusMessage || '';
     collectRequest.gateway = Gateway.EDVIRON_WORLDLINE;
     await collectRequest.save();
     let detail = null;
     let paymentMethod = null;
     switch (parsedMessage?.paymentMethod?.paymentMode) {
       case 'UPI':
-        detail = parsedMessage?.paymentMethod?.paymentTransaction?.upiTransactionDetails;
+        detail =
+          parsedMessage?.paymentMethod?.paymentTransaction
+            ?.upiTransactionDetails;
         paymentMethod = 'UPI';
         break;
       case 'CARD':
@@ -155,14 +170,19 @@ export class WorldlineController {
         detail = {
           netbanking: {
             channel: parsedMessage?.paymentMethod?.instrumentAliasName || null,
-            netbanking_bank_code: parsedMessage?.paymentMethod?.bankSelectionCode || null,
-            netbanking_bank_name: parsedMessage?.paymentMethod?.paymentTransaction?.bankName || null,
+            netbanking_bank_code:
+              parsedMessage?.paymentMethod?.bankSelectionCode || null,
+            netbanking_bank_name:
+              parsedMessage?.paymentMethod?.paymentTransaction?.bankName ||
+              null,
           },
         };
         paymentMethod = 'netbanking';
         break;
       case 'WALLET':
-        detail = parsedMessage?.paymentMethod?.paymentTransaction?.walletTransactionDetails;
+        detail =
+          parsedMessage?.paymentMethod?.paymentTransaction
+            ?.walletTransactionDetails;
         paymentMethod = 'Wallet';
         break;
       default:
@@ -171,38 +191,71 @@ export class WorldlineController {
         break;
     }
 
-    const collectStatus = await this.databaseService.CollectRequestStatusModel.findOne({
-      collect_id: collect_id,
-    });
+    const collectStatus =
+      await this.databaseService.CollectRequestStatusModel.findOne({
+        collect_id: collect_id,
+      });
     if (!collectStatus) {
       throw new BadRequestException('Collect request status not found');
     }
-    const paymentTime = parsedMessage?.paymentMethod?.paymentTransaction?.dateTime || null;
+    const paymentTime =
+      parsedMessage?.paymentMethod?.paymentTransaction?.dateTime || null;
     collectStatus.payment_method = paymentMethod;
-    collectStatus.status = status.toUpperCase() === 'SUCCESS' ? PaymentStatus.SUCCESS : PaymentStatus.PENDING;
-    collectStatus.bank_reference = parsedMessage?.paymentMethod?.paymentTransaction?.reference || '';
-    collectStatus.payment_time = paymentTime ? (() => {
-        const [datePart, timePart] = paymentTime.split(' ');
-        const [day, month, year] = datePart.split('-');
-        const [hours, minutes, seconds] = timePart.split(':');
-        return new Date(Date.UTC(
-          Number(year),
-          Number(month) - 1, 
-          Number(day),
-          Number(hours),
-          Number(minutes),
-          Number(seconds)
-        ));
-      })() : new Date();
+    collectStatus.status =
+      status.toUpperCase() === 'SUCCESS'
+        ? PaymentStatus.SUCCESS
+        : PaymentStatus.PENDING;
+    collectStatus.bank_reference =
+      parsedMessage?.paymentMethod?.paymentTransaction?.reference || '';
+    collectStatus.payment_time = paymentTime
+      ? (() => {
+          const [datePart, timePart] = paymentTime.split(' ');
+          const [day, month, year] = datePart.split('-');
+          const [hours, minutes, seconds] = timePart.split(':');
+          return new Date(
+            Date.UTC(
+              Number(year),
+              Number(month) - 1,
+              Number(day),
+              Number(hours),
+              Number(minutes),
+              Number(seconds),
+            ),
+          );
+        })()
+      : new Date();
     collectStatus.details = JSON.stringify(detail);
     await collectStatus.save();
+    if (collectRequest.isSplitPayments) {
+      console.log('saving vendor');
+
+      try {
+        const vendor =
+          await this.databaseService.VendorTransactionModel.updateMany(
+            {
+              collect_id: collectRequest._id,
+            },
+            {
+              $set: {
+                payment_time: new Date(
+                  parsedMessage?.paymentMethod?.paymentTransaction?.dateTime,
+                ),
+                status: status.toUpperCase(),
+                gateway: Gateway.EDVIRON_WORLDLINE,
+              },
+            },
+          );
+      } catch (e) {
+        console.log('Error in updating vendor transactions');
+      }
+    }
     if (collectRequest?.sdkPayment) {
       if (status.toUpperCase() === `SUCCESS`) {
         console.log(`SDK payment success for ${collect_id}`);
         return res.redirect(
           `${process.env.PG_FRONTEND}/payment-success?collect_id=${collect_id}`,
         );
-      };
+      }
       return res.redirect(
         `${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_id}`,
       );
@@ -221,43 +274,95 @@ export class WorldlineController {
   @Post('/rest/callback')
   async handleCallbackRest(@Req() req: any, @Res() res: any) {
     const { collect_id } = req.query;
+    try {
+      const saveWebhook = await this.databaseService.WebhooksModel.create({
+        gateway: 'wordline',
+        body: JSON.stringify(req.body),
+      });
+    } catch (e) {
+      console.log(e);
+    }
+
     const msg = req.body.msg;
     const collectRequest =
       await this.databaseService.CollectRequestModel.findById(collect_id);
     if (!collectRequest) {
       throw new BadRequestException('Error in collect request');
     }
-    const decryptMessage =
-      await this.worldlineService.decryptAES256Hex(msg, collectRequest.worldline.worldline_encryption_key, collectRequest.worldline.worldline_encryption_iV);
+    const decryptMessage = await this.worldlineService.decryptAES256Hex(
+      msg,
+      collectRequest.worldline.worldline_encryption_key,
+      collectRequest.worldline.worldline_encryption_iV,
+    );
+
+    console.log(decryptMessage);
 
     const parsedMessage = JSON.parse(decryptMessage);
-    console.log(parsedMessage)
-    let status = parsedMessage?.paymentMethod?.paymentTransaction?.statusMessage || "";
+    let status =
+      parsedMessage?.paymentMethod?.paymentTransaction?.statusMessage || '';
     collectRequest.gateway = Gateway.EDVIRON_WORLDLINE;
     await collectRequest.save();
     let detail = null;
     let paymentMethod = null;
     switch (parsedMessage?.paymentMethod?.paymentMode) {
       case 'UPI':
-        detail = parsedMessage?.paymentMethod?.paymentTransaction?.upiTransactionDetails;
+        detail =
+          parsedMessage?.paymentMethod?.paymentTransaction
+            ?.upiTransactionDetails;
         paymentMethod = 'UPI';
         break;
-      case 'CARD':
-        detail = parsedMessage?.paymentMethod?.paymentTransaction?.cardDetails;
-        paymentMethod = 'Card';
+      case 'Credit card':
+        paymentMethod = 'credit_card';
+        detail = {
+          card: {
+            card_bank_name:
+              parsedMessage?.paymentMethod?.instrumentAliasName || 'NA',
+            card_country: 'IN',
+            card_network:
+              parsedMessage?.paymentMethod?.instrumentAliasName
+                ?.instrumentAliasName || 'NA',
+            card_number: 'NA',
+            card_sub_type: 'P',
+            card_type: 'credit_card',
+            channel: null,
+          },
+        };
+        break;
+
+      case 'Debit card':
+        paymentMethod = 'debit_card';
+        detail = {
+          card: {
+            card_bank_name:
+              parsedMessage?.paymentMethod?.instrumentAliasName || 'NA',
+            card_country: 'IN',
+            card_network:
+              parsedMessage?.paymentMethod?.instrumentAliasName
+                ?.instrumentAliasName || 'NA',
+            card_number: 'NA',
+            card_sub_type: 'P',
+            card_type: 'debit_card',
+            channel: null,
+          },
+        };
         break;
       case 'Netbanking':
         detail = {
           netbanking: {
             channel: parsedMessage?.paymentMethod?.instrumentAliasName || null,
-            netbanking_bank_code: parsedMessage?.paymentMethod?.bankSelectionCode || null,
-            netbanking_bank_name: parsedMessage?.paymentMethod?.paymentTransaction?.bankName || null,
+            netbanking_bank_code:
+              parsedMessage?.paymentMethod?.bankSelectionCode || null,
+            netbanking_bank_name:
+              parsedMessage?.paymentMethod?.paymentTransaction?.bankName ||
+              null,
           },
         };
         paymentMethod = 'netbanking';
         break;
       case 'WALLET':
-        detail = parsedMessage?.paymentMethod?.paymentTransaction?.walletTransactionDetails;
+        detail =
+          parsedMessage?.paymentMethod?.paymentTransaction
+            ?.walletTransactionDetails;
         paymentMethod = 'Wallet';
         break;
       default:
@@ -266,38 +371,71 @@ export class WorldlineController {
         break;
     }
 
-    const collectStatus = await this.databaseService.CollectRequestStatusModel.findOne({
-      collect_id: collect_id,
-    });
+    const collectStatus =
+      await this.databaseService.CollectRequestStatusModel.findOne({
+        collect_id: collect_id,
+      });
     if (!collectStatus) {
       throw new BadRequestException('Collect request status not found');
     }
-    const paymentTime = parsedMessage?.paymentMethod?.paymentTransaction?.dateTime || null;
+    const paymentTime =
+      parsedMessage?.paymentMethod?.paymentTransaction?.dateTime || null;
     collectStatus.payment_method = paymentMethod;
-    collectStatus.status = status.toUpperCase() === 'SUCCESS' ? PaymentStatus.SUCCESS : PaymentStatus.PENDING;
-    collectStatus.bank_reference = parsedMessage?.paymentMethod?.paymentTransaction?.reference || '';
-    collectStatus.payment_time = paymentTime ? (() => {
-        const [datePart, timePart] = paymentTime.split(' ');
-        const [day, month, year] = datePart.split('-');
-        const [hours, minutes, seconds] = timePart.split(':');
-        return new Date(Date.UTC(
-          Number(year),
-          Number(month) - 1, 
-          Number(day),
-          Number(hours),
-          Number(minutes),
-          Number(seconds)
-        ));
-      })() : new Date();
+    collectStatus.status =
+      status.toUpperCase() === 'SUCCESS'
+        ? PaymentStatus.SUCCESS
+        : PaymentStatus.PENDING;
+    collectStatus.bank_reference =
+      parsedMessage?.paymentMethod?.paymentTransaction?.reference || '';
+    collectStatus.payment_time = paymentTime
+      ? (() => {
+          const [datePart, timePart] = paymentTime.split(' ');
+          const [day, month, year] = datePart.split('-');
+          const [hours, minutes, seconds] = timePart.split(':');
+          return new Date(
+            Date.UTC(
+              Number(year),
+              Number(month) - 1,
+              Number(day),
+              Number(hours),
+              Number(minutes),
+              Number(seconds),
+            ),
+          );
+        })()
+      : new Date();
     collectStatus.details = JSON.stringify(detail);
     await collectStatus.save();
+    if (collectRequest.isSplitPayments) {
+      console.log('saving vendor');
+
+      try {
+        const vendor =
+          await this.databaseService.VendorTransactionModel.updateMany(
+            {
+              collect_id: collectRequest._id,
+            },
+            {
+              $set: {
+                payment_time: new Date(
+                  parsedMessage?.paymentMethod?.paymentTransaction?.dateTime,
+                ),
+                status: status.toUpperCase(),
+                gateway: Gateway.EDVIRON_WORLDLINE,
+              },
+            },
+          );
+      } catch (e) {
+        console.log('Error in updating vendor transactions');
+      }
+    }
     if (collectRequest?.sdkPayment) {
       if (status.toUpperCase() === `SUCCESS`) {
         console.log(`SDK payment success for ${collect_id}`);
         return res.redirect(
           `${process.env.PG_FRONTEND}/payment-success?collect_id=${collect_id}`,
         );
-      };
+      }
       return res.redirect(
         `${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_id}`,
       );
@@ -325,5 +463,4 @@ export class WorldlineController {
       throw new BadRequestException(error.message || 'Something went wrong');
     }
   }
-
 }

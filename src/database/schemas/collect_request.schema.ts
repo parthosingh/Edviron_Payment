@@ -164,10 +164,25 @@ export class CollectRequest {
   ];
 
   @Prop({ required: false })
-  worldline_vendors_info?: [
-    { vendor_id: string; percentage?: number; amount?: number; name?: string, scheme_code?: string },
+  easebuzzVendors?: [
+    { vendor_id: string; percentage?: number; amount?: number; name?: string },
   ];
 
+  @Prop({ required: false })
+  cashfreeVedors?: [
+    { vendor_id: string; percentage?: number; amount?: number; name?: string },
+  ];
+
+  @Prop({ required: false })
+  worldline_vendors_info?: [
+    {
+      vendor_id: string;
+      percentage?: number;
+      amount?: number;
+      name?: string;
+      scheme_code?: string;
+    },
+  ];
 
   @Prop({ required: false })
   hdfc_razorpay_id: string;
@@ -195,6 +210,9 @@ export class CollectRequest {
 
   @Prop({ required: false })
   pay_u_salt: string;
+
+  @Prop({ required: false })
+  easebuzz_split_label: string;
 
   @Prop({ required: false })
   pos_machine_name: string;
@@ -231,13 +249,17 @@ export class CollectRequest {
     required: false,
     type: {
       worldline_merchant_id: { type: String, required: false, default: null },
-      worldline_encryption_key: { type: String, required: false, default: null },
+      worldline_encryption_key: {
+        type: String,
+        required: false,
+        default: null,
+      },
       worldline_encryption_iV: { type: String, required: false, default: null },
       worldline_token: { type: String, required: false, default: null },
     },
     _id: false,
   })
-  worldline : I_WORLDLINE
+  worldline: I_WORLDLINE;
 
   // @Prop({ required: false })
   // worldline_merchant_id: string;
@@ -247,7 +269,6 @@ export class CollectRequest {
 
   // @Prop({ required: false })
   // worldline_encryption_iV: string;
-
 
   // @Prop({ required: false })
   // worldline_scheme_code: string[];
@@ -265,36 +286,4 @@ export type CollectRequestDocument = CollectRequest & Document;
 export const CollectRequestSchema =
   SchemaFactory.createForClass(CollectRequest);
 
-const dummy = {
-  head: {
-    responseTimestamp: '2025-06-0514:40:00',
-    checksum:
-      'c+g5rJCMNSsllk0VH5ZLdP/q52RH+B7Ly74EADiiSWekJtTwt2ad6MPbdyl4PbNpSpQR8GXz8/cLBas3x/Wfc2E9YrIUxlmdL3yG7D7loRw=',
-  },
-  body: {
-    paytmMid: 'yYLgEx27583498804201',
-    paytmTid: '70001853',
-    transactionDateTime: '2025-06-05 14:39:11',
-    merchantTransactionId: '68415eb7914304377e758613',
-    merchantReferenceNo: '68415eb7914304377e758613',
-    transactionAmount: '100',
-    acquirementId: '20250605011610000137394427929951634',
-    retrievalReferenceNo: '174911457722',
-    authCode: null,
-    issuerMaskCardNo: null,
-    issuingBankName: null,
-    bankResponseCode: '0',
-    bankResponseMessage: 'NA',
-    bankMid: 'yYLgEx27583498804201',
-    bankTid: null,
-    merchantExtendedInfo: null,
-    extendedInfo: null,
-    acquiringBank: 'RBL Bank',
-    resultInfo: {
-      resultStatus: 'SUCCESS',
-      resultCode: 'S',
-      resultMsg: 'Success',
-      resultCodeId: '0000',
-    },
-  },
-};
+

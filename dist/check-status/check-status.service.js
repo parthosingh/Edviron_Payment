@@ -384,9 +384,16 @@ let CheckStatusService = class CheckStatusService {
         }
         const timeDifference = currentTime.getTime() - createdAt.getTime();
         const differenceInMinutes = timeDifference / (1000 * 60);
-        if (differenceInMinutes > 20) {
+        const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: request._id
+        });
+        let paymentStatus = collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
+        if (requestStatus) {
+            paymentStatus = requestStatus.status;
+        }
+        if (differenceInMinutes > 25) {
             return {
-                status: collect_req_status_schema_1.PaymentStatus.USER_DROPPED,
+                status: paymentStatus,
                 custom_order_id: request.custom_order_id || 'NA',
                 amount: request.amount,
                 status_code: 202,
