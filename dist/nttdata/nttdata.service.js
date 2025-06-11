@@ -134,7 +134,7 @@ let NttdataService = class NttdataService {
             const ntt_merchant_id = coll_req.ntt_data.nttdata_id;
             const txnId = coll_req._id.toString();
             const formattedAmount = Math.round(parseFloat(coll_req.amount.toString()) * 100) / 100;
-            const sign = (0, sign_1.generateSignature)(coll_req.ntt_data.nttdata_id, coll_req.ntt_data.nttdata_secret, coll_req._id.toString(), formattedAmount.toFixed(2), 'INR', 'TXNVERIFICATION');
+            const sign = (0, sign_1.generateSignature)(coll_req.ntt_data.nttdata_id, coll_req.ntt_data.nttdata_secret, coll_req._id.toString(), formattedAmount.toFixed(2), 'INR', 'TXNVERIFICATION', coll_req.ntt_data);
             const payload = {
                 payInstrument: {
                     headDetails: {

@@ -175,6 +175,7 @@ export class NttdataService {
         formattedAmount.toFixed(2),
         'INR',
         'TXNVERIFICATION',
+        coll_req.ntt_data
       );
 
       const payload = {
@@ -206,8 +207,7 @@ export class NttdataService {
       });
       const config = {
         method: 'post',
-        url: `${process.env.NTT_AUTH_API_URL
-          }/ots/payment/status?${form.toString()}`,
+        url: `${process.env.NTT_AUTH_API_URL}/ots/payment/status?${form.toString()}`,
         headers: {
           'cache-control': 'no-cache',
           'Content-Type': 'application/json',
