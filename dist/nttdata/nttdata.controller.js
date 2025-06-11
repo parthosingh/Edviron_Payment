@@ -212,6 +212,10 @@ let NttdataController = class NttdataController {
             if (!collect_request || !collect_req_status)
                 throw new common_1.NotFoundException('Order not found');
             const data = JSON.parse(this.nttdataService.decrypt(encRes, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt));
+            await this.databaseService.WebhooksModel.create({
+                body: JSON.stringify(data),
+                gateway: 'ntt_callback'
+            });
             collect_request.gateway = collect_request_schema_1.Gateway.EDVIRON_NTTDATA;
             collect_request.ntt_data.ntt_atom_txn_id =
                 data?.payInstrument?.payDetails?.atomTxnId;

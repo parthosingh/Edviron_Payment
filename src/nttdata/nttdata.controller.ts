@@ -193,8 +193,8 @@ export class NttdataController {
       collect_req_status.payment_time = data.payInstrument.payDetails.txnCompleteDate
       collect_req_status.payment_method = payment_method
       collect_req_status.payment_message = data.payInstrument.responseDetails.description
-      collect_req_status.details =  JSON.stringify(details),
-      collect_req_status.save()
+      collect_req_status.details = JSON.stringify(details),
+        collect_req_status.save()
 
       const status = await this.nttdataService.getTransactionStatus(collect_id);
       const payment_status = status.status;
@@ -249,6 +249,10 @@ export class NttdataController {
 
       const data = JSON.parse(this.nttdataService.decrypt(encRes, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt));
 
+      await this.databaseService.WebhooksModel.create({
+        body: JSON.stringify(data),
+        gateway: 'ntt_callback'
+      });
       collect_request.gateway = Gateway.EDVIRON_NTTDATA;
       collect_request.ntt_data.ntt_atom_txn_id =
         data?.payInstrument?.payDetails?.atomTxnId;
@@ -304,9 +308,9 @@ export class NttdataController {
 
   @Post('initiate-Refund')
   async initiateRefund(
-    @Query('collect_id') collect_id:string,
-    @Query('amount') amount:number
-  ){
+    @Query('collect_id') collect_id: string,
+    @Query('amount') amount: number
+  ) {
     await this.nttdataService.initiateRefund(collect_id, amount)
   }
 }
