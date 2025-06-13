@@ -290,6 +290,15 @@ let CashfreeController = class CashfreeController {
             throw new common_1.BadRequestException(error.message);
         }
     }
+    async testUpload(body) {
+        try {
+            return await this.cashfreeService.uploadKycDocs(body.school_id);
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
     async vbaWebhook(body, res) {
         await this.databaseService.WebhooksModel.create({
             body: JSON.stringify(body),
@@ -530,6 +539,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], CashfreeController.prototype, "testSecureWebhook", null);
 __decorate([
+    (0, common_1.Post)('upload-kyc'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "testUpload", null);
+__decorate([
     (0, common_1.Post)('/webhook/vba-transaction'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Res)()),
@@ -557,4 +573,9 @@ exports.CashfreeController = CashfreeController = __decorate([
         cashfree_service_1.CashfreeService,
         edviron_pg_service_1.EdvironPgService])
 ], CashfreeController);
+const u = {
+    data: { test_object: { test_key: 'test_value' } },
+    type: 'WEBHOOK',
+    event_time: '2025-05-20T10:24:38.589Z',
+};
 //# sourceMappingURL=cashfree.controller.js.map
