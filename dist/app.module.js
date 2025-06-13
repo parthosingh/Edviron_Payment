@@ -32,6 +32,9 @@ const nttdata_module_1 = require("./nttdata/nttdata.module");
 const worldline_module_1 = require("./worldline/worldline.module");
 const worldline_controller_1 = require("./worldline/worldline.controller");
 const worldline_service_1 = require("./worldline/worldline.service");
+const razorpay_nonseamless_module_1 = require("./razorpay-nonseamless/razorpay-nonseamless.module");
+const razorpay_nonseamless_controller_1 = require("./razorpay-nonseamless/razorpay-nonseamless.controller");
+const razorpay_nonseamless_service_1 = require("./razorpay-nonseamless/razorpay-nonseamless.service");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -50,10 +53,11 @@ exports.AppModule = AppModule = __decorate([
             hdfc_razorpay_module_1.HdfcRazorpayModule,
             smartgateway_module_1.SmartgatewayModule,
             nttdata_module_1.NttdataModule,
+            razorpay_nonseamless_module_1.RazorpayNonseamlessModule,
             worldline_module_1.WorldlineModule
         ],
-        controllers: [app_controller_1.AppController, easebuzz_controller_1.EasebuzzController, cashfree_controller_1.CashfreeController, pos_paytm_controller_1.PosPaytmController, worldline_controller_1.WorldlineController],
-        providers: [app_service_1.AppService, cashfree_service_1.CashfreeService, easebuzz_service_1.EasebuzzService, ccavenue_service_1.CcavenueService, pos_paytm_service_1.PosPaytmService, worldline_service_1.WorldlineService],
+        controllers: [app_controller_1.AppController, easebuzz_controller_1.EasebuzzController, cashfree_controller_1.CashfreeController, pos_paytm_controller_1.PosPaytmController, worldline_controller_1.WorldlineController, razorpay_nonseamless_controller_1.RazorpayNonseamlessController],
+        providers: [app_service_1.AppService, cashfree_service_1.CashfreeService, easebuzz_service_1.EasebuzzService, ccavenue_service_1.CcavenueService, pos_paytm_service_1.PosPaytmService, worldline_service_1.WorldlineService, razorpay_nonseamless_service_1.RazorpayNonseamlessService],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

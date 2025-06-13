@@ -28,6 +28,7 @@ var Gateway;
     Gateway["MOSAMBEE_POS"] = "MOSAMBEE_POS";
     Gateway["EDVIRON_NTTDATA"] = "EDVIRON_NTTDATA";
     Gateway["EDVIRON_WORLDLINE"] = "EDVIRON_WORLDLINE";
+    Gateway["EDVIRON_RAZORPAY"] = "EDVIRON_RAZORPAY";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let PaymentIds = class PaymentIds {
 };
@@ -214,6 +215,10 @@ __decorate([
 ], CollectRequest.prototype, "worldline_vendors_info", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Array)
+], CollectRequest.prototype, "razorpay_vendors_info", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "hdfc_razorpay_id", void 0);
 __decorate([
@@ -314,6 +319,21 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "vba_account_number", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        required: false,
+        type: {
+            razorpay_id: { type: String, required: false, default: null },
+            razorpay_secret: { type: String, required: false, default: null },
+            razorpay_mid: { type: String, required: false, default: null },
+            order_id: { type: String, required: false, default: null },
+            payment_id: { type: String, required: false, default: null },
+            razorpay_signature: { type: String, required: false, default: null },
+        },
+        _id: false,
+    }),
+    __metadata("design:type", Object)
+], CollectRequest.prototype, "razorpay", void 0);
 exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequest);

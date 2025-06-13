@@ -19,6 +19,7 @@ import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { NttdataService } from 'src/nttdata/nttdata.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
 import { TransactionStatus } from 'src/types/transactionStatus';
+import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 
 @Injectable()
 export class CollectService {
@@ -34,7 +35,9 @@ export class CollectService {
     private readonly posPaytmService: PosPaytmService,
     private readonly nttdataService: NttdataService,
     private readonly worldLineService: WorldlineService,
+    private readonly razorpayNonseamlessService: RazorpayNonseamlessService,
   ) {}
+
   async collect(
     amount: Number,
     callbackUrl: string,
@@ -80,7 +83,7 @@ export class CollectService {
         scheme_code?: string;
       },
     ],
-      vendorgateway?: {
+    vendorgateway?: {
       easebuzz: boolean;
       cashfree: boolean;
     },
@@ -111,7 +114,27 @@ export class CollectService {
         scheme_code?: string;
       },
     ],
-    easebuzz_school_label?:string | null
+    easebuzz_school_label?: string | null,
+    razorpay_vendors?: [
+      {
+        vendor_id: string;
+        account?: string;
+        percentage?: number;
+        amount?: number;
+        notes?: {
+          branch?: string;
+          name?: string;
+        };
+        linked_account_notes?: string[];
+        on_hold?: boolean;
+        on_hold_until?: Date;
+      },
+    ],
+    razorpay_credentials?: {
+      razorpay_id?: string | null;
+      razorpay_secret?: string | null;
+      razorpay_mid?: string | null;
+    },
   ): Promise<{ url: string; request: CollectRequest }> {
     if (custom_order_id) {
       const count =
@@ -124,7 +147,7 @@ export class CollectService {
         throw new ConflictException('OrderId must be unique');
       }
     }
-    
+
     const gateway = clientId === 'edviron' ? Gateway.HDFC : Gateway.PENDING;
 
     const request = await new this.databaseService.CollectRequestModel({
@@ -158,8 +181,14 @@ export class CollectService {
       cashfreeVedors,
       isVBAPayment: isVBAPayment || false,
       vba_account_number: vba_account_number || 'NA',
-      worldline_vendors_info:worldLine_vendors,
-      isSplitPayments:splitPayments || false
+      worldline_vendors_info: worldLine_vendors,
+      razorpay_vendors_info: razorpay_vendors,
+      isSplitPayments: splitPayments || false,
+      razorpay: {
+        razorpay_id: razorpay_credentials?.razorpay_id || null,
+        razorpay_secret: razorpay_credentials?.razorpay_secret || null,
+        razorpay_mid: razorpay_credentials?.razorpay_mid || null,
+      },
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({
@@ -182,8 +211,49 @@ export class CollectService {
       );
       return { url, request: collect_req };
     }
+    if (
+      razorpay_credentials?.razorpay_id &&
+      razorpay_credentials?.razorpay_secret &&
+      razorpay_credentials?.razorpay_mid
+    ) {
+      if (splitPayments && razorpay_vendors && razorpay_vendors.length > 0) {
+        razorpay_vendors.map(async (info) => {
+          const {
+            vendor_id,
+            percentage,
+            amount,
+            notes,
+            linked_account_notes,
+            on_hold,
+            on_hold_until
+          } = info;
+          let split_amount = 0;
+          if (amount) {
+            split_amount = amount;
+          }
+          if (percentage && percentage !== 0) {
+            split_amount = (request.amount * percentage) / 100;
+          }
+          await new this.databaseService.VendorTransactionModel({
+            vendor_id: vendor_id,
+            amount: split_amount,
+            collect_id: request._id,
+            gateway: Gateway.EDVIRON_RAZORPAY,
+            status: TransactionStatus.PENDING,
+            trustee_id: request.trustee_id,
+            school_id: request.school_id,
+            custom_order_id: request.custom_order_id || '',
+            name,
+            razorpay_vendors: info,
+          }).save();
+        });
+      }
 
-    // PAY-U NON SEAMLESS
+      const { url, collect_req } =
+        await this.razorpayNonseamlessService.createOrder(request);
+
+      return { url, request: collect_req };
+    }
     if (pay_u_key && pay_u_salt) {
       setTimeout(
         async () => {
@@ -240,13 +310,12 @@ export class CollectService {
       };
     }
 
-
     if (
       worldline_merchant_id &&
       worldline_encryption_key &&
       worldline_encryption_iV
     ) {
-      if (splitPayments && worldLine_vendors && worldLine_vendors.length > 0) {        
+      if (splitPayments && worldLine_vendors && worldLine_vendors.length > 0) {
         worldLine_vendors.map(async (info) => {
           const { vendor_id, percentage, amount, name } = info;
           let split_amount = 0;
@@ -266,8 +335,7 @@ export class CollectService {
             school_id: request.school_id,
             custom_order_id: request.custom_order_id || '',
             name,
-            worldline_vendors_info:worldLine_vendors
-            
+            worldline_vendors_info: worldLine_vendors,
           }).save();
         });
       }
@@ -278,7 +346,6 @@ export class CollectService {
           worldline_encryption_iV: worldline_encryption_iV,
           worldline_token: '',
         };
-      
       } else {
         request.worldline.worldline_merchant_id = worldline_merchant_id;
         request.worldline.worldline_encryption_key = worldline_encryption_key;
@@ -295,8 +362,6 @@ export class CollectService {
       return { url, request: collect_req };
     }
 
-
-      
     // HDFC SMART GATEWAY NON SEAMLESS
     if (
       smartgateway_customer_id &&
@@ -327,9 +392,8 @@ export class CollectService {
             vendorgateway,
             easebuzzVendors,
             cashfreeVedors,
-            easebuzz_school_label
+            easebuzz_school_label,
           )
-
         : await this.hdfcService.collect(request)
     )!;
     await this.databaseService.CollectRequestModel.updateOne(
