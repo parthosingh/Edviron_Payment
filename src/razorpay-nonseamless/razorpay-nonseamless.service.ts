@@ -291,6 +291,7 @@ export class RazorpayNonseamlessService {
         });
         throw new BadGatewayException(error.response?.data || error.message);
       }
+      //changes
       console.error('Internal Error:', error);
       throw new InternalServerErrorException(error.message);
     }
