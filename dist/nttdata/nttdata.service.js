@@ -27,7 +27,7 @@ let NttdataService = class NttdataService {
     }
     encrypt(text, ENC_KEY, REQ_SALT) {
         const derivedKey = crypto.pbkdf2Sync(Buffer.from(ENC_KEY, 'utf8'), Buffer.from(REQ_SALT, 'utf8'), 65536, 32, 'sha512');
-        const cipher = crypto.createCipheriv("aes-256-cbc", derivedKey, this.IV);
+        const cipher = crypto.createCipheriv('aes-256-cbc', derivedKey, this.IV);
         let encrypted = cipher.update(text, 'utf8');
         encrypted = Buffer.concat([encrypted, cipher.final()]);
         return encrypted.toString('hex');
@@ -37,7 +37,7 @@ let NttdataService = class NttdataService {
         const ressalt = Buffer.from(RES_SALT, 'utf8');
         const derivedKey = crypto.pbkdf2Sync(respassword, ressalt, 65536, 32, 'sha512');
         const encryptedText = Buffer.from(text, 'hex');
-        const decipher = crypto.createDecipheriv("aes-256-cbc", derivedKey, this.IV);
+        const decipher = crypto.createDecipheriv('aes-256-cbc', derivedKey, this.IV);
         let decrypted = decipher.update(encryptedText);
         decrypted = Buffer.concat([decrypted, decipher.final()]);
         return decrypted.toString();
@@ -102,11 +102,13 @@ let NttdataService = class NttdataService {
                 throw new Error('Encrypted token not found in NTT response');
             }
             const { atomTokenId } = JSON.parse(this.decrypt(encResponse, ntt_data.nttdata_res_salt, ntt_data.nttdata_res_salt));
-            const updatedRequest = await this.databaseService.CollectRequestModel.findOneAndUpdate({ _id }, { $set: {
+            const updatedRequest = await this.databaseService.CollectRequestModel.findOneAndUpdate({ _id }, {
+                $set: {
                     'ntt_data.ntt_atom_token': atomTokenId,
                     'ntt_data.ntt_atom_txn_id': _id.toString(),
-                    'gateway': collect_request_schema_1.Gateway.EDVIRON_NTTDATA,
-                } }, { new: true });
+                    gateway: collect_request_schema_1.Gateway.EDVIRON_NTTDATA,
+                },
+            }, { new: true });
             if (!updatedRequest)
                 throw new common_1.BadRequestException('Orders not found');
             const url = `${process.env.URL}/nttdata/redirect?collect_id=${_id.toString()}`;
@@ -132,7 +134,7 @@ let NttdataService = class NttdataService {
             const ntt_merchant_id = coll_req.ntt_data.nttdata_id;
             const txnId = coll_req._id.toString();
             const formattedAmount = Math.round(parseFloat(coll_req.amount.toString()) * 100) / 100;
-            const sign = (0, sign_1.generateSignature)(coll_req.ntt_data.nttdata_id, coll_req.ntt_data.nttdata_secret, coll_req._id.toString(), formattedAmount.toFixed(2), 'INR', 'TXNVERIFICATION');
+            const sign = (0, sign_1.generateSignature)(coll_req.ntt_data.nttdata_id, coll_req.ntt_data.nttdata_secret, coll_req._id.toString(), formattedAmount.toFixed(2), 'INR', 'TXNVERIFICATION', coll_req.ntt_data);
             const payload = {
                 payInstrument: {
                     headDetails: {
@@ -221,7 +223,7 @@ let NttdataService = class NttdataService {
         hmac.update(data);
         return hmac.digest('hex');
     }
-    async initiateRefund(collect_request_id, amount) {
+    async initiateRefund(collect_request_id, amount, refund_id) {
         try {
             const collect_request = await this.databaseService.CollectRequestModel.findById(collect_request_id);
             if (!collect_request) {
@@ -230,45 +232,57 @@ let NttdataService = class NttdataService {
             if (amount > collect_request.amount) {
                 throw new common_1.BadRequestException("Refund amount can't be greater than order amount");
             }
-            const signaturevalue = collect_request.ntt_data.nttdata_id + collect_request.ntt_data.nttdata_secret + collect_request_id + amount + 'INR' + 'REFUNDINIT';
-            const signature = await this.generateSignature(signaturevalue, collect_request.ntt_data.nttdata_hash_req_key);
+            const ntt_data = collect_request.ntt_data;
+            if (!ntt_data.nttdata_id ||
+                !ntt_data.nttdata_secret ||
+                !ntt_data.nttdata_hash_req_key ||
+                !ntt_data.nttdata_req_salt ||
+                !ntt_data.nttdata_res_salt) {
+                throw new common_1.BadRequestException('NTT Data keys are missing or invalid');
+            }
+            const signaturevalue = ntt_data.nttdata_id +
+                ntt_data.nttdata_secret +
+                collect_request_id +
+                Number(amount).toFixed(2) +
+                'INR' +
+                'REFUNDINIT';
+            const signature = await this.generateSignature(signaturevalue, ntt_data.nttdata_hash_req_key);
             const payload = {
                 payInstrument: {
                     headDetails: {
                         api: 'REFUNDINIT',
-                        source: "OTS"
+                        source: 'OTS',
                     },
                     merchDetails: {
-                        merchId: collect_request.ntt_data.nttdata_id,
-                        password: collect_request.ntt_data.nttdata_secret,
-                        merchTxnId: collect_request_id,
+                        merchId: ntt_data.nttdata_id,
+                        password: ntt_data.nttdata_secret,
+                        merchTxnId: collect_request_id.toString(),
                     },
                     payDetails: {
-                        atomTxnId: collect_request.ntt_data.ntt_atom_token,
                         signature: signature,
+                        atomTxnId: ntt_data.ntt_atom_txn_id,
+                        totalRefundAmount: `${Number(amount).toFixed(2)}`,
+                        txnCurrency: 'INR',
                         prodDetails: [
                             {
-                                prodName: "NSE",
-                                prodRefundId: "refund1",
-                                prodRefundAmount: amount
-                            }
-                        ],
-                        txnCurrency: "INR",
-                        totalRefundAmount: amount,
+                                prodName: 'SCHOOL',
+                                prodRefundAmount: `${Number(amount).toFixed(2)}`,
+                                prodRefundId: refund_id,
+                            },
+                        ]
                     },
                 },
             };
-            const encData = this.encrypt(JSON.stringify(payload), collect_request.ntt_data.nttdata_req_salt, collect_request.ntt_data.nttdata_req_salt);
+            const encData = this.encrypt(JSON.stringify(payload), ntt_data.nttdata_req_salt, ntt_data.nttdata_req_salt);
             const form = new URLSearchParams({
-                merchId: collect_request.ntt_data.nttdata_id,
+                merchId: ntt_data.nttdata_id,
                 encData,
             });
             const config = {
                 method: 'post',
-                url: `${process.env.NTT_AUTH_API_URL}/ots/payment/status?${form.toString()}`,
+                url: `${process.env.NTT_AUTH_API_URL}/ots/payment/refund?${form.toString()}`,
                 headers: {
-                    'cache-control': 'no-cache',
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 },
             };
             const { data: paymentStatusRes } = await axios_1.default.request(config);
@@ -276,7 +290,16 @@ let NttdataService = class NttdataService {
             if (!encResponse) {
                 throw new Error('Encrypted token not found in NTT response');
             }
-            const res = await JSON.parse(this.decrypt(encResponse, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt));
+            const res = await JSON.parse(this.decrypt(encResponse, ntt_data.nttdata_res_salt, ntt_data.nttdata_res_salt));
+            try {
+                await this.databaseService.WebhooksModel.create({
+                    body: JSON.stringify(res),
+                    gateway: 'ntt_refund',
+                });
+            }
+            catch (error) {
+                throw new common_1.BadRequestException(error.message);
+            }
             return res;
         }
         catch (error) {

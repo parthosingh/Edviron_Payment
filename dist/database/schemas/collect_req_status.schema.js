@@ -94,6 +94,10 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({ required: false, default: '' }),
     __metadata("design:type", String)
+], CollectRequestStatus.prototype, "cf_payment_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: '' }),
+    __metadata("design:type", String)
 ], CollectRequestStatus.prototype, "capture_status", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false, default: false }),
@@ -115,6 +119,10 @@ __decorate([
     }),
     __metadata("design:type", Object)
 ], CollectRequestStatus.prototype, "error_details", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], CollectRequestStatus.prototype, "isPosTransaction", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
         required: false,

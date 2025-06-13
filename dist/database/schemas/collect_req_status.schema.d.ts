@@ -42,10 +42,12 @@ export declare class CollectRequestStatus {
     isAutoRefund: boolean;
     reason: string;
     payment_message: string;
+    cf_payment_id: string;
     capture_status: string;
     isVBAPaymentComplete: boolean;
     vbaOrderId: string;
     error_details: error_details;
+    isPosTransaction: boolean;
     vbaPaymentDetails: vbaPaymentDetails;
     _id: ObjectId;
 }

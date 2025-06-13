@@ -27,7 +27,7 @@ export declare class CashfreeService {
     getTransactionForSettlements(utr: string, client_id: string, limit: number, cursor: string | null): Promise<{
         cursor: any;
         limit: any;
-        settlements_transactions: any;
+        settlements_transactions: any[];
     }>;
     getUpiPaymentInfoUrl(collect_id: string): Promise<{
         intentUrl: any;

@@ -30,13 +30,15 @@ import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { PlatformCharge, rangeCharge } from 'src/database/schemas/platform.charges.schema';
 import { NttdataService } from 'src/nttdata/nttdata.service';
+import { WorldlineService } from 'src/worldline/worldline.service';
 export declare class EdvironPgController {
     private readonly edvironPgService;
     private readonly databaseService;
     private readonly easebuzzService;
     private readonly cashfreeService;
     private readonly nttDataService;
-    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, nttDataService: NttdataService);
+    private readonly worldlineService;
+    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, nttDataService: NttdataService, worldlineService: WorldlineService);
     handleRedirect(req: any, res: any): Promise<void>;
     handleSdkRedirect(req: any, res: any): Promise<any>;
     handleCallback(req: any, res: any): Promise<any>;
@@ -51,6 +53,11 @@ export declare class EdvironPgController {
     getTransactionInfo(body: {
         school_id: string;
         collect_request_id: string;
+        token: string;
+    }): Promise<any[]>;
+    getTransactionInfoOrder(body: {
+        school_id: string;
+        order_id: string;
         token: string;
     }): Promise<any[]>;
     bulkTransactions(body: {
@@ -355,4 +362,17 @@ export declare class EdvironPgController {
         monthlyReport?: undefined;
     }>;
     getVba(collect_id: string): Promise<any>;
+    getDisputesbyOrderId(collect_id: string): Promise<{
+        data: {
+            cashfreeDispute: any;
+            custom_order_id: string;
+            collect_id: string;
+            school_id: string;
+            trustee_id: string;
+            gateway: Gateway;
+            bank_reference: string;
+            student_detail: string;
+        };
+    }>;
+    sendMailAfterTransaction(body: any): Promise<string>;
 }

@@ -112,10 +112,90 @@ let NttdataController = class NttdataController {
             if (!collect_request || !collect_req_status)
                 throw new common_1.NotFoundException('Order not found');
             const data = JSON.parse(this.nttdataService.decrypt(encRes, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt));
+            try {
+                await this.databaseService.WebhooksModel.create({
+                    body: JSON.stringify(data),
+                    gateway: 'ntt_callback',
+                });
+            }
+            catch (error) {
+                console.log(error.message);
+            }
             collect_request.gateway = collect_request_schema_1.Gateway.EDVIRON_NTTDATA;
             collect_request.ntt_data.ntt_atom_txn_id =
                 data?.payInstrument?.payDetails?.atomTxnId;
             await collect_request.save();
+            let details;
+            let payment_method = '';
+            let platform_type = '';
+            const subChannel = data.payInstrument?.payModeSpecificData?.subChannel?.[0];
+            switch (subChannel) {
+                case 'UP':
+                    payment_method = 'upi';
+                    platform_type = 'UPI';
+                    details = {
+                        app: {
+                            channel: 'NA',
+                            upi_id: 'NA',
+                        },
+                    };
+                    break;
+                case 'BQ':
+                    payment_method = 'upi';
+                    platform_type = 'UPI';
+                    details = {
+                        app: {
+                            channel: 'NA',
+                            upi_id: 'NA',
+                        },
+                    };
+                    break;
+                case 'CC':
+                    payment_method = 'credit_card';
+                    platform_type = 'CreditCard';
+                    details = {
+                        card: {
+                            card_detail: data.payInstrument.payModeSpecificData.bankDetails,
+                        },
+                    };
+                    break;
+                case 'DC':
+                    payment_method = 'credit_card';
+                    platform_type = 'CreditCard';
+                    details = {
+                        card: {
+                            card_detail: data.payInstrument.payModeSpecificData.bankDetails,
+                        },
+                    };
+                    break;
+                case 'NB':
+                    payment_method = 'net_banking';
+                    platform_type = 'netBanking';
+                    details = {
+                        netBanking: {
+                            netbanking: data.payInstrument.payModeSpecificData.bankDetails,
+                        },
+                    };
+                    break;
+                default:
+                    payment_method = '';
+                    platform_type = '';
+                    details = {};
+                    break;
+            }
+            console.log({ details });
+            collect_req_status.status = data?.payInstrument?.responseDetails?.message;
+            collect_req_status.transaction_amount =
+                data?.payInstrument?.payDetails?.totalAmount;
+            collect_req_status.bank_reference =
+                data?.payInstrument?.payModeSpecificData?.bankDetails?.bankTxnId;
+            collect_req_status.payment_time =
+                data?.payInstrument?.payDetails?.txnCompleteDate;
+            collect_req_status.payment_method = payment_method;
+            collect_req_status.payment_message =
+                data?.payInstrument?.responseDetails?.description;
+            collect_req_status.details = JSON.stringify(details);
+            await collect_req_status.save();
             const status = await this.nttdataService.getTransactionStatus(collect_id);
             const payment_status = status.status;
             if (payment_status === collect_req_status_schema_1.PaymentStatus.SUCCESS) {
@@ -156,6 +236,15 @@ let NttdataController = class NttdataController {
             if (!collect_request || !collect_req_status)
                 throw new common_1.NotFoundException('Order not found');
             const data = JSON.parse(this.nttdataService.decrypt(encRes, collect_request.ntt_data.nttdata_res_salt, collect_request.ntt_data.nttdata_res_salt));
+            try {
+                await this.databaseService.WebhooksModel.create({
+                    body: JSON.stringify(data),
+                    gateway: 'ntt_callback',
+                });
+            }
+            catch (error) {
+                console.log(error.message);
+            }
             collect_request.gateway = collect_request_schema_1.Gateway.EDVIRON_NTTDATA;
             collect_request.ntt_data.ntt_atom_txn_id =
                 data?.payInstrument?.payDetails?.atomTxnId;
@@ -192,13 +281,16 @@ let NttdataController = class NttdataController {
             const stringified_data = JSON.stringify(req.body);
             await this.databaseService.WebhooksModel.create({
                 body: stringified_data,
-                gateway: 'ntt_payment'
+                gateway: 'ntt_payment',
             });
             return res.sendStatus(200);
         }
         catch (error) {
             throw new common_1.BadRequestException(error.message || 'Something went wrong');
         }
+    }
+    async initiateRefund(collect_id, amount, refund_id) {
+        return await this.nttdataService.initiateRefund(collect_id, amount, refund_id);
     }
 };
 exports.NttdataController = NttdataController;
@@ -234,6 +326,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], NttdataController.prototype, "handleWebhook", null);
+__decorate([
+    (0, common_1.Post)('initiate-Refund'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __param(1, (0, common_1.Query)('amount')),
+    __param(2, (0, common_1.Query)('refund_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Number, String]),
+    __metadata("design:returntype", Promise)
+], NttdataController.prototype, "initiateRefund", null);
 exports.NttdataController = NttdataController = __decorate([
     (0, common_1.Controller)('nttdata'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

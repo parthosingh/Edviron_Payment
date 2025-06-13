@@ -50,7 +50,33 @@ export declare class CollectController {
         nttdata_hash_res_key?: string | null;
         nttdata_res_salt?: string | null;
         nttdata_req_salt?: string | null;
+        easebuzz_school_label?: string | null;
+        worldline_merchant_id?: string | null;
+        worldline_encryption_key?: string | null;
+        worldline_encryption_iV?: string | null;
         vendors_info?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+                scheme_code?: string;
+            }
+        ];
+        worldLine_vendors?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+                scheme_code?: string;
+            }
+        ];
+        vendorgateway?: {
+            easebuzz: boolean;
+            cashfree: boolean;
+        };
+        easebuzzVendors?: [
             {
                 vendor_id: string;
                 percentage?: number;
@@ -58,6 +84,34 @@ export declare class CollectController {
                 name?: string;
             }
         ];
+        cashfreeVedors?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+            }
+        ];
+    }): Promise<any>;
+    posCollect(body: {
+        amount: Number;
+        callbackUrl: string;
+        jwt: string;
+        school_id: string;
+        trustee_id: string;
+        machine_name?: string;
+        platform_charges?: platformChange[];
+        paytm_pos?: {
+            paytmMid?: string;
+            paytmTid?: string;
+            channel_id?: string;
+            paytm_merchant_key?: string;
+            device_id?: string;
+        };
+        additional_data?: {};
+        custom_order_id?: string;
+        req_webhook_urls?: string[];
+        school_name?: string;
     }): Promise<any>;
     callbackUrl(res: any, collect_id: string): Promise<void>;
 }
