@@ -2542,6 +2542,7 @@ let EdvironPgController = class EdvironPgController {
     async approve(body) {
         const payload = await this.cashfreeService.getMerchantInfo(body.school_id, body.kyc_mail);
         const { merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details, } = payload;
+        return payload;
         return await this.cashfreeService.createMerchant(merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details);
     }
     async initiategatewayKyc(body) {

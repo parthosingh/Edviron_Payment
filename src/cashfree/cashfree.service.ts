@@ -1090,6 +1090,9 @@ export class CashfreeService {
     };
   }> {
     const token = jwt.sign({ school_id }, process.env.JWT_SECRET_FOR_INTRANET!);
+   
+   const school = await this.edvironPgService.getAllSchoolInfo(school_id);
+    console.log(school);
     const config = {
       method: 'get',
       maxBodyLength: Infinity,
@@ -1099,31 +1102,33 @@ export class CashfreeService {
       },
     };
     const { data: response } = await axios.request(config);
-    if (!response.legal_name) {
-      throw new BadRequestException('legalName required');
+    if (!response.businessProofDetails?.business_name) {
+      throw new BadRequestException('businessProofDetails?.business_name required');
     }
     if (!response.businessCategory) {
-      throw new BadRequestException('businessCategory is re');
+      throw new BadRequestException('businessCategory is required');
+    }
+      if (!response.business_type) {
+      throw new BadRequestException('business_type is required');
     }
     if (!response.authSignatory?.auth_sighnatory_name_on_aadhar) {
       throw new BadRequestException(
         'authSignatory?.auth_sighnatory_name_on_aadhar, required',
       );
     }
-    const school = await this.edvironPgService.getAllSchoolInfo(school_id);
-    console.log(school);
+    
 
     const details = {
       merchant_id: response.school,
       merchant_email: kyc_mail,
       merchant_name: school.school_name,
-      poc_phone: '7000061754', //chaneg later
+      poc_phone: school.number, //take from school
       merchant_site_url: 'https://www.edviron.com/',
       business_details: {
-        business_legal_name: response.legal_name,
-        business_type: response.businessCategory,
-        business_model: 'Both', //chnage later
-        business_category: response.businessCategory || null,
+        business_legal_name:response.businessProofDetails?.business_name,
+        business_type: response.business_type, // trust society
+        business_model: 'D2C', //Same for everyone
+        business_category: response.businessCategory || null, // Education 
         business_subcategory: response.businessSubCategory || null,
         business_pan:
           response.businessProofDetails?.business_pan_number || null,

@@ -339,7 +339,42 @@ export declare class EdvironPgController {
         school_id: string;
         kyc_mail: string;
         token: string;
-    }): Promise<string>;
+    }): Promise<string | {
+        merchant_id: string;
+        merchant_email: string;
+        merchant_name: string;
+        poc_phone: string;
+        merchant_site_url: string;
+        business_details: {
+            business_legal_name: string;
+            business_type: string;
+            business_model: string;
+            business_category?: string | null | undefined;
+            business_subcategory?: string | null | undefined;
+            business_pan?: string | null | undefined;
+            business_address?: string | null | undefined;
+            business_city?: string | null | undefined;
+            business_state?: string | null | undefined;
+            business_postalcode?: string | null | undefined;
+            business_country?: string | null | undefined;
+            business_gstin?: string | null | undefined;
+            business_cin?: string | null | undefined;
+        };
+        website_details: {
+            website_contact_us: string;
+            website_privacy_policy: string;
+            website_refund_policy: string;
+            website_tnc: string;
+        };
+        bank_account_details: {
+            bank_account_number?: string | null | undefined;
+            bank_ifsc?: string | null | undefined;
+        };
+        signatory_details: {
+            signatory_name: string;
+            signatory_pan?: string | undefined;
+        };
+    }>;
     initiategatewayKyc(body: {
         school_id: string;
         kyc_mail: string;
