@@ -10,4 +10,5 @@ export declare class RazorpayNonseamlessService {
     getPaymentStatus(order_id: string, collectRequest: CollectRequest): Promise<any>;
     formatRazorpayPaymentStatusResponse(response: any, collectRequest: CollectRequest): Promise<any>;
     fetchCardDetailsOfaPaymentFromRazorpay(payment_id: string, collectRequest: CollectRequest): Promise<any>;
+    refund(collect_id: string, refundAmount: number, refund_id: string): Promise<any>;
 }

@@ -211,6 +211,52 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
             throw new common_1.BadRequestException(error.response?.data || error.message);
         }
     }
+    async refund(collect_id, refundAmount, refund_id) {
+        try {
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest) {
+                throw new common_1.BadRequestException('CollectRequest with ID ' + collect_id + ' not found.');
+            }
+            if (refundAmount > collectRequest.amount) {
+                throw new common_1.BadRequestException('Refund amount cannot be greater than the original amount.');
+            }
+            const status = await this.getPaymentStatus(collectRequest.razorpay.order_id, collectRequest);
+            console.log(status, "status");
+            if (status.status !== 'SUCCESS') {
+                throw new common_1.BadRequestException('Payment not captured yet.');
+            }
+            const totalPaise = Math.round(refundAmount * 100);
+            const config = {
+                method: 'post',
+                url: `${process.env.RAZORPAY_URL}/v1/payments/${collectRequest.razorpay.payment_id}/refund`,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                auth: {
+                    username: collectRequest.razorpay.razorpay_id,
+                    password: collectRequest.razorpay.razorpay_secret,
+                },
+                data: {
+                    amount: totalPaise,
+                },
+            };
+            const response = await axios_1.default.request(config);
+            console.log(response.data, 'refund response');
+            return response.data;
+        }
+        catch (error) {
+            if (axios_1.default.isAxiosError(error)) {
+                console.error('Razorpay Refund Error:', {
+                    message: error.message,
+                    status: error.response?.status,
+                    data: error.response?.data,
+                });
+                throw new common_1.BadGatewayException(error.response?.data || error.message);
+            }
+            console.error('Internal Error:', error);
+            throw new common_1.InternalServerErrorException(error.message);
+        }
+    }
 };
 exports.RazorpayNonseamlessService = RazorpayNonseamlessService;
 exports.RazorpayNonseamlessService = RazorpayNonseamlessService = __decorate([

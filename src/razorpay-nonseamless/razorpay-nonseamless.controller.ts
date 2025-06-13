@@ -394,4 +394,14 @@ export class RazorpayNonseamlessController {
             throw new BadRequestException(e.message);
         }
     }
+
+    @Post('test-refund-razorpay')
+    async refund(
+        @Body() body : any
+    ){
+        console.log('hit')
+        const { collect_id, refundAmount, refund_id} = body
+        return await this.razorpayServiceModel.refund(collect_id, refundAmount, refund_id)
+    }
+
 }

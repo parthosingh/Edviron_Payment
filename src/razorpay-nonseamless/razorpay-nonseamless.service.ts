@@ -1,5 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import axios from 'axios';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import axios, { AxiosError } from 'axios';
 import { DatabaseService } from 'src/database/database.service';
 import {
   CollectRequest,
@@ -232,6 +237,62 @@ export class RazorpayNonseamlessService {
       return data;
     } catch (error) {
       throw new BadRequestException(error.response?.data || error.message);
+    }
+  }
+
+  async refund(collect_id: string, refundAmount: number, refund_id: string) {
+    try {
+      const collectRequest =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+
+      if (!collectRequest) {
+        throw new BadRequestException(
+          'CollectRequest with ID ' + collect_id + ' not found.',
+        );
+      }
+      if (refundAmount > collectRequest.amount) {
+        throw new BadRequestException(
+          'Refund amount cannot be greater than the original amount.',
+        );
+      }
+      const status = await this.getPaymentStatus(
+        collectRequest.razorpay.order_id,
+        collectRequest,
+      );
+      console.log(status, "status")
+      if (status.status !== 'SUCCESS') {
+        throw new BadRequestException('Payment not captured yet.');
+      }
+
+      const totalPaise = Math.round(refundAmount * 100);
+      const config = {
+        method: 'post',
+        url: `${process.env.RAZORPAY_URL}/v1/payments/${collectRequest.razorpay.payment_id}/refund`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        auth: {
+          username: collectRequest.razorpay.razorpay_id,
+          password: collectRequest.razorpay.razorpay_secret,
+        },
+        data: {
+          amount: totalPaise,
+        },
+      };
+      const response = await axios.request(config);
+      console.log(response.data, 'refund response');
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('Razorpay Refund Error:', {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data, 
+        });
+        throw new BadGatewayException(error.response?.data || error.message);
+      }
+      console.error('Internal Error:', error);
+      throw new InternalServerErrorException(error.message);
     }
   }
 }

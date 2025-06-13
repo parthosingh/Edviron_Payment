@@ -347,6 +347,11 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async refund(body) {
+        console.log('hit');
+        const { collect_id, refundAmount, refund_id } = body;
+        return await this.razorpayServiceModel.refund(collect_id, refundAmount, refund_id);
+    }
 };
 exports.RazorpayNonseamlessController = RazorpayNonseamlessController;
 __decorate([
@@ -373,6 +378,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], RazorpayNonseamlessController.prototype, "webhook", null);
+__decorate([
+    (0, common_1.Post)('test-refund-razorpay'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], RazorpayNonseamlessController.prototype, "refund", null);
 exports.RazorpayNonseamlessController = RazorpayNonseamlessController = __decorate([
     (0, common_1.Controller)('razorpay-nonseamless'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
