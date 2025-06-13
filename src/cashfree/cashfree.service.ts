@@ -14,7 +14,15 @@ import {
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import * as moment from 'moment-timezone';
+import * as jwt from 'jsonwebtoken';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
+import { promises } from 'dns';
+import * as https from 'https';
+import * as stream from 'stream';
+import { promisify } from 'util';
+import FormData = require('form-data');
+import path from 'path';
+import * as mime from 'mime-types';
 @Injectable()
 export class CashfreeService {
   constructor(
@@ -697,6 +705,7 @@ export class CashfreeService {
       );
     }
   }
+
   async acceptDispute(disputeId: string, client_id: string) {
     try {
       const config = {
@@ -721,6 +730,456 @@ export class CashfreeService {
       );
     }
   }
+
+
+  async createMerchant(
+    merchant_id: string, //school_id
+    merchant_email: string, // kyc email
+    merchant_name: string, //school_name
+    poc_phone: string, // edviron
+    merchant_site_url: string, //edviron
+    business_details: {
+      business_legal_name: string; //req
+      business_type: string; //req
+      business_model: string; //req
+      business_category?: string | null;
+      business_subcategory?: string | null;
+      business_pan?: string | null;
+      business_address?: string | null;
+      business_city?: string | null;
+      business_state?: string | null;
+      business_postalcode?: string | null;
+      business_country?: string | null;
+      business_gstin?: string | null;
+      business_cin?: string | null;
+    },
+    website_details: {
+      website_contact_us: string;
+      website_privacy_policy: string;
+      website_refund_policy: string;
+      website_tnc: string; // hard cided same for all
+      // website_shop_delivery: string;
+      // website_checkout_page: string;
+      // website_about_us: string;
+      // website_pricing_policy: string;
+      // website_product_service: string;
+      // website_address: string;
+    },
+    bank_account_details: {
+      bank_account_number?: string | null;
+      bank_ifsc?: string | null;
+    },
+    signatory_details: {
+      signatory_name: string;
+      signatory_pan?: string;
+    },
+  ): Promise<string> {
+    const url = 'https://api.cashfree.com/partners/merchants';
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-partner-apikey': process.env.CASHFREE_API_KEY,
+    };
+    const data = {
+      merchant_id,
+      merchant_email,
+      merchant_name,
+      poc_phone,
+      merchant_site_url,
+      business_details,
+      website_details: {
+        ...website_details,
+      },
+      bank_account_details,
+      signatory_details,
+    };
+
+    console.log({
+      merchant_email,
+      poc_phone,
+    });
+
+    const config = {
+      method: 'post',
+      url,
+      headers,
+      data,
+    };
+
+    try {
+      const response = await axios.request(config);
+      await this.uploadKycDocs(merchant_id)
+      return response.data;
+      return 'Merchant Request Created Successfully on Cashfree';
+    } catch (error) {
+      console.error('Cashfree API error:', error);
+      throw new Error('Cashfree API request failed');
+    }
+  }
+
+  async initiateMerchantOnboarding(school_id: string, kyc_mail: string) {
+    const kycInfo = await this.getMerchantInfo(school_id, kyc_mail);
+    const {
+      merchant_id,
+      merchant_email,
+      merchant_name,
+      poc_phone,
+      merchant_site_url,
+      business_details,
+      website_details,
+      bank_account_details,
+      signatory_details,
+    } = kycInfo;
+    console.log(kycInfo, 'kyc info');
+
+    const merchant = await this.createMerchant(
+      merchant_id,
+      merchant_email,
+      merchant_name,
+      poc_phone,
+      merchant_site_url,
+      business_details,
+      website_details,
+      bank_account_details,
+      signatory_details,
+    );
+    return merchant;
+  }
+
+  async uploadKycDocs2(school_id: string) {
+    try {
+      const token = jwt.sign(
+        { school_id },
+        process.env.JWT_SECRET_FOR_INTRANET!,
+      );
+      const config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: `${process.env.MAIN_BACKEND}/api/trustee/get-school-kyc?school_id=${school_id}&token=${token}`,
+        headers: {
+          accept: 'application/json',
+        },
+      };
+      const { data: kycresponse } = await axios.request(config);
+      const businessproof_saecertificate = kycresponse.businessProof; //businessproof_saecertificate
+      const pipeline = promisify(stream.pipeline);
+      const bankProofUrl = kycresponse.bankProof;
+      const Businessproof_regproof = kycresponse.entityPan;
+      const Businessproof_saecertificate = kycresponse.businessProof;
+      if (kycresponse.businessSubCategory === 'Trust') {
+        const entityproof_trustdeed = kycresponse.businessProof;
+      }
+      if (kycresponse.businessSubCategory === 'Society') {
+        const Entityproof_societycertificate = kycresponse.businessProof;
+      }
+      console.log(kycresponse);
+
+      if (!bankProofUrl) {
+        throw new BadRequestException('Bank proof not found');
+      }
+
+      const response = await axios.get(bankProofUrl, {
+        responseType: 'stream',
+        httpsAgent: new https.Agent({ rejectUnauthorized: false }), // Optional, if URL is HTTPS with self-signed cert
+      });
+      const filename = await this.extractFilenameFromUrl(bankProofUrl);
+
+      const form = new FormData();
+      form.append('document_type', 'bank_statement');
+      form.append('file', response.data, {
+        filename: filename, // or .pdf based on content-type or URL extension
+        contentType: response.headers['content-type'],
+      });
+
+      const cashfreeResponse = await axios.post(
+        `https://api.cashfree.com/partners/merchants/${school_id}/documents`,
+        form,
+        {
+          headers: {
+            ...form.getHeaders(),
+            'x-partner-apikey':
+              'hMEYtP5hELxG944df6e6223f41e1fc2100c34cb2fb98321ad408',
+          },
+          maxBodyLength: Infinity,
+        },
+      );
+      return cashfreeResponse.data;
+    } catch (e) {
+      console.log(e);
+
+      throw new BadRequestException(e.message);
+    }
+    // Needed Docs
+    // businessproof_regproof	Other Government-Issued Registration Document
+  }
+
+  async uploadKycDocs(school_id: string) {
+    try {
+      const token = jwt.sign(
+        { school_id },
+        process.env.JWT_SECRET_FOR_INTRANET!,
+      );
+      const config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: `${process.env.MAIN_BACKEND}/api/trustee/get-school-kyc?school_id=${school_id}&token=${token}`,
+        headers: {
+          accept: 'application/json',
+        },
+      };
+      const { data: kycresponse } = await axios.request(config);
+
+      // Extract all document URLs with their document types here
+      const documentsToUpload: { url: string; docType: string }[] = [];
+
+      // Add bank proof
+      if (kycresponse.bankProof) {
+        documentsToUpload.push({
+          url: kycresponse.bankProof,
+          docType: 'bank_statement',
+        });
+      } else {
+        throw new BadRequestException('Bank proof not found');
+      }
+
+      // Add business proof - assuming type 'business_proof' or adjust as needed
+      if (kycresponse.businessProof) {
+        documentsToUpload.push({
+          url: kycresponse.businessProof,
+          docType: 'businessproof_saecertificate',
+        });
+      }
+
+      if (kycresponse.affiliation) {
+        documentsToUpload.push({
+          url: kycresponse.affiliation,
+          docType: 'lobproof_education',
+        });
+      }
+
+      // Add entity PAN document
+      // if (kycresponse.entityPan) {
+      //   documentsToUpload.push({
+      //     url: kycresponse.entityPan,
+      //     docType: 'entity_pan',
+      //   });
+      // }
+
+      // Add trust deed or society certificate based on businessSubCategory
+      if (
+        kycresponse.businessSubCategory === 'Trust' &&
+        kycresponse.businessProof
+      ) {
+        documentsToUpload.push({
+          url: kycresponse.businessProof,
+          docType: 'entity_proof_trustdeed',
+        });
+      }
+      if (
+        kycresponse.businessSubCategory === 'Society' &&
+        kycresponse.businessProof
+      ) {
+        documentsToUpload.push({
+          url: kycresponse.businessProof,
+          docType: 'Entityproof_societycertificate',
+        });
+      }
+
+      // Function to extract filename from URL
+      const extractFilenameFromUrl = (url: string): string => {
+        try {
+          const pathname = new URL(url).pathname;
+          const segments = pathname.split('/');
+          return segments.pop() || 'file';
+        } catch {
+          return 'file';
+        }
+      };
+
+      // Upload each document sequentially and collect results
+      const uploadResults = [];
+
+      for (const doc of documentsToUpload) {
+        // Download the file stream
+        const response = await axios.get(doc.url, {
+          responseType: 'stream',
+          httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+        });
+
+        const filename = extractFilenameFromUrl(doc.url);
+
+        // Prepare form data
+        const form = new FormData();
+        form.append('document_type', doc.docType);
+        form.append('file', response.data, {
+          filename,
+          contentType: response.headers['content-type'],
+        });
+
+        // Call Cashfree API for this document
+        try{
+
+          const cashfreeResponse = await axios.post(
+            `https://api.cashfree.com/partners/merchants/${school_id}/documents`,
+            form,
+            {
+              headers: {
+                ...form.getHeaders(),
+                'x-partner-apikey':
+                  'hMEYtP5hELxG944df6e6223f41e1fc2100c34cb2fb98321ad408',
+              },
+              maxBodyLength: Infinity,
+            },
+          );
+          uploadResults.push({
+            document: doc.docType,
+            response: cashfreeResponse.data,
+          });
+        }catch(e){
+          console.log(form);
+          console.log(doc);
+          throw new BadRequestException(e.message)
+          
+        }
+
+      }
+
+      return uploadResults; // returns an array of results for each document uploaded
+    } catch (e: any) {
+      console.log(e);
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  async getMerchantInfo(
+    school_id: string,
+    kyc_mail: string,
+  ): Promise<{
+    merchant_id: string; //school_id
+    merchant_email: string; // kyc email
+    merchant_name: string; //school_name
+    poc_phone: string; // edviron
+    merchant_site_url: string; //edviron
+    business_details: {
+      business_legal_name: string; //req
+      business_type: string; //req
+      business_model: string; //req
+      business_category?: string | null;
+      business_subcategory?: string | null;
+      business_pan?: string | null;
+      business_address?: string | null;
+      business_city?: string | null;
+      business_state?: string | null;
+      business_postalcode?: string | null;
+      business_country?: string | null;
+      business_gstin?: string | null;
+      business_cin?: string | null;
+    };
+    website_details: {
+      website_contact_us: string;
+      website_privacy_policy: string;
+      website_refund_policy: string;
+      website_tnc: string;
+    };
+    bank_account_details: {
+      bank_account_number?: string | null;
+      bank_ifsc?: string | null;
+    };
+    signatory_details: {
+      signatory_name: string;
+      signatory_pan?: string;
+    };
+  }> {
+    const token = jwt.sign({ school_id }, process.env.JWT_SECRET_FOR_INTRANET!);
+    const config = {
+      method: 'get',
+      maxBodyLength: Infinity,
+      url: `${process.env.MAIN_BACKEND}/api/trustee/get-school-kyc?school_id=${school_id}&token=${token}`,
+      headers: {
+        accept: 'application/json',
+      },
+    };
+    const { data: response } = await axios.request(config);
+    if (!response.legal_name) {
+      throw new BadRequestException('legalName required');
+    }
+    if (!response.businessCategory) {
+      throw new BadRequestException('businessCategory is re');
+    }
+    if (!response.authSignatory?.auth_sighnatory_name_on_aadhar) {
+      throw new BadRequestException(
+        'authSignatory?.auth_sighnatory_name_on_aadhar, required',
+      );
+    }
+    const school = await this.edvironPgService.getAllSchoolInfo(school_id);
+    console.log(school);
+
+    const details = {
+      merchant_id: response.school,
+      merchant_email: kyc_mail,
+      merchant_name: school.school_name,
+      poc_phone: '7000061754', //chaneg later
+      merchant_site_url: 'https://www.edviron.com/',
+      business_details: {
+        business_legal_name: response.legal_name,
+        business_type: response.businessCategory,
+        business_model: 'Both', //chnage later
+        business_category: response.businessCategory || null,
+        business_subcategory: response.businessSubCategory || null,
+        business_pan:
+          response.businessProofDetails?.business_pan_number || null,
+        business_address: response.businessAddress?.address || null,
+        business_city: response.businessAddress?.city || null,
+        business_state: response.businessAddress?.state || null,
+        business_postalcode: response.businessAddress?.pincode || null,
+        business_country: 'INDIA',
+        business_gstin: response.gst_no || null,
+        business_cin: null,
+      },
+      website_details: {
+        website_contact_us: 'https://www.edviron.com/',
+        website_privacy_policy: 'https://www.edviron.com/',
+        website_refund_policy: 'https://www.edviron.com/',
+        website_tnc: 'https://www.edviron.com/',
+      },
+      bank_account_details: {
+        bank_account_number: response.bankDetails?.account_number || null,
+        bank_ifsc: response.bankDetails?.ifsc_code || null,
+      },
+      signatory_details: {
+        signatory_name: response.authSignatory?.auth_sighnatory_name_on_aadhar,
+        signatory_pan:
+          response.authSignatory?.auth_sighnatory_pan_number || null,
+      },
+    };
+    return details;
+  }
+
+  async getFilenameFromUrlOrContentType(
+    url: string,
+    contentType: string | undefined,
+  ): Promise<string> {
+    // Try to get filename from URL path
+    const urlPath = new URL(url).pathname; // e.g. '/files/bankProof_123.pdf'
+    let filename = path.basename(urlPath); // e.g. 'bankProof_123.pdf'
+
+    // If filename has no extension, try to get from content-type
+    if (!filename || !filename.includes('.')) {
+      const ext = mime.extension(contentType || '') || 'bin'; // fallback extension
+      filename = `bankProof.${ext}`;
+    }
+
+    return filename;
+  }
+
+  async extractFilenameFromUrl(url: string) {
+    try {
+      const pathname = new URL(url).pathname; // "/6828bf8806b55fe0a96f4d6e/businessProof_6828bf8806b55fe0a96f4d6e.pdf"
+      const segments = pathname.split('/');
+      return segments.pop() || 'file'; // returns the last part or fallback 'file'
+    } catch {
+      return 'file';
+     }
+    } // fallback if invalid URL
 
   async createVBA(
     cf_x_client_id: string,
@@ -811,6 +1270,7 @@ export class CashfreeService {
 
       console.error('Error:', error.response?.data || error.message);
       throw error;
+
     }
   }
 }

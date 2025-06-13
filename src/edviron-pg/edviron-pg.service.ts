@@ -711,6 +711,34 @@ export class EdvironPgService implements GatewayService {
     }
   }
 
+  async getAllSchoolInfo(school_id: string) {
+    const payload = { school_id };
+    const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET!, {
+      noTimestamp: true,
+    });
+
+    let config = {
+      method: 'get',
+      maxBodyLength: Infinity,
+      url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-school-all-data?token=${token}`,
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        'x-api-version': '2023-08-01',
+      },
+    };
+    
+    try {
+      const { data: info } = await axios.request(config);
+      console.log({info});
+
+      return info;
+    } catch (e) {
+      console.log(e.message);
+    }
+  }
+
+
   async sendTransactionmail(email: string, request: CollectRequest) {
     const collectReqStatus =
       await this.databaseService.CollectRequestStatusModel.findOne({
@@ -1791,3 +1819,4 @@ export class EdvironPgService implements GatewayService {
     }
 
 }
+

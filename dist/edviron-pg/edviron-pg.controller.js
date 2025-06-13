@@ -2539,6 +2539,23 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async approve(body) {
+        const payload = await this.cashfreeService.getMerchantInfo(body.school_id, body.kyc_mail);
+        const { merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details, } = payload;
+        return await this.cashfreeService.createMerchant(merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details);
+    }
+    async initiategatewayKyc(body) {
+        const { school_id, kyc_mail, gateway } = body;
+        try {
+            if (gateway === 'CASHFREE') {
+                return await this.cashfreeService.initiateMerchantOnboarding(school_id, kyc_mail);
+            }
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
     async genSchoolReport(body) {
         const { school_id, start_date, end_date } = body;
         const startOfDayUTC = new Date(await this.edvironPgService.convertISTStartToUTC(start_date));
@@ -3192,6 +3209,20 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "testWebhook", null);
+__decorate([
+    (0, common_1.Post)('/approve-submerchant'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "approve", null);
+__decorate([
+    (0, common_1.Post)('/initiate-kyc'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "initiategatewayKyc", null);
 __decorate([
     (0, common_1.Post)('school-report-new'),
     __param(0, (0, common_1.Body)()),

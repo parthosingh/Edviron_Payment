@@ -1627,6 +1627,7 @@ export class EdvironPgController {
       searchParams,
       isCustomSearch,
       seachFilter,
+
       isQRCode,
       gateway,
     } = body;
@@ -3661,6 +3662,70 @@ export class EdvironPgController {
     }
   }
 
+
+  @Post('/approve-submerchant')
+  async approve(
+    @Body()
+    body: {
+      gateway: string;
+      school_id: string;
+      kyc_mail: string;
+      token: string;
+    },
+  ) {
+    const payload = await this.cashfreeService.getMerchantInfo(
+      body.school_id,
+      body.kyc_mail,
+    );
+    const {
+      merchant_id,
+      merchant_email,
+      merchant_name,
+      poc_phone,
+      merchant_site_url,
+      business_details,
+      website_details,
+      bank_account_details,
+      signatory_details,
+    } = payload;
+
+   return await this.cashfreeService.createMerchant(
+      merchant_id,
+      merchant_email,
+      merchant_name,
+      poc_phone,
+      merchant_site_url,
+      business_details,
+      website_details,
+      bank_account_details,
+      signatory_details,
+    )
+  }
+
+  @Post('/initiate-kyc')
+  async initiategatewayKyc(
+    @Body() body:{
+      school_id:string,
+      kyc_mail:string,
+      gateway:string
+    }
+  ){
+    const {
+      school_id,
+      kyc_mail,
+      gateway
+    }=body
+    try{
+      if(gateway==='CASHFREE'){
+        return await this.cashfreeService.initiateMerchantOnboarding(school_id,kyc_mail)
+      }
+    }catch(e){
+      console.log(e);
+      
+      throw new BadRequestException(e.message)
+    }
+  }
+
   @Post('school-report-new')
   async genSchoolReport(
     @Body() body: { school_id: string; start_date: string; end_date: string },
@@ -3868,6 +3933,7 @@ export class EdvironPgController {
         customer_email: '',
         customer_id: '',
       };
+
     }
   }
 
