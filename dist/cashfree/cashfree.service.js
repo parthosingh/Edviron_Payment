@@ -250,6 +250,7 @@ let CashfreeService = class CashfreeService {
                 },
             ]));
             let custom_order_id = null;
+            let school_id = null;
             const enrichedOrders = await Promise.all(response.data
                 .filter((order) => order.order_id)
                 .map(async (order) => {
@@ -259,11 +260,13 @@ let CashfreeService = class CashfreeService {
                     customData = customOrderMap.get(order.order_id) || {};
                     try {
                         custom_order_id = customData.custom_order_id || null;
-                        additionalData = JSON.parse(customData?.additional_data);
+                        school_id = customData.school_id || null,
+                            additionalData = JSON.parse(customData?.additional_data);
                     }
                     catch {
                         additionalData = null;
                         custom_order_id = null;
+                        school_id = null;
                     }
                 }
                 if (order.payment_group && order.payment_group === 'VBA_TRANSFER') {
@@ -275,11 +278,14 @@ let CashfreeService = class CashfreeService {
                         if (req) {
                             try {
                                 custom_order_id = req.custom_order_id || null;
+                                order.order_id = req._id;
                                 additionalData = JSON.parse(req?.additional_data);
+                                school_id = req.school_id;
                             }
                             catch {
                                 additionalData = null;
                                 custom_order_id = null;
+                                school_id = null;
                             }
                         }
                     }
@@ -297,8 +303,8 @@ let CashfreeService = class CashfreeService {
                 }
                 return {
                     ...order,
-                    custom_order_id: customData.custom_order_id || null,
-                    school_id: customData.school_id || null,
+                    custom_order_id: custom_order_id || null,
+                    school_id: school_id || null,
                     student_id: additionalData?.student_details?.student_id || null,
                     student_name: additionalData?.student_details?.student_name || null,
                     student_email: additionalData?.student_details?.student_email || null,

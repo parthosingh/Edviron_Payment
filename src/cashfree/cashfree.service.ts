@@ -316,8 +316,8 @@ export class CashfreeService {
         ]),
       );
 
-      let custom_order_id:string|null=null
-
+      let custom_order_id: string | null = null;
+      let school_id:string | null=null
       // const enrichedOrders = response.data.map((order: any) => ({
       //   ...order,
       //   custom_order_id: customOrderMap.get(order.order_id) || null,
@@ -329,18 +329,20 @@ export class CashfreeService {
         response.data
           .filter((order: any) => order.order_id)
           .map(async (order: any) => {
-           let customData: any = {};
+            let customData: any = {};
             let additionalData: any = {};
 
             if (order.order_id) {
               customData = customOrderMap.get(order.order_id) || {};
 
               try {
-                 custom_order_id=customData.custom_order_id || null
+                custom_order_id = customData.custom_order_id || null;
+                school_id=customData.school_id || null,
                 additionalData = JSON.parse(customData?.additional_data);
               } catch {
                 additionalData = null;
-                custom_order_id=null
+                custom_order_id = null;
+                school_id=null
               }
             }
 
@@ -349,7 +351,7 @@ export class CashfreeService {
                 await this.databaseService.CollectRequestStatusModel.findOne({
                   cf_payment_id: order.cf_payment_id,
                 });
-                
+
               if (requestStatus) {
                 const req =
                   await this.databaseService.CollectRequestModel.findById(
@@ -357,11 +359,14 @@ export class CashfreeService {
                   );
                 if (req) {
                   try {
-                    custom_order_id=req.custom_order_id||null
+                    custom_order_id = req.custom_order_id || null;
+                    order.order_id = req._id;
                     additionalData = JSON.parse(req?.additional_data);
+                    school_id=req.school_id
                   } catch {
                     additionalData = null;
-                    custom_order_id=null;
+                    custom_order_id = null;
+                    school_id=null
                   }
                 }
               }
@@ -378,8 +383,8 @@ export class CashfreeService {
 
             return {
               ...order,
-              custom_order_id: customData.custom_order_id || null,
-              school_id: customData.school_id || null,
+              custom_order_id: custom_order_id || null,
+              school_id: school_id || null,
               student_id: additionalData?.student_details?.student_id || null,
               student_name:
                 additionalData?.student_details?.student_name || null,
@@ -738,7 +743,6 @@ export class CashfreeService {
     }
   }
 
-
   async createMerchant(
     merchant_id: string, //school_id
     merchant_email: string, // kyc email
@@ -814,7 +818,7 @@ export class CashfreeService {
 
     try {
       const response = await axios.request(config);
-      await this.uploadKycDocs(merchant_id)
+      await this.uploadKycDocs(merchant_id);
       // return response.data;
       return 'Merchant Request Created Successfully on Cashfree';
     } catch (error) {
@@ -1023,8 +1027,7 @@ export class CashfreeService {
         });
 
         // Call Cashfree API for this document
-        try{
-
+        try {
           const cashfreeResponse = await axios.post(
             `https://api.cashfree.com/partners/merchants/${school_id}/documents`,
             form,
@@ -1041,13 +1044,11 @@ export class CashfreeService {
             document: doc.docType,
             response: cashfreeResponse.data,
           });
-        }catch(e){
+        } catch (e) {
           console.log(form);
           console.log(doc);
-          throw new BadRequestException(e.message)
-          
+          throw new BadRequestException(e.message);
         }
-
       }
 
       return uploadResults; // returns an array of results for each document uploaded
@@ -1097,8 +1098,8 @@ export class CashfreeService {
     };
   }> {
     const token = jwt.sign({ school_id }, process.env.JWT_SECRET_FOR_INTRANET!);
-   
-   const school = await this.edvironPgService.getAllSchoolInfo(school_id);
+
+    const school = await this.edvironPgService.getAllSchoolInfo(school_id);
     console.log(school);
     const config = {
       method: 'get',
@@ -1110,12 +1111,14 @@ export class CashfreeService {
     };
     const { data: response } = await axios.request(config);
     if (!response.businessProofDetails?.business_name) {
-      throw new BadRequestException('businessProofDetails?.business_name required');
+      throw new BadRequestException(
+        'businessProofDetails?.business_name required',
+      );
     }
     if (!response.businessCategory) {
       throw new BadRequestException('businessCategory is required');
     }
-      if (!response.business_type) {
+    if (!response.business_type) {
       throw new BadRequestException('business_type is required');
     }
     if (!response.authSignatory?.auth_sighnatory_name_on_aadhar) {
@@ -1123,7 +1126,6 @@ export class CashfreeService {
         'authSignatory?.auth_sighnatory_name_on_aadhar, required',
       );
     }
-    
 
     const details = {
       merchant_id: response.school,
@@ -1132,10 +1134,10 @@ export class CashfreeService {
       poc_phone: school.number, //take from school
       merchant_site_url: 'https://www.edviron.com/',
       business_details: {
-        business_legal_name:response.businessProofDetails?.business_name,
+        business_legal_name: response.businessProofDetails?.business_name,
         business_type: response.business_type, // trust society
         business_model: 'D2C', //Same for everyone
-        business_category: response.businessCategory || null, // Education 
+        business_category: response.businessCategory || null, // Education
         business_subcategory: response.businessSubCategory || null,
         business_pan:
           response.businessProofDetails?.business_pan_number || null,
@@ -1190,8 +1192,8 @@ export class CashfreeService {
       return segments.pop() || 'file'; // returns the last part or fallback 'file'
     } catch {
       return 'file';
-     }
-    } // fallback if invalid URL
+    }
+  } // fallback if invalid URL
 
   async createVBA(
     cf_x_client_id: string,
@@ -1249,7 +1251,6 @@ export class CashfreeService {
     notification_group: string,
     amount: number,
   ) {
-
     const config = {
       method: 'post',
       url: `https://api.cashfree.com/pg/vba`,
@@ -1282,7 +1283,6 @@ export class CashfreeService {
 
       console.error('Error:', error.response?.data || error.message);
       throw error;
-
     }
   }
 }
