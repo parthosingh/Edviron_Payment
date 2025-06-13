@@ -3688,7 +3688,7 @@ export class EdvironPgController {
       bank_account_details,
       signatory_details,
     } = payload;
-    return payload
+    // return payload
    return await this.cashfreeService.createMerchant(
       merchant_id,
       merchant_email,

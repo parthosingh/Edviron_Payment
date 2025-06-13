@@ -808,7 +808,7 @@ export class CashfreeService {
     try {
       const response = await axios.request(config);
       await this.uploadKycDocs(merchant_id)
-      return response.data;
+      // return response.data;
       return 'Merchant Request Created Successfully on Cashfree';
     } catch (error) {
       console.error('Cashfree API error:', error);

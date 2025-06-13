@@ -619,7 +619,6 @@ let CashfreeService = class CashfreeService {
         try {
             const response = await axios_1.default.request(config);
             await this.uploadKycDocs(merchant_id);
-            return response.data;
             return 'Merchant Request Created Successfully on Cashfree';
         }
         catch (error) {
