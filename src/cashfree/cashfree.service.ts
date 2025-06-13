@@ -316,6 +316,8 @@ export class CashfreeService {
         ]),
       );
 
+      let custom_order_id:string|null=null
+
       // const enrichedOrders = response.data.map((order: any) => ({
       //   ...order,
       //   custom_order_id: customOrderMap.get(order.order_id) || null,
@@ -332,10 +334,13 @@ export class CashfreeService {
 
             if (order.order_id) {
               customData = customOrderMap.get(order.order_id) || {};
+
               try {
+                 custom_order_id=customData.custom_order_id || null
                 additionalData = JSON.parse(customData?.additional_data);
               } catch {
                 additionalData = null;
+                custom_order_id=null
               }
             }
 
@@ -352,9 +357,11 @@ export class CashfreeService {
                   );
                 if (req) {
                   try {
+                    custom_order_id=req.custom_order_id||null
                     additionalData = JSON.parse(req?.additional_data);
                   } catch {
                     additionalData = null;
+                    custom_order_id=null;
                   }
                 }
               }

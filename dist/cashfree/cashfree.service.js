@@ -249,6 +249,7 @@ let CashfreeService = class CashfreeService {
                     additional_data: doc.additional_data,
                 },
             ]));
+            let custom_order_id = null;
             const enrichedOrders = await Promise.all(response.data
                 .filter((order) => order.order_id)
                 .map(async (order) => {
@@ -257,10 +258,12 @@ let CashfreeService = class CashfreeService {
                 if (order.order_id) {
                     customData = customOrderMap.get(order.order_id) || {};
                     try {
+                        custom_order_id = customData.custom_order_id || null;
                         additionalData = JSON.parse(customData?.additional_data);
                     }
                     catch {
                         additionalData = null;
+                        custom_order_id = null;
                     }
                 }
                 if (order.payment_group && order.payment_group === 'VBA_TRANSFER') {
@@ -271,10 +274,12 @@ let CashfreeService = class CashfreeService {
                         const req = await this.databaseService.CollectRequestModel.findById(requestStatus.collect_id);
                         if (req) {
                             try {
+                                custom_order_id = req.custom_order_id || null;
                                 additionalData = JSON.parse(req?.additional_data);
                             }
                             catch {
                                 additionalData = null;
+                                custom_order_id = null;
                             }
                         }
                     }
