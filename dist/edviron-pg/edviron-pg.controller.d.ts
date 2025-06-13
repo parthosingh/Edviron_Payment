@@ -334,6 +334,17 @@ export declare class EdvironPgController {
         url: string;
         trustee_id: string;
     }): Promise<any>;
+    approve(body: {
+        gateway: string;
+        school_id: string;
+        kyc_mail: string;
+        token: string;
+    }): Promise<string>;
+    initiategatewayKyc(body: {
+        school_id: string;
+        kyc_mail: string;
+        gateway: string;
+    }): Promise<string | undefined>;
     genSchoolReport(body: {
         school_id: string;
         start_date: string;
