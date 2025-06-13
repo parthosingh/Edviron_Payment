@@ -58,6 +58,13 @@ interface I_WORLDLINE {
   worldline_token: string;
 }
 
+interface EASEBUZZ_NON_PARTNER_CRED {
+  easebuzz_salt: string;
+  easebuzz_key: string;
+  easebuzz_merchant_email: string;
+  easebuzz_submerchant_id: string;
+}
+
 @Schema()
 export class paytmPos {
   @Prop({ type: String, required: false })
@@ -261,6 +268,25 @@ export class CollectRequest {
   })
   worldline: I_WORLDLINE;
 
+  @Prop({
+    required: false,
+    type: {
+      easebuzz_salt: { type: String, required: false, default: null },
+      easebuzz_key: {
+        type: String,
+        required: false,
+        default: null,
+      },
+      easebuzz_merchant_email: { type: String, required: false, default: null },
+      easebuzz_submerchant_id: { type: String, required: false, default: null },
+    },
+    _id: false,
+  })
+  easebuzz_non_partner_cred: EASEBUZZ_NON_PARTNER_CRED;
+
+  @Prop({ required: false, default: false })
+  easebuzz_non_partner: boolean;
+
   // @Prop({ required: false })
   // worldline_merchant_id: string;
 
@@ -285,5 +311,3 @@ export class CollectRequest {
 export type CollectRequestDocument = CollectRequest & Document;
 export const CollectRequestSchema =
   SchemaFactory.createForClass(CollectRequest);
-
-

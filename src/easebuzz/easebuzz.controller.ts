@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Get,
   NotFoundException,
@@ -21,6 +22,9 @@ import {
 import { encryptCard } from 'src/utils/sign';
 import { get } from 'http';
 import { EasebuzzService } from './easebuzz.service';
+import { platformChange } from 'src/collect/collect.controller';
+import { Gateway } from 'src/database/schemas/collect_request.schema';
+import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 @Controller('easebuzz')
 export class EasebuzzController {
   constructor(
@@ -276,6 +280,114 @@ export class EasebuzzController {
       return data;
     } catch (error) {
       throw new BadRequestException(error.message || 'Something went wrong');
+    }
+  }
+
+  @Post('/create-order-v2')
+  async createOrderV2(body: {
+    amount: Number;
+    callbackUrl: string;
+    jwt: string;
+    school_id: string;
+    trustee_id: string;
+    webHook?: string;
+    disabled_modes?: string[];
+    platform_charges: platformChange[];
+    additional_data?: {};
+    custom_order_id?: string;
+    req_webhook_urls?: string[];
+    school_name?: string;
+    easebuzz_sub_merchant_id?: string;
+    split_payments?: boolean;
+    easebuzz_school_label?: string | null;
+    easebuzzVendors?: [
+      {
+        vendor_id: string;
+        percentage?: number;
+        amount?: number;
+        name?: string;
+      },
+    ];
+    easebuzz_non_partner_cred: {
+      easebuzz_salt: string;
+      easebuzz_key: string;
+      easebuzz_merchant_email: string;
+      easebuzz_submerchant_id: string;
+    };
+  }) {
+    const {
+      amount,
+      callbackUrl,
+      jwt,
+      webHook,
+      disabled_modes,
+      platform_charges,
+      additional_data,
+      school_id,
+      trustee_id,
+      custom_order_id,
+      req_webhook_urls,
+      school_name,
+      easebuzz_sub_merchant_id,
+      split_payments,
+      easebuzzVendors,
+      easebuzz_school_label,
+      easebuzz_non_partner_cred
+    } = body;
+    try {
+      // CHECK FOR DUPLICATE CUSTOM ID
+      if (custom_order_id) {
+        const count =
+          await this.databaseService.CollectRequestModel.countDocuments({
+            school_id,
+            custom_order_id,
+          });
+        if (count > 0) {
+          throw new ConflictException('OrderId must be unique');
+        }
+      }
+
+      if(!easebuzz_non_partner_cred){
+        throw new BadRequestException('EASEBUZZ CREDENTIAL IS MISSING')
+      }
+      if(
+        !easebuzz_non_partner_cred.easebuzz_key ||
+        !easebuzz_non_partner_cred.easebuzz_merchant_email ||
+        !easebuzz_non_partner_cred.easebuzz_salt ||
+        !easebuzz_non_partner_cred.easebuzz_submerchant_id
+      ){
+          throw new BadRequestException('EASEBUZZ CREDENTIAL IS MISSING')
+      }
+
+      const request = await new this.databaseService.CollectRequestModel({
+        amount,
+        callbackUrl,
+        gateway: Gateway.EDVIRON_EASEBUZZ,
+        webHookUrl: webHook || null,
+        disabled_modes,
+        school_id,
+        trustee_id,
+        additional_data: JSON.stringify(additional_data),
+        custom_order_id,
+        req_webhook_urls,
+        easebuzz_sub_merchant_id:easebuzz_non_partner_cred.easebuzz_submerchant_id,
+        easebuzzVendors,
+        paymentIds: { easebuzz_id: null },
+        easebuzz_non_partner: true,
+        easebuzz_non_partner_cred,
+        isSplitPayments:split_payments,
+        easebuzz_split_label:easebuzz_school_label
+      }).save();
+
+      await new this.databaseService.CollectRequestStatusModel({
+        collect_id: request._id,
+        status: PaymentStatus.PENDING,
+        order_amount: request.amount,
+        transaction_amount: request.amount,
+        payment_method: null,
+      }).save();
+    } catch (e) {
+      throw new BadRequestException(e.message);
     }
   }
 }
