@@ -10,4 +10,5 @@ export declare class RazorpayNonseamlessController {
     handleCallback(req: any, res: any): Promise<any>;
     webhook(body: any, res: any): Promise<any>;
     refund(body: any): Promise<any>;
+    razorpayOrders(razorpay_id: string, razorpay_secret: string, count?: string, skip?: string, from?: string, to?: string): Promise<any[]>;
 }

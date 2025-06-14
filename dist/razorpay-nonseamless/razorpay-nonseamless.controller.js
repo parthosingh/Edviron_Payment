@@ -130,7 +130,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                 $set: {
                     'razorpay.payment_id': req.body.razorpay_payment_id,
                     'razorpay.razorpay_signature': req.body.razorpay_signature,
-                }
+                },
             });
             const status = await this.razorpayServiceModel.getPaymentStatus(collect_request.razorpay.order_id.toString(), collect_request);
             let payment_status = status.status;
@@ -138,8 +138,10 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                 collect_req_status.status = collect_req_status_schema_1.PaymentStatus.SUCCESS;
                 collect_req_status.bank_reference = status.details?.bank_ref || '';
                 collect_req_status.payment_method = status.details?.payment_mode || '';
-                collect_req_status.details = JSON.stringify(status.details?.payment_methods) || '';
-                collect_req_status.payment_time = status.details?.transaction_time || '';
+                collect_req_status.details =
+                    JSON.stringify(status.details?.payment_methods) || '';
+                collect_req_status.payment_time =
+                    status.details?.transaction_time || '';
                 await collect_req_status.save();
             }
             if (collect_request.sdkPayment) {
@@ -170,7 +172,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             gateway: collect_request_schema_1.Gateway.EDVIRON_HDFC_RAZORPAY,
         }).save();
         const { payload } = body;
-        const { order_id, amount, method, bank, acquirer_data, error_reason, card, card_id, wallet } = payload.payment.entity;
+        const { order_id, amount, method, bank, acquirer_data, error_reason, card, card_id, wallet, } = payload.payment.entity;
         let { status } = payload.payment.entity;
         const { created_at } = payload.payment.entity;
         const { created_at: payment_time, receipt } = payload.order.entity;
@@ -211,20 +213,24 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                         upi: {
                             channel: null,
                             upi_id: payload.payment.entity.vpa || null,
-                        }
+                        },
                     };
                     break;
                 case 'card':
                     detail = {
                         card: {
                             card_bank_name: card.type || null,
-                            card_country: card.international === false ? "IN" : card.international === true ? "OI" : null,
+                            card_country: card.international === false
+                                ? 'IN'
+                                : card.international === true
+                                    ? 'OI'
+                                    : null,
                             card_network: card.network || null,
                             card_number: card_id || null,
                             card_sub_type: card.sub_type || null,
                             card_type: card.type || null,
-                            channel: null
-                        }
+                            channel: null,
+                        },
                     };
                     break;
                 case 'netbanking':
@@ -233,15 +239,15 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                             channel: null,
                             netbanking_bank_code: acquirer_data.bank_transaction_id,
                             netbanking_bank_name: bank,
-                        }
+                        },
                     };
                     break;
                 case 'wallet':
                     detail = {
                         wallet: {
                             channel: wallet,
-                            provider: wallet
-                        }
+                            provider: wallet,
+                        },
                     };
                     break;
                 default:
@@ -352,6 +358,41 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
         const { collect_id, refundAmount, refund_id } = body;
         return await this.razorpayServiceModel.refund(collect_id, refundAmount, refund_id);
     }
+    async razorpayOrders(razorpay_id, razorpay_secret, count = '100', skip = '0', from, to) {
+        try {
+            console.log('[API START] Fetching orders with params:', { count, skip, from, to });
+            const params = {
+                count: parseInt(count, 10),
+                skip: parseInt(skip, 10),
+            };
+            const getUTCUnix = (dateStr, isEnd = false) => {
+                if (!dateStr)
+                    return;
+                const date = new Date(dateStr);
+                if (isEnd)
+                    date.setUTCHours(23, 59, 59, 999);
+                else
+                    date.setUTCHours(0, 0, 0, 0);
+                return Math.floor(date.getTime() / 1000);
+            };
+            if (from)
+                params.from = getUTCUnix(from);
+            if (to)
+                params.to = getUTCUnix(to, true);
+            console.log('[PARAMS] Final request parameters:', {
+                ...params,
+                from: params.from ? new Date(params.from * 1000).toISOString() : 'N/A',
+                to: params.to ? new Date(params.to * 1000).toISOString() : 'N/A'
+            });
+            const result = await this.razorpayServiceModel.fetchAndStoreAll(razorpay_id, razorpay_secret, params);
+            console.log(`[API COMPLETE] Total orders fetched: ${result.length}`);
+            return result;
+        }
+        catch (err) {
+            console.error('[API ERROR]', err);
+            throw new common_1.InternalServerErrorException(`Razorpay API error: ${err.response?.data?.error?.description || err.message}`);
+        }
+    }
 };
 exports.RazorpayNonseamlessController = RazorpayNonseamlessController;
 __decorate([
@@ -385,6 +426,18 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], RazorpayNonseamlessController.prototype, "refund", null);
+__decorate([
+    (0, common_1.Get)('orders-detail'),
+    __param(0, (0, common_1.Query)('razorpay_id')),
+    __param(1, (0, common_1.Query)('razorpay_secret')),
+    __param(2, (0, common_1.Query)('count')),
+    __param(3, (0, common_1.Query)('skip')),
+    __param(4, (0, common_1.Query)('from')),
+    __param(5, (0, common_1.Query)('to')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object, Object, String, String]),
+    __metadata("design:returntype", Promise)
+], RazorpayNonseamlessController.prototype, "razorpayOrders", null);
 exports.RazorpayNonseamlessController = RazorpayNonseamlessController = __decorate([
     (0, common_1.Controller)('razorpay-nonseamless'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

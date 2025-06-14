@@ -50,7 +50,7 @@ export class RazorpayNonseamlessService {
           computed += amtPaise;
 
           return {
-            account: v.account || v.vendor_id,
+            account: v.account,
             amount: amtPaise,
             currency: 'INR',
             notes: v.notes || {},
@@ -259,7 +259,7 @@ export class RazorpayNonseamlessService {
         collectRequest.razorpay.order_id,
         collectRequest,
       );
-      console.log(status, "status")
+      console.log(status, 'status');
       if (status.status !== 'SUCCESS') {
         throw new BadRequestException('Payment not captured yet.');
       }
@@ -287,12 +287,117 @@ export class RazorpayNonseamlessService {
         console.error('Razorpay Refund Error:', {
           message: error.message,
           status: error.response?.status,
-          data: error.response?.data, 
+          data: error.response?.data,
         });
         throw new BadGatewayException(error.response?.data || error.message);
       }
       console.error('Internal Error:', error);
       throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async fetchAndStoreAll(
+    authId: string,
+    authSecret: string,
+    params: Record<string, any>,
+  ) {
+    console.log('[FETCH START] Beginning pagination', {
+      initialParams: params,
+    });
+
+    let allOrders: any[] = [];
+    let skip = params.skip || 0;
+    const pageSize = Math.min(params.count || 100, 100);
+    let page = 1;
+
+    while (true) {
+      console.log(
+        `[PAGE ${page}] Requesting page | skip=${skip} count=${pageSize}`,
+      );
+
+      const response = await this.fetchOrdersPage(
+        authId,
+        authSecret,
+        pageSize,
+        skip,
+        params,
+      );
+
+      const orders = response.items || response;
+      const receivedCount = orders?.length || 0;
+
+      console.log(`[PAGE ${page}] Received ${receivedCount} orders`);
+
+      if (!orders || receivedCount === 0) {
+        console.log(`[PAGE ${page}] Empty page - stopping pagination`);
+        break;
+      }
+
+      allOrders = [...allOrders, ...orders];
+      skip += receivedCount;
+      page++;
+
+      // Add your DB storage logic here
+
+      if (receivedCount < pageSize) {
+        console.log(
+          `[PAGE ${
+            page - 1
+          }] Received less than page size (${receivedCount} < ${pageSize}) - stopping pagination`,
+        );
+        break;
+      }
+    }
+
+    console.log(`[FETCH COMPLETE] Total orders fetched: ${allOrders.length}`);
+    return allOrders;
+  }
+
+  async fetchOrdersPage(
+    authId: string,
+    authSecret: string,
+    count: number,
+    skip: number,
+    extraParams: Record<string, any> = {},
+  ) {
+    try {
+      const requestParams: { [key: string]: any } = {
+        ...extraParams,
+        count,
+        skip,
+      };
+
+      console.log('[REQUEST] Razorpay API call params:', {
+        ...requestParams,
+        from: requestParams.from
+          ? new Date(requestParams.from * 1000).toISOString()
+          : 'N/A',
+        to: requestParams.to
+          ? new Date(requestParams.to * 1000).toISOString()
+          : 'N/A',
+      });
+
+      const config = {
+        method: 'get',
+        url: `${process.env.RAZORPAY_URL}/v1/orders`,
+        headers: { 'Content-Type': 'application/json' },
+        auth: { username: authId, password: authSecret },
+        params: requestParams,
+      };
+
+      const response = await axios.request(config);
+
+      console.log(`[RESPONSE] Razorpay API status: ${response.status}`);
+      return response.data;
+    } catch (err) {
+      console.error('[REQUEST ERROR] Razorpay API failure:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+      });
+      throw new InternalServerErrorException(
+        `Page request failed: ${err.message}`,
+      );
     }
   }
 }
