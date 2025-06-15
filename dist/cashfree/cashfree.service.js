@@ -249,6 +249,8 @@ let CashfreeService = class CashfreeService {
                     additional_data: doc.additional_data,
                 },
             ]));
+            let custom_order_id = null;
+            let school_id = null;
             const enrichedOrders = await Promise.all(response.data
                 .filter((order) => order.order_id)
                 .map(async (order) => {
@@ -257,10 +259,14 @@ let CashfreeService = class CashfreeService {
                 if (order.order_id) {
                     customData = customOrderMap.get(order.order_id) || {};
                     try {
-                        additionalData = JSON.parse(customData?.additional_data);
+                        custom_order_id = customData.custom_order_id || null;
+                        school_id = customData.school_id || null,
+                            additionalData = JSON.parse(customData?.additional_data);
                     }
                     catch {
                         additionalData = null;
+                        custom_order_id = null;
+                        school_id = null;
                     }
                 }
                 if (order.payment_group && order.payment_group === 'VBA_TRANSFER') {
@@ -271,10 +277,15 @@ let CashfreeService = class CashfreeService {
                         const req = await this.databaseService.CollectRequestModel.findById(requestStatus.collect_id);
                         if (req) {
                             try {
+                                custom_order_id = req.custom_order_id || null;
+                                order.order_id = req._id;
                                 additionalData = JSON.parse(req?.additional_data);
+                                school_id = req.school_id;
                             }
                             catch {
                                 additionalData = null;
+                                custom_order_id = null;
+                                school_id = null;
                             }
                         }
                     }
@@ -292,8 +303,8 @@ let CashfreeService = class CashfreeService {
                 }
                 return {
                     ...order,
-                    custom_order_id: customData.custom_order_id || null,
-                    school_id: customData.school_id || null,
+                    custom_order_id: custom_order_id || null,
+                    school_id: school_id || null,
                     student_id: additionalData?.student_details?.student_id || null,
                     student_name: additionalData?.student_details?.student_name || null,
                     student_email: additionalData?.student_details?.student_email || null,
@@ -619,7 +630,6 @@ let CashfreeService = class CashfreeService {
         try {
             const response = await axios_1.default.request(config);
             await this.uploadKycDocs(merchant_id);
-            return response.data;
             return 'Merchant Request Created Successfully on Cashfree';
         }
         catch (error) {
@@ -785,6 +795,8 @@ let CashfreeService = class CashfreeService {
     }
     async getMerchantInfo(school_id, kyc_mail) {
         const token = jwt.sign({ school_id }, process.env.JWT_SECRET_FOR_INTRANET);
+        const school = await this.edvironPgService.getAllSchoolInfo(school_id);
+        console.log(school);
         const config = {
             method: 'get',
             maxBodyLength: Infinity,
@@ -794,27 +806,28 @@ let CashfreeService = class CashfreeService {
             },
         };
         const { data: response } = await axios_1.default.request(config);
-        if (!response.legal_name) {
-            throw new common_1.BadRequestException('legalName required');
+        if (!response.businessProofDetails?.business_name) {
+            throw new common_1.BadRequestException('businessProofDetails?.business_name required');
         }
         if (!response.businessCategory) {
-            throw new common_1.BadRequestException('businessCategory is re');
+            throw new common_1.BadRequestException('businessCategory is required');
+        }
+        if (!response.business_type) {
+            throw new common_1.BadRequestException('business_type is required');
         }
         if (!response.authSignatory?.auth_sighnatory_name_on_aadhar) {
             throw new common_1.BadRequestException('authSignatory?.auth_sighnatory_name_on_aadhar, required');
         }
-        const school = await this.edvironPgService.getAllSchoolInfo(school_id);
-        console.log(school);
         const details = {
             merchant_id: response.school,
             merchant_email: kyc_mail,
             merchant_name: school.school_name,
-            poc_phone: '7000061754',
+            poc_phone: school.number,
             merchant_site_url: 'https://www.edviron.com/',
             business_details: {
-                business_legal_name: response.legal_name,
-                business_type: response.businessCategory,
-                business_model: 'Both',
+                business_legal_name: response.businessProofDetails?.business_name,
+                business_type: response.business_type,
+                business_model: 'D2C',
                 business_category: response.businessCategory || null,
                 business_subcategory: response.businessSubCategory || null,
                 business_pan: response.businessProofDetails?.business_pan_number || null,

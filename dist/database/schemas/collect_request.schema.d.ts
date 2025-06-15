@@ -73,6 +73,12 @@ interface I_WORLDLINE {
     worldline_encryption_iV: string;
     worldline_token: string;
 }
+interface EASEBUZZ_NON_PARTNER_CRED {
+    easebuzz_salt: string;
+    easebuzz_key: string;
+    easebuzz_merchant_email: string;
+    easebuzz_submerchant_id: string;
+}
 export declare class paytmPos {
     paytmMid?: string | null;
     paytmTid?: string | null;
@@ -173,6 +179,8 @@ export declare class CollectRequest {
     paytmPos: paytmPos;
     ntt_data: I_NTT_DATA;
     worldline: I_WORLDLINE;
+    easebuzz_non_partner_cred: EASEBUZZ_NON_PARTNER_CRED;
+    easebuzz_non_partner: boolean;
     worldline_token: string;
     vba_account_number: string;
     razorpay: I_Razorpay;

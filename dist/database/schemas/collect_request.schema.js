@@ -312,6 +312,27 @@ __decorate([
     __metadata("design:type", Object)
 ], CollectRequest.prototype, "worldline", void 0);
 __decorate([
+    (0, mongoose_1.Prop)({
+        required: false,
+        type: {
+            easebuzz_salt: { type: String, required: false, default: null },
+            easebuzz_key: {
+                type: String,
+                required: false,
+                default: null,
+            },
+            easebuzz_merchant_email: { type: String, required: false, default: null },
+            easebuzz_submerchant_id: { type: String, required: false, default: null },
+        },
+        _id: false,
+    }),
+    __metadata("design:type", Object)
+], CollectRequest.prototype, "easebuzz_non_partner_cred", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], CollectRequest.prototype, "easebuzz_non_partner", void 0);
+__decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "worldline_token", void 0);

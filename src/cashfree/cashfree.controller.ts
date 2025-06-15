@@ -418,6 +418,7 @@ export class CashfreeController {
       bank_reference,
       payment_method,
       payment_group,
+      cf_payment_id
     } = payment;
 
     const {
@@ -472,6 +473,9 @@ export class CashfreeController {
     collectRequestStatus.bank_reference = bank_reference;
     collectRequestStatus.payment_time = new Date(payment_time);
     collectRequestStatus.payment_message = payment_message;
+    if(cf_payment_id){
+      collectRequestStatus.cf_payment_id=cf_payment_id
+    }
     await collectRequestStatus.save();
 
     // Commision
