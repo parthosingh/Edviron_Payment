@@ -211,6 +211,8 @@ export class CollectService {
       );
       return { url, request: collect_req };
     }
+    console.log({razorpay_credentials});
+    
     if (
       razorpay_credentials?.razorpay_id &&
       razorpay_credentials?.razorpay_secret &&

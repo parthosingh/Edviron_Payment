@@ -107,6 +107,7 @@ let CollectService = class CollectService {
             }, 15 * 60 * 1000);
             return { url, request: collect_req };
         }
+        console.log({ razorpay_credentials });
         if (razorpay_credentials?.razorpay_id &&
             razorpay_credentials?.razorpay_secret &&
             razorpay_credentials?.razorpay_mid) {

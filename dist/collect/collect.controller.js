@@ -25,6 +25,7 @@ let CollectController = class CollectController {
     }
     async collect(body) {
         const { amount, callbackUrl, jwt, webHook, clientId, clientSecret, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_access_code, ccavenue_working_key, ccavenue_merchant_id, smartgateway_merchant_id, smartgateway_customer_id, smart_gateway_api_key, split_payments, vendors_info, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, nttdata_hash_req_key, nttdata_hash_res_key, nttdata_res_salt, nttdata_req_salt, isVBAPayment, vendorgateway, easebuzzVendors, cashfreeVedors, easebuzz_school_label, worldline_merchant_id, worldline_encryption_key, worldline_encryption_iV, vba_account_number, worldLine_vendors, razorpay_vendors, razorpay_credentials, } = body;
+        console.log(razorpay_credentials);
         if (!jwt)
             throw new common_1.BadRequestException('JWT not provided');
         if (!amount)

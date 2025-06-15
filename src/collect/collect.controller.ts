@@ -184,7 +184,8 @@ export class CollectController {
       razorpay_vendors,
       razorpay_credentials,
     } = body;
-
+    console.log(razorpay_credentials);
+    
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
     if (!callbackUrl)
