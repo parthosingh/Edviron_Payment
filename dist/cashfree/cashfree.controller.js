@@ -307,7 +307,7 @@ let CashfreeController = class CashfreeController {
         });
         const { data } = body;
         const { order, payment, customer_details, payment_gateway_details } = data;
-        const { payment_status, payment_amount, payment_message, payment_time, bank_reference, payment_method, payment_group, } = payment;
+        const { payment_status, payment_amount, payment_message, payment_time, bank_reference, payment_method, payment_group, cf_payment_id } = payment;
         const { utr, credit_ref_no, remitter_account, remitter_name, remitter_ifsc, email, phone, vaccount_id, vaccount_number, } = payment_method.vba_transfer;
         const { customer_name, customer_id, customer_email, customer_phone } = customer_details;
         const { gateway_name, gateway_order_id, gateway_payment_id, gateway_status_code, gateway_order_reference_id, gateway_settlement, } = payment_gateway_details;
@@ -337,6 +337,9 @@ let CashfreeController = class CashfreeController {
         collectRequestStatus.bank_reference = bank_reference;
         collectRequestStatus.payment_time = new Date(payment_time);
         collectRequestStatus.payment_message = payment_message;
+        if (cf_payment_id) {
+            collectRequestStatus.cf_payment_id = cf_payment_id;
+        }
         await collectRequestStatus.save();
         try {
             const axios = require('axios');
