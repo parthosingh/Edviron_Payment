@@ -17,6 +17,7 @@ export enum Gateway {
   MOSAMBEE_POS = 'MOSAMBEE_POS',
   EDVIRON_NTTDATA = 'EDVIRON_NTTDATA',
   EDVIRON_WORLDLINE = 'EDVIRON_WORLDLINE',
+  EDVIRON_RAZORPAY = 'EDVIRON_RAZORPAY',
 }
 
 interface I_NTT_DATA {
@@ -28,6 +29,15 @@ interface I_NTT_DATA {
   nttdata_req_salt: string;
   nttdata_hash_res_key: string;
   nttdata_res_salt: string;
+}
+
+interface I_Razorpay {
+  razorpay_id: string;
+  razorpay_secret: string;
+  razorpay_mid: string;
+  order_id: string;
+  payment_id: string;
+  razorpay_signature: string;
 }
 
 @Schema()
@@ -192,6 +202,23 @@ export class CollectRequest {
   ];
 
   @Prop({ required: false })
+  razorpay_vendors_info?: [
+    {
+      vendor_id: string;
+      account?: string;
+      percentage?: number;
+      amount?: number;
+      notes?: {
+        branch?: string;
+        name?: string;
+      };
+      linked_account_notes?: string[];
+      on_hold?: boolean;
+      on_hold_until?: Date;
+    },
+  ];
+
+  @Prop({ required: false })
   hdfc_razorpay_id: string;
 
   @Prop({ required: false })
@@ -304,6 +331,20 @@ export class CollectRequest {
 
   @Prop({ required: false })
   vba_account_number: string;
+
+  @Prop({
+    required: false,
+    type: {
+      razorpay_id: { type: String, required: false, default: null },
+      razorpay_secret: { type: String, required: false, default: null },
+      razorpay_mid: { type: String, required: false, default: null },
+      order_id: { type: String, required: false, default: null },
+      payment_id: { type: String, required: false, default: null },
+      razorpay_signature: { type: String, required: false, default: null },
+    },
+    _id: false,
+  })
+  razorpay: I_Razorpay;
 
   _id: ObjectId;
 }

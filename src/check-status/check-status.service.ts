@@ -20,6 +20,7 @@ import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
 import { NttdataService } from 'src/nttdata/nttdata.service';
 import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
+import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 @Injectable()
 export class CheckStatusService {
   constructor(
@@ -36,6 +37,7 @@ export class CheckStatusService {
     private readonly nttdataService: NttdataService,
     private readonly posPaytmService: PosPaytmService,
     private readonly worldlineService: WorldlineService,
+    private readonly razorpayServiceModel: RazorpayNonseamlessService,
   ) { }
   async checkStatus(collect_request_id: String) {
     console.log('checking status for', collect_request_id);
@@ -146,6 +148,13 @@ export class CheckStatusService {
           collectRequest,
         );
         return data;
+
+      case Gateway.EDVIRON_RAZORPAY:
+        const razorpayData = await this.razorpayServiceModel.getPaymentStatus(
+          collectRequest.razorpay.order_id.toString(),
+          collectRequest,
+        );
+        return razorpayData;
 
       case Gateway.EDVIRON_EASEBUZZ:
         const easebuzzStatus = await this.easebuzzService.statusResponse(
@@ -366,6 +375,13 @@ export class CheckStatusService {
           ...edv_response,
           edviron_order_id: collectRequest._id.toString(),
         };
+
+      case Gateway.EDVIRON_RAZORPAY:
+        const razorpayData = await this.razorpayServiceModel.getPaymentStatus(
+          collectRequest.razorpay.order_id.toString(),
+          collectRequest,
+        );
+        return razorpayData;
 
       case Gateway.SMART_GATEWAY:
         const data = await this.hdfcSmartgatewayService.checkStatus(

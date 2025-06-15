@@ -72,17 +72,22 @@ export class CollectController {
       nttdata_hash_res_key?: string | null;
       nttdata_res_salt?: string | null;
       nttdata_req_salt?: string | null;
-      easebuzz_school_label?:string | null;
+      easebuzz_school_label?: string | null;
       worldline_merchant_id?: string | null;
       worldline_encryption_key?: string | null;
       worldline_encryption_iV?: string | null;
+      razorpay_credentials?: {
+        razorpay_id?: string | null;
+        razorpay_secret?: string | null;
+        razorpay_mid?: string | null;
+      };
       vendors_info?: [
         {
           vendor_id: string;
           percentage?: number;
           amount?: number;
           name?: string;
-          scheme_code?:string
+          scheme_code?: string;
         },
       ];
       worldLine_vendors?: [
@@ -91,7 +96,7 @@ export class CollectController {
           percentage?: number;
           amount?: number;
           name?: string;
-          scheme_code?:string
+          scheme_code?: string;
         },
       ];
       vendorgateway?: {
@@ -112,6 +117,21 @@ export class CollectController {
           percentage?: number;
           amount?: number;
           name?: string;
+        },
+      ];
+      razorpay_vendors?: [
+        {
+          vendor_id: string;
+          account?: string;
+          percentage?: number;
+          amount?: number;
+          notes?: {
+            branch?: string;
+            name?: string;
+          };
+          linked_account_notes?: string[];
+          on_hold?: boolean;
+          on_hold_until?: Date;
         },
       ];
     },
@@ -160,7 +180,9 @@ export class CollectController {
       worldline_encryption_key,
       worldline_encryption_iV,
       vba_account_number,
-      worldLine_vendors
+      worldLine_vendors,
+      razorpay_vendors,
+      razorpay_credentials,
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -220,6 +242,8 @@ export class CollectController {
           vba_account_number,
           worldLine_vendors,
           easebuzz_school_label,
+          razorpay_vendors, 
+          razorpay_credentials,
         ),
       );
     } catch (e) {
@@ -298,7 +322,6 @@ export class CollectController {
         throw new UnauthorizedException('JWT invalid');
       throw e;
     }
-
   }
 
   @Get('callback')

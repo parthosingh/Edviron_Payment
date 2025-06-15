@@ -14,6 +14,7 @@ import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
 import { NttdataService } from 'src/nttdata/nttdata.service';
 import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
+import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 export declare class CheckStatusService {
     private readonly databaseService;
     private readonly hdfcService;
@@ -28,7 +29,8 @@ export declare class CheckStatusService {
     private readonly nttdataService;
     private readonly posPaytmService;
     private readonly worldlineService;
-    constructor(databaseService: DatabaseService, hdfcService: HdfcService, phonePeService: PhonepeService, edvironPgService: EdvironPgService, ccavenueService: CcavenueService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, payUService: PayUService, hdfcRazorpay: HdfcRazorpayService, hdfcSmartgatewayService: SmartgatewayService, nttdataService: NttdataService, posPaytmService: PosPaytmService, worldlineService: WorldlineService);
+    private readonly razorpayServiceModel;
+    constructor(databaseService: DatabaseService, hdfcService: HdfcService, phonePeService: PhonepeService, edvironPgService: EdvironPgService, ccavenueService: CcavenueService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, payUService: PayUService, hdfcRazorpay: HdfcRazorpayService, hdfcSmartgatewayService: SmartgatewayService, nttdataService: NttdataService, posPaytmService: PosPaytmService, worldlineService: WorldlineService, razorpayServiceModel: RazorpayNonseamlessService);
     checkStatus(collect_request_id: String): Promise<any>;
     checkStatusByOrderId(order_id: String, school_id: string): Promise<any>;
     checkExpiry(request: CollectRequest): Promise<"Invalid request" | {

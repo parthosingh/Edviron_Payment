@@ -23,6 +23,7 @@ const smartgateway_service_1 = require("../smartgateway/smartgateway.service");
 const nttdata_service_1 = require("../nttdata/nttdata.service");
 const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 const worldline_service_1 = require("../worldline/worldline.service");
+const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
 let CheckStatusModule = class CheckStatusModule {
 };
 exports.CheckStatusModule = CheckStatusModule;
@@ -38,7 +39,8 @@ exports.CheckStatusModule = CheckStatusModule = __decorate([
             hdfc_razorpay_service_1.HdfcRazorpayService,
             nttdata_service_1.NttdataService,
             pos_paytm_service_1.PosPaytmService,
-            worldline_service_1.WorldlineService
+            worldline_service_1.WorldlineService,
+            razorpay_nonseamless_service_1.RazorpayNonseamlessService,
         ],
         imports: [
             database_module_1.DatabaseModule,

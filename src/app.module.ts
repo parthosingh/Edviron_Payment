@@ -24,7 +24,9 @@ import { NttdataModule } from './nttdata/nttdata.module';
 import { WorldlineModule } from './worldline/worldline.module';
 import { WorldlineController } from './worldline/worldline.controller';
 import { WorldlineService } from './worldline/worldline.service';
-
+import { RazorpayNonseamlessModule } from './razorpay-nonseamless/razorpay-nonseamless.module';
+import { RazorpayNonseamlessController } from './razorpay-nonseamless/razorpay-nonseamless.controller';
+import { RazorpayNonseamlessService } from './razorpay-nonseamless/razorpay-nonseamless.service';
 
 @Module({
   imports: [
@@ -40,9 +42,10 @@ import { WorldlineService } from './worldline/worldline.service';
     HdfcRazorpayModule,
     SmartgatewayModule,
     NttdataModule,
+    RazorpayNonseamlessModule,
     WorldlineModule
   ],
-  controllers: [AppController, EasebuzzController, CashfreeController, PosPaytmController, WorldlineController],
-  providers: [AppService, CashfreeService, EasebuzzService, CcavenueService, PosPaytmService, WorldlineService],
+  controllers: [AppController, EasebuzzController, CashfreeController, PosPaytmController, WorldlineController, RazorpayNonseamlessController],
+  providers: [AppService, CashfreeService, EasebuzzService, CcavenueService, PosPaytmService, WorldlineService, RazorpayNonseamlessService],
 })
 export class AppModule {}
