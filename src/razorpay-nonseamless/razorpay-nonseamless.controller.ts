@@ -218,12 +218,12 @@ export class RazorpayNonseamlessController {
         const webhook = await new this.databaseService.WebhooksModel({
           collect_id: new Types.ObjectId(collect_id),
           body: details,
-          gateway: Gateway.EDVIRON_HDFC_RAZORPAY,
+          gateway: Gateway.EDVIRON_RAZORPAY,
         }).save();
       } catch (e) {
         await new this.databaseService.WebhooksModel({
           body: details,
-          gateway: Gateway.EDVIRON_HDFC_RAZORPAY,
+          gateway: Gateway.EDVIRON_RAZORPAY,
         }).save();
       }
 

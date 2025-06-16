@@ -182,13 +182,13 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                 const webhook = await new this.databaseService.WebhooksModel({
                     collect_id: new mongoose_1.Types.ObjectId(collect_id),
                     body: details,
-                    gateway: collect_request_schema_1.Gateway.EDVIRON_HDFC_RAZORPAY,
+                    gateway: collect_request_schema_1.Gateway.EDVIRON_RAZORPAY,
                 }).save();
             }
             catch (e) {
                 await new this.databaseService.WebhooksModel({
                     body: details,
-                    gateway: collect_request_schema_1.Gateway.EDVIRON_HDFC_RAZORPAY,
+                    gateway: collect_request_schema_1.Gateway.EDVIRON_RAZORPAY,
                 }).save();
             }
             const collectIdObject = new mongoose_1.Types.ObjectId(collect_id);
