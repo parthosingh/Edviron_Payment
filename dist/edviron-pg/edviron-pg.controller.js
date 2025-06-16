@@ -29,11 +29,9 @@ const qs = require("qs");
 const _jwt = require("jsonwebtoken");
 const nttdata_service_1 = require("../nttdata/nttdata.service");
 const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
-let EdvironPgController = class EdvironPgController {
-    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService, posPaytmService) {
 const worldline_service_1 = require("../worldline/worldline.service");
 let EdvironPgController = class EdvironPgController {
-    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService, worldlineService) {
+    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService, posPaytmService, worldlineService) {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
         this.easebuzzService = easebuzzService;
@@ -3268,7 +3266,7 @@ exports.EdvironPgController = EdvironPgController = __decorate([
         easebuzz_service_1.EasebuzzService,
         cashfree_service_1.CashfreeService,
         nttdata_service_1.NttdataService,
-        pos_paytm_service_1.PosPaytmService])
+        pos_paytm_service_1.PosPaytmService,
         worldline_service_1.WorldlineService])
 ], EdvironPgController);
 //# sourceMappingURL=edviron-pg.controller.js.map

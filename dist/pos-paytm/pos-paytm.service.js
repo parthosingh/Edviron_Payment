@@ -266,7 +266,6 @@ let PosPaytmService = class PosPaytmService {
         };
         return response;
     }
-    async getCardType() { }
 };
 exports.PosPaytmService = PosPaytmService;
 exports.PosPaytmService = PosPaytmService = __decorate([

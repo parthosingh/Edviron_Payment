@@ -60,5 +60,4 @@ export declare class PosPaytmService {
         details: any;
         custom_order_id: string | null;
     }>;
-    getCardType(): Promise<void>;
 }
