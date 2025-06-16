@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 import { DatabaseService } from 'src/database/database.service';
+import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import {
   CollectRequest,
   Gateway,
@@ -299,22 +300,16 @@ export class RazorpayNonseamlessService {
   async fetchAndStoreAll(
     authId: string,
     authSecret: string,
+    school_id: string,
+    trustee_id: string,
     params: Record<string, any>,
+    razorpay_mid: string,
   ) {
-    console.log('[FETCH START] Beginning pagination', {
-      initialParams: params,
-    });
-
     let allOrders: any[] = [];
     let skip = params.skip || 0;
     const pageSize = Math.min(params.count || 100, 100);
     let page = 1;
-
     while (true) {
-      console.log(
-        `[PAGE ${page}] Requesting page | skip=${skip} count=${pageSize}`,
-      );
-
       const response = await this.fetchOrdersPage(
         authId,
         authSecret,
@@ -322,35 +317,140 @@ export class RazorpayNonseamlessService {
         skip,
         params,
       );
-
       const orders = response.items || response;
       const receivedCount = orders?.length || 0;
-
-      console.log(`[PAGE ${page}] Received ${receivedCount} orders`);
-
+      // console.log(`[PAGE ${page}] Received ${receivedCount} orders`);
       if (!orders || receivedCount === 0) {
-        console.log(`[PAGE ${page}] Empty page - stopping pagination`);
+        // console.log(`[PAGE ${page}] Empty page - stopping pagination`);
         break;
       }
-
       allOrders = [...allOrders, ...orders];
       skip += receivedCount;
       page++;
 
-      // Add your DB storage logic here
-
       if (receivedCount < pageSize) {
-        console.log(
-          `[PAGE ${
-            page - 1
-          }] Received less than page size (${receivedCount} < ${pageSize}) - stopping pagination`,
-        );
+        // console.log(
+        //   `[PAGE ${
+        //     page - 1
+        //   }] Received less than page size (${receivedCount} < ${pageSize}) - stopping pagination`,
+        // );
         break;
       }
     }
+    const notfound = [];
+    for (const order of allOrders) {
+      const response = await this.retriveRazorpay(authId, authSecret, order.id);
+      const payment = response;
+      if (response.length === 0) {
+        notfound.push(order.id);
+        continue;
+      }
+      const studentDetail = {
+        student_details: {
+          student_id: 'N/A',
+          student_email: payment.email || 'N/A',
+          student_name: payment.description || 'N/A',
+          student_phone_no: payment.contact || 'N/A',
+          additional_fields: {},
+        },
+      };
 
-    console.log(`[FETCH COMPLETE] Total orders fetched: ${allOrders.length}`);
+      const collectRequest = new this.databaseService.CollectRequestModel({
+        amount: payment.amount / 100, 
+        gateway: Gateway.EDVIRON_RAZORPAY,
+        razorpay: {
+          razorpay_id : authId,
+          razorpay_secret : authSecret,
+          order_id : order.id,
+          payment_id : payment.id,
+          razorpay_mid : razorpay_mid || ""
+        }, 
+        custom_order_id: order.receipt,
+        additional_data: JSON.stringify(studentDetail),
+        school_id: school_id,
+        trustee_id: trustee_id,
+      });
+
+      let platform_type = '';
+      let payment_method = '';
+      let details: any = {};
+
+      switch (payment.method) {
+        case 'upi':
+          payment_method = 'upi';
+          platform_type = 'UPI';
+          details = {
+            app: {
+              channel: payment.upi?.payer_account_type || 'NA',
+              upi_id: payment.vpa || 'N/A',
+            },
+          };
+          break;
+
+        case 'card':
+          payment_method =
+            payment.card?.type === 'credit' ? 'crebit_card' : 'debit_card';
+          platform_type =
+            payment.card?.type === 'credit' ? 'CreditCard' : 'DebitCard';
+          details = {
+            card: {
+              card_bank_name: payment.card?.issuer || 'NA',
+              card_network: payment.card?.network || 'N/A',
+              card_number: `XXXX-XXXX-XXXX-${payment.card?.last4 || 'XXXX'}`,
+              card_type: payment_method,
+            },
+          };
+          break;
+
+        case 'netbanking':
+          details = {
+            netbanking: {
+              channel: null,
+              netbanking_bank_code: payment.acquirer_data.bank_transaction_id,
+              netbanking_bank_name: payment.bank,
+            },
+          };
+          break;
+
+        default:
+          platform_type = 'Other';
+          payment_method = payment.method || 'N/A';
+          details = {};
+      }
+
+      const collectRequestStatus =
+        new this.databaseService.CollectRequestStatusModel({
+          order_amount: payment.amount / 100,
+          transaction_amount: payment.amount / 100,
+          payment_method : payment_method,
+          status:
+            payment.status === 'captured'
+              ? PaymentStatus.SUCCESS
+              : PaymentStatus.FAIL,
+          collect_id: collectRequest._id,
+          payment_message: payment.error_description || 'Payment Successful',
+          payment_time: new Date(payment.created_at * 1000),
+          bank_reference: payment.acquirer_data?.rrn || '',
+          details: JSON.stringify(details),
+        });
+
+        // console.log(collectRequest, "collectRequest")
+      await collectRequest.save();
+      await collectRequestStatus.save();
+    }
     return allOrders;
+  }
+
+  async retriveRazorpay(authId: string, authSecret: string, order_id: string) {
+    const config = {
+      method: 'get',
+      url: `${process.env.RAZORPAY_URL}/v1/orders/${order_id}/payments`,
+      headers: { 'Content-Type': 'application/json' },
+      auth: { username: authId, password: authSecret }
+    };
+
+    const response = await axios.request(config);
+    return response.data.items[0] || [];
   }
 
   async fetchOrdersPage(

@@ -13,6 +13,7 @@ exports.RazorpayNonseamlessService = void 0;
 const common_1 = require("@nestjs/common");
 const axios_1 = require("axios");
 const database_service_1 = require("../database/database.service");
+const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const hdfc_razorpay_service_1 = require("../hdfc_razporpay/hdfc_razorpay.service");
 const transactionStatus_1 = require("../types/transactionStatus");
@@ -257,34 +258,126 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
             throw new common_1.InternalServerErrorException(error.message);
         }
     }
-    async fetchAndStoreAll(authId, authSecret, params) {
-        console.log('[FETCH START] Beginning pagination', {
-            initialParams: params,
-        });
+    async fetchAndStoreAll(authId, authSecret, school_id, trustee_id, params, razorpay_mid) {
         let allOrders = [];
         let skip = params.skip || 0;
         const pageSize = Math.min(params.count || 100, 100);
         let page = 1;
         while (true) {
-            console.log(`[PAGE ${page}] Requesting page | skip=${skip} count=${pageSize}`);
             const response = await this.fetchOrdersPage(authId, authSecret, pageSize, skip, params);
             const orders = response.items || response;
             const receivedCount = orders?.length || 0;
-            console.log(`[PAGE ${page}] Received ${receivedCount} orders`);
             if (!orders || receivedCount === 0) {
-                console.log(`[PAGE ${page}] Empty page - stopping pagination`);
                 break;
             }
             allOrders = [...allOrders, ...orders];
             skip += receivedCount;
             page++;
             if (receivedCount < pageSize) {
-                console.log(`[PAGE ${page - 1}] Received less than page size (${receivedCount} < ${pageSize}) - stopping pagination`);
                 break;
             }
         }
-        console.log(`[FETCH COMPLETE] Total orders fetched: ${allOrders.length}`);
+        const notfound = [];
+        for (const order of allOrders) {
+            const response = await this.retriveRazorpay(authId, authSecret, order.id);
+            const payment = response;
+            if (response.length === 0) {
+                notfound.push(order.id);
+                continue;
+            }
+            const studentDetail = {
+                student_details: {
+                    student_id: 'N/A',
+                    student_email: payment.email || 'N/A',
+                    student_name: payment.description || 'N/A',
+                    student_phone_no: payment.contact || 'N/A',
+                    additional_fields: {},
+                },
+            };
+            const collectRequest = new this.databaseService.CollectRequestModel({
+                amount: payment.amount / 100,
+                gateway: collect_request_schema_1.Gateway.EDVIRON_RAZORPAY,
+                razorpay: {
+                    razorpay_id: authId,
+                    razorpay_secret: authSecret,
+                    order_id: order.id,
+                    payment_id: payment.id,
+                    razorpay_mid: razorpay_mid || ""
+                },
+                custom_order_id: order.receipt,
+                additional_data: JSON.stringify(studentDetail),
+                school_id: school_id,
+                trustee_id: trustee_id,
+            });
+            let platform_type = '';
+            let payment_method = '';
+            let details = {};
+            switch (payment.method) {
+                case 'upi':
+                    payment_method = 'upi';
+                    platform_type = 'UPI';
+                    details = {
+                        app: {
+                            channel: payment.upi?.payer_account_type || 'NA',
+                            upi_id: payment.vpa || 'N/A',
+                        },
+                    };
+                    break;
+                case 'card':
+                    payment_method =
+                        payment.card?.type === 'credit' ? 'crebit_card' : 'debit_card';
+                    platform_type =
+                        payment.card?.type === 'credit' ? 'CreditCard' : 'DebitCard';
+                    details = {
+                        card: {
+                            card_bank_name: payment.card?.issuer || 'NA',
+                            card_network: payment.card?.network || 'N/A',
+                            card_number: `XXXX-XXXX-XXXX-${payment.card?.last4 || 'XXXX'}`,
+                            card_type: payment_method,
+                        },
+                    };
+                    break;
+                case 'netbanking':
+                    details = {
+                        netbanking: {
+                            channel: null,
+                            netbanking_bank_code: payment.acquirer_data.bank_transaction_id,
+                            netbanking_bank_name: payment.bank,
+                        },
+                    };
+                    break;
+                default:
+                    platform_type = 'Other';
+                    payment_method = payment.method || 'N/A';
+                    details = {};
+            }
+            const collectRequestStatus = new this.databaseService.CollectRequestStatusModel({
+                order_amount: payment.amount / 100,
+                transaction_amount: payment.amount / 100,
+                payment_method: payment_method,
+                status: payment.status === 'captured'
+                    ? collect_req_status_schema_1.PaymentStatus.SUCCESS
+                    : collect_req_status_schema_1.PaymentStatus.FAIL,
+                collect_id: collectRequest._id,
+                payment_message: payment.error_description || 'Payment Successful',
+                payment_time: new Date(payment.created_at * 1000),
+                bank_reference: payment.acquirer_data?.rrn || '',
+                details: JSON.stringify(details),
+            });
+            await collectRequest.save();
+            await collectRequestStatus.save();
+        }
         return allOrders;
+    }
+    async retriveRazorpay(authId, authSecret, order_id) {
+        const config = {
+            method: 'get',
+            url: `${process.env.RAZORPAY_URL}/v1/orders/${order_id}/payments`,
+            headers: { 'Content-Type': 'application/json' },
+            auth: { username: authId, password: authSecret }
+        };
+        const response = await axios_1.default.request(config);
+        return response.data.items[0] || [];
     }
     async fetchOrdersPage(authId, authSecret, count, skip, extraParams = {}) {
         try {
