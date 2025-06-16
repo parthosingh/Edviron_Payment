@@ -31,6 +31,7 @@ import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { PlatformCharge, rangeCharge } from 'src/database/schemas/platform.charges.schema';
 import { NttdataService } from 'src/nttdata/nttdata.service';
 import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
+import { WorldlineService } from 'src/worldline/worldline.service';
 export declare class EdvironPgController {
     private readonly edvironPgService;
     private readonly databaseService;
@@ -53,6 +54,11 @@ export declare class EdvironPgController {
     getTransactionInfo(body: {
         school_id: string;
         collect_request_id: string;
+        token: string;
+    }): Promise<any[]>;
+    getTransactionInfoOrder(body: {
+        school_id: string;
+        order_id: string;
         token: string;
     }): Promise<any[]>;
     bulkTransactions(body: {
@@ -329,6 +335,17 @@ export declare class EdvironPgController {
         url: string;
         trustee_id: string;
     }): Promise<any>;
+    approve(body: {
+        gateway: string;
+        school_id: string;
+        kyc_mail: string;
+        token: string;
+    }): Promise<string>;
+    initiategatewayKyc(body: {
+        school_id: string;
+        kyc_mail: string;
+        gateway: string;
+    }): Promise<string | undefined>;
     genSchoolReport(body: {
         school_id: string;
         start_date: string;
@@ -358,4 +375,5 @@ export declare class EdvironPgController {
             student_detail: string;
         };
     }>;
+    sendMailAfterTransaction(body: any): Promise<string>;
 }

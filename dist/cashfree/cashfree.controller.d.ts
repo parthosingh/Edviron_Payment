@@ -34,7 +34,7 @@ export declare class CashfreeController {
     }, req: any): Promise<{
         cursor: any;
         limit: any;
-        settlements_transactions: any;
+        settlements_transactions: any[];
     }>;
     testWebhook(req: any, res: any): Promise<any>;
     testWebhook2(req: any, res: any): Promise<any>;
@@ -51,6 +51,12 @@ export declare class CashfreeController {
         sign: string;
     }): Promise<any>;
     testSecureWebhook(req: any, res: any): Promise<any>;
+    testUpload(body: {
+        school_id: string;
+    }): Promise<{
+        document: string;
+        response: any;
+    }[]>;
     vbaWebhook(body: any, res: any): Promise<any>;
     createVBA(body: {
         cf_x_client_id: string;

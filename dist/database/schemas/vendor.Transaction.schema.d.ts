@@ -13,6 +13,19 @@ export declare class VendorTransaction {
     custom_order_id: string;
     name: string;
     payment_time: Date;
+    razorpay_vendors?: Array<{
+        vendor_id: string;
+        account?: string;
+        percentage?: number;
+        amount?: number;
+        notes?: {
+            branch?: string;
+            name?: string;
+        };
+        linked_account_notes?: string[];
+        on_hold?: boolean;
+        on_hold_until?: Date;
+    }>;
     _id: ObjectId;
 }
 export type VendorTransactionDocument = VendorTransaction & Document;

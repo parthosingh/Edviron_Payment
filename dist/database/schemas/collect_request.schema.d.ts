@@ -37,7 +37,9 @@ export declare enum Gateway {
     SMART_GATEWAY = "EDVIRON_SMARTGATEWAY",
     PAYTM_POS = "PAYTM_POS",
     MOSAMBEE_POS = "MOSAMBEE_POS",
-    EDVIRON_NTTDATA = "EDVIRON_NTTDATA"
+    EDVIRON_NTTDATA = "EDVIRON_NTTDATA",
+    EDVIRON_WORLDLINE = "EDVIRON_WORLDLINE",
+    EDVIRON_RAZORPAY = "EDVIRON_RAZORPAY"
 }
 interface I_NTT_DATA {
     nttdata_id: string;
@@ -49,6 +51,14 @@ interface I_NTT_DATA {
     nttdata_hash_res_key: string;
     nttdata_res_salt: string;
 }
+interface I_Razorpay {
+    razorpay_id: string;
+    razorpay_secret: string;
+    razorpay_mid: string;
+    order_id: string;
+    payment_id: string;
+    razorpay_signature: string;
+}
 export declare class PaymentIds {
     cashfree_id?: string | null;
     easebuzz_id?: string | null;
@@ -56,6 +66,18 @@ export declare class PaymentIds {
     easebuzz_cc_id?: string | null;
     easebuzz_dc_id?: string | null;
     ccavenue_id?: string | null;
+}
+interface I_WORLDLINE {
+    worldline_merchant_id: string;
+    worldline_encryption_key: string;
+    worldline_encryption_iV: string;
+    worldline_token: string;
+}
+interface EASEBUZZ_NON_PARTNER_CRED {
+    easebuzz_salt: string;
+    easebuzz_key: string;
+    easebuzz_merchant_email: string;
+    easebuzz_submerchant_id: string;
 }
 export declare class paytmPos {
     paytmMid?: string | null;
@@ -100,6 +122,46 @@ export declare class CollectRequest {
             name?: string;
         }
     ];
+    easebuzzVendors?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
+    ];
+    cashfreeVedors?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
+    ];
+    worldline_vendors_info?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+            scheme_code?: string;
+        }
+    ];
+    razorpay_vendors_info?: [
+        {
+            vendor_id: string;
+            account?: string;
+            percentage?: number;
+            amount?: number;
+            notes?: {
+                branch?: string;
+                name?: string;
+            };
+            linked_account_notes?: string[];
+            on_hold?: boolean;
+            on_hold_until?: Date;
+        }
+    ];
     hdfc_razorpay_id: string;
     hdfc_razorpay_secret: string;
     hdfc_razorpay_payment_id: string;
@@ -109,13 +171,19 @@ export declare class CollectRequest {
     isQRPayment: boolean;
     pay_u_key: string;
     pay_u_salt: string;
+    easebuzz_split_label: string;
     pos_machine_name: string;
     pos_machine_device_id: string;
     pos_machine_device_code: string;
     isPosTransaction: boolean;
     paytmPos: paytmPos;
     ntt_data: I_NTT_DATA;
+    worldline: I_WORLDLINE;
+    easebuzz_non_partner_cred: EASEBUZZ_NON_PARTNER_CRED;
+    easebuzz_non_partner: boolean;
+    worldline_token: string;
     vba_account_number: string;
+    razorpay: I_Razorpay;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;

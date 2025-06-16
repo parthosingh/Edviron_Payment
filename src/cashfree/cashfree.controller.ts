@@ -384,6 +384,21 @@ export class CashfreeController {
     }
   }
 
+  @Post('upload-kyc')
+  async testUpload(
+    @Body() body:{
+      school_id:string
+    }
+  ){
+    try{
+      return await this.cashfreeService.uploadKycDocs(body.school_id)
+
+    }catch(e){
+      console.log(e);
+      throw new BadRequestException(e.message)
+    }
+  }
+
   @Post('/webhook/vba-transaction')
   async vbaWebhook(@Body() body: any, @Res() res: any) {
     await this.databaseService.WebhooksModel.create({
@@ -403,6 +418,7 @@ export class CashfreeController {
       bank_reference,
       payment_method,
       payment_group,
+      cf_payment_id
     } = payment;
 
     const {
@@ -457,6 +473,9 @@ export class CashfreeController {
     collectRequestStatus.bank_reference = bank_reference;
     collectRequestStatus.payment_time = new Date(payment_time);
     collectRequestStatus.payment_message = payment_message;
+    if(cf_payment_id){
+      collectRequestStatus.cf_payment_id=cf_payment_id
+    }
     await collectRequestStatus.save();
 
     // Commision
@@ -674,3 +693,9 @@ export class CashfreeController {
     }
   }
 }
+
+const u = {
+  data: { test_object: { test_key: 'test_value' } },
+  type: 'WEBHOOK',
+  event_time: '2025-05-20T10:24:38.589Z',
+};

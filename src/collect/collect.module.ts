@@ -12,10 +12,15 @@ import { CollectController } from './collect.controller';
 import { CollectService } from './collect.service';
 import { NttdataService } from 'src/nttdata/nttdata.service';
 import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
+import { WorldlineService } from 'src/worldline/worldline.service';
+import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
+
+
+
 
 @Module({
   controllers: [CollectController],
-  providers: [CollectService, CcavenueService, HdfcRazorpayService, PayUService, SmartgatewayService,NttdataService, PosPaytmService],
+  providers: [CollectService, CcavenueService, HdfcRazorpayService,PayUService, SmartgatewayService, NttdataService, RazorpayNonseamlessService, PosPaytmService, WorldlineService],
   imports: [
     PhonepeModule,
     DatabaseModule,

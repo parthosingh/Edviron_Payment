@@ -41,7 +41,23 @@ export declare class EdvironPgService implements GatewayService {
             amount?: number;
             name?: string;
         }
-    ]): Promise<Transaction | undefined>;
+    ], vendorgateway?: {
+        easebuzz: boolean;
+        cashfree: boolean;
+    }, easebuzzVendors?: [
+        {
+            vendor_id: string;
+            amount?: number;
+            name?: string;
+        }
+    ], cashfreeVedors?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
+    ], easebuzz_school_label?: string | null): Promise<Transaction | undefined>;
     checkStatus(collect_request_id: String, collect_request: CollectRequest): Promise<{
         status: TransactionStatus;
         amount: number;
@@ -53,8 +69,11 @@ export declare class EdvironPgService implements GatewayService {
     terminateOrder(collect_id: string): Promise<boolean>;
     easebuzzCheckStatus(collect_request_id: String, collect_request: CollectRequest): Promise<any>;
     getPaymentDetails(school_id: string, startDate: string, mode: string): Promise<any[]>;
-    getQr(collect_id: string, request: CollectRequest): Promise<void>;
+    getQr(collect_id: string, request: CollectRequest, ezb_split_payments: {
+        [key: string]: number;
+    }): Promise<void>;
     getSchoolInfo(school_id: string): Promise<any>;
+    getAllSchoolInfo(school_id: string): Promise<any>;
     sendTransactionmail(email: string, request: CollectRequest): Promise<string>;
     sendErpWebhook(webHookUrl: string[], webhookData: any, webhook_key?: string | null): Promise<void>;
     test(): Promise<void>;
@@ -116,4 +135,5 @@ export declare class EdvironPgService implements GatewayService {
         _id: import("mongoose").Schema.Types.ObjectId;
     }>)[]>;
     getSingleTransaction(collect_id: string): Promise<any>;
+    sendMailAfterTransaction(collect_id: string): Promise<boolean>;
 }

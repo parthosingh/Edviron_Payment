@@ -290,6 +290,15 @@ let CashfreeController = class CashfreeController {
             throw new common_1.BadRequestException(error.message);
         }
     }
+    async testUpload(body) {
+        try {
+            return await this.cashfreeService.uploadKycDocs(body.school_id);
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
     async vbaWebhook(body, res) {
         await this.databaseService.WebhooksModel.create({
             body: JSON.stringify(body),
@@ -298,7 +307,7 @@ let CashfreeController = class CashfreeController {
         });
         const { data } = body;
         const { order, payment, customer_details, payment_gateway_details } = data;
-        const { payment_status, payment_amount, payment_message, payment_time, bank_reference, payment_method, payment_group, } = payment;
+        const { payment_status, payment_amount, payment_message, payment_time, bank_reference, payment_method, payment_group, cf_payment_id } = payment;
         const { utr, credit_ref_no, remitter_account, remitter_name, remitter_ifsc, email, phone, vaccount_id, vaccount_number, } = payment_method.vba_transfer;
         const { customer_name, customer_id, customer_email, customer_phone } = customer_details;
         const { gateway_name, gateway_order_id, gateway_payment_id, gateway_status_code, gateway_order_reference_id, gateway_settlement, } = payment_gateway_details;
@@ -328,6 +337,9 @@ let CashfreeController = class CashfreeController {
         collectRequestStatus.bank_reference = bank_reference;
         collectRequestStatus.payment_time = new Date(payment_time);
         collectRequestStatus.payment_message = payment_message;
+        if (cf_payment_id) {
+            collectRequestStatus.cf_payment_id = cf_payment_id;
+        }
         await collectRequestStatus.save();
         try {
             const axios = require('axios');
@@ -530,6 +542,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], CashfreeController.prototype, "testSecureWebhook", null);
 __decorate([
+    (0, common_1.Post)('upload-kyc'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "testUpload", null);
+__decorate([
     (0, common_1.Post)('/webhook/vba-transaction'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Res)()),
@@ -557,4 +576,9 @@ exports.CashfreeController = CashfreeController = __decorate([
         cashfree_service_1.CashfreeService,
         edviron_pg_service_1.EdvironPgService])
 ], CashfreeController);
+const u = {
+    data: { test_object: { test_key: 'test_value' } },
+    type: 'WEBHOOK',
+    event_time: '2025-05-20T10:24:38.589Z',
+};
 //# sourceMappingURL=cashfree.controller.js.map

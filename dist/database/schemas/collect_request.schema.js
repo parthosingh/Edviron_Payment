@@ -27,6 +27,8 @@ var Gateway;
     Gateway["PAYTM_POS"] = "PAYTM_POS";
     Gateway["MOSAMBEE_POS"] = "MOSAMBEE_POS";
     Gateway["EDVIRON_NTTDATA"] = "EDVIRON_NTTDATA";
+    Gateway["EDVIRON_WORLDLINE"] = "EDVIRON_WORLDLINE";
+    Gateway["EDVIRON_RAZORPAY"] = "EDVIRON_RAZORPAY";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let PaymentIds = class PaymentIds {
 };
@@ -201,6 +203,22 @@ __decorate([
 ], CollectRequest.prototype, "vendors_info", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Array)
+], CollectRequest.prototype, "easebuzzVendors", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Array)
+], CollectRequest.prototype, "cashfreeVedors", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Array)
+], CollectRequest.prototype, "worldline_vendors_info", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Array)
+], CollectRequest.prototype, "razorpay_vendors_info", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "hdfc_razorpay_id", void 0);
 __decorate([
@@ -235,6 +253,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "pay_u_salt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "easebuzz_split_label", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
@@ -273,9 +295,66 @@ __decorate([
     __metadata("design:type", Object)
 ], CollectRequest.prototype, "ntt_data", void 0);
 __decorate([
+    (0, mongoose_1.Prop)({
+        required: false,
+        type: {
+            worldline_merchant_id: { type: String, required: false, default: null },
+            worldline_encryption_key: {
+                type: String,
+                required: false,
+                default: null,
+            },
+            worldline_encryption_iV: { type: String, required: false, default: null },
+            worldline_token: { type: String, required: false, default: null },
+        },
+        _id: false,
+    }),
+    __metadata("design:type", Object)
+], CollectRequest.prototype, "worldline", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        required: false,
+        type: {
+            easebuzz_salt: { type: String, required: false, default: null },
+            easebuzz_key: {
+                type: String,
+                required: false,
+                default: null,
+            },
+            easebuzz_merchant_email: { type: String, required: false, default: null },
+            easebuzz_submerchant_id: { type: String, required: false, default: null },
+        },
+        _id: false,
+    }),
+    __metadata("design:type", Object)
+], CollectRequest.prototype, "easebuzz_non_partner_cred", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], CollectRequest.prototype, "easebuzz_non_partner", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "worldline_token", void 0);
+__decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "vba_account_number", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        required: false,
+        type: {
+            razorpay_id: { type: String, required: false, default: null },
+            razorpay_secret: { type: String, required: false, default: null },
+            razorpay_mid: { type: String, required: false, default: null },
+            order_id: { type: String, required: false, default: null },
+            payment_id: { type: String, required: false, default: null },
+            razorpay_signature: { type: String, required: false, default: null },
+        },
+        _id: false,
+    }),
+    __metadata("design:type", Object)
+], CollectRequest.prototype, "razorpay", void 0);
 exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequest);

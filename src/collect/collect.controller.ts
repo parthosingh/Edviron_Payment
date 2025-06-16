@@ -32,7 +32,7 @@ export class CollectController {
   constructor(
     private readonly collectService: CollectService,
     private readonly databaseService: DatabaseService,
-  ) { }
+  ) {}
   @Post('/')
   async collect(
     @Body()
@@ -63,8 +63,8 @@ export class CollectController {
       pay_u_salt: string | null;
       hdfc_razorpay_id?: string;
       hdfc_razorpay_secret?: string;
-      isVBAPayment:boolean;
-      vba_account_number:string;
+      isVBAPayment: boolean;
+      vba_account_number: string;
       hdfc_razorpay_mid?: string;
       nttdata_id?: string | null;
       nttdata_secret?: string | null;
@@ -72,12 +72,66 @@ export class CollectController {
       nttdata_hash_res_key?: string | null;
       nttdata_res_salt?: string | null;
       nttdata_req_salt?: string | null;
+      easebuzz_school_label?: string | null;
+      worldline_merchant_id?: string | null;
+      worldline_encryption_key?: string | null;
+      worldline_encryption_iV?: string | null;
+      razorpay_credentials?: {
+        razorpay_id?: string | null;
+        razorpay_secret?: string | null;
+        razorpay_mid?: string | null;
+      };
       vendors_info?: [
         {
           vendor_id: string;
           percentage?: number;
           amount?: number;
           name?: string;
+          scheme_code?: string;
+        },
+      ];
+      worldLine_vendors?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+          scheme_code?: string;
+        },
+      ];
+      vendorgateway?: {
+        easebuzz: boolean;
+        cashfree: boolean;
+      };
+      easebuzzVendors?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+        },
+      ];
+      cashfreeVedors?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+        },
+      ];
+      razorpay_vendors?: [
+        {
+          vendor_id: string;
+          account?: string;
+          percentage?: number;
+          amount?: number;
+          notes?: {
+            branch?: string;
+            name?: string;
+          };
+          linked_account_notes?: string[];
+          on_hold?: boolean;
+          on_hold_until?: Date;
         },
       ];
     },
@@ -118,17 +172,26 @@ export class CollectController {
       nttdata_res_salt,
       nttdata_req_salt,
       isVBAPayment,
-      vba_account_number
+      vendorgateway,
+      easebuzzVendors,
+      cashfreeVedors,
+      easebuzz_school_label,
+      worldline_merchant_id,
+      worldline_encryption_key,
+      worldline_encryption_iV,
+      vba_account_number,
+      worldLine_vendors,
+      razorpay_vendors,
+      razorpay_credentials,
     } = body;
-
+    console.log(razorpay_credentials);
+    
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
     if (!callbackUrl)
       throw new BadRequestException('Callback url not provided');
     try {
-      console.log(disabled_modes);
       let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
-      console.log(decrypted);
 
       // if (
       //   decrypted.amount !== amount || decrypted.callbackUrl !== callbackUrl
@@ -169,9 +232,19 @@ export class CollectController {
           nttdata_hash_res_key,
           nttdata_res_salt,
           nttdata_req_salt,
+          worldline_merchant_id,
+          worldline_encryption_key,
+          worldline_encryption_iV,
           vendors_info,
+          vendorgateway,
+          easebuzzVendors,
+          cashfreeVedors,
           isVBAPayment,
-          vba_account_number
+          vba_account_number,
+          worldLine_vendors,
+          easebuzz_school_label,
+          razorpay_vendors, 
+          razorpay_credentials,
         ),
       );
     } catch (e) {
@@ -250,7 +323,6 @@ export class CollectController {
         throw new UnauthorizedException('JWT invalid');
       throw e;
     }
-
   }
 
   @Get('callback')

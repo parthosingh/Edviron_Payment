@@ -15,6 +15,7 @@ const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 const cashfree_module_1 = require("../cashfree/cashfree.module");
 const nttdata_service_1 = require("../nttdata/nttdata.service");
 const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
+const worldline_service_1 = require("../worldline/worldline.service");
 let EdvironPgModule = class EdvironPgModule {
 };
 exports.EdvironPgModule = EdvironPgModule;

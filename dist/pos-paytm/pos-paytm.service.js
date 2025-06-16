@@ -198,6 +198,75 @@ let PosPaytmService = class PosPaytmService {
             throw new common_1.BadRequestException('Failed to fetch transaction status.');
         }
     }
+    async formattedStatu(collect_id) {
+        const { body } = await this.getTransactionStatus(collect_id);
+        const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!request) {
+            throw new common_1.BadRequestException('Error in Fetching Request');
+        }
+        let statusCode = '400';
+        if (body.resultInfo.resultStatus === 'SUCCESS') {
+            statusCode = '200';
+        }
+        let payment_method = '';
+        let details = {};
+        let platform_type = '';
+        let payment_mode = 'Others';
+        switch (body.payMethod) {
+            case 'CREDIT_CARD':
+                payment_method = 'credit_card';
+                payment_mode = body.cardScheme.toLocaleLowerCase();
+                platform_type = body.cardScheme.toLocaleLowerCase();
+                details = {
+                    card: {
+                        card_bank_name: body.issuingBankName,
+                        card_country: 'IN',
+                        card_network: body.cardScheme.toLocaleLowerCase(),
+                        card_number: body.issuerMaskCardNo,
+                        card_sub_type: '',
+                        card_type: 'credit_card',
+                        channel: null,
+                    },
+                };
+                break;
+            case 'DEBIT_CARD':
+                payment_method = 'debit_card';
+                payment_mode = body.cardScheme.toLocaleLowerCase();
+                platform_type = body.cardScheme.toLocaleLowerCase();
+                details = {
+                    card: {
+                        card_bank_name: body.issuingBankName,
+                        card_country: 'IN',
+                        card_network: body.cardScheme.toLocaleLowerCase(),
+                        card_number: body.issuerMaskCardNo,
+                        card_sub_type: '',
+                        card_type: 'debit_card',
+                        channel: null,
+                    },
+                };
+                break;
+            case 'UPI':
+                payment_method = 'upi';
+                payment_mode = 'Others';
+                platform_type = 'Others';
+                details = {
+                    upi: {
+                        upi_id: 'NA',
+                    },
+                };
+                break;
+        }
+        const response = {
+            status: body.resultInfo.resultStatus,
+            amount: request.amount,
+            transaction_amount: Number(body.transactionAmount / 100),
+            status_code: statusCode,
+            details: details,
+            custom_order_id: request.custom_order_id || null,
+        };
+        return response;
+    }
+    async getCardType() { }
 };
 exports.PosPaytmService = PosPaytmService;
 exports.PosPaytmService = PosPaytmService = __decorate([
