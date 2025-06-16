@@ -358,7 +358,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
         const { collect_id, refundAmount, refund_id } = body;
         return await this.razorpayServiceModel.refund(collect_id, refundAmount, refund_id);
     }
-    async razorpayOrders(razorpay_id, razorpay_secret, count = '100', skip = '0', from, to) {
+    async razorpayOrders(razorpay_id, razorpay_secret, count = '100', skip = '0', school_id, trustee_id, from, to, razorpay_mid) {
         try {
             console.log('[API START] Fetching orders with params:', { count, skip, from, to });
             const params = {
@@ -384,7 +384,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                 from: params.from ? new Date(params.from * 1000).toISOString() : 'N/A',
                 to: params.to ? new Date(params.to * 1000).toISOString() : 'N/A'
             });
-            const result = await this.razorpayServiceModel.fetchAndStoreAll(razorpay_id, razorpay_secret, params);
+            const result = await this.razorpayServiceModel.fetchAndStoreAll(razorpay_id, razorpay_secret, school_id, trustee_id, params, razorpay_mid);
             console.log(`[API COMPLETE] Total orders fetched: ${result.length}`);
             return result;
         }
@@ -432,10 +432,13 @@ __decorate([
     __param(1, (0, common_1.Query)('razorpay_secret')),
     __param(2, (0, common_1.Query)('count')),
     __param(3, (0, common_1.Query)('skip')),
-    __param(4, (0, common_1.Query)('from')),
-    __param(5, (0, common_1.Query)('to')),
+    __param(4, (0, common_1.Query)('school_id')),
+    __param(5, (0, common_1.Query)('trustee_id')),
+    __param(6, (0, common_1.Query)('from')),
+    __param(7, (0, common_1.Query)('to')),
+    __param(8, (0, common_1.Query)('razorpay_mid')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object, Object, String, String]),
+    __metadata("design:paramtypes", [String, String, Object, Object, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], RazorpayNonseamlessController.prototype, "razorpayOrders", null);
 exports.RazorpayNonseamlessController = RazorpayNonseamlessController = __decorate([

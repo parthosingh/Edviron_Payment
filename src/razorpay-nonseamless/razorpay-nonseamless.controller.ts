@@ -439,8 +439,11 @@ async razorpayOrders(
   @Query('razorpay_secret') razorpay_secret: string,
   @Query('count') count = '100',
   @Query('skip') skip = '0',
+  @Query('school_id') school_id: string,
+  @Query('trustee_id') trustee_id: string,
   @Query('from') from?: string,
   @Query('to') to?: string,
+  @Query('razorpay_mid') razorpay_mid?: string,
 ) {
   try {
     console.log('[API START] Fetching orders with params:', { count, skip, from, to }); 
@@ -466,7 +469,10 @@ async razorpayOrders(
     const result = await this.razorpayServiceModel.fetchAndStoreAll(
       razorpay_id,
       razorpay_secret,
+      school_id,
+      trustee_id,
       params,
+      razorpay_mid,
     );
 
     console.log(`[API COMPLETE] Total orders fetched: ${result.length}`);
