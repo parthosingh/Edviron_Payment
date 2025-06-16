@@ -15,6 +15,7 @@ const database_service_1 = require("../database/database.service");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const sign_1 = require("../utils/sign");
 const axios_1 = require("axios");
+const transactionStatus_1 = require("../types/transactionStatus");
 let EasebuzzService = class EasebuzzService {
     constructor(databaseService) {
         this.databaseService = databaseService;
@@ -191,6 +192,484 @@ let EasebuzzService = class EasebuzzService {
         catch (error) {
             throw new common_1.BadRequestException(error.message || 'Something went wrong');
         }
+    }
+    async createOrderV2(request, platform_charges, school_name) {
+        try {
+            const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
+            if (!collectReq) {
+                throw new common_1.BadRequestException('Collect request not found');
+            }
+            if (request.isSplitPayments) {
+                if (!request.easebuzz_split_label) {
+                    throw new common_1.BadRequestException(`Split Information Not Configure Please contact tarun.k@edviron.com`);
+                }
+                const easebuzz_key = request.easebuzz_non_partner_cred.easebuzz_key;
+                const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
+                const easebuzz_sub_merchant_id = request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
+                let productinfo = 'payment gateway customer';
+                let firstname = 'customer';
+                let email = 'noreply@edviron.com';
+                let hashData = easebuzz_key +
+                    '|' +
+                    request._id +
+                    '|' +
+                    parseFloat(request.amount.toFixed(2)) +
+                    '|' +
+                    productinfo +
+                    '|' +
+                    firstname +
+                    '|' +
+                    email +
+                    '|||||||||||' +
+                    easebuzz_salt;
+                const easebuzz_cb_surl = process.env.URL +
+                    '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                    request._id +
+                    '&status=pass';
+                const easebuzz_cb_furl = process.env.URL +
+                    '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                    request._id +
+                    '&status=fail';
+                let hash = await (0, sign_1.calculateSHA512Hash)(hashData);
+                let encodedParams = new URLSearchParams();
+                encodedParams.set('key', request.easebuzz_non_partner_cred.easebuzz_key);
+                encodedParams.set('txnid', request._id.toString());
+                encodedParams.set('amount', parseFloat(request.amount.toFixed(2)).toString());
+                encodedParams.set('productinfo', productinfo);
+                encodedParams.set('firstname', firstname);
+                encodedParams.set('phone', '9898989898');
+                encodedParams.set('email', email);
+                encodedParams.set('surl', easebuzz_cb_surl);
+                encodedParams.set('furl', easebuzz_cb_furl);
+                encodedParams.set('hash', hash);
+                encodedParams.set('request_flow', 'SEAMLESS');
+                encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
+                let ezb_split_payments = {};
+                if (request.isSplitPayments &&
+                    request.easebuzzVendors &&
+                    request.easebuzz_split_label &&
+                    request.easebuzzVendors.length > 0) {
+                    let vendorTotal = 0;
+                    for (const vendor of request.easebuzzVendors) {
+                        if (vendor.name && typeof vendor.amount === 'number') {
+                            ezb_split_payments[vendor.vendor_id] = vendor.amount;
+                            vendorTotal += vendor.amount;
+                        }
+                        await new this.databaseService.VendorTransactionModel({
+                            vendor_id: vendor.vendor_id,
+                            amount: vendor.amount,
+                            collect_id: request._id,
+                            gateway: collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ,
+                            status: transactionStatus_1.TransactionStatus.PENDING,
+                            trustee_id: request.trustee_id,
+                            school_id: request.school_id,
+                            custom_order_id: request.custom_order_id || '',
+                            name: vendor.name,
+                        }).save();
+                    }
+                    const remainingAmount = request.amount - vendorTotal;
+                    if (remainingAmount > 0) {
+                        ezb_split_payments[request.easebuzz_split_label] = remainingAmount;
+                    }
+                    encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+                }
+                else {
+                    ezb_split_payments[request.easebuzz_split_label] = request.amount;
+                    encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+                }
+                const Ezboptions = {
+                    method: 'POST',
+                    url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        Accept: 'application/json',
+                    },
+                    data: encodedParams,
+                };
+                const disabled_modes_string = request.disabled_modes
+                    .map((mode) => `${mode}=false`)
+                    .join('&');
+                const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
+                const { data: easebuzzRes } = await axios_1.default.request(Ezboptions);
+                const easebuzzPaymentId = easebuzzRes.data;
+                collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
+                await collectReq.save();
+                await this.getQr(request._id.toString(), request, ezb_split_payments);
+                return {
+                    url: process.env.URL +
+                        '/edviron-pg/redirect?session_id=' +
+                        '' +
+                        '&collect_request_id=' +
+                        request._id +
+                        '&amount=' +
+                        request.amount.toFixed(2) +
+                        '&' +
+                        disabled_modes_string +
+                        '&platform_charges=' +
+                        encodedPlatformCharges +
+                        '&school_name=' +
+                        school_name +
+                        '&easebuzz_pg=' +
+                        true +
+                        '&payment_id=' +
+                        easebuzzPaymentId,
+                };
+            }
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async createOrderV2NonSplit(request, platform_charges, school_name) {
+        try {
+            console.log('11');
+            const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
+            if (!collectReq) {
+                throw new common_1.BadRequestException('Collect request not found');
+            }
+            console.log('debud');
+            const easebuzz_key = request.easebuzz_non_partner_cred.easebuzz_key;
+            const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
+            const easebuzz_sub_merchant_id = request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
+            let productinfo = 'payment gateway customer';
+            let firstname = 'customer';
+            let email = 'noreply@edviron.com';
+            let hashData = easebuzz_key +
+                '|' +
+                request._id +
+                '|' +
+                parseFloat(request.amount.toFixed(2)) +
+                '|' +
+                productinfo +
+                '|' +
+                firstname +
+                '|' +
+                email +
+                '|||||||||||' +
+                easebuzz_salt;
+            const easebuzz_cb_surl = process.env.URL +
+                '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                request._id +
+                '&status=pass';
+            const easebuzz_cb_furl = process.env.URL +
+                '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                request._id +
+                '&status=fail';
+            let hash = await (0, sign_1.calculateSHA512Hash)(hashData);
+            let encodedParams = new URLSearchParams();
+            encodedParams.set('key', request.easebuzz_non_partner_cred.easebuzz_key);
+            encodedParams.set('txnid', request._id.toString());
+            encodedParams.set('amount', parseFloat(request.amount.toFixed(2)).toString());
+            encodedParams.set('productinfo', productinfo);
+            encodedParams.set('firstname', firstname);
+            encodedParams.set('phone', '9898989898');
+            encodedParams.set('email', email);
+            encodedParams.set('surl', easebuzz_cb_surl);
+            encodedParams.set('furl', easebuzz_cb_furl);
+            encodedParams.set('hash', hash);
+            encodedParams.set('request_flow', 'SEAMLESS');
+            encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
+            const disabled_modes_string = request.disabled_modes
+                .map((mode) => `${mode}=false`)
+                .join('&');
+            const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
+            const Ezboptions = {
+                method: 'POST',
+                url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    Accept: 'application/json',
+                },
+                data: encodedParams,
+            };
+            const { data: easebuzzRes } = await axios_1.default.request(Ezboptions);
+            console.log(easebuzzRes);
+            const easebuzzPaymentId = easebuzzRes.data;
+            collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
+            await collectReq.save();
+            await this.getQrNonSplit(request._id.toString(), request);
+            return {
+                colect_id: request._id,
+                url: process.env.URL +
+                    '/edviron-pg/redirect?session_id=' +
+                    '' +
+                    '&collect_request_id=' +
+                    request._id +
+                    '&amount=' +
+                    request.amount.toFixed(2) +
+                    '&' +
+                    disabled_modes_string +
+                    '&platform_charges=' +
+                    encodedPlatformCharges +
+                    '&school_name=' +
+                    school_name +
+                    '&easebuzz_pg=' +
+                    true +
+                    '&payment_id=' +
+                    easebuzzPaymentId,
+            };
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async getQr(collect_id, request, ezb_split_payments) {
+        try {
+            const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
+            if (!collectReq) {
+                throw new common_1.BadRequestException('Collect request not found');
+            }
+            const easebuzz_key = request.easebuzz_non_partner_cred.easebuzz_key;
+            const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
+            const easebuzz_sub_merchant_id = request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
+            const upi_collect_id = `upi_${collect_id}`;
+            let productinfo = 'payment gateway customer';
+            let firstname = 'customer';
+            let email = 'noreply@edviron.com';
+            let hashData = easebuzz_key +
+                '|' +
+                upi_collect_id +
+                '|' +
+                parseFloat(request.amount.toFixed(2)) +
+                '|' +
+                productinfo +
+                '|' +
+                firstname +
+                '|' +
+                email +
+                '|||||||||||' +
+                easebuzz_salt;
+            const easebuzz_cb_surl = process.env.URL +
+                '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                upi_collect_id +
+                '&status=pass';
+            const easebuzz_cb_furl = process.env.URL +
+                '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                upi_collect_id +
+                '&status=fail';
+            let hash = await (0, sign_1.calculateSHA512Hash)(hashData);
+            let encodedParams = new URLSearchParams();
+            encodedParams.set('key', process.env.EASEBUZZ_KEY);
+            encodedParams.set('txnid', upi_collect_id);
+            encodedParams.set('amount', parseFloat(request.amount.toFixed(2)).toString());
+            encodedParams.set('productinfo', productinfo);
+            encodedParams.set('firstname', firstname);
+            encodedParams.set('phone', '9898989898');
+            encodedParams.set('email', email);
+            encodedParams.set('surl', easebuzz_cb_surl);
+            encodedParams.set('furl', easebuzz_cb_furl);
+            encodedParams.set('hash', hash);
+            encodedParams.set('request_flow', 'SEAMLESS');
+            encodedParams.set('sub_merchant_id', request.easebuzz_sub_merchant_id);
+            encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+            const options = {
+                method: 'POST',
+                url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    Accept: 'application/json',
+                },
+                data: encodedParams,
+            };
+            const { data: easebuzzRes } = await axios_1.default.request(options);
+            const access_key = easebuzzRes.data;
+            let formData = new FormData();
+            formData.append('access_key', access_key);
+            formData.append('payment_mode', `UPI`);
+            formData.append('upi_qr', 'true');
+            formData.append('request_mode', 'SUVA');
+            let config = {
+                method: 'POST',
+                url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/initiate_seamless_payment/`,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+                data: formData,
+            };
+            const response = await axios_1.default.request(config);
+            console.log(response.data);
+            await this.databaseService.CollectRequestModel.findByIdAndUpdate(collect_id, {
+                deepLink: response.data.qr_link,
+            });
+        }
+        catch (error) {
+            throw new Error(error.message);
+        }
+    }
+    async getQrNonSplit(collect_id, request) {
+        try {
+            const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
+            if (!collectReq) {
+                throw new common_1.BadRequestException('Collect request not found');
+            }
+            const easebuzz_key = request.easebuzz_non_partner_cred.easebuzz_key;
+            const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
+            const easebuzz_sub_merchant_id = request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
+            const upi_collect_id = `upi_${collect_id}`;
+            let productinfo = 'payment gateway customer';
+            let firstname = 'customer';
+            let email = 'noreply@edviron.com';
+            let hashData = easebuzz_key +
+                '|' +
+                upi_collect_id +
+                '|' +
+                parseFloat(request.amount.toFixed(2)) +
+                '|' +
+                productinfo +
+                '|' +
+                firstname +
+                '|' +
+                email +
+                '|||||||||||' +
+                easebuzz_salt;
+            const easebuzz_cb_surl = process.env.URL +
+                '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                upi_collect_id +
+                '&status=pass';
+            const easebuzz_cb_furl = process.env.URL +
+                '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                upi_collect_id +
+                '&status=fail';
+            let hash = await (0, sign_1.calculateSHA512Hash)(hashData);
+            let encodedParams = new URLSearchParams();
+            encodedParams.set('key', request.easebuzz_non_partner_cred.easebuzz_key);
+            encodedParams.set('txnid', upi_collect_id);
+            encodedParams.set('amount', parseFloat(request.amount.toFixed(2)).toString());
+            encodedParams.set('productinfo', productinfo);
+            encodedParams.set('firstname', firstname);
+            encodedParams.set('phone', '9898989898');
+            encodedParams.set('email', email);
+            encodedParams.set('surl', easebuzz_cb_surl);
+            encodedParams.set('furl', easebuzz_cb_furl);
+            encodedParams.set('hash', hash);
+            encodedParams.set('request_flow', 'SEAMLESS');
+            encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
+            const options = {
+                method: 'POST',
+                url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    Accept: 'application/json',
+                },
+                data: encodedParams,
+            };
+            const { data: easebuzzRes } = await axios_1.default.request(options);
+            const access_key = easebuzzRes.data;
+            let formData = new FormData();
+            formData.append('access_key', access_key);
+            formData.append('payment_mode', `UPI`);
+            formData.append('upi_qr', 'true');
+            formData.append('request_mode', 'SUVA');
+            let config = {
+                method: 'POST',
+                url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/initiate_seamless_payment/`,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+                data: formData,
+            };
+            const response = await axios_1.default.request(config);
+            console.log(response.data);
+            await this.databaseService.CollectRequestModel.findByIdAndUpdate(collect_id, {
+                deepLink: response.data.qr_link,
+            });
+        }
+        catch (error) {
+            throw new Error(error.message);
+        }
+    }
+    async easebuzzCheckStatusV2(collect_request_id, collect_request) {
+        const easebuzz_key = collect_request.easebuzz_non_partner_cred.easebuzz_key;
+        const easebuzz_salt = collect_request.easebuzz_non_partner_cred.easebuzz_salt;
+        const easebuzz_sub_merchant_id = collect_request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
+        const amount = parseFloat(collect_request.amount.toString()).toFixed(1);
+        const axios = require('axios');
+        let hashData = easebuzz_key +
+            '|' +
+            collect_request_id +
+            '|' +
+            amount.toString() +
+            '|' +
+            'noreply@edviron.com' +
+            '|' +
+            '9898989898' +
+            '|' +
+            easebuzz_salt;
+        let hash = await (0, sign_1.calculateSHA512Hash)(hashData);
+        const qs = require('qs');
+        const data = qs.stringify({
+            txnid: collect_request_id,
+            key: easebuzz_key,
+            amount: amount,
+            email: 'noreply@edviron.com',
+            phone: '9898989898',
+            hash: hash,
+        });
+        const config = {
+            method: 'POST',
+            url: `https://dashboard.easebuzz.in/transaction/v1/retrieve`,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Accept: 'application/json',
+            },
+            data: data,
+        };
+        const { data: statusRes } = await axios.request(config);
+        console.log(statusRes);
+        return statusRes;
+    }
+    async statusResponseV2(requestId, collectReq) {
+        try {
+            let statusResponse = await this.easebuzzCheckStatus(requestId, collectReq);
+            if (statusResponse.msg.mode === 'NA') {
+                console.log(`Status 0 for ${requestId}, retrying with 'upi_' suffix`);
+                statusResponse = await this.easebuzzCheckStatus(`upi_${requestId}`, collectReq);
+            }
+            return statusResponse;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async easebuzzWebhookCheckStatusV2(collect_request_id, collect_request) {
+        const amount = parseFloat(collect_request.amount.toString()).toFixed(1);
+        const easebuzz_key = collect_request.easebuzz_non_partner_cred.easebuzz_key;
+        const easebuzz_salt = collect_request.easebuzz_non_partner_cred.easebuzz_salt;
+        const easebuzz_sub_merchant_id = collect_request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
+        const axios = require('axios');
+        let hashData = easebuzz_key +
+            '|' +
+            collect_request_id +
+            '|' +
+            amount.toString() +
+            '|' +
+            'noreply@edviron.com' +
+            '|' +
+            '9898989898' +
+            '|' +
+            easebuzz_salt;
+        let hash = await (0, sign_1.calculateSHA512Hash)(hashData);
+        const qs = require('qs');
+        const data = qs.stringify({
+            txnid: collect_request_id,
+            key: easebuzz_key,
+            amount: amount,
+            email: 'noreply@edviron.com',
+            phone: '9898989898',
+            hash: hash,
+        });
+        const config = {
+            method: 'POST',
+            url: `https://dashboard.easebuzz.in/transaction/v1/retrieve`,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Accept: 'application/json',
+            },
+            data: data,
+        };
+        const { data: statusRes } = await axios.request(config);
+        return statusRes;
     }
 };
 exports.EasebuzzService = EasebuzzService;

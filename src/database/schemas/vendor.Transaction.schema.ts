@@ -44,6 +44,41 @@ export class VendorTransaction {
   @Prop({ required: false, default: '' })
   payment_time: Date;
 
+  @Prop({
+    required: false,
+    type: [
+      {
+        vendor_id: { type: String, required: true },
+        account: { type: String, required: false },
+        percentage: { type: Number, required: false },
+        amount: { type: Number, required: false },
+        notes: {
+          type: {
+            branch: { type: String, required: false },
+            name: { type: String, required: false },
+          },
+          required: false,
+        },
+        linked_account_notes: { type: [String], required: false },
+        on_hold: { type: Boolean, required: false },
+        on_hold_until: { type: Date, required: false },
+      },
+    ],
+  })
+  razorpay_vendors?: Array<{
+    vendor_id: string;
+    account?: string;
+    percentage?: number;
+    amount?: number;
+    notes?: {
+      branch?: string;
+      name?: string;
+    };
+    linked_account_notes?: string[];
+    on_hold?: boolean;
+    on_hold_until?: Date;
+  }>;
+
   _id: ObjectId;
 }
 

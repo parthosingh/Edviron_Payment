@@ -51,6 +51,7 @@ export declare class PosPaytmService {
         paytmResponse: any;
     }>;
     getTransactionStatus(orderId: string): Promise<any>;
+    refund(collect_id: string, refund_amount: number, refund_id: string): Promise<any>;
     formattedStatu(collect_id: string): Promise<{
         status: any;
         amount: number;
@@ -59,5 +60,4 @@ export declare class PosPaytmService {
         details: any;
         custom_order_id: string | null;
     }>;
-    getCardType(): Promise<void>;
 }

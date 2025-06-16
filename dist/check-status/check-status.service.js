@@ -28,8 +28,9 @@ const smartgateway_service_1 = require("../smartgateway/smartgateway.service");
 const nttdata_service_1 = require("../nttdata/nttdata.service");
 const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 const worldline_service_1 = require("../worldline/worldline.service");
+const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
 let CheckStatusService = class CheckStatusService {
-    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay, hdfcSmartgatewayService, nttdataService, posPaytmService, worldlineService) {
+    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay, hdfcSmartgatewayService, nttdataService, posPaytmService, worldlineService, razorpayServiceModel) {
         this.databaseService = databaseService;
         this.hdfcService = hdfcService;
         this.phonePeService = phonePeService;
@@ -43,6 +44,7 @@ let CheckStatusService = class CheckStatusService {
         this.nttdataService = nttdataService;
         this.posPaytmService = posPaytmService;
         this.worldlineService = worldlineService;
+        this.razorpayServiceModel = razorpayServiceModel;
     }
     async checkStatus(collect_request_id) {
         console.log('checking status for', collect_request_id);
@@ -131,6 +133,9 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.SMART_GATEWAY:
                 const data = await this.hdfcSmartgatewayService.checkStatus(collectRequest._id.toString(), collectRequest);
                 return data;
+            case collect_request_schema_1.Gateway.EDVIRON_RAZORPAY:
+                const razorpayData = await this.razorpayServiceModel.getPaymentStatus(collectRequest.razorpay.order_id.toString(), collectRequest);
+                return razorpayData;
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
                 const easebuzzStatus = await this.easebuzzService.statusResponse(collect_request_id.toString(), collectRequest);
                 let status_code;
@@ -301,6 +306,9 @@ let CheckStatusService = class CheckStatusService {
                     ...edv_response,
                     edviron_order_id: collectRequest._id.toString(),
                 };
+            case collect_request_schema_1.Gateway.EDVIRON_RAZORPAY:
+                const razorpayData = await this.razorpayServiceModel.getPaymentStatus(collectRequest.razorpay.order_id.toString(), collectRequest);
+                return razorpayData;
             case collect_request_schema_1.Gateway.SMART_GATEWAY:
                 const data = await this.hdfcSmartgatewayService.checkStatus(collectRequest._id.toString(), collectRequest);
                 return data;
@@ -537,6 +545,7 @@ exports.CheckStatusService = CheckStatusService = __decorate([
         smartgateway_service_1.SmartgatewayService,
         nttdata_service_1.NttdataService,
         pos_paytm_service_1.PosPaytmService,
-        worldline_service_1.WorldlineService])
+        worldline_service_1.WorldlineService,
+        razorpay_nonseamless_service_1.RazorpayNonseamlessService])
 ], CheckStatusService);
 //# sourceMappingURL=check-status.service.js.map
