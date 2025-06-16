@@ -450,7 +450,7 @@ async razorpayOrders(
     if(!razorpay_id  || !razorpay_secret || !school_id || !trustee_id || !from || to || !razorpay_mid   ){
       throw new BadRequestException('All details are required')
     }
-    console.log('[API START] Fetching orders with params:', { count, skip, from, to }); 
+    
     const params: Record<string, any> = {
       count: parseInt(count, 10),
       skip: parseInt(skip, 10),
