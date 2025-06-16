@@ -730,18 +730,18 @@ let CashfreeService = class CashfreeService {
                     docType: 'lobproof_education',
                 });
             }
-            if (kycresponse.businessSubCategory === 'Trust' &&
+            if (kycresponse.business_type === 'Trust' &&
                 kycresponse.businessProof) {
                 documentsToUpload.push({
                     url: kycresponse.businessProof,
                     docType: 'entity_proof_trustdeed',
                 });
             }
-            if (kycresponse.businessSubCategory === 'Society' &&
+            if (kycresponse.business_type === 'Society' &&
                 kycresponse.businessProof) {
                 documentsToUpload.push({
                     url: kycresponse.businessProof,
-                    docType: 'Entityproof_societycertificate',
+                    docType: 'entityproof_societycertificate',
                 });
             }
             const extractFilenameFromUrl = (url) => {

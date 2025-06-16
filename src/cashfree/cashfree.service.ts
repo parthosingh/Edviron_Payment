@@ -977,7 +977,7 @@ export class CashfreeService {
 
       // Add trust deed or society certificate based on businessSubCategory
       if (
-        kycresponse.businessSubCategory === 'Trust' &&
+        kycresponse.business_type === 'Trust' &&
         kycresponse.businessProof
       ) {
         documentsToUpload.push({
@@ -986,12 +986,12 @@ export class CashfreeService {
         });
       }
       if (
-        kycresponse.businessSubCategory === 'Society' &&
+        kycresponse.business_type === 'Society' &&
         kycresponse.businessProof
       ) {
         documentsToUpload.push({
           url: kycresponse.businessProof,
-          docType: 'Entityproof_societycertificate',
+          docType: 'entityproof_societycertificate',
         });
       }
 
