@@ -85,4 +85,10 @@ export declare class CashfreeController {
         notification_group: string;
         amount: number;
     }): Promise<any>;
+    uploadKYC(body: {
+        school_id: string;
+    }): Promise<{
+        document: string;
+        response: any;
+    }[] | undefined>;
 }

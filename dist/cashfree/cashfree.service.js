@@ -827,7 +827,7 @@ let CashfreeService = class CashfreeService {
             business_details: {
                 business_legal_name: response.businessProofDetails?.business_name,
                 business_type: response.business_type,
-                business_model: 'D2C',
+                business_model: 'B2C',
                 business_category: response.businessCategory || null,
                 business_subcategory: response.businessSubCategory || null,
                 business_pan: response.businessProofDetails?.business_pan_number || null,

@@ -1136,7 +1136,7 @@ export class CashfreeService {
       business_details: {
         business_legal_name: response.businessProofDetails?.business_name,
         business_type: response.business_type, // trust society
-        business_model: 'D2C', //Same for everyone
+        business_model: 'B2C', //Same for everyone
         business_category: response.businessCategory || null, // Education
         business_subcategory: response.businessSubCategory || null,
         business_pan:
