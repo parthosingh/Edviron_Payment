@@ -127,8 +127,7 @@ let PosPaytmService = class PosPaytmService {
                 merchantTransactionId: orderId,
             };
             console.log('debug 1', body);
-            const checksum = await Paytm.generateSignature(body, 'urflK0@0mthEgRo8');
-            console.log(checksum, 'checksum');
+            const checksum = await Paytm.generateSignature(body, collectRequest.paytmPos.paytm_merchant_key);
             const requestData = {
                 head: {
                     requestTimeStamp: await this.fmt(await this.nowInIST()),
@@ -140,6 +139,53 @@ let PosPaytmService = class PosPaytmService {
             };
             const config = {
                 url: `${process.env.PAYTM_POS_BASEURL}/ecr/V2/payment/status`,
+                method: 'post',
+                headers: { 'Content-Type': 'application/json' },
+                data: JSON.stringify(requestData),
+            };
+            const response = await axios_1.default.request(config);
+            return response.data;
+        }
+        catch (error) {
+            console.error('Error fetching transaction status:', error);
+            throw new common_1.BadRequestException('Failed to fetch transaction status.');
+        }
+    }
+    async refund(collect_id, refund_amount, refund_id) {
+        try {
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest) {
+                throw new common_1.BadRequestException('collect request not found');
+            }
+            const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: new mongoose_1.Types.ObjectId(collect_id),
+            });
+            if (!collectRequestStatus) {
+                throw new common_1.BadRequestException('collect request status not found');
+            }
+            if (refund_amount > collectRequest.amount) {
+                throw new common_1.BadRequestException('Refund amount cannot be greater than transaction amount');
+            }
+            if (collectRequestStatus.status !== collect_req_status_schema_1.PaymentStatus.SUCCESS) {
+                throw new common_1.BadRequestException('Refund can only be processed for successful transactions');
+            }
+            const body = {
+                mid: collectRequest.paytmPos.paytmMid,
+                txnType: 'REFUND',
+                orderId: collectRequest._id.toString(),
+                txnId: collect_id,
+                refId: refund_id,
+                refundAmount: refund_amount.toFixed(2),
+            };
+            const checksum = await Paytm.generateSignature(JSON.stringify(body), collectRequest.paytmPos.paytm_merchant_key);
+            const requestData = {
+                head: {
+                    signature: checksum,
+                },
+                body: body,
+            };
+            const config = {
+                url: `${process.env.PAYTM_POS_BASEURL}/refund/apply`,
                 method: 'post',
                 headers: { 'Content-Type': 'application/json' },
                 data: JSON.stringify(requestData),
