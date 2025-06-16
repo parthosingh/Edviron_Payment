@@ -730,18 +730,18 @@ let CashfreeService = class CashfreeService {
                     docType: 'lobproof_education',
                 });
             }
-            if (kycresponse.businessSubCategory === 'Trust' &&
+            if (kycresponse.business_type === 'Trust' &&
                 kycresponse.businessProof) {
                 documentsToUpload.push({
                     url: kycresponse.businessProof,
                     docType: 'entity_proof_trustdeed',
                 });
             }
-            if (kycresponse.businessSubCategory === 'Society' &&
+            if (kycresponse.business_type === 'Society' &&
                 kycresponse.businessProof) {
                 documentsToUpload.push({
                     url: kycresponse.businessProof,
-                    docType: 'Entityproof_societycertificate',
+                    docType: 'entityproof_societycertificate',
                 });
             }
             const extractFilenameFromUrl = (url) => {
@@ -827,7 +827,7 @@ let CashfreeService = class CashfreeService {
             business_details: {
                 business_legal_name: response.businessProofDetails?.business_name,
                 business_type: response.business_type,
-                business_model: 'D2C',
+                business_model: 'B2C',
                 business_category: response.businessCategory || null,
                 business_subcategory: response.businessSubCategory || null,
                 business_pan: response.businessProofDetails?.business_pan_number || null,

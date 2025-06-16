@@ -977,7 +977,7 @@ export class CashfreeService {
 
       // Add trust deed or society certificate based on businessSubCategory
       if (
-        kycresponse.businessSubCategory === 'Trust' &&
+        kycresponse.business_type === 'Trust' &&
         kycresponse.businessProof
       ) {
         documentsToUpload.push({
@@ -986,12 +986,12 @@ export class CashfreeService {
         });
       }
       if (
-        kycresponse.businessSubCategory === 'Society' &&
+        kycresponse.business_type === 'Society' &&
         kycresponse.businessProof
       ) {
         documentsToUpload.push({
           url: kycresponse.businessProof,
-          docType: 'Entityproof_societycertificate',
+          docType: 'entityproof_societycertificate',
         });
       }
 
@@ -1136,7 +1136,7 @@ export class CashfreeService {
       business_details: {
         business_legal_name: response.businessProofDetails?.business_name,
         business_type: response.business_type, // trust society
-        business_model: 'D2C', //Same for everyone
+        business_model: 'B2C', //Same for everyone
         business_category: response.businessCategory || null, // Education
         business_subcategory: response.businessSubCategory || null,
         business_pan:
