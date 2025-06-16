@@ -136,5 +136,5 @@ export declare class EdvironPgService implements GatewayService {
     }>)[]>;
     getSingleTransaction(collect_id: string): Promise<any>;
     sendMailAfterTransaction(collect_id: string): Promise<boolean>;
-    retriveEasebuzz(txnid: string, key: string): Promise<any>;
+    retriveEasebuzz(txnid: string, key: string, salt: string): Promise<any>;
 }

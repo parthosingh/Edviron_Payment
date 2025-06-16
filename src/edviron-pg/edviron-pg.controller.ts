@@ -4042,140 +4042,156 @@ export class EdvironPgController {
 
   @Post('update-easebuz')
   async updateEasebuzzAmount(@Body() body: any) {
-    const { key, merchant_email, start_date, end_date, submerchant_id } = body;
-
-    if (!key || !merchant_email || !start_date || !end_date) {
-      throw new BadRequestException('Missing required parameters');
-    }
-
-    const hashString = `${key}|${merchant_email}|${start_date}|${end_date}|${process.env.EASEBUZZ_SALT}`;
-    const hashValue = await calculateSHA512Hash(hashString);
-
-    const requestData: any = {
+    const {
       key,
-      hash: hashValue,
       merchant_email,
-      date_range: {
-        start_date,
-        end_date,
-      },
+      start_date,
+      end_date,
       submerchant_id,
-    };
-    let successTransaction: any[] = [];
+      school_id,
+      salt,
+      trustee_id,
+    } = body;
 
-    const fetchAndSave = async (requestData: any) => {
-      const config = {
-        method: 'post',
-        url: 'https://dashboard.easebuzz.in/transaction/v2/retrieve/date',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+    try {
+      if (
+        !key ||
+        !merchant_email ||
+        !start_date ||
+        !end_date ||
+        !school_id ||
+        !salt ||
+        !trustee_id
+      ) {
+        throw new BadRequestException('Missing required parameters');
+      }
+
+      const hashString = `${key}|${merchant_email}|${start_date}|${end_date}|${salt}`;
+      const hashValue = await calculateSHA512Hash(hashString);
+
+      const requestData: any = {
+        key,
+        hash: hashValue,
+        merchant_email,
+        date_range: {
+          start_date,
+          end_date,
         },
-        data: requestData,
+        submerchant_id,
       };
+      const fetchAndSave = async (requestData: any) => {
+        const config = {
+          method: 'post',
+          url: 'https://dashboard.easebuzz.in/transaction/v2/retrieve/date',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          data: requestData,
+        };
 
-      const { data } = await axios.request(config);
-      const paymentData = data.data;
+        const { data } = await axios.request(config);
+        const paymentData = data.data;
 
-      for (const item of paymentData) {
-        const response = await this.edvironPgService.retriveEasebuzz(
-          item.txnid,
-          key,
-        );
-        const data = response.msg[0];
-        const studentDetail = {
-          student_details : {
-            student_id : 'N/A',
-            student_email : data.email || "N/A",
-            student_name : data.firstname || "N/A",
-            student_phone_no : data.phone || "N/A",
-            additional_fields : {}
-          }
-        }
-        const collectRequest = new this.databaseService.CollectRequestModel({
-          amount: data.amount,
-          gateway: 'EDVIRON_EASEBUZZ',
-          easebuzz_sub_merchant_id: data.key,
-          custom_order_id: data.txnid,
-          additional_data : JSON.stringify(studentDetail)
-        });
-        // await collectRequest.save();
-
-        const mode = data.mode;
-        let platform_type = '';
-        let payment_method = '';
-        let details: any;
-
-        switch (mode) {
-          case 'UPI':
-            payment_method = 'upi';
-            platform_type = 'UPI';
-            details = {
-              app: {
-                channel: 'NA',
-                upi_id: data.upi_va,
-              },
-            };
-            break;
-          case 'DC':
-            payment_method = 'debit_card';
-            platform_type = 'DeditCard';
-            details = {
-              card: {
-                card_bank_name: 'NA',
-                card_network: data.network || 'N/A',
-                card_number: data.cardnum,
-                card_type: 'debit_card',
-              },
-            };
-            break;
-          case 'CC':
-            payment_method = 'crebit_card';
-            platform_type = 'CreditCard';
-            details = {
-              card: {
-                card_bank_name: 'NA',
-                card_network: data.network || 'N/A',
-                card_number: data.cardnum,
-                card_type: 'crebit_card',
-              },
-            };
-            break;
-          default:
-            details = {};
-        }
-
-        const collectRequestStatus =
-          new this.databaseService.CollectRequestStatusModel({
-            order_amount: data.amount,
-            transaction_amount: data.net_amount_debit,
-            payment_method: payment_method || data.mode.toLowerCase() || '',
-            status: data.status.toUpperCase() || '',
-            collect_id: collectRequest._id,
-            payment_message: data.payment_message || '',
-            payment_time: new Date(data.addedon),
-            bank_reference: data.bank_ref_num || '',
-            details: JSON.stringify(details),
+        for (const item of paymentData) {
+          const response = await this.edvironPgService.retriveEasebuzz(
+            item.txnid,
+            key,
+            salt
+          );
+          const data = response.msg[0];
+          const studentDetail = {
+            student_details: {
+              student_id: 'N/A',
+              student_email: data.email || 'N/A',
+              student_name: data.firstname || 'N/A',
+              student_phone_no: data.phone || 'N/A',
+              additional_fields: {},
+            },
+          };
+          const collectRequest = new this.databaseService.CollectRequestModel({
+            amount: data.amount,
+            gateway: Gateway.EDVIRON_EASEBUZZ,
+            easebuzz_sub_merchant_id: data.key,
+            custom_order_id: data.txnid,
+            additional_data: JSON.stringify(studentDetail),
+            school_id: school_id,
+            trustee_id: trustee_id,
           });
-        if (data.status === 'success') {
-          successTransaction.push(collectRequestStatus);
+          // await collectRequest.save();
+
+          const mode = data.mode;
+          let platform_type = '';
+          let payment_method = '';
+          let details: any;
+
+          switch (mode) {
+            case 'UPI':
+              payment_method = 'upi';
+              platform_type = 'UPI';
+              details = {
+                app: {
+                  channel: 'NA',
+                  upi_id: data.upi_va,
+                },
+              };
+              break;
+            case 'DC':
+              payment_method = 'debit_card';
+              platform_type = 'DeditCard';
+              details = {
+                card: {
+                  card_bank_name: 'NA',
+                  card_network: data.network || 'N/A',
+                  card_number: data.cardnum,
+                  card_type: 'debit_card',
+                },
+              };
+              break;
+            case 'CC':
+              payment_method = 'crebit_card';
+              platform_type = 'CreditCard';
+              details = {
+                card: {
+                  card_bank_name: 'NA',
+                  card_network: data.network || 'N/A',
+                  card_number: data.cardnum,
+                  card_type: 'crebit_card',
+                },
+              };
+              break;
+            default:
+              details = {};
+          }
+
+          const collectRequestStatus =
+            new this.databaseService.CollectRequestStatusModel({
+              order_amount: data.amount,
+              transaction_amount: data.net_amount_debit,
+              payment_method: payment_method || data.mode.toLowerCase() || '',
+              status: data.status.toUpperCase() || '',
+              collect_id: collectRequest._id,
+              payment_message: data.payment_message || '',
+              payment_time: new Date(data.addedon),
+              bank_reference: data.bank_ref_num || '',
+              details: JSON.stringify(details),
+            });
+
+          // console.log(collectRequestStatus)
+          // await collectRequestStatus.save();
         }
-
-        console.log(collectRequestStatus)
-        // await collectRequestStatus.save();
-      }
-
-      if (data.next) {
-        requestData.page = data.next;
-        await fetchAndSave(requestData);
-      }
-
-      return;
-    };
-
-    await fetchAndSave(requestData);
-    return successTransaction;
-    // return { message: 'All pages fetched and data saved successfully' };
+        if (data.next) {
+          requestData.page = data.next;
+          await fetchAndSave(requestData);
+        }
+        return;
+      };
+      await fetchAndSave(requestData);
+      // return successTransaction;
+      return { message: 'All pages fetched and data saved successfully' };
+    } catch (error) {
+      throw new BadRequestException(error.message)
+    }
   }
 
   @Post('easebuzz-retrive')

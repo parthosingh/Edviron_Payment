@@ -1816,8 +1816,8 @@ export class EdvironPgService implements GatewayService {
     }
   }
 
-  async retriveEasebuzz(txnid:string, key:string) {
-    const hashString = `${key}|${txnid}|${process.env.EASEBUZZ_SALT}`;
+  async retriveEasebuzz(txnid:string, key:string, salt:string) {
+    const hashString = `${key}|${txnid}|${salt}`;
     const hashValue = await calculateSHA512Hash(hashString);
 
     try {
@@ -1838,6 +1838,8 @@ export class EdvironPgService implements GatewayService {
 
       const { data } = await axios.request(config);
       return data;
-    } catch (error) {}
+    } catch (error) {
+      throw new BadRequestException(error.message)
+    }
   }
 }

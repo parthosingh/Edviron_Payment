@@ -1436,8 +1436,8 @@ let EdvironPgService = class EdvironPgService {
             throw new common_1.BadRequestException(e.message);
         }
     }
-    async retriveEasebuzz(txnid, key) {
-        const hashString = `${key}|${txnid}|${process.env.EASEBUZZ_SALT}`;
+    async retriveEasebuzz(txnid, key, salt) {
+        const hashString = `${key}|${txnid}|${salt}`;
         const hashValue = await (0, sign_1.calculateSHA512Hash)(hashString);
         try {
             const requestData = {
@@ -1457,7 +1457,9 @@ let EdvironPgService = class EdvironPgService {
             const { data } = await axios_1.default.request(config);
             return data;
         }
-        catch (error) { }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
     }
 };
 exports.EdvironPgService = EdvironPgService;
