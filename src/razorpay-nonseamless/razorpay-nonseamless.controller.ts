@@ -441,11 +441,15 @@ async razorpayOrders(
   @Query('skip') skip = '0',
   @Query('school_id') school_id: string,
   @Query('trustee_id') trustee_id: string,
-  @Query('from') from?: string,
-  @Query('to') to?: string,
-  @Query('razorpay_mid') razorpay_mid?: string,
+  @Query('razorpay_mid') razorpay_mid: string,
+  @Query('from') from: string,
+  @Query('to') to: string,
 ) {
+  
   try {
+    if(!razorpay_id  || !razorpay_secret || !school_id || !trustee_id || !from || to || !razorpay_mid   ){
+      throw new BadRequestException('All details are required')
+    }
     console.log('[API START] Fetching orders with params:', { count, skip, from, to }); 
     const params: Record<string, any> = {
       count: parseInt(count, 10),
@@ -460,11 +464,11 @@ async razorpayOrders(
     };
     if (from) params.from = getUTCUnix(from);
     if (to) params.to = getUTCUnix(to, true);
-    console.log('[PARAMS] Final request parameters:', {
-      ...params,
-      from: params.from ? new Date(params.from * 1000).toISOString() : 'N/A',
-      to: params.to ? new Date(params.to * 1000).toISOString() : 'N/A'
-    });
+    // console.log('[PARAMS] Final request parameters:', {
+    //   ...params,
+    //   from: params.from ? new Date(params.from * 1000).toISOString() : 'N/A',
+    //   to: params.to ? new Date(params.to * 1000).toISOString() : 'N/A'
+    // });
 
     const result = await this.razorpayServiceModel.fetchAndStoreAll(
       razorpay_id,
@@ -474,9 +478,8 @@ async razorpayOrders(
       params,
       razorpay_mid,
     );
-
-    console.log(`[API COMPLETE] Total orders fetched: ${result.length}`);
-    return result;
+    // return result;
+    return {message : `Total orders fetched: ${result.length} and payment Detail from ${from} to ${to} Updated`}
   } catch (err) {
     console.error('[API ERROR]', err);
     throw new InternalServerErrorException(

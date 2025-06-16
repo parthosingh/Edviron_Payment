@@ -10,5 +10,7 @@ export declare class RazorpayNonseamlessController {
     handleCallback(req: any, res: any): Promise<any>;
     webhook(body: any, res: any): Promise<any>;
     refund(body: any): Promise<any>;
-    razorpayOrders(razorpay_id: string, razorpay_secret: string, count: string | undefined, skip: string | undefined, school_id: string, trustee_id: string, from?: string, to?: string, razorpay_mid?: string): Promise<any[]>;
+    razorpayOrders(razorpay_id: string, razorpay_secret: string, count: string | undefined, skip: string | undefined, school_id: string, trustee_id: string, razorpay_mid: string, from: string, to: string): Promise<{
+        message: string;
+    }>;
 }

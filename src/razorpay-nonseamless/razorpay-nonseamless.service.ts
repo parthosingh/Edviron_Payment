@@ -303,22 +303,13 @@ export class RazorpayNonseamlessService {
     school_id: string,
     trustee_id: string,
     params: Record<string, any>,
-    razorpay_mid?: string,
+    razorpay_mid: string,
   ) {
-    console.log('[FETCH START] Beginning pagination', {
-      initialParams: params,
-    });
-
     let allOrders: any[] = [];
     let skip = params.skip || 0;
     const pageSize = Math.min(params.count || 100, 100);
     let page = 1;
-
     while (true) {
-      console.log(
-        `[PAGE ${page}] Requesting page | skip=${skip} count=${pageSize}`,
-      );
-
       const response = await this.fetchOrdersPage(
         authId,
         authSecret,
@@ -326,34 +317,26 @@ export class RazorpayNonseamlessService {
         skip,
         params,
       );
-
       const orders = response.items || response;
       const receivedCount = orders?.length || 0;
-      console.log(`[PAGE ${page}] Received ${receivedCount} orders`);
-
+      // console.log(`[PAGE ${page}] Received ${receivedCount} orders`);
       if (!orders || receivedCount === 0) {
-        console.log(`[PAGE ${page}] Empty page - stopping pagination`);
+        // console.log(`[PAGE ${page}] Empty page - stopping pagination`);
         break;
       }
-
       allOrders = [...allOrders, ...orders];
       skip += receivedCount;
       page++;
 
       if (receivedCount < pageSize) {
-        console.log(
-          `[PAGE ${
-            page - 1
-          }] Received less than page size (${receivedCount} < ${pageSize}) - stopping pagination`,
-        );
+        // console.log(
+        //   `[PAGE ${
+        //     page - 1
+        //   }] Received less than page size (${receivedCount} < ${pageSize}) - stopping pagination`,
+        // );
         break;
       }
     }
-
-    console.log(`[FETCH COMPLETE] Total orders fetched: ${allOrders.length}`);
-
-    console.log('[PAYMENTS] Starting payment details fetch');
-
     const notfound = [];
     for (const order of allOrders) {
       const response = await this.retriveRazorpay(authId, authSecret, order.id);
@@ -362,7 +345,6 @@ export class RazorpayNonseamlessService {
         notfound.push(order.id);
         continue;
       }
-
       const studentDetail = {
         student_details: {
           student_id: 'N/A',
@@ -374,7 +356,7 @@ export class RazorpayNonseamlessService {
       };
 
       const collectRequest = new this.databaseService.CollectRequestModel({
-        amount: payment.amount / 100, // Razorpay amount is in paise
+        amount: payment.amount / 100, 
         gateway: Gateway.EDVIRON_RAZORPAY,
         razorpay: {
           razorpay_id : authId,
@@ -452,12 +434,10 @@ export class RazorpayNonseamlessService {
           details: JSON.stringify(details),
         });
 
-        console.log(collectRequest, "collectRequest")
-      // await collectRequest.save();
-      // await collectRequestStatus.save();
+        // console.log(collectRequest, "collectRequest")
+      await collectRequest.save();
+      await collectRequestStatus.save();
     }
-
-    console.log('[PAYMENTS] Completed fetching payment details');
     return allOrders;
   }
 
