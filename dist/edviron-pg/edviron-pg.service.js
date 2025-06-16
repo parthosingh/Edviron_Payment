@@ -1406,7 +1406,6 @@ let EdvironPgService = class EdvironPgService {
             if (!collect_id) {
                 throw new common_1.BadRequestException('Collect ID is required');
             }
-            ;
             const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
             if (!collectRequest) {
                 throw new common_1.NotFoundException('Collect Request not found');
@@ -1422,7 +1421,7 @@ let EdvironPgService = class EdvironPgService {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    data: getTransactionInfo[0]
+                    data: getTransactionInfo[0],
                 };
                 await axios_1.default.request(config);
             }
@@ -1435,6 +1434,31 @@ let EdvironPgService = class EdvironPgService {
         catch (e) {
             console.error(e);
             throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async retriveEasebuzz(txnid, key, salt) {
+        const hashString = `${key}|${txnid}|${salt}`;
+        const hashValue = await (0, sign_1.calculateSHA512Hash)(hashString);
+        try {
+            const requestData = {
+                txnid,
+                key,
+                hash: hashValue,
+            };
+            const config = {
+                method: 'post',
+                url: 'https://dashboard.easebuzz.in/transaction/v2.1/retrieve',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                },
+                data: requestData,
+            };
+            const { data } = await axios_1.default.request(config);
+            return data;
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message);
         }
     }
 };

@@ -377,4 +377,8 @@ export declare class EdvironPgController {
         };
     }>;
     sendMailAfterTransaction(body: any): Promise<string>;
+    updateEasebuzzAmount(body: any): Promise<{
+        message: string;
+    }>;
+    retriveEasebuzz(body: any): Promise<any>;
 }
