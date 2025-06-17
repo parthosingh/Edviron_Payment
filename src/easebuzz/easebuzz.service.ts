@@ -284,13 +284,13 @@ export class EasebuzzService {
 
         const easebuzz_cb_surl =
           process.env.URL +
-          '/edviron-pg/easebuzz-callback?collect_request_id=' +
+          '/edviron-pg/easebuzz/easebuzz-callback?collect_request_id=' +
           request._id +
           '&status=pass';
 
         const easebuzz_cb_furl =
           process.env.URL +
-          '/edviron-pg/easebuzz-callback?collect_request_id=' +
+          '/edviron-pg/easebuzz/easebuzz-callback?collect_request_id=' +
           request._id +
           '&status=fail';
 
@@ -452,13 +452,13 @@ export class EasebuzzService {
 
       const easebuzz_cb_surl =
         process.env.URL +
-        '/edviron-pg/easebuzz-callback?collect_request_id=' +
+        '/edviron-pg/easebuzz/easebuzz-callback/?collect_request_id=' +
         request._id +
         '&status=pass';
 
       const easebuzz_cb_furl =
         process.env.URL +
-        '/edviron-pg/easebuzz-callback?collect_request_id=' +
+        '/edviron-pg/easebuzz/easebuzz-callback/?collect_request_id=' +
         request._id +
         '&status=fail';
 
@@ -615,13 +615,13 @@ export class EasebuzzService {
 
       const easebuzz_cb_surl =
         process.env.URL +
-        '/edviron-pg/easebuzz-callback?collect_request_id=' +
+        '/edviron-pg/easebuzz/easebuzz-callback?collect_request_id=' +
         upi_collect_id +
         '&status=pass';
 
       const easebuzz_cb_furl =
         process.env.URL +
-        '/edviron-pg/easebuzz-callback?collect_request_id=' +
+        '/edviron-pg/easebuzz/easebuzz-callback?collect_request_id=' +
         upi_collect_id +
         '&status=fail';
 
@@ -717,13 +717,13 @@ export class EasebuzzService {
 
       const easebuzz_cb_surl =
         process.env.URL +
-        '/edviron-pg/easebuzz-callback?collect_request_id=' +
+        '/edviron-pg/easebuzz/easebuzz-callback?collect_request_id=' +
         upi_collect_id +
         '&status=pass';
 
       const easebuzz_cb_furl =
         process.env.URL +
-        '/edviron-pg/easebuzz-callback?collect_request_id=' +
+        '/edviron-pg/easebuzz/easebuzz-callback?collect_request_id=' +
         upi_collect_id +
         '&status=fail';
 
