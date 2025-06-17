@@ -43,7 +43,7 @@ export declare class EasebuzzService {
         file_url: string;
     }>): Promise<any>;
     createOrderV2(request: CollectRequest, platform_charges: platformChange[], school_name: string): Promise<{
-        url: string;
+        collect_request_url: string;
     } | undefined>;
     createOrderV2NonSplit(request: CollectRequest, platform_charges: platformChange[], school_name: string): Promise<{
         colect_id: import("mongoose").Schema.Types.ObjectId;
