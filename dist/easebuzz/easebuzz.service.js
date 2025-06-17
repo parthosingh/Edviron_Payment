@@ -296,6 +296,7 @@ let EasebuzzService = class EasebuzzService {
                 await collectReq.save();
                 await this.getQr(request._id.toString(), request, ezb_split_payments);
                 return {
+                    collect_request_id: request._id,
                     collect_request_url: process.env.URL +
                         '/edviron-pg/redirect?session_id=' +
                         '' +
@@ -389,8 +390,8 @@ let EasebuzzService = class EasebuzzService {
             await collectReq.save();
             await this.getQrNonSplit(request._id.toString(), request);
             return {
-                colect_id: request._id,
-                url: process.env.URL +
+                collect_request_id: request._id,
+                collect_request_url: process.env.URL +
                     '/edviron-pg/redirect?session_id=' +
                     '' +
                     '&collect_request_id=' +

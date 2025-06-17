@@ -385,6 +385,7 @@ export class EasebuzzService {
         await collectReq.save();
         await this.getQr(request._id.toString(), request, ezb_split_payments); // uncomment after fixing easebuzz QR code issue
         return {
+          collect_request_id:request._id,
           collect_request_url:
             process.env.URL +
             '/edviron-pg/redirect?session_id=' +
@@ -551,8 +552,8 @@ export class EasebuzzService {
       await collectReq.save();
       await this.getQrNonSplit(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
       return {
-        colect_id:request._id,
-        url:
+        collect_request_id:request._id,
+        collect_request_url:
           process.env.URL +
           '/edviron-pg/redirect?session_id=' +
           '' +
