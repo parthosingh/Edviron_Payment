@@ -27,8 +27,9 @@ const nttdata_service_1 = require("../nttdata/nttdata.service");
 const worldline_service_1 = require("../worldline/worldline.service");
 const transactionStatus_1 = require("../types/transactionStatus");
 const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
+const gatepay_service_1 = require("../gatepay/gatepay.service");
 let CollectService = class CollectService {
-    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService, hdfcRazorpay, payuService, hdfcSmartgatewayService, posPaytmService, nttdataService, worldLineService, razorpayNonseamlessService) {
+    constructor(phonepeService, hdfcService, edvironPgService, databaseService, ccavenueService, hdfcRazorpay, payuService, hdfcSmartgatewayService, posPaytmService, nttdataService, worldLineService, razorpayNonseamlessService, gatepayService) {
         this.phonepeService = phonepeService;
         this.hdfcService = hdfcService;
         this.edvironPgService = edvironPgService;
@@ -41,8 +42,9 @@ let CollectService = class CollectService {
         this.nttdataService = nttdataService;
         this.worldLineService = worldLineService;
         this.razorpayNonseamlessService = razorpayNonseamlessService;
+        this.gatepayService = gatepayService;
     }
-    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, nttdata_hash_req_key, nttdata_hash_res_key, nttdata_res_salt, nttdata_req_salt, worldline_merchant_id, worldline_encryption_key, worldline_encryption_iV, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, isVBAPayment, vba_account_number, worldLine_vendors, easebuzz_school_label, razorpay_vendors, razorpay_credentials) {
+    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, nttdata_hash_req_key, nttdata_hash_res_key, nttdata_res_salt, nttdata_req_salt, worldline_merchant_id, worldline_encryption_key, worldline_encryption_iV, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, isVBAPayment, vba_account_number, worldLine_vendors, easebuzz_school_label, razorpay_vendors, razorpay_credentials, gatepay_credentials) {
         if (custom_order_id) {
             const count = await this.databaseService.CollectRequestModel.countDocuments({
                 school_id,
@@ -151,6 +153,18 @@ let CollectService = class CollectService {
                 url: `${process.env.URL}/pay-u/redirect?collect_id=${request._id}&school_name=${school_name?.split(' ').join('_')}`,
                 request,
             };
+        }
+        if (gatepay_credentials?.gatepay_mid && gatepay_credentials?.gatepay_key && gatepay_credentials?.gatepay_iv && gatepay_credentials.gatepay_terminal_id) {
+            request.gatepay.gatepay_mid = gatepay_credentials?.gatepay_mid;
+            request.gatepay.gatepay_key = gatepay_credentials?.gatepay_key;
+            request.gatepay.gatepay_iv = gatepay_credentials?.gatepay_iv;
+            request.gatepay.gatepay_terminal_id = gatepay_credentials?.gatepay_terminal_id;
+            request.gatepay.udf1 = gatepay_credentials?.udf1 || "";
+            request.gatepay.udf2 = gatepay_credentials?.udf2 || "";
+            request.gatepay.udf3 = gatepay_credentials?.udf3 || "";
+            request.save();
+            const { url, collect_req } = await this.gatepayService.createOrder(request);
+            return { url, request: collect_req };
         }
         if (ccavenue_merchant_id) {
             const transaction = await this.ccavenueService.createOrder(request);
@@ -363,6 +377,7 @@ exports.CollectService = CollectService = __decorate([
         pos_paytm_service_1.PosPaytmService,
         nttdata_service_1.NttdataService,
         worldline_service_1.WorldlineService,
-        razorpay_nonseamless_service_1.RazorpayNonseamlessService])
+        razorpay_nonseamless_service_1.RazorpayNonseamlessService,
+        gatepay_service_1.GatepayService])
 ], CollectService);
 //# sourceMappingURL=collect.service.js.map

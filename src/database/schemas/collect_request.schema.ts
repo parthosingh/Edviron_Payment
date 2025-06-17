@@ -68,6 +68,18 @@ interface I_WORLDLINE {
   worldline_token: string;
 }
 
+interface I_Gatepay {
+  gatepay_mid: string;
+  gatepay_terminal_id: string;
+  gatepay_key: string;
+  gatepay_iv: string;
+  udf1: string;
+  udf2: string;
+  udf3: string;
+}
+
+
+
 interface EASEBUZZ_NON_PARTNER_CRED {
   easebuzz_salt: string;
   easebuzz_key: string;
@@ -92,6 +104,8 @@ export class paytmPos {
   @Prop({ type: String, required: false })
   device_id?: string | null;
 }
+
+
 
 @Schema({ timestamps: true })
 export class CollectRequest {
@@ -294,6 +308,25 @@ export class CollectRequest {
     _id: false,
   })
   worldline: I_WORLDLINE;
+
+   @Prop({
+    required: false,
+    type: {
+      gatepay_mid: { type: String, required: false, default: null },
+      gatepay_key: {
+        type: String,
+        required: false,
+        default: null,
+      },
+      gatepay_terminal_id: { type: String, required: false, default: null },
+      gatepay_iv: { type: String, required: false, default: null },
+      udf1: { type: String, required: false, default: null },
+      udf2: { type: String, required: false, default: null },
+      udf3: { type: String, required: false, default: null },
+    },
+    _id: false,
+  })
+  gatepay: I_Gatepay;
 
   @Prop({
     required: false,

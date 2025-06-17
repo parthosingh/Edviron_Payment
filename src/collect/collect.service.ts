@@ -20,6 +20,7 @@ import { NttdataService } from 'src/nttdata/nttdata.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
+import { GatepayService } from 'src/gatepay/gatepay.service';
 
 @Injectable()
 export class CollectService {
@@ -36,6 +37,7 @@ export class CollectService {
     private readonly nttdataService: NttdataService,
     private readonly worldLineService: WorldlineService,
     private readonly razorpayNonseamlessService: RazorpayNonseamlessService,
+    private readonly gatepayService: GatepayService,
   ) {}
 
   async collect(
@@ -135,6 +137,15 @@ export class CollectService {
       razorpay_secret?: string | null;
       razorpay_mid?: string | null;
     },
+    gatepay_credentials?: {
+        gatepay_mid?: string | null;
+        gatepay_terminal_id?: string | null;
+        gatepay_key?: string | null;
+        gatepay_iv?: string | null;
+        udf1?: string | null;
+        udf2?: string | null;
+        udf3?: string | null;
+      },
   ): Promise<{ url: string; request: CollectRequest }> {
     if (custom_order_id) {
       const count =
@@ -273,6 +284,23 @@ export class CollectService {
         }&school_name=${school_name?.split(' ').join('_')}`,
         request,
       };
+    }
+
+    if(gatepay_credentials?.gatepay_mid && gatepay_credentials?.gatepay_key && gatepay_credentials?.gatepay_iv && gatepay_credentials.gatepay_terminal_id){
+      request.gatepay.gatepay_mid = gatepay_credentials?.gatepay_mid
+      request.gatepay.gatepay_key= gatepay_credentials?.gatepay_key
+      request.gatepay.gatepay_iv= gatepay_credentials?.gatepay_iv
+      request.gatepay.gatepay_terminal_id= gatepay_credentials?.gatepay_terminal_id
+      request.gatepay.udf1= gatepay_credentials?.udf1 || ""
+      request.gatepay.udf2= gatepay_credentials?.udf2 || ""
+      request.gatepay.udf3= gatepay_credentials?.udf3 || ""
+
+      request.save()
+
+
+      const { url, collect_req } = await this.gatepayService.createOrder(request)
+      
+      return { url, request: collect_req };
     }
 
     // CCAVENUE NONSEAMMLESS

@@ -73,6 +73,15 @@ interface I_WORLDLINE {
     worldline_encryption_iV: string;
     worldline_token: string;
 }
+interface I_Gatepay {
+    gatepay_mid: string;
+    gatepay_terminal_id: string;
+    gatepay_key: string;
+    gatepay_iv: string;
+    udf1: string;
+    udf2: string;
+    udf3: string;
+}
 interface EASEBUZZ_NON_PARTNER_CRED {
     easebuzz_salt: string;
     easebuzz_key: string;
@@ -179,6 +188,7 @@ export declare class CollectRequest {
     paytmPos: paytmPos;
     ntt_data: I_NTT_DATA;
     worldline: I_WORLDLINE;
+    gatepay: I_Gatepay;
     easebuzz_non_partner_cred: EASEBUZZ_NON_PARTNER_CRED;
     easebuzz_non_partner: boolean;
     worldline_token: string;

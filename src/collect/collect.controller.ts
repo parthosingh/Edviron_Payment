@@ -81,6 +81,15 @@ export class CollectController {
         razorpay_secret?: string | null;
         razorpay_mid?: string | null;
       };
+      gatepay_credentials?: {
+        gatepay_mid?: string | null;
+        gatepay_terminal_id?: string | null;
+        gatepay_key?: string | null;
+        gatepay_iv?: string | null;
+        udf1?: string | null;
+        udf2?: string | null;
+        udf3?: string | null;
+      };
       vendors_info?: [
         {
           vendor_id: string;
@@ -183,9 +192,11 @@ export class CollectController {
       worldLine_vendors,
       razorpay_vendors,
       razorpay_credentials,
+      gatepay_credentials,
     } = body;
     console.log(razorpay_credentials);
     
+    console.log('hit')
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
     if (!callbackUrl)
@@ -245,6 +256,7 @@ export class CollectController {
           easebuzz_school_label,
           razorpay_vendors, 
           razorpay_credentials,
+          gatepay_credentials
         ),
       );
     } catch (e) {

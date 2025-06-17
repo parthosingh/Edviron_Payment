@@ -315,6 +315,26 @@ __decorate([
     (0, mongoose_1.Prop)({
         required: false,
         type: {
+            gatepay_mid: { type: String, required: false, default: null },
+            gatepay_key: {
+                type: String,
+                required: false,
+                default: null,
+            },
+            gatepay_terminal_id: { type: String, required: false, default: null },
+            gatepay_iv: { type: String, required: false, default: null },
+            udf1: { type: String, required: false, default: null },
+            udf2: { type: String, required: false, default: null },
+            udf3: { type: String, required: false, default: null },
+        },
+        _id: false,
+    }),
+    __metadata("design:type", Object)
+], CollectRequest.prototype, "gatepay", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        required: false,
+        type: {
             easebuzz_salt: { type: String, required: false, default: null },
             easebuzz_key: {
                 type: String,
