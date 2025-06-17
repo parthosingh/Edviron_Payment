@@ -169,7 +169,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
         const details = JSON.stringify(body);
         const webhook = await new this.databaseService.WebhooksModel({
             body: details,
-            gateway: collect_request_schema_1.Gateway.EDVIRON_HDFC_RAZORPAY,
+            gateway: collect_request_schema_1.Gateway.EDVIRON_RAZORPAY,
         }).save();
         const { payload } = body;
         const { order_id, amount, method, bank, acquirer_data, error_reason, card, card_id, wallet, } = payload.payment.entity;
