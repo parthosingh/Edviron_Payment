@@ -1,10 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { DatabaseService } from 'src/database/database.service';
+import { CollectRequest } from 'src/database/schemas/collect_request.schema';
 const crypto = require('crypto');
 
 @Injectable()
 export class GatepayService {
-  constructor() {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async encryptEas(data: any, keyBase64: string, ivBase64: string) {
     const key = Buffer.from(keyBase64, 'base64');
@@ -16,18 +18,35 @@ export class GatepayService {
     return encrypted.toUpperCase();
   }
 
-  async createOrder(request: any) {
-    const { _id, amount, gatepay } = request;
+  async decryptEas(encryptedData: string, keyBase64: string, ivBase64: string) {
+    const key = Buffer.from(keyBase64, 'base64');
+    const iv = Buffer.from(ivBase64, 'base64');
+
+    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+    let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+
+    return decrypted;
+  }
+
+  async createOrder(request: CollectRequest) {
+    const { _id, amount, gatepay, additional_data } = request;
+    let student_details: any = {};
     try {
-      const {
-        gatepay_mid,
-        gatepay_key,
-        gatepay_iv,
-        gatepay_terminal_id,
-        udf1,
-        udf2,
-        udf3,
-      } = gatepay;
+      student_details =
+        typeof additional_data === 'string'
+          ? JSON.parse(additional_data)
+          : additional_data;
+    } catch (err) {
+      console.error('Error parsing additional_data:', err.message);
+    }
+
+    const udf1 = student_details?.student_id || '';
+    const udf2 = student_details?.student_email || '';
+    const udf3 = student_details?.student_name || '';
+    try {
+      const { gatepay_mid, gatepay_key, gatepay_iv, gatepay_terminal_id } =
+        gatepay;
       const formatDate = (date: Date) => {
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const months = [
@@ -57,8 +76,7 @@ export class GatepayService {
         )} ${hours}:${minutes}:${seconds} IST ${year}`;
       };
 
-      const formatedDate = formatDate(new Date())
-      console.log(formatedDate, "formatedDate")
+      const formatedDate = formatDate(new Date());
 
       const data = {
         mid: gatepay_mid,
@@ -67,7 +85,7 @@ export class GatepayService {
         transactionDate: formatedDate,
         terminalId: gatepay_terminal_id,
         udf1: udf1,
-        udf2: `mailto:${udf2}`,
+        udf2: udf2,
         udf3: udf3,
         udf4: '',
         udf5: '',
@@ -93,7 +111,6 @@ export class GatepayService {
         gatepay_iv,
       );
 
-      console.log(ciphertext, 'ciphertext');
       const raw = {
         mid: gatepay_mid,
         terminalId: gatepay_terminal_id,
@@ -105,16 +122,45 @@ export class GatepayService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: raw,
-        redirect: 'follow',
+        data: raw,
+        redirect: `${process.env.URL}/gatepay/callback?collect_id=${_id}`,
       };
 
-      const axiosRequest = axios.request(config);
+      const response = await axios.request(config);
+      // console.log(response.data, 'request');
 
-      console.log(axiosRequest, 'request');
+      if (response.data.status !== 'SUCCESS') {
+        throw new BadRequestException('payment link not created');
+      }
+
+      const decrypted = await this.decryptEas(
+        response.data.response,
+        gatepay_key,
+        gatepay_iv,
+      );
+      console.log(decrypted, 'decrypted');
+      const parsedData = JSON.parse(decrypted);
+      const { paymentUrl, qrPath, qrIntent, paymentId, token } = parsedData;
+
+      await this.databaseService.CollectRequestModel.findByIdAndUpdate(
+        {
+          _id,
+        },
+        {
+          $set: {
+            'gatepay.token': token,
+            'gatepay.txnId': paymentId,
+          },
+        },
+        {
+          upsert: true,
+          new: true,
+        },
+      );
+
+      return { url: paymentUrl, collect_req: request };
     } catch (error) {
       throw new BadRequestException(error.message);
     }
-    return { url: 'url,', collect_req: request };
   }
 }

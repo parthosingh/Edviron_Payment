@@ -103,19 +103,19 @@ let CollectService = class CollectService {
             payment_method: null,
         }).save();
         if (nttdata_id && nttdata_secret) {
+            console.log('enter atom');
             const { url, collect_req } = await this.nttdataService.createOrder(request);
             setTimeout(() => {
                 this.nttdataService.terminateOrder(collect_req._id.toString());
             }, 15 * 60 * 1000);
             return { url, request: collect_req };
         }
-        console.log({ razorpay_credentials });
         if (razorpay_credentials?.razorpay_id &&
             razorpay_credentials?.razorpay_secret &&
             razorpay_credentials?.razorpay_mid) {
             if (splitPayments && razorpay_vendors && razorpay_vendors.length > 0) {
                 razorpay_vendors.map(async (info) => {
-                    const { vendor_id, percentage, amount, notes, linked_account_notes, on_hold, on_hold_until } = info;
+                    const { vendor_id, percentage, amount, notes, linked_account_notes, on_hold, on_hold_until, } = info;
                     let split_amount = 0;
                     if (amount) {
                         split_amount = amount;
@@ -154,15 +154,33 @@ let CollectService = class CollectService {
                 request,
             };
         }
-        if (gatepay_credentials?.gatepay_mid && gatepay_credentials?.gatepay_key && gatepay_credentials?.gatepay_iv && gatepay_credentials.gatepay_terminal_id) {
-            request.gatepay.gatepay_mid = gatepay_credentials?.gatepay_mid;
-            request.gatepay.gatepay_key = gatepay_credentials?.gatepay_key;
-            request.gatepay.gatepay_iv = gatepay_credentials?.gatepay_iv;
-            request.gatepay.gatepay_terminal_id = gatepay_credentials?.gatepay_terminal_id;
-            request.gatepay.udf1 = gatepay_credentials?.udf1 || "";
-            request.gatepay.udf2 = gatepay_credentials?.udf2 || "";
-            request.gatepay.udf3 = gatepay_credentials?.udf3 || "";
-            request.save();
+        if (gatepay_credentials?.gatepay_mid &&
+            gatepay_credentials?.gatepay_key &&
+            gatepay_credentials?.gatepay_iv &&
+            gatepay_credentials.gatepay_terminal_id) {
+            console.log('gatepay enter');
+            if (!request.gatepay) {
+                request.gateway = collect_request_schema_1.Gateway.EDVIRON_GATEPAY,
+                    request.gatepay = {
+                        gatepay_mid: gatepay_credentials?.gatepay_mid,
+                        gatepay_key: gatepay_credentials?.gatepay_key,
+                        gatepay_iv: gatepay_credentials?.gatepay_iv,
+                        gatepay_terminal_id: gatepay_credentials?.gatepay_terminal_id,
+                        txnId: "",
+                        token: "",
+                    };
+            }
+            else {
+                request.gateway = collect_request_schema_1.Gateway.EDVIRON_GATEPAY,
+                    request.gatepay.gatepay_mid = gatepay_credentials?.gatepay_mid;
+                request.gatepay.gatepay_key = gatepay_credentials?.gatepay_key;
+                request.gatepay.gatepay_iv = gatepay_credentials?.gatepay_iv;
+                request.gatepay.txnId = "";
+                request.gatepay.token = "";
+                request.gatepay.gatepay_terminal_id =
+                    gatepay_credentials?.gatepay_terminal_id;
+            }
+            await request.save();
             const { url, collect_req } = await this.gatepayService.createOrder(request);
             return { url, request: collect_req };
         }

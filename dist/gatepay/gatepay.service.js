@@ -12,9 +12,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GatepayService = void 0;
 const common_1 = require("@nestjs/common");
 const axios_1 = require("axios");
+const database_service_1 = require("../database/database.service");
 const crypto = require('crypto');
 let GatepayService = class GatepayService {
-    constructor() { }
+    constructor(databaseService) {
+        this.databaseService = databaseService;
+    }
     async encryptEas(data, keyBase64, ivBase64) {
         const key = Buffer.from(keyBase64, 'base64');
         const iv = Buffer.from(ivBase64, 'base64');
@@ -23,10 +26,31 @@ let GatepayService = class GatepayService {
         encrypted += cipher.final('hex');
         return encrypted.toUpperCase();
     }
+    async decryptEas(encryptedData, keyBase64, ivBase64) {
+        const key = Buffer.from(keyBase64, 'base64');
+        const iv = Buffer.from(ivBase64, 'base64');
+        const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+        let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+        decrypted += decipher.final('utf8');
+        return decrypted;
+    }
     async createOrder(request) {
-        const { _id, amount, gatepay } = request;
+        const { _id, amount, gatepay, additional_data } = request;
+        let student_details = {};
         try {
-            const { gatepay_mid, gatepay_key, gatepay_iv, gatepay_terminal_id, udf1, udf2, udf3, } = gatepay;
+            student_details =
+                typeof additional_data === 'string'
+                    ? JSON.parse(additional_data)
+                    : additional_data;
+        }
+        catch (err) {
+            console.error('Error parsing additional_data:', err.message);
+        }
+        const udf1 = student_details?.student_id || '';
+        const udf2 = student_details?.student_email || '';
+        const udf3 = student_details?.student_name || '';
+        try {
+            const { gatepay_mid, gatepay_key, gatepay_iv, gatepay_terminal_id } = gatepay;
             const formatDate = (date) => {
                 const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                 const months = [
@@ -53,7 +77,6 @@ let GatepayService = class GatepayService {
                 return `${day} ${month} ${pad(date.getDate())} ${hours}:${minutes}:${seconds} IST ${year}`;
             };
             const formatedDate = formatDate(new Date());
-            console.log(formatedDate, "formatedDate");
             const data = {
                 mid: gatepay_mid,
                 amount: amount.toFixed(2).toString(),
@@ -61,7 +84,7 @@ let GatepayService = class GatepayService {
                 transactionDate: formatedDate,
                 terminalId: gatepay_terminal_id,
                 udf1: udf1,
-                udf2: `mailto:${udf2}`,
+                udf2: udf2,
                 udf3: udf3,
                 udf4: '',
                 udf5: '',
@@ -81,7 +104,6 @@ let GatepayService = class GatepayService {
                 vpa: gatepay_terminal_id,
             };
             const ciphertext = await this.encryptEas(JSON.stringify(data), gatepay_key, gatepay_iv);
-            console.log(ciphertext, 'ciphertext');
             const raw = {
                 mid: gatepay_mid,
                 terminalId: gatepay_terminal_id,
@@ -93,21 +115,38 @@ let GatepayService = class GatepayService {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: raw,
-                redirect: 'follow',
+                data: raw,
+                redirect: `${process.env.URL}/gatepay/callback?collect_id=${_id}`,
             };
-            const axiosRequest = axios_1.default.request(config);
-            console.log(axiosRequest, 'request');
+            const response = await axios_1.default.request(config);
+            if (response.data.status !== 'SUCCESS') {
+                throw new common_1.BadRequestException('payment link not created');
+            }
+            const decrypted = await this.decryptEas(response.data.response, gatepay_key, gatepay_iv);
+            console.log(decrypted, 'decrypted');
+            const parsedData = JSON.parse(decrypted);
+            const { paymentUrl, qrPath, qrIntent, paymentId, token } = parsedData;
+            await this.databaseService.CollectRequestModel.findByIdAndUpdate({
+                _id,
+            }, {
+                $set: {
+                    'gatepay.token': token,
+                    'gatepay.txnId': paymentId,
+                },
+            }, {
+                upsert: true,
+                new: true,
+            });
+            return { url: paymentUrl, collect_req: request };
         }
         catch (error) {
             throw new common_1.BadRequestException(error.message);
         }
-        return { url: 'url,', collect_req: request };
     }
 };
 exports.GatepayService = GatepayService;
 exports.GatepayService = GatepayService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [])
+    __metadata("design:paramtypes", [database_service_1.DatabaseService])
 ], GatepayService);
 //# sourceMappingURL=gatepay.service.js.map

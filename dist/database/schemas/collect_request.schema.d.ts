@@ -39,7 +39,8 @@ export declare enum Gateway {
     MOSAMBEE_POS = "MOSAMBEE_POS",
     EDVIRON_NTTDATA = "EDVIRON_NTTDATA",
     EDVIRON_WORLDLINE = "EDVIRON_WORLDLINE",
-    EDVIRON_RAZORPAY = "EDVIRON_RAZORPAY"
+    EDVIRON_RAZORPAY = "EDVIRON_RAZORPAY",
+    EDVIRON_GATEPAY = "EDVIRON_GATEPAY"
 }
 interface I_NTT_DATA {
     nttdata_id: string;
@@ -78,9 +79,8 @@ interface I_Gatepay {
     gatepay_terminal_id: string;
     gatepay_key: string;
     gatepay_iv: string;
-    udf1: string;
-    udf2: string;
-    udf3: string;
+    txnId: string;
+    token: string;
 }
 interface EASEBUZZ_NON_PARTNER_CRED {
     easebuzz_salt: string;

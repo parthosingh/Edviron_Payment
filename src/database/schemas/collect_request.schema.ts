@@ -18,6 +18,7 @@ export enum Gateway {
   EDVIRON_NTTDATA = 'EDVIRON_NTTDATA',
   EDVIRON_WORLDLINE = 'EDVIRON_WORLDLINE',
   EDVIRON_RAZORPAY = 'EDVIRON_RAZORPAY',
+  EDVIRON_GATEPAY = 'EDVIRON_GATEPAY',
 }
 
 interface I_NTT_DATA {
@@ -73,9 +74,8 @@ interface I_Gatepay {
   gatepay_terminal_id: string;
   gatepay_key: string;
   gatepay_iv: string;
-  udf1: string;
-  udf2: string;
-  udf3: string;
+  txnId: string;
+  token: string;
 }
 
 
@@ -320,9 +320,8 @@ export class CollectRequest {
       },
       gatepay_terminal_id: { type: String, required: false, default: null },
       gatepay_iv: { type: String, required: false, default: null },
-      udf1: { type: String, required: false, default: null },
-      udf2: { type: String, required: false, default: null },
-      udf3: { type: String, required: false, default: null },
+      txnId: { type: String, required: false, default: null },
+      token: { type: String, required: false, default: null },
     },
     _id: false,
   })

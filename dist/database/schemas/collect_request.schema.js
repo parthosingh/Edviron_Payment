@@ -29,6 +29,7 @@ var Gateway;
     Gateway["EDVIRON_NTTDATA"] = "EDVIRON_NTTDATA";
     Gateway["EDVIRON_WORLDLINE"] = "EDVIRON_WORLDLINE";
     Gateway["EDVIRON_RAZORPAY"] = "EDVIRON_RAZORPAY";
+    Gateway["EDVIRON_GATEPAY"] = "EDVIRON_GATEPAY";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let PaymentIds = class PaymentIds {
 };
@@ -323,9 +324,8 @@ __decorate([
             },
             gatepay_terminal_id: { type: String, required: false, default: null },
             gatepay_iv: { type: String, required: false, default: null },
-            udf1: { type: String, required: false, default: null },
-            udf2: { type: String, required: false, default: null },
-            udf3: { type: String, required: false, default: null },
+            txnId: { type: String, required: false, default: null },
+            token: { type: String, required: false, default: null },
         },
         _id: false,
     }),

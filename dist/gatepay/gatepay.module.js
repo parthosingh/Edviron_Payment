@@ -10,13 +10,16 @@ exports.GatepayModule = void 0;
 const common_1 = require("@nestjs/common");
 const gatepay_controller_1 = require("./gatepay.controller");
 const gatepay_service_1 = require("./gatepay.service");
+const database_service_1 = require("../database/database.service");
+const database_module_1 = require("../database/database.module");
 let GatepayModule = class GatepayModule {
 };
 exports.GatepayModule = GatepayModule;
 exports.GatepayModule = GatepayModule = __decorate([
     (0, common_1.Module)({
         controllers: [gatepay_controller_1.GatepayController],
-        providers: [gatepay_service_1.GatepayService]
+        providers: [gatepay_service_1.GatepayService, database_service_1.DatabaseService],
+        imports: [database_module_1.DatabaseModule]
     })
 ], GatepayModule);
 //# sourceMappingURL=gatepay.module.js.map
