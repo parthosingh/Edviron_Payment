@@ -74,6 +74,7 @@ export class CollectService {
     worldline_merchant_id?: string | null,
     worldline_encryption_key?: string | null,
     worldline_encryption_iV?: string | null,
+    worldline_scheme_code?: string | null,
     vendor?: [
       {
         vendor_id: string;
@@ -211,8 +212,8 @@ export class CollectService {
       );
       return { url, request: collect_req };
     }
-    console.log({razorpay_credentials});
-    
+    console.log({ razorpay_credentials });
+
     if (
       razorpay_credentials?.razorpay_id &&
       razorpay_credentials?.razorpay_secret &&
@@ -227,7 +228,7 @@ export class CollectService {
             notes,
             linked_account_notes,
             on_hold,
-            on_hold_until
+            on_hold_until,
           } = info;
           let split_amount = 0;
           if (amount) {
@@ -315,7 +316,8 @@ export class CollectService {
     if (
       worldline_merchant_id &&
       worldline_encryption_key &&
-      worldline_encryption_iV
+      worldline_encryption_iV && 
+      worldline_scheme_code
     ) {
       if (splitPayments && worldLine_vendors && worldLine_vendors.length > 0) {
         worldLine_vendors.map(async (info) => {
@@ -341,17 +343,20 @@ export class CollectService {
           }).save();
         });
       }
+
       if (!request.worldline) {
         request.worldline = {
           worldline_merchant_id: worldline_merchant_id,
           worldline_encryption_key: worldline_encryption_key,
           worldline_encryption_iV: worldline_encryption_iV,
+          worldline_scheme_code: worldline_scheme_code,
           worldline_token: '',
         };
       } else {
         request.worldline.worldline_merchant_id = worldline_merchant_id;
         request.worldline.worldline_encryption_key = worldline_encryption_key;
         request.worldline.worldline_encryption_iV = worldline_encryption_iV;
+        request.worldline.worldline_scheme_code = worldline_scheme_code;
         if (!request.worldline.worldline_token) {
           request.worldline.worldline_token = '';
         }

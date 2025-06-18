@@ -305,12 +305,16 @@ export class WorldlineController {
     await collectRequest.save();
     let detail = null;
     let paymentMethod = null;
+
     switch (parsedMessage?.paymentMethod?.paymentMode) {
-      case 'UPI':
-        detail =
-          parsedMessage?.paymentMethod?.paymentTransaction
-            ?.upiTransactionDetails;
-        paymentMethod = 'UPI';
+      case 'UPI collect':
+      detail = {
+            upi: {
+              channel: null,
+              upi_id: 'N/A',
+            },
+          };
+        paymentMethod = 'upi';
         break;
       case 'Credit card':
         paymentMethod = 'credit_card';
@@ -387,7 +391,7 @@ export class WorldlineController {
         ? PaymentStatus.SUCCESS
         : PaymentStatus.PENDING;
     collectStatus.bank_reference =
-      parsedMessage?.paymentMethod?.paymentTransaction?.reference || '';
+      parsedMessage?.paymentMethod?.paymentTransaction?.bankReferenceIdentifier || '';
     collectStatus.payment_time = paymentTime
       ? (() => {
           const [datePart, timePart] = paymentTime.split(' ');
@@ -406,10 +410,11 @@ export class WorldlineController {
         })()
       : new Date();
     collectStatus.details = JSON.stringify(detail);
+    collectStatus.reason = status.toUpperCase();
+    collectStatus.payment_message = status.toUpperCase();
     await collectStatus.save();
     if (collectRequest.isSplitPayments) {
       console.log('saving vendor');
-
       try {
         const vendor =
           await this.databaseService.VendorTransactionModel.updateMany(

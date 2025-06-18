@@ -39,8 +39,11 @@ let WorldlineService = class WorldlineService {
     }
     async SingleUrlIntegeration(request) {
         const { _id, amount, additional_data, worldline } = request;
-        const { worldline_merchant_id, worldline_encryption_key, worldline_encryption_iV, } = worldline || {};
-        const studentDetail = JSON.parse(additional_data);
+        const { worldline_merchant_id, worldline_encryption_key, worldline_encryption_iV, worldline_scheme_code, } = worldline || {};
+        const parsedData = JSON.parse(additional_data);
+        const studentEmail = parsedData?.student_details?.student_email || 'testemail@email.com';
+        const studentPhone = parsedData?.student_details?.student_phone_no || '8888888888';
+        const studentId = parsedData?.student_details?.student_id || '8888888888';
         const txnDate = new Date();
         const formattedAmount = Math.round(parseFloat(amount.toString()) * 100) / 100;
         const clnt_txn_ref = _id.toString();
@@ -49,60 +52,6 @@ let WorldlineService = class WorldlineService {
             (txnDate.getMonth() + 1).toString().padStart(2, '0') +
             '-' +
             txnDate.getFullYear();
-        const totalAmountPaisa = formattedAmount * 100;
-        console.log(request.worldline_vendors_info);
-        const vendorDetails = request.worldline_vendors_info || [
-            {
-                itemId: 'FIRST',
-                amount: `${amount}`,
-                comAmt: '0',
-                identifier: 'FIRST',
-            },
-        ];
-        const totalSchemes = vendorDetails.length;
-        const baseAmount = Math.floor(totalAmountPaisa / totalSchemes);
-        const extraPaisa = totalAmountPaisa % totalSchemes;
-        let items;
-        if (!vendorDetails.length) {
-            items = [
-                {
-                    itemId: 'FIRST',
-                    amount: `${amount}`,
-                    comAmt: '0',
-                    identifier: 'FIRST',
-                },
-            ];
-        }
-        else {
-            console.log(vendorDetails);
-            items = vendorDetails.map((vendor, idx) => {
-                let amountInPaise;
-                if (vendor.amount !== undefined) {
-                    amountInPaise = Math.round(vendor.amount * 100);
-                }
-                else {
-                    amountInPaise = idx < extraPaisa ? baseAmount + 1 : baseAmount;
-                }
-                const amount = (amountInPaise / 100).toFixed(2);
-                return {
-                    itemId: vendor.scheme_code,
-                    amount: `${amount}`,
-                    comAmt: '0',
-                    identifier: vendor.scheme_code,
-                };
-            });
-        }
-        const totalMappedAmount = items.reduce((sum, item) => sum + parseFloat(item.amount), 0);
-        const remainingAmount = (request.amount - totalMappedAmount).toFixed(2);
-        if (parseFloat(remainingAmount) > 0) {
-            items.push({
-                itemId: 'FIRST',
-                amount: `${remainingAmount}`,
-                comAmt: '0',
-                identifier: 'FIRST',
-            });
-        }
-        console.log({ items });
         const plainJson = {
             merchant: {
                 webhookEndpointURL: `${process.env.URL}/worldline/webhook`,
@@ -113,7 +62,15 @@ let WorldlineService = class WorldlineService {
                 webhookType: 'payment.captured',
             },
             cart: {
-                item: items,
+                item: [
+                    {
+                        itemId: worldline_scheme_code.toString(),
+                        amount: amount.toFixed(2).toString(),
+                        comAmt: '0',
+                        reference: '',
+                        identifier: worldline_scheme_code.toString(),
+                    },
+                ],
                 reference: '',
                 identifier: '',
                 description: '',
@@ -191,9 +148,9 @@ let WorldlineService = class WorldlineService {
                 tenureId: '',
             },
             consumer: {
-                mobileNumber: '9876543210',
-                emailID: 'test@test.com',
-                identifier: 'c9',
+                mobileNumber: studentPhone,
+                emailID: studentEmail,
+                identifier: studentId,
                 accountNo: '',
                 accountType: '',
                 accountHolderName: '',
@@ -373,14 +330,18 @@ let WorldlineService = class WorldlineService {
             if (!collect_request) {
                 throw new common_1.BadRequestException('Order not found');
             }
-            const collect_request_status = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: new mongoose_1.Types.ObjectId(collect_request_id) });
+            const collect_request_status = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: new mongoose_1.Types.ObjectId(collect_request_id),
+            });
             if (!collect_request_status) {
                 throw new common_1.BadRequestException('Order status not found');
             }
             if (amount > collect_request.amount) {
                 throw new common_1.BadRequestException("Refund amount can't be greater than order amount");
             }
-            const createdAt = collect_request.createdAt ? new Date(collect_request.createdAt) : new Date();
+            const createdAt = collect_request.createdAt
+                ? new Date(collect_request.createdAt)
+                : new Date();
             const formattedDate = createdAt.getDate().toString().padStart(2, '0') +
                 '-' +
                 (createdAt.getMonth() + 1).toString().padStart(2, '0') +
@@ -388,16 +349,16 @@ let WorldlineService = class WorldlineService {
                 createdAt.getFullYear();
             const plainJson = {
                 merchant: {
-                    identifier: collect_request.worldline.worldline_merchant_id
+                    identifier: collect_request.worldline.worldline_merchant_id,
                 },
                 transaction: {
                     amount: 1,
                     identifier: collect_request.worldline.worldline_merchant_id,
                     dateTime: formattedDate,
-                    requestType: "R",
-                    token: "",
-                    reference: collect_request_status.bank_reference
-                }
+                    requestType: 'R',
+                    token: '',
+                    reference: collect_request_status.bank_reference,
+                },
             };
             const encryptedData = await this.encryptTxthdnMsg(JSON.stringify(plainJson), collect_request.worldline.worldline_encryption_key, collect_request.worldline.worldline_encryption_iV);
             try {
