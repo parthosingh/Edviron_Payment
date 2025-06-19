@@ -306,6 +306,7 @@ __decorate([
             },
             worldline_encryption_iV: { type: String, required: false, default: null },
             worldline_token: { type: String, required: false, default: null },
+            worldline_scheme_code: { type: String, required: false, default: null },
         },
         _id: false,
     }),
