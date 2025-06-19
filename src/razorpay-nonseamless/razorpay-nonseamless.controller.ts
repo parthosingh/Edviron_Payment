@@ -505,7 +505,7 @@ export class RazorpayNonseamlessController {
     body: {
       limit: number;
       cursor: string | null;
-      skip: string;
+      skip: number;
       fromDate: Date;
     },
     @Req() req: any,
@@ -513,6 +513,7 @@ export class RazorpayNonseamlessController {
     const { utr, razorpay_id, razropay_secret, token } = req.query;
     try {
       const limit = body.limit || 10;
+      const skip = body.skip || 0;
 
       return await this.razorpayServiceModel.getTransactionForSettlements(
         utr,
@@ -522,6 +523,7 @@ export class RazorpayNonseamlessController {
         body.cursor,
         body.fromDate,
         limit,
+        skip
       );
     } catch (error) {
       throw new BadRequestException(error.message);

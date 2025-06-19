@@ -401,7 +401,8 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
         const { utr, razorpay_id, razropay_secret, token } = req.query;
         try {
             const limit = body.limit || 10;
-            return await this.razorpayServiceModel.getTransactionForSettlements(utr, razorpay_id, razropay_secret, token, body.cursor, body.fromDate, limit);
+            const skip = body.skip || 0;
+            return await this.razorpayServiceModel.getTransactionForSettlements(utr, razorpay_id, razropay_secret, token, body.cursor, body.fromDate, limit, skip);
         }
         catch (error) {
             throw new common_1.BadRequestException(error.message);

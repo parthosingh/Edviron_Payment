@@ -508,7 +508,8 @@ export class RazorpayNonseamlessService {
     token: string,
     cursor: string | null,
     fromDate: Date,
-    limit:number
+    limit:number,
+    skip:number
   ) {
     try {
       const date = new Date(fromDate);
@@ -523,7 +524,7 @@ export class RazorpayNonseamlessService {
 
       const config = {
         method: 'get',
-        url: `https://api.razorpay.com/v1/settlements/recon/combined?year=${year}&month=${month}&day=${day}`,
+        url: `https://api.razorpay.com/v1/settlements/recon/combined?year=${year}&month=${month}&day=${day}&count=${limit}&skip=${skip}`,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -701,9 +702,6 @@ export class RazorpayNonseamlessService {
               };
             }),
         );
-
-        console.log(enrichedOrders, 'enrichedOrders');
-
         return {
           cursor: response.data.cursor || 'N/A',
           limit: limit,

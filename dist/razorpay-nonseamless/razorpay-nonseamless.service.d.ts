@@ -14,7 +14,7 @@ export declare class RazorpayNonseamlessService {
     fetchAndStoreAll(authId: string, authSecret: string, school_id: string, trustee_id: string, params: Record<string, any>, razorpay_mid: string): Promise<any[]>;
     retriveRazorpay(authId: string, authSecret: string, order_id: string): Promise<any>;
     fetchOrdersPage(authId: string, authSecret: string, count: number, skip: number, extraParams?: Record<string, any>): Promise<any>;
-    getTransactionForSettlements(utr: string, razorpay_id: string, razropay_secret: string, token: string, cursor: string | null, fromDate: Date, limit: number): Promise<false | {
+    getTransactionForSettlements(utr: string, razorpay_id: string, razropay_secret: string, token: string, cursor: string | null, fromDate: Date, limit: number, skip: number): Promise<false | {
         cursor: any;
         limit: number;
         settlements_transactions: any[];

@@ -16,7 +16,7 @@ export declare class RazorpayNonseamlessController {
     getSettlementsTransactions(body: {
         limit: number;
         cursor: string | null;
-        skip: string;
+        skip: number;
         fromDate: Date;
     }, req: any): Promise<false | {
         cursor: any;
