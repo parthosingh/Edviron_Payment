@@ -302,7 +302,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     razorpay_secret: authSecret,
                     order_id: order.id,
                     payment_id: payment.id,
-                    razorpay_mid: razorpay_mid || ""
+                    razorpay_mid: razorpay_mid || '',
                 },
                 custom_order_id: order.receipt,
                 additional_data: JSON.stringify(studentDetail),
@@ -374,7 +374,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
             method: 'get',
             url: `${process.env.RAZORPAY_URL}/v1/orders/${order_id}/payments`,
             headers: { 'Content-Type': 'application/json' },
-            auth: { username: authId, password: authSecret }
+            auth: { username: authId, password: authSecret },
         };
         const response = await axios_1.default.request(config);
         return response.data.items[0] || [];
@@ -413,6 +413,146 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 data: err.response?.data,
             });
             throw new common_1.InternalServerErrorException(`Page request failed: ${err.message}`);
+        }
+    }
+    async getTransactionForSettlements(utr, razorpay_id, razropay_secret, token, cursor, fromDate) {
+        try {
+            const date = new Date(fromDate);
+            if (isNaN(date.getTime())) {
+                throw new Error('Invalid date provided');
+            }
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const config = {
+                method: 'get',
+                url: `https://api.razorpay.com/v1/settlements/recon/combined?year=${year}&month=${month}&day=${day}`,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                auth: {
+                    username: razorpay_id,
+                    password: razropay_secret,
+                },
+            };
+            try {
+                const response = await axios_1.default.request(config);
+                const settlements = response.data.items;
+                if (settlements.length === 0) {
+                    throw new common_1.BadGatewayException('no settlement Found');
+                }
+                const filteredItems = settlements.filter((item) => item.settlement_utr === utr);
+                const orderIds = filteredItems
+                    .filter((order) => order.order_receipt !== null)
+                    .map((order) => order.order_receipt);
+                const customOrders = await this.databaseService.CollectRequestModel.find({
+                    custom_order_id: { $in: orderIds },
+                });
+                const customOrderMap = new Map(customOrders.map((doc) => [
+                    doc.custom_order_id,
+                    {
+                        _id: doc._id.toString(),
+                        custom_order_id: doc.custom_order_id,
+                        school_id: doc.school_id,
+                        additional_data: doc.additional_data,
+                    },
+                ]));
+                const enrichedOrders = await Promise.all(response.data.items
+                    .filter((order) => order.order_receipt)
+                    .map(async (order) => {
+                    let customData = {};
+                    let additionalData = {};
+                    let custom_order_id = null;
+                    let school_id = null;
+                    let studentDetails = {};
+                    if (order.order_receipt) {
+                        customData = customOrderMap.get(order.order_receipt) || {};
+                        try {
+                            custom_order_id = order.order_receipt;
+                            school_id = customData.school_id || null;
+                            if (typeof customData?.additional_data === 'string') {
+                                additionalData = JSON.parse(customData.additional_data);
+                            }
+                            else {
+                                additionalData = customData.additional_data || {};
+                            }
+                            studentDetails = additionalData?.student_details || {};
+                            order.order_id = customData._id || null;
+                        }
+                        catch {
+                            additionalData = null;
+                            custom_order_id = null;
+                            school_id = null;
+                        }
+                    }
+                    if (order.payment_group &&
+                        order.payment_group === 'VBA_TRANSFER') {
+                        const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                            cf_payment_id: order.cf_payment_id,
+                        });
+                        if (requestStatus) {
+                            const req = await this.databaseService.CollectRequestModel.findById(requestStatus.collect_id);
+                            if (req) {
+                                try {
+                                    custom_order_id = req.custom_order_id || null;
+                                    order.order_id = req._id;
+                                    school_id = req.school_id;
+                                    if (typeof customData?.additional_data === 'string') {
+                                        additionalData = JSON.parse(customData.additional_data);
+                                    }
+                                    else {
+                                        additionalData = customData.additional_data || {};
+                                    }
+                                    studentDetails = additionalData?.student_details || {};
+                                }
+                                catch {
+                                    additionalData = null;
+                                    custom_order_id = null;
+                                    school_id = null;
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        if (order.order_id) {
+                            customData = customOrderMap.get(order.order_id) || {};
+                            try {
+                                if (typeof customData?.additional_data === 'string') {
+                                    additionalData = JSON.parse(customData.additional_data);
+                                }
+                                else {
+                                    additionalData = customData.additional_data || {};
+                                }
+                            }
+                            catch {
+                                additionalData = null;
+                            }
+                        }
+                    }
+                    return {
+                        ...order,
+                        custom_order_id: custom_order_id || null,
+                        school_id: school_id || null,
+                        student_id: studentDetails?.student_id || null,
+                        student_name: studentDetails?.student_name || null,
+                        student_email: studentDetails?.student_email || null,
+                        student_phone_no: studentDetails?.student_phone_no || null,
+                    };
+                }));
+                console.log(enrichedOrders, 'enrichedOrders');
+                return {
+                    cursor: response.data.cursor || 'N/A',
+                    limit: response.data.count,
+                    settlements_transactions: enrichedOrders,
+                };
+            }
+            catch (error) {
+                throw new common_1.BadRequestException(error.message);
+            }
+        }
+        catch (e) {
+            console.log('Error in settlement cron job:', e.message);
+            return false;
         }
     }
 };
