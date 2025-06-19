@@ -223,11 +223,11 @@ let EasebuzzService = class EasebuzzService {
                     '|||||||||||' +
                     easebuzz_salt;
                 const easebuzz_cb_surl = process.env.URL +
-                    '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                    '/easebuzz/easebuzz-callback?collect_request_id=' +
                     request._id +
                     '&status=pass';
                 const easebuzz_cb_furl = process.env.URL +
-                    '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                    '/easebuzz/easebuzz-callback?collect_request_id=' +
                     request._id +
                     '&status=fail';
                 let hash = await (0, sign_1.calculateSHA512Hash)(hashData);
@@ -296,7 +296,8 @@ let EasebuzzService = class EasebuzzService {
                 await collectReq.save();
                 await this.getQr(request._id.toString(), request, ezb_split_payments);
                 return {
-                    url: process.env.URL +
+                    collect_request_id: request._id,
+                    collect_request_url: process.env.URL +
                         '/edviron-pg/redirect?session_id=' +
                         '' +
                         '&collect_request_id=' +
@@ -348,11 +349,11 @@ let EasebuzzService = class EasebuzzService {
                 '|||||||||||' +
                 easebuzz_salt;
             const easebuzz_cb_surl = process.env.URL +
-                '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                '/easebuzz/easebuzz-callback/?collect_request_id=' +
                 request._id +
                 '&status=pass';
             const easebuzz_cb_furl = process.env.URL +
-                '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                '/easebuzz/easebuzz-callback/?collect_request_id=' +
                 request._id +
                 '&status=fail';
             let hash = await (0, sign_1.calculateSHA512Hash)(hashData);
@@ -389,8 +390,8 @@ let EasebuzzService = class EasebuzzService {
             await collectReq.save();
             await this.getQrNonSplit(request._id.toString(), request);
             return {
-                colect_id: request._id,
-                url: process.env.URL +
+                collect_request_id: request._id,
+                collect_request_url: process.env.URL +
                     '/edviron-pg/redirect?session_id=' +
                     '' +
                     '&collect_request_id=' +
@@ -441,11 +442,11 @@ let EasebuzzService = class EasebuzzService {
                 '|||||||||||' +
                 easebuzz_salt;
             const easebuzz_cb_surl = process.env.URL +
-                '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                '/easebuzz/easebuzz-callback?collect_request_id=' +
                 upi_collect_id +
                 '&status=pass';
             const easebuzz_cb_furl = process.env.URL +
-                '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                '/easebuzz/easebuzz-callback?collect_request_id=' +
                 upi_collect_id +
                 '&status=fail';
             let hash = await (0, sign_1.calculateSHA512Hash)(hashData);
@@ -524,11 +525,11 @@ let EasebuzzService = class EasebuzzService {
                 '|||||||||||' +
                 easebuzz_salt;
             const easebuzz_cb_surl = process.env.URL +
-                '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                '/easebuzz/easebuzz-callback?collect_request_id=' +
                 upi_collect_id +
                 '&status=pass';
             const easebuzz_cb_furl = process.env.URL +
-                '/edviron-pg/easebuzz-callback?collect_request_id=' +
+                '/easebuzz/easebuzz-callback?collect_request_id=' +
                 upi_collect_id +
                 '&status=fail';
             let hash = await (0, sign_1.calculateSHA512Hash)(hashData);

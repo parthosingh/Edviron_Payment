@@ -284,13 +284,13 @@ export class EasebuzzService {
 
         const easebuzz_cb_surl =
           process.env.URL +
-          '/edviron-pg/easebuzz-callback?collect_request_id=' +
+          '/easebuzz/easebuzz-callback?collect_request_id=' +
           request._id +
           '&status=pass';
 
         const easebuzz_cb_furl =
           process.env.URL +
-          '/edviron-pg/easebuzz-callback?collect_request_id=' +
+          '/easebuzz/easebuzz-callback?collect_request_id=' +
           request._id +
           '&status=fail';
 
@@ -385,7 +385,8 @@ export class EasebuzzService {
         await collectReq.save();
         await this.getQr(request._id.toString(), request, ezb_split_payments); // uncomment after fixing easebuzz QR code issue
         return {
-          url:
+          collect_request_id:request._id,
+          collect_request_url:
             process.env.URL +
             '/edviron-pg/redirect?session_id=' +
             '' +
@@ -451,13 +452,13 @@ export class EasebuzzService {
 
       const easebuzz_cb_surl =
         process.env.URL +
-        '/edviron-pg/easebuzz-callback?collect_request_id=' +
+        '/easebuzz/easebuzz-callback/?collect_request_id=' +
         request._id +
         '&status=pass';
 
       const easebuzz_cb_furl =
         process.env.URL +
-        '/edviron-pg/easebuzz-callback?collect_request_id=' +
+        '/easebuzz/easebuzz-callback/?collect_request_id=' +
         request._id +
         '&status=fail';
 
@@ -551,8 +552,8 @@ export class EasebuzzService {
       await collectReq.save();
       await this.getQrNonSplit(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
       return {
-        colect_id:request._id,
-        url:
+        collect_request_id:request._id,
+        collect_request_url:
           process.env.URL +
           '/edviron-pg/redirect?session_id=' +
           '' +
@@ -614,13 +615,13 @@ export class EasebuzzService {
 
       const easebuzz_cb_surl =
         process.env.URL +
-        '/edviron-pg/easebuzz-callback?collect_request_id=' +
+        '/easebuzz/easebuzz-callback?collect_request_id=' +
         upi_collect_id +
         '&status=pass';
 
       const easebuzz_cb_furl =
         process.env.URL +
-        '/edviron-pg/easebuzz-callback?collect_request_id=' +
+        '/easebuzz/easebuzz-callback?collect_request_id=' +
         upi_collect_id +
         '&status=fail';
 
@@ -716,13 +717,13 @@ export class EasebuzzService {
 
       const easebuzz_cb_surl =
         process.env.URL +
-        '/edviron-pg/easebuzz-callback?collect_request_id=' +
+        '/easebuzz/easebuzz-callback?collect_request_id=' +
         upi_collect_id +
         '&status=pass';
 
       const easebuzz_cb_furl =
         process.env.URL +
-        '/edviron-pg/easebuzz-callback?collect_request_id=' +
+        '/easebuzz/easebuzz-callback?collect_request_id=' +
         upi_collect_id +
         '&status=fail';
 

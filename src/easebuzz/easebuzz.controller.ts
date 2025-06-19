@@ -424,7 +424,7 @@ export class EasebuzzController {
     }
   }
 
-  @Post('/easebuzz/webhook')
+  @Post('/webhook')
   async easebuzzWebhook(@Body() body: any, @Res() res: any) {
     console.log('easebuzz webhook recived with data', body);
 
@@ -784,5 +784,129 @@ export class EasebuzzController {
     }
     res.status(200).send('OK');
     return;
+  }
+
+  @Get('/easebuzz-callback')
+  async handleEasebuzzCallback(@Req() req: any, @Res() res: any) {
+    const { collect_request_id } = req.query;
+    console.log(req.query.status, 'easebuzz callback status');
+
+    const collectRequest =
+      (await this.databaseService.CollectRequestModel.findById(
+        collect_request_id,
+      ))!;
+
+    collectRequest.gateway = Gateway.EDVIRON_EASEBUZZ;
+    await collectRequest.save();
+    const statusResponse =
+      await this.easebuzzService.easebuzzWebhookCheckStatusV2(
+        collect_request_id,
+        collectRequest,
+      );
+    const reqToCheck = statusResponse;
+    console.log(statusResponse, 'status response check');
+
+    const status = reqToCheck.msg.status;
+
+    if (collectRequest?.sdkPayment) {
+      const callbackUrl = new URL(collectRequest?.callbackUrl);
+      callbackUrl.searchParams.set(
+        'EdvironCollectRequestId',
+        collect_request_id,
+      );
+      if (status === `success`) {
+        console.log(`SDK payment success for ${collect_request_id}`);
+        callbackUrl.searchParams.set('status', 'SUCCESS');
+        return res.redirect(
+          `${process.env.PG_FRONTEND}/payment-success?collect_id=${collect_request_id}&EdvironCollectRequestId=${collect_request_id}`,
+        );
+      }
+      console.log(`SDK payment failed for ${collect_request_id}`);
+      callbackUrl.searchParams.set('status', 'SUCCESS');
+
+      return res.redirect(
+        `${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}&EdvironCollectRequestId=${collect_request_id}`,
+      );
+    }
+
+    const callbackUrl = new URL(collectRequest?.callbackUrl);
+    if (status.toLocaleLowerCase() !== `success`) {
+      console.log('failure');
+      let reason = reqToCheck?.msg?.error_Message || 'payment-declined';
+      if (reason === 'Collect Expired') {
+        reason = 'Order Expired';
+      }
+      callbackUrl.searchParams.set(
+        'EdvironCollectRequestId',
+        collect_request_id,
+      );
+      return res.redirect(
+        `${callbackUrl.toString()}&status=cancelled&reason=${reason}`,
+      );
+    }
+    callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
+    return res.redirect(callbackUrl.toString());
+  }
+
+  @Post('/easebuzz-callback')
+  async handleEasebuzzCallbackPost(@Req() req: any, @Res() res: any) {
+    const { collect_request_id } = req.query;
+    console.log(req.query.status, 'easebuzz callback status');
+
+    const collectRequest =
+      (await this.databaseService.CollectRequestModel.findById(
+        collect_request_id,
+      ))!;
+
+    collectRequest.gateway = Gateway.EDVIRON_EASEBUZZ;
+    await collectRequest.save();
+    const statusResponse =
+      await this.easebuzzService.easebuzzWebhookCheckStatusV2(
+        collect_request_id,
+        collectRequest,
+      );
+    const reqToCheck = statusResponse;
+    console.log(statusResponse, 'status response check');
+
+    const status = reqToCheck.msg.status;
+
+    if (collectRequest?.sdkPayment) {
+      const callbackUrl = new URL(collectRequest?.callbackUrl);
+      callbackUrl.searchParams.set(
+        'EdvironCollectRequestId',
+        collect_request_id,
+      );
+      if (status === `success`) {
+        console.log(`SDK payment success for ${collect_request_id}`);
+        callbackUrl.searchParams.set('status', 'SUCCESS');
+        return res.redirect(
+          `${process.env.PG_FRONTEND}/payment-success?collect_id=${collect_request_id}&EdvironCollectRequestId=${collect_request_id}`,
+        );
+      }
+      console.log(`SDK payment failed for ${collect_request_id}`);
+      callbackUrl.searchParams.set('status', 'SUCCESS');
+
+      return res.redirect(
+        `${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}&EdvironCollectRequestId=${collect_request_id}`,
+      );
+    }
+
+    const callbackUrl = new URL(collectRequest?.callbackUrl);
+    if (status.toLocaleLowerCase() !== `success`) {
+      console.log('failure');
+      let reason = reqToCheck?.msg?.error_Message || 'payment-declined';
+      if (reason === 'Collect Expired') {
+        reason = 'Order Expired';
+      }
+      callbackUrl.searchParams.set(
+        'EdvironCollectRequestId',
+        collect_request_id,
+      );
+      return res.redirect(
+        `${callbackUrl.toString()}&status=cancelled&reason=${reason}`,
+      );
+    }
+    callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
+    return res.redirect(callbackUrl.toString());
   }
 }
