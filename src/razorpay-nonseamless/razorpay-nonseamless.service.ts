@@ -572,6 +572,11 @@ export class RazorpayNonseamlessService {
               let customData: any = {};
               let additionalData: any = {};
               let custom_order_id: string | null = null;
+              let order_amount: string | null = null;
+              let event_amount: string | null = null;
+              let event_time: string | null = null;
+              let event_success: string | null = null;
+              let payment_group: string | null = null;
               let school_id: string | null = null;
               let studentDetails: any = {};
 
@@ -581,19 +586,28 @@ export class RazorpayNonseamlessService {
                 try {
                   custom_order_id = order.order_receipt;
                   school_id = customData.school_id || null;
-
                   if (typeof customData?.additional_data === 'string') {
                     additionalData = JSON.parse(customData.additional_data);
                   } else {
                     additionalData = customData.additional_data || {};
                   }
-
+                  order_amount = (order.amount / 100).toString();
+                  event_amount = (order.amount / 100).toString();
+                  event_success= order.settled === true  ?"SUCCESS" : "FAIL"
+                  event_time = order.created_at
+                    ? new Date(order.created_at * 1000).toISOString()
+                    : null;
+                  payment_group = order.method;
                   studentDetails = additionalData?.student_details || {};
                   order.order_id = customData._id || null;
                 } catch {
                   additionalData = null;
                   custom_order_id = null;
                   school_id = null;
+                  order_amount = null;
+                  event_amount = null;
+                  event_time = null;
+                  payment_group = null;
                 }
               }
 
@@ -622,18 +636,36 @@ export class RazorpayNonseamlessService {
                       } else {
                         additionalData = customData.additional_data || {};
                       }
+                      event_success= order.settled === true  ?"SUCCESS" : "FAIL"
+                      order_amount = (order.amount / 100).toString();
+                      event_amount = (order.amount / 100).toString();
+                      event_time = order.created_at
+                        ? new Date(order.created_at * 1000).toISOString()
+                        : null;
+                      payment_group = order.method;
 
                       studentDetails = additionalData?.student_details || {};
                     } catch {
                       additionalData = null;
                       custom_order_id = null;
                       school_id = null;
+                      order_amount = null;
+                      event_amount = null;
+                      event_time = null;
+                      payment_group = null;
                     }
                   }
                 }
               } else {
                 if (order.order_id) {
+                  event_success= order.settled === true  ?"SUCCESS" : "FAIL"
                   customData = customOrderMap.get(order.order_id) || {};
+                  order_amount = (order.amount / 100).toString();
+                  event_amount = (order.amount / 100).toString();
+                  event_time = order.created_at
+                    ? new Date(order.created_at * 1000).toISOString()
+                    : null;
+                  payment_group = order.method;
                   try {
                     if (typeof customData?.additional_data === 'string') {
                       additionalData = JSON.parse(customData.additional_data);
@@ -642,10 +674,13 @@ export class RazorpayNonseamlessService {
                     }
                   } catch {
                     additionalData = null;
+                    order_amount = null;
+                    event_amount = null;
+                    event_time = null;
+                    payment_group = null;
                   }
                 }
               }
-
               return {
                 ...order,
                 custom_order_id: custom_order_id || null,
@@ -654,6 +689,14 @@ export class RazorpayNonseamlessService {
                 student_name: studentDetails?.student_name || null,
                 student_email: studentDetails?.student_email || null,
                 student_phone_no: studentDetails?.student_phone_no || null,
+                order_amount: order.amount / 100 || null,
+                event_amount: order.amount / 100 || null,
+                payment_group: order.method || null,
+                event_status:event_success,
+                event_settlement_amount: order.amount / 100 || null,
+                event_time: order.created_at
+                  ? new Date(order.created_at * 1000).toISOString()
+                  : null,
               };
             }),
         );
