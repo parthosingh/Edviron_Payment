@@ -20,7 +20,7 @@ export declare class RazorpayNonseamlessController {
         fromDate: Date;
     }, req: any): Promise<false | {
         cursor: any;
-        limit: any;
+        limit: number;
         settlements_transactions: any[];
     }>;
 }

@@ -508,6 +508,7 @@ export class RazorpayNonseamlessService {
     token: string,
     cursor: string | null,
     fromDate: Date,
+    limit:number
   ) {
     try {
       const date = new Date(fromDate);
@@ -705,7 +706,7 @@ export class RazorpayNonseamlessService {
 
         return {
           cursor: response.data.cursor || 'N/A',
-          limit: response.data.count,
+          limit: limit,
           settlements_transactions: enrichedOrders,
         };
       } catch (error) {

@@ -415,7 +415,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
             throw new common_1.InternalServerErrorException(`Page request failed: ${err.message}`);
         }
     }
-    async getTransactionForSettlements(utr, razorpay_id, razropay_secret, token, cursor, fromDate) {
+    async getTransactionForSettlements(utr, razorpay_id, razropay_secret, token, cursor, fromDate, limit) {
         try {
             const date = new Date(fromDate);
             if (isNaN(date.getTime())) {
@@ -588,7 +588,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 console.log(enrichedOrders, 'enrichedOrders');
                 return {
                     cursor: response.data.cursor || 'N/A',
-                    limit: response.data.count,
+                    limit: limit,
                     settlements_transactions: enrichedOrders,
                 };
             }

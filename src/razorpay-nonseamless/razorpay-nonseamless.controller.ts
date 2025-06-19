@@ -521,6 +521,7 @@ export class RazorpayNonseamlessController {
         token,
         body.cursor,
         body.fromDate,
+        limit,
       );
     } catch (error) {
       throw new BadRequestException(error.message);
