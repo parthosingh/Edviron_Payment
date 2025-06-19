@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RazorpayNonseamlessService = void 0;
 const common_1 = require("@nestjs/common");
 const axios_1 = require("axios");
+const mongoose_1 = require("mongoose");
 const database_service_1 = require("../database/database.service");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
@@ -445,8 +446,21 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 const orderIds = filteredItems
                     .filter((order) => order.order_receipt !== null)
                     .map((order) => order.order_receipt);
+                const objectIdOrderIds = orderIds
+                    .map((id) => {
+                    try {
+                        return new mongoose_1.default.Types.ObjectId(id);
+                    }
+                    catch (e) {
+                        return null;
+                    }
+                })
+                    .filter((id) => id !== null);
                 const customOrders = await this.databaseService.CollectRequestModel.find({
-                    custom_order_id: { $in: orderIds },
+                    $or: [
+                        { custom_order_id: { $in: orderIds } },
+                        { _id: { $in: objectIdOrderIds } },
+                    ],
                 });
                 const customOrderMap = new Map(customOrders.map((doc) => [
                     doc.custom_order_id,
@@ -483,7 +497,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                             }
                             order_amount = (order.amount / 100).toString();
                             event_amount = (order.amount / 100).toString();
-                            event_success = order.settled === true ? "SUCCESS" : "FAIL";
+                            event_success = order.settled === true ? 'SUCCESS' : 'FAIL';
                             event_time = order.created_at
                                 ? new Date(order.created_at * 1000).toISOString()
                                 : null;
@@ -519,7 +533,8 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                                     else {
                                         additionalData = customData.additional_data || {};
                                     }
-                                    event_success = order.settled === true ? "SUCCESS" : "FAIL";
+                                    event_success =
+                                        order.settled === true ? 'SUCCESS' : 'FAIL';
                                     order_amount = (order.amount / 100).toString();
                                     event_amount = (order.amount / 100).toString();
                                     event_time = order.created_at
@@ -542,7 +557,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     }
                     else {
                         if (order.order_id) {
-                            event_success = order.settled === true ? "SUCCESS" : "FAIL";
+                            event_success = order.settled === true ? 'SUCCESS' : 'FAIL';
                             customData = customOrderMap.get(order.order_id) || {};
                             order_amount = (order.amount / 100).toString();
                             event_amount = (order.amount / 100).toString();
