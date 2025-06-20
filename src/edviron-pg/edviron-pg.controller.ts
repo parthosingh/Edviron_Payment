@@ -125,7 +125,7 @@ export class EdvironPgController {
           new: true,
         },
       );
-      return res.redirect(collectRequest.payment_data);
+       res.redirect(collectRequest.payment_data);
     }
     if (collectRequest?.gateway === Gateway.EDVIRON_CCAVENUE) {
       await this.databaseService.CollectRequestModel.updateOne(

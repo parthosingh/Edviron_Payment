@@ -367,7 +367,7 @@ export class CollectService {
       const { url, collect_req } =
         // await this.worldLineService.createOrder(request);
         await this.worldLineService.SingleUrlIntegeration(request);
-     
+      
       try{
         request.payment_data=url
         await request.save()

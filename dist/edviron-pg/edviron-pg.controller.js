@@ -94,7 +94,7 @@ let EdvironPgController = class EdvironPgController {
             }, {
                 new: true,
             });
-            return res.redirect(collectRequest.payment_data);
+            res.redirect(collectRequest.payment_data);
         }
         if (collectRequest?.gateway === collect_request_schema_1.Gateway.EDVIRON_CCAVENUE) {
             await this.databaseService.CollectRequestModel.updateOne({
