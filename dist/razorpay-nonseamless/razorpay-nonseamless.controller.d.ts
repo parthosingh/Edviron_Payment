@@ -13,4 +13,14 @@ export declare class RazorpayNonseamlessController {
     razorpayOrders(razorpay_id: string, razorpay_secret: string, count: string | undefined, skip: string | undefined, school_id: string, trustee_id: string, razorpay_mid: string, from: string, to: string): Promise<{
         message: string;
     }>;
+    getSettlementsTransactions(body: {
+        limit: number;
+        cursor: string | null;
+        skip: number;
+        fromDate: Date;
+    }, req: any): Promise<false | {
+        cursor: any;
+        limit: number;
+        settlements_transactions: any[];
+    }>;
 }
