@@ -316,7 +316,7 @@ export class CollectService {
     if (
       worldline_merchant_id &&
       worldline_encryption_key &&
-      worldline_encryption_iV && 
+      worldline_encryption_iV &&
       worldline_scheme_code
     ) {
       if (splitPayments && worldLine_vendors && worldLine_vendors.length > 0) {
@@ -361,11 +361,21 @@ export class CollectService {
           request.worldline.worldline_token = '';
         }
       }
+      // request.gateway=Gateway.EDVIRON_WORLDLINE
       await request.save();
 
       const { url, collect_req } =
         // await this.worldLineService.createOrder(request);
         await this.worldLineService.SingleUrlIntegeration(request);
+     
+      try{
+        request.payment_data=url
+        await request.save()
+      }catch(e){
+        console.log(e);
+        
+      }
+      
       return { url, request: collect_req };
     }
 

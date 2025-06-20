@@ -84,6 +84,18 @@ let EdvironPgController = class EdvironPgController {
         if (!collectRequest) {
             res.redirect(`${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`);
         }
+        if (collectRequest &&
+            collectRequest.worldline &&
+            collectRequest.worldline.worldline_merchant_id) {
+            await this.databaseService.CollectRequestModel.updateOne({
+                _id: collect_id,
+            }, {
+                sdkPayment: true,
+            }, {
+                new: true,
+            });
+            return res.redirect(collectRequest.payment_data);
+        }
         if (collectRequest?.gateway === collect_request_schema_1.Gateway.EDVIRON_CCAVENUE) {
             await this.databaseService.CollectRequestModel.updateOne({
                 _id: collect_id,

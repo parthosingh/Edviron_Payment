@@ -229,6 +229,13 @@ let CollectService = class CollectService {
             }
             await request.save();
             const { url, collect_req } = await this.worldLineService.SingleUrlIntegeration(request);
+            try {
+                request.payment_data = url;
+                await request.save();
+            }
+            catch (e) {
+                console.log(e);
+            }
             return { url, request: collect_req };
         }
         if (smartgateway_customer_id &&
