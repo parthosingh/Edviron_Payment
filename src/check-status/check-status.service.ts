@@ -21,6 +21,7 @@ import { NttdataService } from 'src/nttdata/nttdata.service';
 import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
+import { GatepayService } from 'src/gatepay/gatepay.service';
 @Injectable()
 export class CheckStatusService {
   constructor(
@@ -38,7 +39,8 @@ export class CheckStatusService {
     private readonly posPaytmService: PosPaytmService,
     private readonly worldlineService: WorldlineService,
     private readonly razorpayServiceModel: RazorpayNonseamlessService,
-  ) { }
+    private readonly gatepayService: GatepayService,
+  ) {}
   async checkStatus(collect_request_id: String) {
     console.log('checking status for', collect_request_id);
     const collectRequest =
@@ -148,6 +150,13 @@ export class CheckStatusService {
           collectRequest,
         );
         return data;
+
+      case Gateway.EDVIRON_GATEPAY:
+        const gatepay_data = await this.gatepayService.getPaymentStatus(
+          collectRequest._id.toString(),
+          collectRequest,
+        );
+        return gatepay_data;
 
       case Gateway.EDVIRON_RAZORPAY:
         const razorpayData = await this.razorpayServiceModel.getPaymentStatus(
@@ -281,7 +290,10 @@ export class CheckStatusService {
         );
 
       case Gateway.EDVIRON_WORLDLINE:
-        console.log('checking status for EDVIRON_WORLDLINE', collect_request_id);
+        console.log(
+          'checking status for EDVIRON_WORLDLINE',
+          collect_request_id,
+        );
         return await this.worldlineService.getStatus(
           collect_request_id.toString(),
         );
@@ -391,7 +403,10 @@ export class CheckStatusService {
         return data;
 
       case Gateway.EDVIRON_WORLDLINE:
-        console.log('checking status for EDVIRON_WORLDLINE', collectRequest._id.toString());
+        console.log(
+          'checking status for EDVIRON_WORLDLINE',
+          collectRequest._id.toString(),
+        );
         return await this.worldlineService.getStatus(
           collectRequest._id.toString(),
         );
@@ -493,12 +508,13 @@ export class CheckStatusService {
 
     // Convert milliseconds to minutes
     const differenceInMinutes = timeDifference / (1000 * 60);
-    const requestStatus=await this.databaseService.CollectRequestStatusModel.findOne({
-      collect_id:request._id
-    })
-    let paymentStatus:any=PaymentStatus.USER_DROPPED
-    if(requestStatus){
-      paymentStatus=requestStatus.status
+    const requestStatus =
+      await this.databaseService.CollectRequestStatusModel.findOne({
+        collect_id: request._id,
+      });
+    let paymentStatus: any = PaymentStatus.USER_DROPPED;
+    if (requestStatus) {
+      paymentStatus = requestStatus.status;
     }
     // Check if the difference is more than 20 minutes
     if (differenceInMinutes > 25) {

@@ -76,6 +76,7 @@ interface I_Gatepay {
   gatepay_iv: string;
   txnId: string;
   token: string;
+  paymentUrl?: string;
 }
 
 
@@ -320,6 +321,7 @@ export class CollectRequest {
       },
       gatepay_terminal_id: { type: String, required: false, default: null },
       gatepay_iv: { type: String, required: false, default: null },
+      paymentUrl: { type: String, required: false, default: null },
       txnId: { type: String, required: false, default: null },
       token: { type: String, required: false, default: null },
     },

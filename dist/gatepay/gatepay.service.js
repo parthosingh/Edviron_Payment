@@ -46,9 +46,6 @@ let GatepayService = class GatepayService {
         catch (err) {
             console.error('Error parsing additional_data:', err.message);
         }
-        const udf1 = student_details?.student_id || '';
-        const udf2 = student_details?.student_email || '';
-        const udf3 = student_details?.student_name || '';
         try {
             const { gatepay_mid, gatepay_key, gatepay_iv, gatepay_terminal_id } = gatepay;
             const formatDate = (date) => {
@@ -83,9 +80,9 @@ let GatepayService = class GatepayService {
                 merchantTransactionId: request._id.toString(),
                 transactionDate: formatedDate,
                 terminalId: gatepay_terminal_id,
-                udf1: udf1,
-                udf2: udf2,
-                udf3: udf3,
+                udf1: '',
+                udf2: '',
+                udf3: '',
                 udf4: '',
                 udf5: '',
                 udf6: '',
@@ -132,12 +129,51 @@ let GatepayService = class GatepayService {
                 $set: {
                     'gatepay.token': token,
                     'gatepay.txnId': paymentId,
+                    'gatepay.paymentUrl': paymentUrl
                 },
             }, {
                 upsert: true,
                 new: true,
             });
-            return { url: paymentUrl, collect_req: request };
+            const url = `${process.env.URL}/gatepay/redirect?&collect_id=${request._id}`;
+            return { url: url, collect_req: request };
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
+    async getPaymentStatus(collect_id, collect_req) {
+        try {
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest) {
+                throw new common_1.BadRequestException('Collect request not found');
+            }
+            const { gatepay } = collectRequest;
+            const { gatepay_mid, gatepay_key, gatepay_iv, gatepay_terminal_id, txnId, } = gatepay;
+            const data = {
+                mid: gatepay,
+                paymentId: txnId,
+                referenceNo: '',
+                status: '',
+                terminalId: gatepay_terminal_id
+            };
+            const ciphertext = await this.encryptEas(JSON.stringify(data), gatepay_key, gatepay_iv);
+            const raw = {
+                mid: gatepay_mid,
+                terminalId: gatepay_terminal_id,
+                req: ciphertext,
+            };
+            const config = {
+                url: `https://pay1.getepay.in:8443/getepayPortal/pg/invoiceStatus`,
+                method: 'post',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                data: raw,
+            };
+            const response = await axios_1.default.request(config);
+            console.log(response.data);
+            return response.data;
         }
         catch (error) {
             throw new common_1.BadRequestException(error.message);

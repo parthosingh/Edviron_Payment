@@ -81,6 +81,7 @@ interface I_Gatepay {
     gatepay_iv: string;
     txnId: string;
     token: string;
+    paymentUrl?: string;
 }
 interface EASEBUZZ_NON_PARTNER_CRED {
     easebuzz_salt: string;

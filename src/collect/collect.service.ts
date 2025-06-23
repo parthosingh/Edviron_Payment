@@ -141,10 +141,7 @@ export class CollectService {
       gatepay_mid?: string | null;
       gatepay_terminal_id?: string | null;
       gatepay_key?: string | null;
-      gatepay_iv?: string | null;
-      udf1?: string | null;
-      udf2?: string | null;
-      udf3?: string | null;
+      gatepay_iv?: string | null
     },
   ): Promise<{ url: string; request: CollectRequest }> {
     if (custom_order_id) {
@@ -318,7 +315,6 @@ export class CollectService {
 
       const { url, collect_req } =
         await this.gatepayService.createOrder(request);
-
       return { url, request: collect_req };
     }
 

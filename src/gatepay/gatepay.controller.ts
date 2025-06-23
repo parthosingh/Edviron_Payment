@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Req,
   Res,
 } from '@nestjs/common';
@@ -20,6 +21,26 @@ export class GatepayController {
     private readonly databaseService: DatabaseService,
     private readonly gatepayService: GatepayService,
   ) {}
+
+  @Get('/redirect')
+  async redirect(
+    @Query('collect_id') collect_id: string,
+    @Res() res: any,
+  ) {
+    try {
+       const collectRequest =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collectRequest) throw new BadRequestException('Order Id not found');
+      const paymentUrl = collectRequest.gatepay.paymentUrl
+      if(!paymentUrl){
+        throw new BadRequestException('payment url not found')
+      }
+      res.redirect(paymentUrl)
+    } catch (error) {
+      throw new BadRequestException(error.response?.data || error.message);
+    }
+  }
+
   @Post('callback')
   async handleCallback(@Req() req: any, @Res() res: any) {
     try {

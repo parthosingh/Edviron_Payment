@@ -23,6 +23,21 @@ let GatepayController = class GatepayController {
         this.databaseService = databaseService;
         this.gatepayService = gatepayService;
     }
+    async redirect(collect_id, res) {
+        try {
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest)
+                throw new common_1.BadRequestException('Order Id not found');
+            const paymentUrl = collectRequest.gatepay.paymentUrl;
+            if (!paymentUrl) {
+                throw new common_1.BadRequestException('payment url not found');
+            }
+            res.redirect(paymentUrl);
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.response?.data || error.message);
+        }
+    }
     async handleCallback(req, res) {
         try {
             const { collect_id } = req.query;
@@ -102,6 +117,14 @@ let GatepayController = class GatepayController {
     }
 };
 exports.GatepayController = GatepayController;
+__decorate([
+    (0, common_1.Get)('/redirect'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], GatepayController.prototype, "redirect", null);
 __decorate([
     (0, common_1.Post)('callback'),
     __param(0, (0, common_1.Req)()),

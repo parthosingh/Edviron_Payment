@@ -86,9 +86,6 @@ export class CollectController {
         gatepay_terminal_id?: string | null;
         gatepay_key?: string | null;
         gatepay_iv?: string | null;
-        udf1?: string | null;
-        udf2?: string | null;
-        udf3?: string | null;
       };
       vendors_info?: [
         {

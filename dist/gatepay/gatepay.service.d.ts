@@ -6,7 +6,8 @@ export declare class GatepayService {
     encryptEas(data: any, keyBase64: string, ivBase64: string): Promise<any>;
     decryptEas(encryptedData: string, keyBase64: string, ivBase64: string): Promise<any>;
     createOrder(request: CollectRequest): Promise<{
-        url: any;
+        url: string;
         collect_req: CollectRequest;
     }>;
+    getPaymentStatus(collect_id: string, collect_req: any): Promise<any>;
 }

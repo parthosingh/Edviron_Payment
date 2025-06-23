@@ -84,9 +84,6 @@ export declare class CollectService {
         gatepay_terminal_id?: string | null;
         gatepay_key?: string | null;
         gatepay_iv?: string | null;
-        udf1?: string | null;
-        udf2?: string | null;
-        udf3?: string | null;
     }): Promise<{
         url: string;
         request: CollectRequest;

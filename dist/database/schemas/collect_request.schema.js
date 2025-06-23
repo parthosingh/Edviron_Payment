@@ -324,6 +324,7 @@ __decorate([
             },
             gatepay_terminal_id: { type: String, required: false, default: null },
             gatepay_iv: { type: String, required: false, default: null },
+            paymentUrl: { type: String, required: false, default: null },
             txnId: { type: String, required: false, default: null },
             token: { type: String, required: false, default: null },
         },
