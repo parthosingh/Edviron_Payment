@@ -3365,7 +3365,7 @@ export class EdvironPgController {
   async updateSchoolMdr(
     @Body()
     body: {
-      token: string;
+      token: string; 
       trustee_id: string;
       school_id: string;
       platform_charges: PlatformCharge[];
@@ -3720,6 +3720,9 @@ export class EdvironPgController {
       token: string;
     },
   ) {
+    try{
+
+   
     const payload = await this.cashfreeService.getMerchantInfo(
       body.school_id,
       body.kyc_mail,
@@ -3747,6 +3750,11 @@ export class EdvironPgController {
       bank_account_details,
       signatory_details,
     );
+     }catch(e){
+      console.log(e);
+      
+      throw new BadRequestException(e.message)
+    }
   }
 
   @Post('/initiate-kyc')
