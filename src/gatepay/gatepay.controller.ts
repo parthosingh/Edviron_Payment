@@ -23,19 +23,16 @@ export class GatepayController {
   ) {}
 
   @Get('/redirect')
-  async redirect(
-    @Query('collect_id') collect_id: string,
-    @Res() res: any,
-  ) {
+  async redirect(@Query('collect_id') collect_id: string, @Res() res: any) {
     try {
-       const collectRequest =
+      const collectRequest =
         await this.databaseService.CollectRequestModel.findById(collect_id);
       if (!collectRequest) throw new BadRequestException('Order Id not found');
-      const paymentUrl = collectRequest.gatepay.paymentUrl
-      if(!paymentUrl){
-        throw new BadRequestException('payment url not found')
+      const paymentUrl = collectRequest.gatepay.paymentUrl;
+      if (!paymentUrl) {
+        throw new BadRequestException('payment url not found');
       }
-      res.redirect(paymentUrl)
+      res.redirect(paymentUrl);
     } catch (error) {
       throw new BadRequestException(error.response?.data || error.message);
     }
@@ -74,6 +71,7 @@ export class GatepayController {
       try {
         await this.databaseService.WebhooksModel.create({
           body: JSON.stringify(parseData),
+          encData: response,
           gateway: 'gatepay_callback',
         });
       } catch (error) {
@@ -81,18 +79,58 @@ export class GatepayController {
       }
 
       let paymentMethod = '';
+      let details: any;
       switch (paymentMode) {
         case 'DC':
-          paymentMethod = 'debitCard';
+          paymentMethod = 'debit_card';
+          details = {
+            card: {
+              card_bank_name: 'N/A',
+              card_country: 'N/A',
+              card_network: 'N/A',
+              card_number: 'N/A',
+              card_sub_type: 'N/A',
+              card_type: 'N/A',
+              channel: null,
+            },
+          };
           break;
         case 'CC':
-          paymentMethod = 'creditCard';
+          paymentMethod = 'credit_card';
+          details = {
+            card: {
+              card_bank_name: 'N/A',
+              card_country: 'N/A',
+              card_network: 'N/A',
+              card_number: 'N/A',
+              card_sub_type: 'N/A',
+              card_type: 'N/A',
+              channel: null,
+            },
+          };
           break;
         case 'NB':
-          paymentMethod = 'netBanking';
+          paymentMethod = 'net_banking';
+          details = {
+            netbanking: {
+              channel: null,
+              netbanking_bank_code: 'N/A',
+              netbanking_bank_name: 'N/A',
+            },
+          };
           break;
         case 'UPI':
           paymentMethod = 'upi';
+          details = {
+            upi: {
+              channel: 'NA',
+              upi_id: 'NA',
+            },
+          };
+          break;
+        default:
+          paymentMethod = '';
+          details = {};
           break;
       }
       const formattedDate = txnDate?.replace(' ', 'T');
@@ -103,11 +141,17 @@ export class GatepayController {
       }
 
       collect_req_status.status =
-        txnStatus === 'SUCCESS' ? PaymentStatus.SUCCESS : PaymentStatus.PENDING;
+        txnStatus === 'SUCCESS'
+          ? PaymentStatus.SUCCESS
+          : txnStatus === 'FAILED'
+          ? PaymentStatus.FAILED
+          : PaymentStatus.PENDING;
+
       collect_req_status.transaction_amount = txnAmount || '';
       collect_req_status.payment_time = dateObj || Date.now();
       collect_req_status.payment_method = paymentMethod || '';
       collect_req_status.payment_message = message || '';
+      collect_req_status.details = JSON.stringify(details) || '';
       await collect_req_status.save();
 
       const payment_status = collect_req_status.status;

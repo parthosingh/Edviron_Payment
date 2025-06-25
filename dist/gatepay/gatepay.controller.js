@@ -59,6 +59,7 @@ let GatepayController = class GatepayController {
             try {
                 await this.databaseService.WebhooksModel.create({
                     body: JSON.stringify(parseData),
+                    encData: response,
                     gateway: 'gatepay_callback',
                 });
             }
@@ -66,18 +67,58 @@ let GatepayController = class GatepayController {
                 console.error('Webhook save failed:', error.message);
             }
             let paymentMethod = '';
+            let details;
             switch (paymentMode) {
                 case 'DC':
-                    paymentMethod = 'debitCard';
+                    paymentMethod = 'debit_card';
+                    details = {
+                        card: {
+                            card_bank_name: 'N/A',
+                            card_country: 'N/A',
+                            card_network: 'N/A',
+                            card_number: 'N/A',
+                            card_sub_type: 'N/A',
+                            card_type: 'N/A',
+                            channel: null,
+                        },
+                    };
                     break;
                 case 'CC':
-                    paymentMethod = 'creditCard';
+                    paymentMethod = 'credit_card';
+                    details = {
+                        card: {
+                            card_bank_name: 'N/A',
+                            card_country: 'N/A',
+                            card_network: 'N/A',
+                            card_number: 'N/A',
+                            card_sub_type: 'N/A',
+                            card_type: 'N/A',
+                            channel: null,
+                        },
+                    };
                     break;
                 case 'NB':
-                    paymentMethod = 'netBanking';
+                    paymentMethod = 'net_banking';
+                    details = {
+                        netbanking: {
+                            channel: null,
+                            netbanking_bank_code: 'N/A',
+                            netbanking_bank_name: 'N/A',
+                        },
+                    };
                     break;
                 case 'UPI':
                     paymentMethod = 'upi';
+                    details = {
+                        upi: {
+                            channel: 'NA',
+                            upi_id: 'NA',
+                        },
+                    };
+                    break;
+                default:
+                    paymentMethod = '';
+                    details = {};
                     break;
             }
             const formattedDate = txnDate?.replace(' ', 'T');
@@ -86,11 +127,16 @@ let GatepayController = class GatepayController {
                 throw new common_1.BadRequestException('Invalid txnDate received');
             }
             collect_req_status.status =
-                txnStatus === 'SUCCESS' ? collect_req_status_schema_1.PaymentStatus.SUCCESS : collect_req_status_schema_1.PaymentStatus.PENDING;
+                txnStatus === 'SUCCESS'
+                    ? collect_req_status_schema_1.PaymentStatus.SUCCESS
+                    : txnStatus === 'FAILED'
+                        ? collect_req_status_schema_1.PaymentStatus.FAILED
+                        : collect_req_status_schema_1.PaymentStatus.PENDING;
             collect_req_status.transaction_amount = txnAmount || '';
             collect_req_status.payment_time = dateObj || Date.now();
             collect_req_status.payment_method = paymentMethod || '';
             collect_req_status.payment_message = message || '';
+            collect_req_status.details = JSON.stringify(details) || '';
             await collect_req_status.save();
             const payment_status = collect_req_status.status;
             if (collect_request.sdkPayment) {
