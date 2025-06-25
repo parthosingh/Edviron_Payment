@@ -109,7 +109,7 @@ export class GatepayService {
         req: ciphertext,
       };
       const config = {
-        url: 'https://pay1.getepay.in:8443/getepayPortal/pg/generateInvoice',
+        url: `${process.env.GET_E_PAY_URL}/getepayPortal/pg/generateInvoice`,
         method: 'post',
         headers: {
           'Content-Type': 'application/json',
@@ -190,7 +190,7 @@ export class GatepayService {
         req: ciphertext,
       };
       const config = {
-        url: `https://pay1.getepay.in:8443/getepayPortal/pg/invoiceStatus`,
+        url: `${process.env.GET_E_PAY_URL}/getepayPortal/pg/invoiceStatus`,
         method: 'post',
         headers: {
           'Content-Type': 'application/json',
