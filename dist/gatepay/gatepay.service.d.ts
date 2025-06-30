@@ -10,4 +10,5 @@ export declare class GatepayService {
         collect_req: CollectRequest;
     }>;
     getPaymentStatus(collect_id: string, collect_req: any): Promise<any>;
+    getPaymentFromDb(collect_id: string, collect_req: any): Promise<any>;
 }

@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GatepayService = void 0;
 const common_1 = require("@nestjs/common");
 const axios_1 = require("axios");
+const mongoose_1 = require("mongoose");
 const database_service_1 = require("../database/database.service");
 const crypto = require('crypto');
 let GatepayService = class GatepayService {
@@ -97,7 +98,7 @@ let GatepayService = class GatepayService {
                 bankId: '',
                 txnType: 'single',
                 productType: 'IPG',
-                txnNote: 'Test Txn',
+                txnNote: 'Txn',
                 vpa: gatepay_terminal_id,
             };
             const ciphertext = await this.encryptEas(JSON.stringify(data), gatepay_key, gatepay_iv);
@@ -120,7 +121,6 @@ let GatepayService = class GatepayService {
                 throw new common_1.BadRequestException('payment link not created');
             }
             const decrypted = await this.decryptEas(response.data.response, gatepay_key, gatepay_iv);
-            console.log(decrypted, 'decrypted');
             const parsedData = JSON.parse(decrypted);
             const { paymentUrl, qrPath, qrIntent, paymentId, token } = parsedData;
             await this.databaseService.CollectRequestModel.findByIdAndUpdate({
@@ -129,7 +129,7 @@ let GatepayService = class GatepayService {
                 $set: {
                     'gatepay.token': token,
                     'gatepay.txnId': paymentId,
-                    'gatepay.paymentUrl': paymentUrl
+                    'gatepay.paymentUrl': paymentUrl,
                 },
             }, {
                 upsert: true,
@@ -144,18 +144,23 @@ let GatepayService = class GatepayService {
     }
     async getPaymentStatus(collect_id, collect_req) {
         try {
-            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
-            if (!collectRequest) {
-                throw new common_1.BadRequestException('Collect request not found');
+            const [collect_request, collect_req_status] = await Promise.all([
+                this.databaseService.CollectRequestModel.findById(collect_id),
+                this.databaseService.CollectRequestStatusModel.findOne({
+                    collect_id: new mongoose_1.Types.ObjectId(collect_id),
+                }),
+            ]);
+            if (!collect_request || !collect_req_status) {
+                throw new common_1.BadRequestException('Order not found');
             }
-            const { gatepay } = collectRequest;
+            const { gatepay } = collect_request;
             const { gatepay_mid, gatepay_key, gatepay_iv, gatepay_terminal_id, txnId, } = gatepay;
             const data = {
-                mid: gatepay,
+                mid: gatepay_mid,
                 paymentId: txnId,
                 referenceNo: '',
                 status: '',
-                terminalId: gatepay_terminal_id
+                terminalId: gatepay_terminal_id,
             };
             const ciphertext = await this.encryptEas(JSON.stringify(data), gatepay_key, gatepay_iv);
             const raw = {
@@ -172,8 +177,164 @@ let GatepayService = class GatepayService {
                 data: raw,
             };
             const response = await axios_1.default.request(config);
-            console.log(response.data);
-            return response.data;
+            const encData = response.data.response;
+            const decrypted = await this.decryptEas(encData, gatepay_key, gatepay_iv);
+            const parsedData = JSON.parse(decrypted);
+            const { txnStatus, txnAmount, txnDate, getepayTxnId } = parsedData;
+            let paymentMode = '';
+            const payment_method = collect_req_status.payment_method;
+            switch (payment_method) {
+                case 'debit_card':
+                    paymentMode = 'card';
+                    break;
+                case 'credit_card':
+                    paymentMode = 'card';
+                    break;
+                case 'net_banking':
+                    paymentMode = 'net_banking';
+                    break;
+                case 'upi':
+                    paymentMode = 'upi';
+                    break;
+                default:
+                    paymentMode = '';
+                    break;
+            }
+            const transformedResponse = {
+                status: txnStatus,
+                status_code: response.status,
+                custom_order_id: collect_request?.custom_order_id,
+                amount: collect_req_status?.order_amount,
+                transaction_amount: collect_req_status?.transaction_amount,
+                details: {
+                    payment_mode: paymentMode,
+                    bank_ref: collect_req_status.bank_reference || null,
+                    payment_methods: {},
+                    transaction_time: collect_req_status.payment_time || null,
+                    formattedTransactionDate: collect_req_status.payment_time
+                        ? collect_req_status.payment_time.toISOString().split('T')[0]
+                        : null,
+                    order_status: collect_req_status.status || 'unknown',
+                    isSettlementComplete: false,
+                    transfer_utr: null,
+                    service_charge: 0,
+                },
+                capture_status: collect_req_status.status,
+            };
+            if (paymentMode === 'upi') {
+                const detail = JSON.parse(collect_req_status.details);
+                transformedResponse.details.payment_methods.upi = detail.upi.upi_id;
+            }
+            if (paymentMode === 'card') {
+                const cardDetail = JSON.parse(collect_req_status.details);
+                transformedResponse.details.payment_methods.card = {
+                    card_bank_name: cardDetail?.card?.card_bank_name || null,
+                    card_country: 'IN',
+                    card_network: cardDetail?.card?.card_network || null,
+                    card_number: cardDetail?.card?.card_number || null,
+                    card_sub_type: cardDetail?.card?.card_type === 'credit_card' ? 'P' : 'D',
+                    card_type: paymentMode,
+                    channel: null,
+                };
+            }
+            if (paymentMode === 'net_banking') {
+                const detail = JSON.parse(collect_req_status.details);
+                transformedResponse.details.payment_methods.net_banking = {
+                    netbanking_bank_name: detail.netbanking.netbanking_bank_name || null,
+                };
+            }
+            if (paymentMode === 'wallet') {
+                const detail = JSON.parse(collect_req_status.details);
+                transformedResponse.details.payment_methods.wallet = {
+                    mode: detail.app.provider,
+                };
+            }
+            return transformedResponse;
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
+    async getPaymentFromDb(collect_id, collect_req) {
+        try {
+            const [collect_request, collect_req_status] = await Promise.all([
+                this.databaseService.CollectRequestModel.findById(collect_id),
+                this.databaseService.CollectRequestStatusModel.findOne({
+                    collect_id: new mongoose_1.Types.ObjectId(collect_id),
+                }),
+            ]);
+            if (!collect_request || !collect_req_status) {
+                throw new common_1.BadRequestException('Order not found');
+            }
+            let paymentMode = '';
+            const payment_method = collect_req_status.payment_method;
+            switch (payment_method) {
+                case 'debit_card':
+                    paymentMode = 'card';
+                    break;
+                case 'credit_card':
+                    paymentMode = 'card';
+                    break;
+                case 'net_banking':
+                    paymentMode = 'net_banking';
+                    break;
+                case 'upi':
+                    paymentMode = 'upi';
+                    break;
+                default:
+                    paymentMode = '';
+                    break;
+            }
+            const transformedResponse = {
+                status: collect_req_status.status,
+                status_code: 200,
+                custom_order_id: collect_request?.custom_order_id,
+                amount: collect_req_status?.order_amount,
+                transaction_amount: collect_req_status?.transaction_amount,
+                details: {
+                    payment_mode: paymentMode,
+                    bank_ref: collect_req_status.bank_reference || null,
+                    payment_methods: {},
+                    transaction_time: collect_req_status.payment_time || null,
+                    formattedTransactionDate: collect_req_status.payment_time
+                        ? collect_req_status.payment_time.toISOString().split('T')[0]
+                        : null,
+                    order_status: collect_req_status.status || 'unknown',
+                    isSettlementComplete: false,
+                    transfer_utr: null,
+                    service_charge: 0,
+                },
+                capture_status: collect_req_status.status,
+            };
+            if (paymentMode === 'upi') {
+                const detail = JSON.parse(collect_req_status.details);
+                transformedResponse.details.payment_methods.upi = detail.upi.upi_id;
+            }
+            if (paymentMode === 'card') {
+                const cardDetail = JSON.parse(collect_req_status.details);
+                transformedResponse.details.payment_methods.card = {
+                    card_bank_name: cardDetail?.card?.card_bank_name || null,
+                    card_country: 'IN',
+                    card_network: cardDetail?.card?.card_network || null,
+                    card_number: cardDetail?.card?.card_number || null,
+                    card_sub_type: cardDetail?.card?.card_type === 'credit_card' ? 'P' : 'D',
+                    card_type: paymentMode,
+                    channel: null,
+                };
+            }
+            if (paymentMode === 'net_banking') {
+                const detail = JSON.parse(collect_req_status.details);
+                transformedResponse.details.payment_methods.net_banking = {
+                    netbanking_bank_name: detail.netbanking.netbanking_bank_name || null,
+                };
+            }
+            if (paymentMode === 'wallet') {
+                const detail = JSON.parse(collect_req_status.details);
+                transformedResponse.details.payment_methods.wallet = {
+                    mode: detail.app.provider,
+                };
+            }
+            return transformedResponse;
         }
         catch (error) {
             throw new common_1.BadRequestException(error.message);

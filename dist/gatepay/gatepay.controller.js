@@ -54,12 +54,11 @@ let GatepayController = class GatepayController {
             const { gatepay_key, gatepay_iv } = collect_request.gatepay;
             const decrypted = await this.gatepayService.decryptEas(response, gatepay_key, gatepay_iv);
             const parseData = JSON.parse(JSON.parse(decrypted));
-            console.log('Decrypted Response:', JSON.stringify(parseData, null, 2));
             const { paymentMode, txnStatus, txnAmount, txnDate, getepayTxnId } = parseData;
             try {
                 await this.databaseService.WebhooksModel.create({
                     body: JSON.stringify(parseData),
-                    encData: response,
+                    encData: JSON.stringify(req.body),
                     gateway: 'gatepay_callback',
                 });
             }
@@ -111,8 +110,17 @@ let GatepayController = class GatepayController {
                     paymentMethod = 'upi';
                     details = {
                         upi: {
-                            channel: 'NA',
-                            upi_id: 'NA',
+                            channel: 'N/A',
+                            upi_id: 'N/A',
+                        },
+                    };
+                    break;
+                case 'UPIQR':
+                    paymentMethod = 'upi';
+                    details = {
+                        upi: {
+                            channel: 'N/A',
+                            upi_id: 'N/A',
                         },
                     };
                     break;
