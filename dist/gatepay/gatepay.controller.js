@@ -41,7 +41,7 @@ let GatepayController = class GatepayController {
     async handleCallback(req, res) {
         try {
             const { collect_id } = req.query;
-            const { status, message, response, terminalId } = req.body;
+            const { message, response, terminalId } = req.body;
             const [collect_request, collect_req_status] = await Promise.all([
                 this.databaseService.CollectRequestModel.findById(collect_id),
                 this.databaseService.CollectRequestStatusModel.findOne({
@@ -54,7 +54,8 @@ let GatepayController = class GatepayController {
             const { gatepay_key, gatepay_iv } = collect_request.gatepay;
             const decrypted = await this.gatepayService.decryptEas(response, gatepay_key, gatepay_iv);
             const parseData = JSON.parse(JSON.parse(decrypted));
-            const { paymentMode, txnStatus, txnAmount, txnDate, getepayTxnId } = parseData;
+            const { paymentMode, txnAmount, txnDate, getepayTxnId } = parseData;
+            const { status } = await this.gatepayService.getPaymentStatus(collect_id, collect_request);
             try {
                 await this.databaseService.WebhooksModel.create({
                     body: JSON.stringify(parseData),
@@ -135,15 +136,16 @@ let GatepayController = class GatepayController {
                 throw new common_1.BadRequestException('Invalid txnDate received');
             }
             collect_req_status.status =
-                txnStatus === 'SUCCESS'
+                status === 'SUCCESS'
                     ? collect_req_status_schema_1.PaymentStatus.SUCCESS
-                    : txnStatus === 'FAILED'
+                    : status === 'FAILED'
                         ? collect_req_status_schema_1.PaymentStatus.FAILED
                         : collect_req_status_schema_1.PaymentStatus.PENDING;
             collect_req_status.transaction_amount = txnAmount || '';
             collect_req_status.payment_time = dateObj || Date.now();
             collect_req_status.payment_method = paymentMethod || '';
             collect_req_status.payment_message = message || '';
+            collect_req_status.reason = message || '';
             collect_req_status.details = JSON.stringify(details) || '';
             await collect_req_status.save();
             const payment_status = collect_req_status.status;

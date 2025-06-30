@@ -42,7 +42,7 @@ export class GatepayController {
   async handleCallback(@Req() req: any, @Res() res: any) {
     try {
       const { collect_id } = req.query;
-      const { status, message, response, terminalId } = req.body;
+      const {  message, response, terminalId } = req.body;
 
       const [collect_request, collect_req_status] = await Promise.all([
         this.databaseService.CollectRequestModel.findById(collect_id),
@@ -64,9 +64,12 @@ export class GatepayController {
 
       const parseData = JSON.parse(JSON.parse(decrypted));
 
-      const { paymentMode, txnStatus, txnAmount, txnDate, getepayTxnId } =
-        parseData;
-
+      const { paymentMode, txnAmount, txnDate, getepayTxnId } = parseData;
+// console.log(parseData)
+      const { status } = await this.gatepayService.getPaymentStatus(
+        collect_id,
+        collect_request,
+      );
       try {
         await this.databaseService.WebhooksModel.create({
           body: JSON.stringify(parseData),
@@ -149,9 +152,9 @@ export class GatepayController {
       }
 
       collect_req_status.status =
-        txnStatus === 'SUCCESS'
+        status === 'SUCCESS'
           ? PaymentStatus.SUCCESS
-          : txnStatus === 'FAILED'
+          : status === 'FAILED'
           ? PaymentStatus.FAILED
           : PaymentStatus.PENDING;
 
@@ -159,6 +162,7 @@ export class GatepayController {
       collect_req_status.payment_time = dateObj || Date.now();
       collect_req_status.payment_method = paymentMethod || '';
       collect_req_status.payment_message = message || '';
+      collect_req_status.reason = message || '';
       collect_req_status.details = JSON.stringify(details) || '';
       await collect_req_status.save();
 

@@ -241,12 +241,12 @@ export class GatepayService {
           formattedTransactionDate: collect_req_status.payment_time
             ? collect_req_status.payment_time.toISOString().split('T')[0]
             : null,
-          order_status: collect_req_status.status || 'unknown',
+          order_status: txnStatus || 'unknown',
           isSettlementComplete: false,
           transfer_utr: null,
           service_charge: 0,
         },
-        capture_status: collect_req_status.status,
+        capture_status: txnStatus,
       } as any;
       if (paymentMode === 'upi') {
         const detail = JSON.parse(collect_req_status.details as string);
@@ -277,6 +277,7 @@ export class GatepayService {
           mode: detail.app.provider,
         };
       }
+      // console.log(transformedResponse, 'transformedResponse');
       return transformedResponse;
     } catch (error) {
       throw new BadRequestException(error.message);

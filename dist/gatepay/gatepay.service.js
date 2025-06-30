@@ -214,12 +214,12 @@ let GatepayService = class GatepayService {
                     formattedTransactionDate: collect_req_status.payment_time
                         ? collect_req_status.payment_time.toISOString().split('T')[0]
                         : null,
-                    order_status: collect_req_status.status || 'unknown',
+                    order_status: txnStatus || 'unknown',
                     isSettlementComplete: false,
                     transfer_utr: null,
                     service_charge: 0,
                 },
-                capture_status: collect_req_status.status,
+                capture_status: txnStatus,
             };
             if (paymentMode === 'upi') {
                 const detail = JSON.parse(collect_req_status.details);
