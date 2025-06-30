@@ -76,6 +76,7 @@ export class CollectService {
     worldline_merchant_id?: string | null,
     worldline_encryption_key?: string | null,
     worldline_encryption_iV?: string | null,
+    worldline_scheme_code?: string | null,
     vendor?: [
       {
         vendor_id: string;
@@ -220,7 +221,6 @@ export class CollectService {
       );
       return { url, request: collect_req };
     }
-
     if (
       razorpay_credentials?.razorpay_id &&
       razorpay_credentials?.razorpay_secret &&
@@ -358,7 +358,8 @@ export class CollectService {
     if (
       worldline_merchant_id &&
       worldline_encryption_key &&
-      worldline_encryption_iV
+      worldline_encryption_iV &&
+      worldline_scheme_code
     ) {
       if (splitPayments && worldLine_vendors && worldLine_vendors.length > 0) {
         worldLine_vendors.map(async (info) => {
@@ -384,26 +385,39 @@ export class CollectService {
           }).save();
         });
       }
+
       if (!request.worldline) {
         request.worldline = {
           worldline_merchant_id: worldline_merchant_id,
           worldline_encryption_key: worldline_encryption_key,
           worldline_encryption_iV: worldline_encryption_iV,
+          worldline_scheme_code: worldline_scheme_code,
           worldline_token: '',
         };
       } else {
         request.worldline.worldline_merchant_id = worldline_merchant_id;
         request.worldline.worldline_encryption_key = worldline_encryption_key;
         request.worldline.worldline_encryption_iV = worldline_encryption_iV;
+        request.worldline.worldline_scheme_code = worldline_scheme_code;
         if (!request.worldline.worldline_token) {
           request.worldline.worldline_token = '';
         }
       }
+      // request.gateway=Gateway.EDVIRON_WORLDLINE
       await request.save();
 
       const { url, collect_req } =
         // await this.worldLineService.createOrder(request);
         await this.worldLineService.SingleUrlIntegeration(request);
+      
+      try{
+        request.payment_data=url
+        await request.save()
+      }catch(e){
+        console.log(e);
+        
+      }
+      
       return { url, request: collect_req };
     }
 

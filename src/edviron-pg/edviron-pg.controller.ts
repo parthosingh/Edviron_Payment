@@ -22,7 +22,10 @@ import { Webhooks } from 'src/database/schemas/webhooks.schema';
 import { Types } from 'mongoose';
 import * as jwt from 'jsonwebtoken';
 import { TransactionStatus } from 'src/types/transactionStatus';
-import { Gateway } from 'src/database/schemas/collect_request.schema';
+import {
+  CollectRequest,
+  Gateway,
+} from 'src/database/schemas/collect_request.schema';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { skip } from 'node:test';
@@ -35,7 +38,6 @@ import * as _jwt from 'jsonwebtoken';
 import { NttdataService } from 'src/nttdata/nttdata.service';
 import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
-
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -106,6 +108,24 @@ export class EdvironPgController {
       res.redirect(
         `${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`,
       );
+    }
+    if (
+      collectRequest &&
+      collectRequest.worldline &&
+      collectRequest.worldline.worldline_merchant_id
+    ) {
+      await this.databaseService.CollectRequestModel.updateOne(
+        {
+          _id: collect_id,
+        },
+        {
+          sdkPayment: true,
+        },
+        {
+          new: true,
+        },
+      );
+       res.redirect(collectRequest.payment_data);
     }
     if (collectRequest?.gateway === Gateway.EDVIRON_CCAVENUE) {
       await this.databaseService.CollectRequestModel.updateOne(
@@ -1437,7 +1457,7 @@ export class EdvironPgController {
               bank_reference: 1,
               createdAt: 1,
               updatedAt: 1,
-              isPosTransaction:1,
+              isPosTransaction: 1,
             },
           },
           {
@@ -2447,8 +2467,8 @@ export class EdvironPgController {
         return refund;
       }
 
-      if(gateway === Gateway.PAYTM_POS){
-         console.log('init refund from paytm pos');
+      if (gateway === Gateway.PAYTM_POS) {
+        console.log('init refund from paytm pos');
 
         const refund = await this.posPaytmService.refund(
           collect_id,
@@ -2458,7 +2478,6 @@ export class EdvironPgController {
 
         return refund;
       }
-
     } catch (e) {
       throw new BadRequestException(e.message);
     }
@@ -3346,7 +3365,7 @@ export class EdvironPgController {
   async updateSchoolMdr(
     @Body()
     body: {
-      token: string;
+      token: string; 
       trustee_id: string;
       school_id: string;
       platform_charges: PlatformCharge[];
@@ -3701,6 +3720,9 @@ export class EdvironPgController {
       token: string;
     },
   ) {
+    try{
+
+   
     const payload = await this.cashfreeService.getMerchantInfo(
       body.school_id,
       body.kyc_mail,
@@ -3717,7 +3739,7 @@ export class EdvironPgController {
       signatory_details,
     } = payload;
     // return payload
-   return await this.cashfreeService.createMerchant(
+    return await this.cashfreeService.createMerchant(
       merchant_id,
       merchant_email,
       merchant_name,
@@ -3728,6 +3750,11 @@ export class EdvironPgController {
       bank_account_details,
       signatory_details,
     );
+     }catch(e){
+      console.log(e);
+      
+      throw new BadRequestException(e.message)
+    }
   }
 
   @Post('/initiate-kyc')
@@ -4114,7 +4141,7 @@ export class EdvironPgController {
           const response = await this.edvironPgService.retriveEasebuzz(
             item.txnid,
             key,
-            salt
+            salt,
           );
           const data = response.msg[0];
           const studentDetail = {
@@ -4207,7 +4234,7 @@ export class EdvironPgController {
       // return successTransaction;
       return { message: 'All pages fetched and data saved successfully' };
     } catch (error) {
-      throw new BadRequestException(error.message)
+      throw new BadRequestException(error.message);
     }
   }
 

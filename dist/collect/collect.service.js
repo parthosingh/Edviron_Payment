@@ -44,7 +44,9 @@ let CollectService = class CollectService {
         this.razorpayNonseamlessService = razorpayNonseamlessService;
         this.gatepayService = gatepayService;
     }
+
     async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, nttdata_hash_req_key, nttdata_hash_res_key, nttdata_res_salt, nttdata_req_salt, worldline_merchant_id, worldline_encryption_key, worldline_encryption_iV, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, isVBAPayment, vba_account_number, worldLine_vendors, easebuzz_school_label, razorpay_vendors, razorpay_credentials, gatepay_credentials) {
+
         if (custom_order_id) {
             const count = await this.databaseService.CollectRequestModel.countDocuments({
                 school_id,
@@ -215,7 +217,8 @@ let CollectService = class CollectService {
         }
         if (worldline_merchant_id &&
             worldline_encryption_key &&
-            worldline_encryption_iV) {
+            worldline_encryption_iV &&
+            worldline_scheme_code) {
             if (splitPayments && worldLine_vendors && worldLine_vendors.length > 0) {
                 worldLine_vendors.map(async (info) => {
                     const { vendor_id, percentage, amount, name } = info;
@@ -245,6 +248,7 @@ let CollectService = class CollectService {
                     worldline_merchant_id: worldline_merchant_id,
                     worldline_encryption_key: worldline_encryption_key,
                     worldline_encryption_iV: worldline_encryption_iV,
+                    worldline_scheme_code: worldline_scheme_code,
                     worldline_token: '',
                 };
             }
@@ -252,12 +256,20 @@ let CollectService = class CollectService {
                 request.worldline.worldline_merchant_id = worldline_merchant_id;
                 request.worldline.worldline_encryption_key = worldline_encryption_key;
                 request.worldline.worldline_encryption_iV = worldline_encryption_iV;
+                request.worldline.worldline_scheme_code = worldline_scheme_code;
                 if (!request.worldline.worldline_token) {
                     request.worldline.worldline_token = '';
                 }
             }
             await request.save();
             const { url, collect_req } = await this.worldLineService.SingleUrlIntegeration(request);
+            try {
+                request.payment_data = url;
+                await request.save();
+            }
+            catch (e) {
+                console.log(e);
+            }
             return { url, request: collect_req };
         }
         if (smartgateway_customer_id &&

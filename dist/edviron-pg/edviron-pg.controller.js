@@ -84,6 +84,18 @@ let EdvironPgController = class EdvironPgController {
         if (!collectRequest) {
             res.redirect(`${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`);
         }
+        if (collectRequest &&
+            collectRequest.worldline &&
+            collectRequest.worldline.worldline_merchant_id) {
+            await this.databaseService.CollectRequestModel.updateOne({
+                _id: collect_id,
+            }, {
+                sdkPayment: true,
+            }, {
+                new: true,
+            });
+            res.redirect(collectRequest.payment_data);
+        }
         if (collectRequest?.gateway === collect_request_schema_1.Gateway.EDVIRON_CCAVENUE) {
             await this.databaseService.CollectRequestModel.updateOne({
                 _id: collect_id,
@@ -2548,9 +2560,15 @@ let EdvironPgController = class EdvironPgController {
         }
     }
     async approve(body) {
-        const payload = await this.cashfreeService.getMerchantInfo(body.school_id, body.kyc_mail);
-        const { merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details, } = payload;
-        return await this.cashfreeService.createMerchant(merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details);
+        try {
+            const payload = await this.cashfreeService.getMerchantInfo(body.school_id, body.kyc_mail);
+            const { merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details, } = payload;
+            return await this.cashfreeService.createMerchant(merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details);
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
     }
     async initiategatewayKyc(body) {
         const { school_id, kyc_mail, gateway } = body;

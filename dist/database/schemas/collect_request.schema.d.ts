@@ -73,6 +73,7 @@ interface I_WORLDLINE {
     worldline_encryption_key: string;
     worldline_encryption_iV: string;
     worldline_token: string;
+    worldline_scheme_code: string;
 }
 interface I_Gatepay {
     gatepay_mid: string;

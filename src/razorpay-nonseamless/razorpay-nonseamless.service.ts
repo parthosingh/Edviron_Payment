@@ -5,6 +5,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
+import mongoose from 'mongoose';
 import { DatabaseService } from 'src/database/database.service';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import {
@@ -356,15 +357,15 @@ export class RazorpayNonseamlessService {
       };
 
       const collectRequest = new this.databaseService.CollectRequestModel({
-        amount: payment.amount / 100, 
+        amount: payment.amount / 100,
         gateway: Gateway.EDVIRON_RAZORPAY,
         razorpay: {
-          razorpay_id : authId,
-          razorpay_secret : authSecret,
-          order_id : order.id,
-          payment_id : payment.id,
-          razorpay_mid : razorpay_mid || ""
-        }, 
+          razorpay_id: authId,
+          razorpay_secret: authSecret,
+          order_id: order.id,
+          payment_id: payment.id,
+          razorpay_mid: razorpay_mid || '',
+        },
         custom_order_id: order.receipt,
         additional_data: JSON.stringify(studentDetail),
         school_id: school_id,
@@ -422,7 +423,7 @@ export class RazorpayNonseamlessService {
         new this.databaseService.CollectRequestStatusModel({
           order_amount: payment.amount / 100,
           transaction_amount: payment.amount / 100,
-          payment_method : payment_method,
+          payment_method: payment_method,
           status:
             payment.status === 'captured'
               ? PaymentStatus.SUCCESS
@@ -434,7 +435,7 @@ export class RazorpayNonseamlessService {
           details: JSON.stringify(details),
         });
 
-        // console.log(collectRequest, "collectRequest")
+      // console.log(collectRequest, "collectRequest")
       await collectRequest.save();
       await collectRequestStatus.save();
     }
@@ -446,7 +447,7 @@ export class RazorpayNonseamlessService {
       method: 'get',
       url: `${process.env.RAZORPAY_URL}/v1/orders/${order_id}/payments`,
       headers: { 'Content-Type': 'application/json' },
-      auth: { username: authId, password: authSecret }
+      auth: { username: authId, password: authSecret },
     };
 
     const response = await axios.request(config);
@@ -498,6 +499,235 @@ export class RazorpayNonseamlessService {
       throw new InternalServerErrorException(
         `Page request failed: ${err.message}`,
       );
+    }
+  }
+
+  async getTransactionForSettlements(
+    utr: string,
+    razorpay_id: string,
+    razropay_secret: string,
+    token: string,
+    cursor: string | null,
+    fromDate: Date,
+    limit: number,
+    skip: number,
+  ) {
+    try {
+      const date = new Date(fromDate);
+
+      if (isNaN(date.getTime())) {
+        throw new Error('Invalid date provided');
+      }
+
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+
+      const config = {
+        method: 'get',
+        url: `https://api.razorpay.com/v1/settlements/recon/combined?year=${year}&month=${month}&day=${day}&count=${limit}&skip=${skip}`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        auth: {
+          username: razorpay_id,
+          password: razropay_secret,
+        },
+      };
+
+      try {
+        const response = await axios.request(config);
+        const settlements = response.data.items;
+
+        if (settlements.length === 0) {
+          throw new BadGatewayException('no settlement Found');
+        }
+
+        const filteredItems = settlements.filter(
+          (item: any) => item.settlement_utr === utr,
+        );
+
+        const orderIds = filteredItems
+          .filter((order: any) => order.order_receipt !== null)
+          .map((order: any) => order.order_receipt);
+
+        const objectIdOrderIds = orderIds
+          .map((id :any) => {
+            try {
+              return new mongoose.Types.ObjectId(id);
+            } catch (e) {
+              return null;
+            }
+          })
+          .filter((id :any) => id !== null);
+
+        const customOrders =
+          await this.databaseService.CollectRequestModel.find({
+            $or: [
+              { custom_order_id: { $in: orderIds } },
+              { _id: { $in: objectIdOrderIds } },
+            ],
+          });
+
+        const customOrderMap = new Map(
+          customOrders.map((doc) => [
+            doc.custom_order_id,
+            {
+              _id: doc._id.toString(),
+              custom_order_id: doc.custom_order_id,
+              school_id: doc.school_id,
+              additional_data: doc.additional_data,
+            },
+          ]),
+        );
+
+        const enrichedOrders = await Promise.all(
+          response.data.items
+            .filter((order: any) => order.order_receipt)
+            .map(async (order: any) => {
+              let customData: any = {};
+              let additionalData: any = {};
+              let custom_order_id: string | null = null;
+              let order_amount: string | null = null;
+              let event_amount: string | null = null;
+              let event_time: string | null = null;
+              let event_success: string | null = null;
+              let payment_group: string | null = null;
+              let school_id: string | null = null;
+              let studentDetails: any = {};
+
+              if (order.order_receipt) {
+                customData = customOrderMap.get(order.order_receipt) || {};
+
+                try {
+                  custom_order_id = order.order_receipt;
+                  school_id = customData.school_id || null;
+                  if (typeof customData?.additional_data === 'string') {
+                    additionalData = JSON.parse(customData.additional_data);
+                  } else {
+                    additionalData = customData.additional_data || {};
+                  }
+                  order_amount = (order.amount / 100).toString();
+                  event_amount = (order.amount / 100).toString();
+                  event_success = order.settled === true ? 'SUCCESS' : 'FAIL';
+                  event_time = order.created_at
+                    ? new Date(order.created_at * 1000).toISOString()
+                    : null;
+                  payment_group = order.method;
+                  studentDetails = additionalData?.student_details || {};
+                  order.order_id = customData._id || null;
+                } catch {
+                  additionalData = null;
+                  custom_order_id = null;
+                  school_id = null;
+                  order_amount = null;
+                  event_amount = null;
+                  event_time = null;
+                  payment_group = null;
+                }
+              }
+
+              if (
+                order.payment_group &&
+                order.payment_group === 'VBA_TRANSFER'
+              ) {
+                const requestStatus =
+                  await this.databaseService.CollectRequestStatusModel.findOne({
+                    cf_payment_id: order.cf_payment_id,
+                  });
+
+                if (requestStatus) {
+                  const req =
+                    await this.databaseService.CollectRequestModel.findById(
+                      requestStatus.collect_id,
+                    );
+                  if (req) {
+                    try {
+                      custom_order_id = req.custom_order_id || null;
+                      order.order_id = req._id;
+                      school_id = req.school_id;
+
+                      if (typeof customData?.additional_data === 'string') {
+                        additionalData = JSON.parse(customData.additional_data);
+                      } else {
+                        additionalData = customData.additional_data || {};
+                      }
+                      event_success =
+                        order.settled === true ? 'SUCCESS' : 'FAIL';
+                      order_amount = (order.amount / 100).toString();
+                      event_amount = (order.amount / 100).toString();
+                      event_time = order.created_at
+                        ? new Date(order.created_at * 1000).toISOString()
+                        : null;
+                      payment_group = order.method;
+
+                      studentDetails = additionalData?.student_details || {};
+                    } catch {
+                      additionalData = null;
+                      custom_order_id = null;
+                      school_id = null;
+                      order_amount = null;
+                      event_amount = null;
+                      event_time = null;
+                      payment_group = null;
+                    }
+                  }
+                }
+              } else {
+                if (order.order_id) {
+                  event_success = order.settled === true ? 'SUCCESS' : 'FAIL';
+                  customData = customOrderMap.get(order.order_id) || {};
+                  order_amount = (order.amount / 100).toString();
+                  event_amount = (order.amount / 100).toString();
+                  event_time = order.created_at
+                    ? new Date(order.created_at * 1000).toISOString()
+                    : null;
+                  payment_group = order.method;
+                  try {
+                    if (typeof customData?.additional_data === 'string') {
+                      additionalData = JSON.parse(customData.additional_data);
+                    } else {
+                      additionalData = customData.additional_data || {};
+                    }
+                  } catch {
+                    additionalData = null;
+                    order_amount = null;
+                    event_amount = null;
+                    event_time = null;
+                    payment_group = null;
+                  }
+                }
+              }
+              return {
+                ...order,
+                custom_order_id: custom_order_id || null,
+                school_id: school_id || null,
+                student_id: studentDetails?.student_id || null,
+                student_name: studentDetails?.student_name || null,
+                student_email: studentDetails?.student_email || null,
+                student_phone_no: studentDetails?.student_phone_no || null,
+                order_amount: order.amount / 100 || null,
+                event_amount: order.amount / 100 || null,
+                payment_group: order.method || null,
+                event_status: event_success,
+                event_settlement_amount: order.amount / 100 || null,
+                event_time: order.created_at
+                  ? new Date(order.created_at * 1000).toISOString()
+                  : null,
+              };
+            }),
+        );
+        return {
+          cursor: response.data.cursor || 'N/A',
+          limit: limit,
+          settlements_transactions: enrichedOrders,
+        };
+      } catch (error) {
+        throw new BadRequestException(error.message);
+      }
+    } catch (e) {
+      console.log('Error in settlement cron job:', e.message);
+      return false;
     }
   }
 }

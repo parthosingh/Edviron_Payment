@@ -734,7 +734,7 @@ let CashfreeService = class CashfreeService {
                 kycresponse.businessProof) {
                 documentsToUpload.push({
                     url: kycresponse.businessProof,
-                    docType: 'entity_proof_trustdeed',
+                    docType: 'entityproof_trustdeed',
                 });
             }
             if (kycresponse.business_type === 'Society' &&

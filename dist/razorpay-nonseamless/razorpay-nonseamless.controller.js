@@ -169,7 +169,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
         const details = JSON.stringify(body);
         const webhook = await new this.databaseService.WebhooksModel({
             body: details,
-            gateway: collect_request_schema_1.Gateway.EDVIRON_HDFC_RAZORPAY,
+            gateway: collect_request_schema_1.Gateway.EDVIRON_RAZORPAY,
         }).save();
         const { payload } = body;
         const { order_id, amount, method, bank, acquirer_data, error_reason, card, card_id, wallet, } = payload.payment.entity;
@@ -360,7 +360,13 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
     }
     async razorpayOrders(razorpay_id, razorpay_secret, count = '100', skip = '0', school_id, trustee_id, razorpay_mid, from, to) {
         try {
-            if (!razorpay_id || !razorpay_secret || !school_id || !trustee_id || !from || to || !razorpay_mid) {
+            if (!razorpay_id ||
+                !razorpay_secret ||
+                !school_id ||
+                !trustee_id ||
+                !from ||
+                to ||
+                !razorpay_mid) {
                 throw new common_1.BadRequestException('All details are required');
             }
             const params = {
@@ -382,11 +388,24 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             if (to)
                 params.to = getUTCUnix(to, true);
             const result = await this.razorpayServiceModel.fetchAndStoreAll(razorpay_id, razorpay_secret, school_id, trustee_id, params, razorpay_mid);
-            return { message: `Total orders fetched: ${result.length} and payment Detail from ${from} to ${to} Updated` };
+            return {
+                message: `Total orders fetched: ${result.length} and payment Detail from ${from} to ${to} Updated`,
+            };
         }
         catch (err) {
             console.error('[API ERROR]', err);
             throw new common_1.InternalServerErrorException(`Razorpay API error: ${err.response?.data?.error?.description || err.message}`);
+        }
+    }
+    async getSettlementsTransactions(body, req) {
+        const { utr, razorpay_id, razropay_secret, token } = req.query;
+        try {
+            const limit = body.limit || 10;
+            const skip = body.skip || 0;
+            return await this.razorpayServiceModel.getTransactionForSettlements(utr, razorpay_id, razropay_secret, token, body.cursor, body.fromDate, limit, skip);
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message);
         }
     }
 };
@@ -437,6 +456,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String, Object, Object, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], RazorpayNonseamlessController.prototype, "razorpayOrders", null);
+__decorate([
+    (0, common_1.Post)('/settlements-transactions'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], RazorpayNonseamlessController.prototype, "getSettlementsTransactions", null);
 exports.RazorpayNonseamlessController = RazorpayNonseamlessController = __decorate([
     (0, common_1.Controller)('razorpay-nonseamless'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

@@ -76,6 +76,7 @@ export class CollectController {
       worldline_merchant_id?: string | null;
       worldline_encryption_key?: string | null;
       worldline_encryption_iV?: string | null;
+      worldline_scheme_code?: string | null;
       razorpay_credentials?: {
         razorpay_id?: string | null;
         razorpay_secret?: string | null;
@@ -185,6 +186,7 @@ export class CollectController {
       worldline_merchant_id,
       worldline_encryption_key,
       worldline_encryption_iV,
+      worldline_scheme_code,
       vba_account_number,
       worldLine_vendors,
       razorpay_vendors,
@@ -243,6 +245,7 @@ export class CollectController {
           worldline_merchant_id,
           worldline_encryption_key,
           worldline_encryption_iV,
+          worldline_scheme_code,
           vendors_info,
           vendorgateway,
           easebuzzVendors,

@@ -195,7 +195,7 @@ export class RazorpayNonseamlessController {
     const details = JSON.stringify(body);
     const webhook = await new this.databaseService.WebhooksModel({
       body: details,
-      gateway: Gateway.EDVIRON_HDFC_RAZORPAY,
+      gateway: Gateway.EDVIRON_RAZORPAY,
     }).save();
     const { payload } = body;
     const {
@@ -433,60 +433,100 @@ export class RazorpayNonseamlessController {
     );
   }
 
-@Get('orders-detail')
-async razorpayOrders(
-  @Query('razorpay_id') razorpay_id: string,
-  @Query('razorpay_secret') razorpay_secret: string,
-  @Query('count') count = '100',
-  @Query('skip') skip = '0',
-  @Query('school_id') school_id: string,
-  @Query('trustee_id') trustee_id: string,
-  @Query('razorpay_mid') razorpay_mid: string,
-  @Query('from') from: string,
-  @Query('to') to: string,
-) {
-  
-  try {
-    if(!razorpay_id  || !razorpay_secret || !school_id || !trustee_id || !from || to || !razorpay_mid   ){
-      throw new BadRequestException('All details are required')
-    }
-    
-    const params: Record<string, any> = {
-      count: parseInt(count, 10),
-      skip: parseInt(skip, 10),
-    };  
-    const getUTCUnix = (dateStr: string, isEnd = false) => {
-      if (!dateStr) return;
-      const date = new Date(dateStr);
-      if (isEnd) date.setUTCHours(23, 59, 59, 999);
-      else date.setUTCHours(0, 0, 0, 0);
-      return Math.floor(date.getTime() / 1000);
-    };
-    if (from) params.from = getUTCUnix(from);
-    if (to) params.to = getUTCUnix(to, true);
-    // console.log('[PARAMS] Final request parameters:', {
-    //   ...params,
-    //   from: params.from ? new Date(params.from * 1000).toISOString() : 'N/A',
-    //   to: params.to ? new Date(params.to * 1000).toISOString() : 'N/A'
-    // });
+  @Get('orders-detail')
+  async razorpayOrders(
+    @Query('razorpay_id') razorpay_id: string,
+    @Query('razorpay_secret') razorpay_secret: string,
+    @Query('count') count = '100',
+    @Query('skip') skip = '0',
+    @Query('school_id') school_id: string,
+    @Query('trustee_id') trustee_id: string,
+    @Query('razorpay_mid') razorpay_mid: string,
+    @Query('from') from: string,
+    @Query('to') to: string,
+  ) {
+    try {
+      if (
+        !razorpay_id ||
+        !razorpay_secret ||
+        !school_id ||
+        !trustee_id ||
+        !from ||
+        to ||
+        !razorpay_mid
+      ) {
+        throw new BadRequestException('All details are required');
+      }
 
-    const result = await this.razorpayServiceModel.fetchAndStoreAll(
-      razorpay_id,
-      razorpay_secret,
-      school_id,
-      trustee_id,
-      params,
-      razorpay_mid,
-    );
-    // return result;
-    return {message : `Total orders fetched: ${result.length} and payment Detail from ${from} to ${to} Updated`}
-  } catch (err) {
-    console.error('[API ERROR]', err);
-    throw new InternalServerErrorException(
-      `Razorpay API error: ${
-        err.response?.data?.error?.description || err.message
-      }`,
-    );
+      const params: Record<string, any> = {
+        count: parseInt(count, 10),
+        skip: parseInt(skip, 10),
+      };
+      const getUTCUnix = (dateStr: string, isEnd = false) => {
+        if (!dateStr) return;
+        const date = new Date(dateStr);
+        if (isEnd) date.setUTCHours(23, 59, 59, 999);
+        else date.setUTCHours(0, 0, 0, 0);
+        return Math.floor(date.getTime() / 1000);
+      };
+      if (from) params.from = getUTCUnix(from);
+      if (to) params.to = getUTCUnix(to, true);
+      // console.log('[PARAMS] Final request parameters:', {
+      //   ...params,
+      //   from: params.from ? new Date(params.from * 1000).toISOString() : 'N/A',
+      //   to: params.to ? new Date(params.to * 1000).toISOString() : 'N/A'
+      // });
+
+      const result = await this.razorpayServiceModel.fetchAndStoreAll(
+        razorpay_id,
+        razorpay_secret,
+        school_id,
+        trustee_id,
+        params,
+        razorpay_mid,
+      );
+      // return result;
+      return {
+        message: `Total orders fetched: ${result.length} and payment Detail from ${from} to ${to} Updated`,
+      };
+    } catch (err) {
+      console.error('[API ERROR]', err);
+      throw new InternalServerErrorException(
+        `Razorpay API error: ${
+          err.response?.data?.error?.description || err.message
+        }`,
+      );
+    }
   }
-}
+
+  @Post('/settlements-transactions')
+  async getSettlementsTransactions(
+    @Body()
+    body: {
+      limit: number;
+      cursor: string | null;
+      skip: number;
+      fromDate: Date;
+    },
+    @Req() req: any,
+  ) {
+    const { utr, razorpay_id, razropay_secret, token } = req.query;
+    try {
+      const limit = body.limit || 10;
+      const skip = body.skip || 0;
+
+      return await this.razorpayServiceModel.getTransactionForSettlements(
+        utr,
+        razorpay_id,
+        razropay_secret,
+        token,
+        body.cursor,
+        body.fromDate,
+        limit,
+        skip
+      );
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
 }

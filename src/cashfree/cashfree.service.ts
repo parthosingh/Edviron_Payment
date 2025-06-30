@@ -982,7 +982,7 @@ export class CashfreeService {
       ) {
         documentsToUpload.push({
           url: kycresponse.businessProof,
-          docType: 'entity_proof_trustdeed',
+          docType: 'entityproof_trustdeed',
         });
       }
       if (
