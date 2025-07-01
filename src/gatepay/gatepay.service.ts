@@ -32,15 +32,6 @@ export class GatepayService {
 
   async createOrder(request: CollectRequest) {
     const { _id, amount, gatepay, additional_data } = request;
-    let student_details: any = {};
-    try {
-      student_details =
-        typeof additional_data === 'string'
-          ? JSON.parse(additional_data)
-          : additional_data;
-    } catch (err) {
-      console.error('Error parsing additional_data:', err.message);
-    }
     try {
       const { gatepay_mid, gatepay_key, gatepay_iv, gatepay_terminal_id } =
         gatepay;

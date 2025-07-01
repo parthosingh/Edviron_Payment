@@ -43,9 +43,6 @@ export class Webhooks {
 
   @Prop({ required: false })
   gateway: string;
-  
-  @Prop({ required: false })
-  encData: string;
 
   @Prop({ required: true })
   body: string;

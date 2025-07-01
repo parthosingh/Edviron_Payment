@@ -47,10 +47,6 @@ __decorate([
     __metadata("design:type", String)
 ], Webhooks.prototype, "gateway", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: false }),
-    __metadata("design:type", String)
-], Webhooks.prototype, "encData", void 0);
-__decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
 ], Webhooks.prototype, "body", void 0);

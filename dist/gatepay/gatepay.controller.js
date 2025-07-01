@@ -42,6 +42,15 @@ let GatepayController = class GatepayController {
         try {
             const { collect_id } = req.query;
             const { message, response, terminalId } = req.body;
+            try {
+                await this.databaseService.WebhooksModel.create({
+                    body: JSON.stringify(req.body),
+                    gateway: 'gatepay_callback',
+                });
+            }
+            catch (error) {
+                console.error('Webhook save failed:', error.message);
+            }
             const [collect_request, collect_req_status] = await Promise.all([
                 this.databaseService.CollectRequestModel.findById(collect_id),
                 this.databaseService.CollectRequestStatusModel.findOne({
@@ -56,16 +65,6 @@ let GatepayController = class GatepayController {
             const parseData = JSON.parse(JSON.parse(decrypted));
             const { paymentMode, txnAmount, txnDate, getepayTxnId } = parseData;
             const { status } = await this.gatepayService.getPaymentStatus(collect_id, collect_request);
-            try {
-                await this.databaseService.WebhooksModel.create({
-                    body: JSON.stringify(parseData),
-                    encData: JSON.stringify(req.body),
-                    gateway: 'gatepay_callback',
-                });
-            }
-            catch (error) {
-                console.error('Webhook save failed:', error.message);
-            }
             let paymentMethod = '';
             let details;
             switch (paymentMode) {
