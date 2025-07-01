@@ -317,6 +317,9 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.SMART_GATEWAY:
                 const data = await this.hdfcSmartgatewayService.checkStatus(collectRequest._id.toString(), collectRequest);
                 return data;
+            case collect_request_schema_1.Gateway.EDVIRON_GATEPAY:
+                const gatepay_data = await this.gatepayService.getPaymentStatus(collectRequest._id.toString(), collectRequest);
+                return gatepay_data;
             case collect_request_schema_1.Gateway.EDVIRON_WORLDLINE:
                 console.log('checking status for EDVIRON_WORLDLINE', collectRequest._id.toString());
                 return await this.worldlineService.getStatus(collectRequest._id.toString());

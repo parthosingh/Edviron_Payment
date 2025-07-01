@@ -402,6 +402,13 @@ export class CheckStatusService {
         );
         return data;
 
+      case Gateway.EDVIRON_GATEPAY:
+        const gatepay_data = await this.gatepayService.getPaymentStatus(
+          collectRequest._id.toString(),
+          collectRequest,
+        );
+        return gatepay_data;
+
       case Gateway.EDVIRON_WORLDLINE:
         console.log(
           'checking status for EDVIRON_WORLDLINE',
