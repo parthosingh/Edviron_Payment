@@ -60,6 +60,12 @@ export declare class CollectController {
             razorpay_secret?: string | null;
             razorpay_mid?: string | null;
         };
+        gatepay_credentials?: {
+            gatepay_mid?: string | null;
+            gatepay_terminal_id?: string | null;
+            gatepay_key?: string | null;
+            gatepay_iv?: string | null;
+        };
         vendors_info?: [
             {
                 vendor_id: string;

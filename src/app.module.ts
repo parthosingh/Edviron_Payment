@@ -27,6 +27,7 @@ import { WorldlineService } from './worldline/worldline.service';
 import { RazorpayNonseamlessModule } from './razorpay-nonseamless/razorpay-nonseamless.module';
 import { RazorpayNonseamlessController } from './razorpay-nonseamless/razorpay-nonseamless.controller';
 import { RazorpayNonseamlessService } from './razorpay-nonseamless/razorpay-nonseamless.service';
+import { GatepayModule } from './gatepay/gatepay.module';
 
 @Module({
   imports: [
@@ -43,7 +44,8 @@ import { RazorpayNonseamlessService } from './razorpay-nonseamless/razorpay-nons
     SmartgatewayModule,
     NttdataModule,
     RazorpayNonseamlessModule,
-    WorldlineModule
+    WorldlineModule,
+    GatepayModule
   ],
   controllers: [AppController, EasebuzzController, CashfreeController, PosPaytmController, WorldlineController, RazorpayNonseamlessController],
   providers: [AppService, CashfreeService, EasebuzzService, CcavenueService, PosPaytmService, WorldlineService, RazorpayNonseamlessService],

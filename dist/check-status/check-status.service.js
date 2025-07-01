@@ -29,8 +29,9 @@ const nttdata_service_1 = require("../nttdata/nttdata.service");
 const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 const worldline_service_1 = require("../worldline/worldline.service");
 const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
+const gatepay_service_1 = require("../gatepay/gatepay.service");
 let CheckStatusService = class CheckStatusService {
-    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay, hdfcSmartgatewayService, nttdataService, posPaytmService, worldlineService, razorpayServiceModel) {
+    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay, hdfcSmartgatewayService, nttdataService, posPaytmService, worldlineService, razorpayServiceModel, gatepayService) {
         this.databaseService = databaseService;
         this.hdfcService = hdfcService;
         this.phonePeService = phonePeService;
@@ -45,6 +46,7 @@ let CheckStatusService = class CheckStatusService {
         this.posPaytmService = posPaytmService;
         this.worldlineService = worldlineService;
         this.razorpayServiceModel = razorpayServiceModel;
+        this.gatepayService = gatepayService;
     }
     async checkStatus(collect_request_id) {
         console.log('checking status for', collect_request_id);
@@ -133,6 +135,9 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.SMART_GATEWAY:
                 const data = await this.hdfcSmartgatewayService.checkStatus(collectRequest._id.toString(), collectRequest);
                 return data;
+            case collect_request_schema_1.Gateway.EDVIRON_GATEPAY:
+                const gatepay_data = await this.gatepayService.getPaymentStatus(collectRequest._id.toString(), collectRequest);
+                return gatepay_data;
             case collect_request_schema_1.Gateway.EDVIRON_RAZORPAY:
                 const razorpayData = await this.razorpayServiceModel.getPaymentStatus(collectRequest.razorpay.order_id.toString(), collectRequest);
                 return razorpayData;
@@ -312,6 +317,9 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.SMART_GATEWAY:
                 const data = await this.hdfcSmartgatewayService.checkStatus(collectRequest._id.toString(), collectRequest);
                 return data;
+            case collect_request_schema_1.Gateway.EDVIRON_GATEPAY:
+                const gatepay_data = await this.gatepayService.getPaymentStatus(collectRequest._id.toString(), collectRequest);
+                return gatepay_data;
             case collect_request_schema_1.Gateway.EDVIRON_WORLDLINE:
                 console.log('checking status for EDVIRON_WORLDLINE', collectRequest._id.toString());
                 return await this.worldlineService.getStatus(collectRequest._id.toString());
@@ -393,7 +401,7 @@ let CheckStatusService = class CheckStatusService {
         const timeDifference = currentTime.getTime() - createdAt.getTime();
         const differenceInMinutes = timeDifference / (1000 * 60);
         const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
-            collect_id: request._id
+            collect_id: request._id,
         });
         let paymentStatus = collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
         if (requestStatus) {
@@ -546,6 +554,7 @@ exports.CheckStatusService = CheckStatusService = __decorate([
         nttdata_service_1.NttdataService,
         pos_paytm_service_1.PosPaytmService,
         worldline_service_1.WorldlineService,
-        razorpay_nonseamless_service_1.RazorpayNonseamlessService])
+        razorpay_nonseamless_service_1.RazorpayNonseamlessService,
+        gatepay_service_1.GatepayService])
 ], CheckStatusService);
 //# sourceMappingURL=check-status.service.js.map

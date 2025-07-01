@@ -29,6 +29,7 @@ var Gateway;
     Gateway["EDVIRON_NTTDATA"] = "EDVIRON_NTTDATA";
     Gateway["EDVIRON_WORLDLINE"] = "EDVIRON_WORLDLINE";
     Gateway["EDVIRON_RAZORPAY"] = "EDVIRON_RAZORPAY";
+    Gateway["EDVIRON_GATEPAY"] = "EDVIRON_GATEPAY";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let PaymentIds = class PaymentIds {
 };
@@ -312,6 +313,26 @@ __decorate([
     }),
     __metadata("design:type", Object)
 ], CollectRequest.prototype, "worldline", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        required: false,
+        type: {
+            gatepay_mid: { type: String, required: false, default: null },
+            gatepay_key: {
+                type: String,
+                required: false,
+                default: null,
+            },
+            gatepay_terminal_id: { type: String, required: false, default: null },
+            gatepay_iv: { type: String, required: false, default: null },
+            paymentUrl: { type: String, required: false, default: null },
+            txnId: { type: String, required: false, default: null },
+            token: { type: String, required: false, default: null },
+        },
+        _id: false,
+    }),
+    __metadata("design:type", Object)
+], CollectRequest.prototype, "gatepay", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
         required: false,

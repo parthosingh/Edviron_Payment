@@ -39,7 +39,8 @@ export declare enum Gateway {
     MOSAMBEE_POS = "MOSAMBEE_POS",
     EDVIRON_NTTDATA = "EDVIRON_NTTDATA",
     EDVIRON_WORLDLINE = "EDVIRON_WORLDLINE",
-    EDVIRON_RAZORPAY = "EDVIRON_RAZORPAY"
+    EDVIRON_RAZORPAY = "EDVIRON_RAZORPAY",
+    EDVIRON_GATEPAY = "EDVIRON_GATEPAY"
 }
 interface I_NTT_DATA {
     nttdata_id: string;
@@ -73,6 +74,15 @@ interface I_WORLDLINE {
     worldline_encryption_iV: string;
     worldline_token: string;
     worldline_scheme_code: string;
+}
+interface I_Gatepay {
+    gatepay_mid: string;
+    gatepay_terminal_id: string;
+    gatepay_key: string;
+    gatepay_iv: string;
+    txnId: string;
+    token: string;
+    paymentUrl?: string;
 }
 interface EASEBUZZ_NON_PARTNER_CRED {
     easebuzz_salt: string;
@@ -180,6 +190,7 @@ export declare class CollectRequest {
     paytmPos: paytmPos;
     ntt_data: I_NTT_DATA;
     worldline: I_WORLDLINE;
+    gatepay: I_Gatepay;
     easebuzz_non_partner_cred: EASEBUZZ_NON_PARTNER_CRED;
     easebuzz_non_partner: boolean;
     worldline_token: string;
