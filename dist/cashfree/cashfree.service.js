@@ -252,7 +252,7 @@ let CashfreeService = class CashfreeService {
             let custom_order_id = null;
             let school_id = null;
             const enrichedOrders = await Promise.all(response.data
-                .filter((order) => order.order_id)
+                .filter((order) => order.order_id && order.event_type !== 'DISPUTE')
                 .map(async (order) => {
                 let customData = {};
                 let additionalData = {};
