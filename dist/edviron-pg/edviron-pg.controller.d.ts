@@ -219,6 +219,7 @@ export declare class EdvironPgController {
         trustee_id: string;
         start_date: string;
         end_date: string;
+        school_id?: string;
         status?: string;
     }): Promise<{
         transactions: any[];
@@ -228,6 +229,13 @@ export declare class EdvironPgController {
     }>;
     getBatchTransactions(query: {
         trustee_id: string;
+        year: string;
+        token: string;
+    }): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{
+        _id: import("mongoose").Schema.Types.ObjectId;
+    }>)[]>;
+    getMerchantBatchTransactions(query: {
+        school_id: string;
         year: string;
         token: string;
     }): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{

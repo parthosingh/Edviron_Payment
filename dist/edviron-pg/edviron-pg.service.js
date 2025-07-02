@@ -1225,7 +1225,7 @@ let EdvironPgService = class EdvironPgService {
             throw new Error(error.message);
         }
     }
-    async generateBacthTransactions(trustee_id, start_date, end_date, status) {
+    async generateBacthTransactions(trustee_id, start_date, end_date, school_id, status) {
         try {
             const monthsFull = [
                 'January',
@@ -1256,6 +1256,9 @@ let EdvironPgService = class EdvironPgService {
                     $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
                 },
             };
+            if (school_id) {
+                collectQuery.school_id = school_id;
+            }
             const orders = await this.databaseService.CollectRequestModel.find({
                 ...collectQuery,
             }).select('_id');
@@ -1300,15 +1303,16 @@ let EdvironPgService = class EdvironPgService {
                 trustee_id: trustee_id,
                 month: monthsFull[new Date(endDate).getMonth()],
                 year: new Date(endDate).getFullYear().toString(),
+                school_id: school_id != null ? school_id : { $exists: false },
             });
             if (checkbatch) {
                 await this.databaseService.ErrorLogsModel.create({
                     type: 'BATCH TRANSACTION CORN',
-                    des: `Batch transaction already exists for trustee_id ${transactions[0].trustee_id}`,
+                    des: `Batch transaction already exists for trustee_id ${trustee_id}`,
                     identifier: trustee_id,
                     body: `${JSON.stringify({ startDate, endDate, status })}`,
                 });
-                throw new Error(`Batch transaction`);
+                throw new common_1.BadRequestException(`Already exists for trustee_id ${trustee_id}`);
             }
             const transactionsCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
             transactions =
@@ -1339,6 +1343,7 @@ let EdvironPgService = class EdvironPgService {
                         $project: {
                             _id: 0,
                             trustee_id: '$_id',
+                            school_id: school_id ? school_id : null,
                             totalTransactionAmount: 1,
                             totalOrderAmount: 1,
                             totalTransactions: 1,
@@ -1348,6 +1353,7 @@ let EdvironPgService = class EdvironPgService {
             if (transactions.length > 0) {
                 await new this.databaseService.BatchTransactionModel({
                     trustee_id: transactions[0].trustee_id,
+                    school_id: school_id ? school_id : null,
                     total_order_amount: transactions[0].totalOrderAmount,
                     total_transaction_amount: transactions[0].totalTransactionAmount,
                     total_transactions: transactions[0].totalTransactions,
@@ -1364,13 +1370,28 @@ let EdvironPgService = class EdvironPgService {
             };
         }
         catch (error) {
-            throw new Error(error.message);
+            throw new common_1.BadRequestException(error.message);
         }
     }
     async getBatchTransactions(trustee_id, year) {
         try {
             const batch = await this.databaseService.BatchTransactionModel.find({
                 trustee_id,
+                year,
+            });
+            if (!batch) {
+                throw new Error('Batch not found');
+            }
+            return batch;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async getMerchantBatchTransactions(school_id, year) {
+        try {
+            const batch = await this.databaseService.BatchTransactionModel.find({
+                school_id,
                 year,
             });
             if (!batch) {

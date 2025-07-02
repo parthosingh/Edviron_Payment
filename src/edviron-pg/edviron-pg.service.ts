@@ -1560,6 +1560,7 @@ export class EdvironPgService implements GatewayService {
     trustee_id: string,
     start_date: string,
     end_date: string,
+    school_id?: string | null,
     status?: string | null,
   ) {
     try {
@@ -1611,12 +1612,13 @@ export class EdvironPgService implements GatewayService {
       let collectQuery: any = {
         trustee_id: trustee_id,
         createdAt: {
-          // $gte: new Date(start_date),
-          // $lt: endOfDay,
           $gte: new Date(startDate.getTime() - 24 * 60 * 60 * 1000),
           $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
         },
       };
+      if (school_id) {
+        collectQuery.school_id = school_id;
+      }
       const orders = await this.databaseService.CollectRequestModel.find({
         ...collectQuery,
       }).select('_id');
@@ -1669,15 +1671,16 @@ export class EdvironPgService implements GatewayService {
           trustee_id: trustee_id,
           month: monthsFull[new Date(endDate).getMonth()],
           year: new Date(endDate).getFullYear().toString(),
+          school_id: school_id != null ? school_id : { $exists: false },
         });
       if (checkbatch) {
         await this.databaseService.ErrorLogsModel.create({
           type: 'BATCH TRANSACTION CORN',
-          des: `Batch transaction already exists for trustee_id ${transactions[0].trustee_id}`,
+          des: `Batch transaction already exists for trustee_id ${trustee_id}`,
           identifier: trustee_id,
           body: `${JSON.stringify({ startDate, endDate, status })}`,
         });
-        throw new Error(`Batch transaction`);
+        throw new BadRequestException(`Already exists for trustee_id ${trustee_id}`);
       }
 
       const transactionsCount =
@@ -1713,6 +1716,7 @@ export class EdvironPgService implements GatewayService {
             $project: {
               _id: 0, // Remove the `_id` field
               trustee_id: '$_id', // Rename `_id` to `trustee_id`
+              school_id: school_id ? school_id : null, // Rename `_id` to `trustee_id`
               totalTransactionAmount: 1,
               totalOrderAmount: 1,
               totalTransactions: 1,
@@ -1723,6 +1727,7 @@ export class EdvironPgService implements GatewayService {
       if (transactions.length > 0) {
         await new this.databaseService.BatchTransactionModel({
           trustee_id: transactions[0].trustee_id,
+          school_id: school_id ? school_id : null,
           total_order_amount: transactions[0].totalOrderAmount,
           total_transaction_amount: transactions[0].totalTransactionAmount,
           total_transactions: transactions[0].totalTransactions,
@@ -1738,7 +1743,7 @@ export class EdvironPgService implements GatewayService {
         year: new Date(endDate).getFullYear().toString(),
       };
     } catch (error) {
-      throw new Error(error.message);
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -1746,6 +1751,23 @@ export class EdvironPgService implements GatewayService {
     try {
       const batch = await this.databaseService.BatchTransactionModel.find({
         trustee_id,
+        year,
+      });
+
+      if (!batch) {
+        throw new Error('Batch not found');
+      }
+      return batch;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  async getMerchantBatchTransactions(school_id: string, year: string) {
+    
+    try {
+      const batch = await this.databaseService.BatchTransactionModel.find({
+        school_id,
         year,
       });
 

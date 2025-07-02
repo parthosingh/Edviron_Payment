@@ -2922,6 +2922,7 @@ export class EdvironPgController {
       trustee_id: string;
       start_date: string;
       end_date: string;
+      school_id?: string;
       status?: string;
     },
   ) {
@@ -2930,6 +2931,7 @@ export class EdvironPgController {
       body.trustee_id,
       body.start_date,
       body.end_date,
+      body.school_id,
       status,
     );
   }
@@ -2953,6 +2955,32 @@ export class EdvironPgController {
       }
       return await this.edvironPgService.getBatchTransactions(
         query.trustee_id,
+        query.year,
+      );
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Get('/get-merchant-batch-transactions')
+  async getMerchantBatchTransactions(
+    @Query()
+    query: {
+      school_id: string;
+      year: string;
+      token: string;
+    },
+  ) {
+    try {
+      const { school_id, year, token } = query;
+      console.log(school_id, year, 'school_id, year');
+      console.log(process.env.KEY);
+      const decoded = jwt.verify(token, process.env.KEY!) as any;
+      if (decoded.school_id !== school_id) {
+        throw new UnauthorizedException('Invalid token');
+      }
+      return await this.edvironPgService.getMerchantBatchTransactions(
+        query.school_id,
         query.year,
       );
     } catch (e) {

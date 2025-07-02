@@ -2003,7 +2003,7 @@ let EdvironPgController = class EdvironPgController {
     }
     async saveBatchTransactions(body) {
         const status = body.status || null;
-        return await this.edvironPgService.generateBacthTransactions(body.trustee_id, body.start_date, body.end_date, status);
+        return await this.edvironPgService.generateBacthTransactions(body.trustee_id, body.start_date, body.end_date, body.school_id, status);
     }
     async getBatchTransactions(query) {
         try {
@@ -2014,6 +2014,21 @@ let EdvironPgController = class EdvironPgController {
                 throw new common_1.UnauthorizedException('Invalid token');
             }
             return await this.edvironPgService.getBatchTransactions(query.trustee_id, query.year);
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async getMerchantBatchTransactions(query) {
+        try {
+            const { school_id, year, token } = query;
+            console.log(school_id, year, 'school_id, year');
+            console.log(process.env.KEY);
+            const decoded = jwt.verify(token, process.env.KEY);
+            if (decoded.school_id !== school_id) {
+                throw new common_1.UnauthorizedException('Invalid token');
+            }
+            return await this.edvironPgService.getMerchantBatchTransactions(query.school_id, query.year);
         }
         catch (e) {
             throw new common_1.BadRequestException(e.message);
@@ -3270,6 +3285,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getBatchTransactions", null);
+__decorate([
+    (0, common_1.Get)('/get-merchant-batch-transactions'),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getMerchantBatchTransactions", null);
 __decorate([
     (0, common_1.Post)('/vendor-transactions-settlement'),
     __param(0, (0, common_1.Body)()),
