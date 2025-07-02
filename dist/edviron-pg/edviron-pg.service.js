@@ -1267,8 +1267,6 @@ let EdvironPgService = class EdvironPgService {
             let query = {
                 collect_id: { $in: orderIds },
             };
-            console.log(startOfDayUTC, 'startOfDayUTC');
-            console.log(endOfDayUTC, 'endOfDayUTC');
             if (startDate && endDate) {
                 query = {
                     ...query,
@@ -1308,11 +1306,11 @@ let EdvironPgService = class EdvironPgService {
             if (checkbatch) {
                 await this.databaseService.ErrorLogsModel.create({
                     type: 'BATCH TRANSACTION CORN',
-                    des: `Batch transaction already exists for trustee_id ${trustee_id}`,
+                    des: `Batch transaction already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]} month`,
                     identifier: trustee_id,
                     body: `${JSON.stringify({ startDate, endDate, status })}`,
                 });
-                throw new common_1.BadRequestException(`Already exists for trustee_id ${trustee_id}`);
+                throw new common_1.BadRequestException(`Already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]} month`);
             }
             const transactionsCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
             transactions =

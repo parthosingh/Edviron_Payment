@@ -2973,8 +2973,7 @@ export class EdvironPgController {
   ) {
     try {
       const { school_id, year, token } = query;
-      console.log(school_id, year, 'school_id, year');
-      console.log(process.env.KEY);
+     
       const decoded = jwt.verify(token, process.env.KEY!) as any;
       if (decoded.school_id !== school_id) {
         throw new UnauthorizedException('Invalid token');

@@ -1632,8 +1632,8 @@ export class EdvironPgService implements GatewayService {
 
       // Set hours, minutes, seconds, and milliseconds to the last moment of the day
       // endOfDay.setHours(23, 59, 59, 999);
-      console.log(startOfDayUTC, 'startOfDayUTC');
-      console.log(endOfDayUTC, 'endOfDayUTC');
+      // console.log(startOfDayUTC, 'startOfDayUTC');
+      // console.log(endOfDayUTC, 'endOfDayUTC');
       if (startDate && endDate) {
         query = {
           ...query,
@@ -1676,11 +1676,11 @@ export class EdvironPgService implements GatewayService {
       if (checkbatch) {
         await this.databaseService.ErrorLogsModel.create({
           type: 'BATCH TRANSACTION CORN',
-          des: `Batch transaction already exists for trustee_id ${trustee_id}`,
+          des: `Batch transaction already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]} month`,
           identifier: trustee_id,
           body: `${JSON.stringify({ startDate, endDate, status })}`,
         });
-        throw new BadRequestException(`Already exists for trustee_id ${trustee_id}`);
+        throw new BadRequestException(`Already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]} month`);
       }
 
       const transactionsCount =
