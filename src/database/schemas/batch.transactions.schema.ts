@@ -4,7 +4,7 @@ import { CollectRequest } from './collect_request.schema';
 
 @Schema({ timestamps: true })
 export class BatchTransactions {
-  @Prop({nullable: true })
+  @Prop({ })
   trustee_id: string;
   @Prop({ nullable: true })
   school_id: string;
