@@ -1301,7 +1301,7 @@ let EdvironPgService = class EdvironPgService {
                 trustee_id: trustee_id,
                 month: monthsFull[new Date(endDate).getMonth()],
                 year: new Date(endDate).getFullYear().toString(),
-                school_id: school_id != null ? school_id : null,
+                school_id: school_id ? school_id : null,
             });
             if (checkbatch) {
                 await this.databaseService.ErrorLogsModel.create({
