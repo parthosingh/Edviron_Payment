@@ -1241,26 +1241,53 @@ let EdvironPgService = class EdvironPgService {
                 'November',
                 'December',
             ];
-            const orders = await this.databaseService.CollectRequestModel.find({
+            if (!trustee_id) {
+                throw new common_1.BadRequestException('Trustee ID is required');
+            }
+            const startDate = new Date(start_date);
+            const startOfDayUTC = new Date(await this.convertISTStartToUTC(start_date));
+            const endDate = end_date;
+            const endOfDay = new Date(endDate);
+            const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
+            let collectQuery = {
                 trustee_id: trustee_id,
+                createdAt: {
+                    $gte: new Date(startDate.getTime() - 24 * 60 * 60 * 1000),
+                    $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
+                },
+            };
+            const orders = await this.databaseService.CollectRequestModel.find({
+                ...collectQuery,
             }).select('_id');
             let transactions = [];
             const orderIds = orders.map((order) => order._id);
             let query = {
                 collect_id: { $in: orderIds },
             };
-            const startDate = new Date(start_date);
-            const startOfDayUTC = new Date(await this.convertISTStartToUTC(start_date));
-            const endDate = end_date;
-            const endOfDay = new Date(endDate);
-            const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
+            console.log(startOfDayUTC, 'startOfDayUTC');
+            console.log(endOfDayUTC, 'endOfDayUTC');
             if (startDate && endDate) {
                 query = {
                     ...query,
-                    createdAt: {
-                        $gte: startOfDayUTC,
-                        $lt: endOfDayUTC,
-                    },
+                    $or: [
+                        {
+                            payment_time: {
+                                $gte: startOfDayUTC,
+                                $lt: endOfDayUTC,
+                            },
+                        },
+                        {
+                            $and: [
+                                { payment_time: { $eq: null } },
+                                {
+                                    updatedAt: {
+                                        $gte: startOfDayUTC,
+                                        $lt: endOfDayUTC,
+                                    },
+                                },
+                            ],
+                        },
+                    ],
                 };
             }
             if ((status && status === 'SUCCESS') || status === 'PENDING') {

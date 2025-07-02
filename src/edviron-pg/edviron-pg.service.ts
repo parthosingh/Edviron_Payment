@@ -1597,18 +1597,9 @@ export class EdvironPgService implements GatewayService {
         'November',
         'December',
       ];
-
-      const orders = await this.databaseService.CollectRequestModel.find({
-        trustee_id: trustee_id,
-      }).select('_id');
-
-      let transactions: any[] = [];
-
-      const orderIds = orders.map((order: any) => order._id);
-
-      let query: any = {
-        collect_id: { $in: orderIds },
-      };
+      if (!trustee_id) {
+        throw new BadRequestException('Trustee ID is required');
+      }
 
       const startDate = new Date(start_date);
       const startOfDayUTC = new Date(
@@ -1617,16 +1608,52 @@ export class EdvironPgService implements GatewayService {
       const endDate = end_date;
       const endOfDay = new Date(endDate);
       const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
+      let collectQuery: any = {
+        trustee_id: trustee_id,
+        createdAt: {
+          // $gte: new Date(start_date),
+          // $lt: endOfDay,
+          $gte: new Date(startDate.getTime() - 24 * 60 * 60 * 1000),
+          $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
+        },
+      };
+      const orders = await this.databaseService.CollectRequestModel.find({
+        ...collectQuery,
+      }).select('_id');
+
+      let transactions: any[] = [];
+
+      const orderIds = orders.map((order: any) => order._id);
+      let query: any = {
+        collect_id: { $in: orderIds },
+      };
+
       // Set hours, minutes, seconds, and milliseconds to the last moment of the day
       // endOfDay.setHours(23, 59, 59, 999);
-
+      console.log(startOfDayUTC, 'startOfDayUTC');
+      console.log(endOfDayUTC, 'endOfDayUTC');
       if (startDate && endDate) {
         query = {
           ...query,
-          createdAt: {
-            $gte: startOfDayUTC,
-            $lt: endOfDayUTC,
-          },
+          $or: [
+            {
+              payment_time: {
+                $gte: startOfDayUTC,
+                $lt: endOfDayUTC,
+              },
+            },
+            {
+              $and: [
+                { payment_time: { $eq: null } }, // Matches documents where payment_time is null or doesn't exist
+                {
+                  updatedAt: {
+                    $gte: startOfDayUTC,
+                    $lt: endOfDayUTC,
+                  },
+                },
+              ],
+            },
+          ],
         };
       }
 
@@ -1816,7 +1843,7 @@ export class EdvironPgService implements GatewayService {
     }
   }
 
-  async retriveEasebuzz(txnid:string, key:string, salt:string) {
+  async retriveEasebuzz(txnid: string, key: string, salt: string) {
     const hashString = `${key}|${txnid}|${salt}`;
     const hashValue = await calculateSHA512Hash(hashString);
 
@@ -1839,7 +1866,7 @@ export class EdvironPgService implements GatewayService {
       const { data } = await axios.request(config);
       return data;
     } catch (error) {
-      throw new BadRequestException(error.message)
+      throw new BadRequestException(error.message);
     }
   }
 }
