@@ -2003,7 +2003,11 @@ let EdvironPgController = class EdvironPgController {
     }
     async saveBatchTransactions(body) {
         const status = body.status || null;
-        return await this.edvironPgService.generateBacthTransactions(body.trustee_id, body.start_date, body.end_date, body.school_id, status);
+        return await this.edvironPgService.generateBacthTransactions(body.trustee_id, body.start_date, body.end_date, status);
+    }
+    async saveMerchantBatchTransactions(body) {
+        const status = body.status || null;
+        return await this.edvironPgService.generateMerchantBacthTransactions(body.school_id, body.start_date, body.end_date, status);
     }
     async getBatchTransactions(query) {
         try {
@@ -3276,6 +3280,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "saveBatchTransactions", null);
+__decorate([
+    (0, common_1.Post)('/save-merchant-transactions'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "saveMerchantBatchTransactions", null);
 __decorate([
     (0, common_1.Get)('/get-batch-transactions'),
     __param(0, (0, common_1.Query)()),

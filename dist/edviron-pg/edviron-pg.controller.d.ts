@@ -219,7 +219,17 @@ export declare class EdvironPgController {
         trustee_id: string;
         start_date: string;
         end_date: string;
-        school_id?: string;
+        status?: string;
+    }): Promise<{
+        transactions: any[];
+        totalTransactions: number;
+        month: string;
+        year: string;
+    }>;
+    saveMerchantBatchTransactions(body: {
+        school_id: string;
+        start_date: string;
+        end_date: string;
         status?: string;
     }): Promise<{
         transactions: any[];

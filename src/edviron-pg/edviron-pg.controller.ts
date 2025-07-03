@@ -2922,7 +2922,6 @@ export class EdvironPgController {
       trustee_id: string;
       start_date: string;
       end_date: string;
-      school_id?: string;
       status?: string;
     },
   ) {
@@ -2931,7 +2930,25 @@ export class EdvironPgController {
       body.trustee_id,
       body.start_date,
       body.end_date,
+      status,
+    );
+  }
+
+   @Post('/save-merchant-transactions')
+  async saveMerchantBatchTransactions(
+    @Body()
+    body: {
+      school_id: string;
+      start_date: string;
+      end_date: string;
+      status?: string;
+    },
+  ) {
+    const status = body.status || null;
+    return await this.edvironPgService.generateMerchantBacthTransactions(
       body.school_id,
+      body.start_date,
+      body.end_date,
       status,
     );
   }
