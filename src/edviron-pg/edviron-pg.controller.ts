@@ -125,7 +125,7 @@ export class EdvironPgController {
           new: true,
         },
       );
-       res.redirect(collectRequest.payment_data);
+      res.redirect(collectRequest.payment_data);
     }
     if (collectRequest?.gateway === Gateway.EDVIRON_CCAVENUE) {
       await this.databaseService.CollectRequestModel.updateOne(
@@ -2456,7 +2456,13 @@ export class EdvironPgController {
       }
       if (gateway === Gateway.EDVIRON_EASEBUZZ) {
         console.log('init refund from easebuzz');
-
+        if (request.easebuzz_non_partner) {
+          return await this.easebuzzService.initiateRefundv2(
+            collect_id,
+            amount,
+            refund_id,
+          );
+        }
         const refund = await this.easebuzzService.initiateRefund(
           collect_id,
           amount,
@@ -3365,7 +3371,7 @@ export class EdvironPgController {
   async updateSchoolMdr(
     @Body()
     body: {
-      token: string; 
+      token: string;
       trustee_id: string;
       school_id: string;
       platform_charges: PlatformCharge[];
@@ -3720,40 +3726,38 @@ export class EdvironPgController {
       token: string;
     },
   ) {
-    try{
-
-   
-    const payload = await this.cashfreeService.getMerchantInfo(
-      body.school_id,
-      body.kyc_mail,
-    );
-    const {
-      merchant_id,
-      merchant_email,
-      merchant_name,
-      poc_phone,
-      merchant_site_url,
-      business_details,
-      website_details,
-      bank_account_details,
-      signatory_details,
-    } = payload;
-    // return payload
-    return await this.cashfreeService.createMerchant(
-      merchant_id,
-      merchant_email,
-      merchant_name,
-      poc_phone,
-      merchant_site_url,
-      business_details,
-      website_details,
-      bank_account_details,
-      signatory_details,
-    );
-     }catch(e){
+    try {
+      const payload = await this.cashfreeService.getMerchantInfo(
+        body.school_id,
+        body.kyc_mail,
+      );
+      const {
+        merchant_id,
+        merchant_email,
+        merchant_name,
+        poc_phone,
+        merchant_site_url,
+        business_details,
+        website_details,
+        bank_account_details,
+        signatory_details,
+      } = payload;
+      // return payload
+      return await this.cashfreeService.createMerchant(
+        merchant_id,
+        merchant_email,
+        merchant_name,
+        poc_phone,
+        merchant_site_url,
+        business_details,
+        website_details,
+        bank_account_details,
+        signatory_details,
+      );
+    } catch (e) {
       console.log(e);
-      
-      throw new BadRequestException(e.message)
+
+      throw new BadRequestException(e.message);
     }
   }
 
