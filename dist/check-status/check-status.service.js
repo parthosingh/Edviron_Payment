@@ -120,6 +120,12 @@ let CheckStatusService = class CheckStatusService {
                 custom_order_id: collectRequest.custom_order_id || null,
             };
         }
+        if (collectRequest.easebuzz_non_partner) {
+            switch (collectRequest.gateway) {
+                case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
+                    return await this.easebuzzService.easebuzzWebhookCheckStatusV2(collect_request_id, collectRequest);
+            }
+        }
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:
                 return await this.hdfcService.checkStatus(collect_request_id);
@@ -299,6 +305,12 @@ let CheckStatusService = class CheckStatusService {
                 details: details,
                 custom_order_id: collectRequest.custom_order_id || null,
             };
+        }
+        if (collectRequest.easebuzz_non_partner) {
+            switch (collectRequest.gateway) {
+                case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
+                    return await this.easebuzzService.easebuzzWebhookCheckStatusV2(collectRequest._id.toString(), collectRequest);
+            }
         }
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:
