@@ -297,7 +297,7 @@ let EasebuzzService = class EasebuzzService {
                 await this.getQr(request._id.toString(), request, ezb_split_payments);
                 return {
                     collect_request_id: request._id,
-                    collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`
+                    collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
                 };
             }
         }
@@ -374,7 +374,7 @@ let EasebuzzService = class EasebuzzService {
             await this.getQrNonSplit(request._id.toString(), request);
             return {
                 collect_request_id: request._id,
-                collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`
+                collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
             };
         }
         catch (e) {
