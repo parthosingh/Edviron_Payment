@@ -297,23 +297,7 @@ let EasebuzzService = class EasebuzzService {
                 await this.getQr(request._id.toString(), request, ezb_split_payments);
                 return {
                     collect_request_id: request._id,
-                    collect_request_url: process.env.URL +
-                        '/edviron-pg/redirect?session_id=' +
-                        '' +
-                        '&collect_request_id=' +
-                        request._id +
-                        '&amount=' +
-                        request.amount.toFixed(2) +
-                        '&' +
-                        disabled_modes_string +
-                        '&platform_charges=' +
-                        encodedPlatformCharges +
-                        '&school_name=' +
-                        school_name +
-                        '&easebuzz_pg=' +
-                        true +
-                        '&payment_id=' +
-                        easebuzzPaymentId,
+                    collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
                 };
             }
         }
@@ -384,30 +368,13 @@ let EasebuzzService = class EasebuzzService {
                 data: encodedParams,
             };
             const { data: easebuzzRes } = await axios_1.default.request(Ezboptions);
-            console.log(easebuzzRes);
             const easebuzzPaymentId = easebuzzRes.data;
             collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
             await collectReq.save();
             await this.getQrNonSplit(request._id.toString(), request);
             return {
                 collect_request_id: request._id,
-                collect_request_url: process.env.URL +
-                    '/edviron-pg/redirect?session_id=' +
-                    '' +
-                    '&collect_request_id=' +
-                    request._id +
-                    '&amount=' +
-                    request.amount.toFixed(2) +
-                    '&' +
-                    disabled_modes_string +
-                    '&platform_charges=' +
-                    encodedPlatformCharges +
-                    '&school_name=' +
-                    school_name +
-                    '&easebuzz_pg=' +
-                    true +
-                    '&payment_id=' +
-                    easebuzzPaymentId,
+                collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
             };
         }
         catch (e) {
