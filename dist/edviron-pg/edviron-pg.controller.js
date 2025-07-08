@@ -1785,6 +1785,9 @@ let EdvironPgController = class EdvironPgController {
             }
             if (gateway === collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ) {
                 console.log('init refund from easebuzz');
+                if (request.easebuzz_non_partner) {
+                    return await this.easebuzzService.initiateRefundv2(collect_id, amount, refund_id);
+                }
                 const refund = await this.easebuzzService.initiateRefund(collect_id, amount, refund_id);
                 console.log(refund);
                 return refund;

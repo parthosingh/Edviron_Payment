@@ -6,6 +6,7 @@ import {
   Get,
   NotFoundException,
   Post,
+  Query,
   Req,
   Res,
   UnauthorizedException,
@@ -35,6 +36,25 @@ export class EasebuzzController {
     private readonly databaseService: DatabaseService,
     private readonly edvironPgService: EdvironPgService,
   ) {}
+
+  @Get('/redirect')
+  async redirect(
+    @Query('collect_id') collect_id: string, 
+    @Query('easebuzzPaymentId') easebuzzPaymentId: string, 
+    @Res() res: any
+  ) {
+    try {
+      const collectRequest =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collectRequest) throw new BadRequestException('Order Id not found');
+      if (!easebuzzPaymentId) {
+        throw new BadRequestException('payment url not found');
+      }
+      res.redirect(`${process.env.EASEBUZZ_ENDPOINT_PROD}/pay/${easebuzzPaymentId}`);
+    } catch (error) {
+      throw new BadRequestException(error.response?.data || error.message);
+    }
+  }
   @Get('/upiqr')
   async getQr(@Res() res: any, @Req() req: any) {
     try {
