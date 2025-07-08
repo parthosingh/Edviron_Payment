@@ -2256,7 +2256,6 @@ export class EdvironPgController {
         pipeline: [],
         as: 'collect_request',
       };
-
       // 1. Handle date filters
       if (startDate && endDate) {
         query.$or = [
@@ -2335,7 +2334,6 @@ export class EdvironPgController {
       // 6. Project only necessary fields
       collectRequestLookup.pipeline.push({
         $project: {
-          _id: 0,
           __v: 0,
           createdAt: 0,
           updatedAt: 0,
@@ -2373,7 +2371,7 @@ export class EdvironPgController {
                   payment_method: '$payment_method',
                   details: '$details',
                   bank_reference: '$bank_reference',
-                  collect_id: '$collect_id',
+                  collect_id: '$collect_request._id',
                   order_amount: '$order_amount',
                   merchant_id: '$collect_request.school_id',
                   currency: 'INR',

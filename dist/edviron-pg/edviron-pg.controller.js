@@ -1723,7 +1723,6 @@ let EdvironPgController = class EdvironPgController {
             });
             collectRequestLookup.pipeline.push({
                 $project: {
-                    _id: 0,
                     __v: 0,
                     createdAt: 0,
                     updatedAt: 0,
@@ -1759,7 +1758,7 @@ let EdvironPgController = class EdvironPgController {
                                     payment_method: '$payment_method',
                                     details: '$details',
                                     bank_reference: '$bank_reference',
-                                    collect_id: '$collect_id',
+                                    collect_id: '$collect_request._id',
                                     order_amount: '$order_amount',
                                     merchant_id: '$collect_request.school_id',
                                     currency: 'INR',
