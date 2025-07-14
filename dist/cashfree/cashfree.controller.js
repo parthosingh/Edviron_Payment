@@ -307,7 +307,7 @@ let CashfreeController = class CashfreeController {
         });
         const { data } = body;
         const { order, payment, customer_details, payment_gateway_details } = data;
-        const { payment_status, payment_amount, payment_message, payment_time, bank_reference, payment_method, payment_group, cf_payment_id } = payment;
+        const { payment_status, payment_amount, payment_message, payment_time, bank_reference, payment_method, payment_group, cf_payment_id, } = payment;
         const { utr, credit_ref_no, remitter_account, remitter_name, remitter_ifsc, email, phone, vaccount_id, vaccount_number, } = payment_method.vba_transfer;
         const { customer_name, customer_id, customer_email, customer_phone } = customer_details;
         const { gateway_name, gateway_order_id, gateway_payment_id, gateway_status_code, gateway_order_reference_id, gateway_settlement, } = payment_gateway_details;
@@ -482,6 +482,38 @@ let CashfreeController = class CashfreeController {
             console.log(e);
         }
     }
+    async redirect(session_id, res) {
+        try {
+            const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Redirecting to Payment...</title>
+          <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+      </head>
+      <body>
+          <p>Redirecting to payment page...</p>
+          <script>
+              const cashfree = Cashfree({ mode: "production" });
+              const checkoutOptions = {
+                  paymentSessionId: "${session_id}",
+                  redirectTarget: "_self"
+              };
+              cashfree.checkout(checkoutOptions);
+          </script>
+      </body>
+      </html>
+    `;
+            res.setHeader('Content-Type', 'text/html');
+            res.send(html);
+        }
+        catch (e) {
+            console.error(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.CashfreeController = CashfreeController;
 __decorate([
@@ -585,6 +617,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CashfreeController.prototype, "uploadKYC", null);
+__decorate([
+    (0, common_1.Get)('/redirect'),
+    __param(0, (0, common_1.Query)('session_id')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "redirect", null);
 exports.CashfreeController = CashfreeController = __decorate([
     (0, common_1.Controller)('cashfree'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

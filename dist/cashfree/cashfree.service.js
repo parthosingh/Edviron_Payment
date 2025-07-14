@@ -260,8 +260,8 @@ let CashfreeService = class CashfreeService {
                     customData = customOrderMap.get(order.order_id) || {};
                     try {
                         custom_order_id = customData.custom_order_id || null;
-                        school_id = customData.school_id || null,
-                            additionalData = JSON.parse(customData?.additional_data);
+                        (school_id = customData.school_id || null),
+                            (additionalData = JSON.parse(customData?.additional_data));
                     }
                     catch {
                         additionalData = null;
@@ -730,8 +730,7 @@ let CashfreeService = class CashfreeService {
                     docType: 'lobproof_education',
                 });
             }
-            if (kycresponse.business_type === 'Trust' &&
-                kycresponse.businessProof) {
+            if (kycresponse.business_type === 'Trust' && kycresponse.businessProof) {
                 documentsToUpload.push({
                     url: kycresponse.businessProof,
                     docType: 'entityproof_trustdeed',
@@ -938,6 +937,72 @@ let CashfreeService = class CashfreeService {
             console.log(error);
             console.error('Error:', error.response?.data || error.message);
             throw error;
+        }
+    }
+    async createNonSeamlessOrder(request, cashfreeVedors, isSplitPayments) {
+        try {
+            const currentTime = new Date();
+            const expiryTime = new Date(currentTime.getTime() + 20 * 60000);
+            const isoExpiryTime = expiryTime.toISOString();
+            let data = JSON.stringify({
+                customer_details: {
+                    customer_id: '7112AAA812234',
+                    customer_phone: '9898989898',
+                },
+                order_currency: 'INR',
+                order_amount: request.amount.toFixed(2),
+                order_id: request._id,
+                order_meta: {
+                    return_url: process.env.URL +
+                        '/edviron-pg/callback?collect_request_id=' +
+                        request._id,
+                },
+                order_expiry_time: isoExpiryTime,
+            });
+            if (isSplitPayments && cashfreeVedors) {
+                const vendor_data = cashfreeVedors
+                    .filter(({ amount, percentage }) => {
+                    return (amount && amount > 0) || (percentage && percentage > 0);
+                })
+                    .map(({ vendor_id, percentage, amount }) => ({
+                    vendor_id,
+                    percentage,
+                    amount,
+                }));
+                data = JSON.stringify({
+                    customer_details: {
+                        customer_id: '7112AAA812234',
+                        customer_phone: '9898989898',
+                    },
+                    order_currency: 'INR',
+                    order_amount: request.amount.toFixed(2),
+                    order_id: request._id,
+                    order_meta: {
+                        return_url: process.env.URL +
+                            '/edviron-pg/callback?collect_request_id=' +
+                            request._id,
+                    },
+                    order_splits: vendor_data,
+                });
+            }
+            const config = {
+                method: 'post',
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/orders`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': process.env.CASHFREE_MERCHANT_ID,
+                    'x-partner-apikey': process.env.CASHFREE_API_KEY,
+                },
+                data: data,
+            };
+            const { data: response } = await axios_1.default.request(config);
+            return response;
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
         }
     }
 };
