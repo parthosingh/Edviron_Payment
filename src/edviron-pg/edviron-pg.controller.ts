@@ -109,7 +109,13 @@ export class EdvironPgController {
         `${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`,
       );
     }
-    if (
+
+    if (collectRequest?.easebuzz_non_partner) {
+      res.redirect(
+        `${process.env.EASEBUZZ_ENDPOINT_PROD}/pay/${collectRequest.paymentIds.easebuzz_id}`,
+      );
+    }
+    if ( 
       collectRequest &&
       collectRequest.worldline &&
       collectRequest.worldline.worldline_merchant_id
@@ -180,10 +186,6 @@ export class EdvironPgController {
     );
     const collectReq =
       await this.databaseService.CollectRequestModel.findById(collect_id);
-
-      if(collectReq?.easebuzz_non_partner){
-        res.redirect(`${process.env.EASEBUZZ_ENDPOINT_PROD}/pay/${collectReq.paymentIds.easebuzz_id}`);
-      }
 
     if (collectReq?.isCFNonSeamless) {
       const html = `
