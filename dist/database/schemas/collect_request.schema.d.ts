@@ -113,6 +113,7 @@ export declare class CollectRequest {
     trustee_id: string;
     payment_data: string;
     sdkPayment: boolean;
+    isCFNonSeamless: boolean;
     isVBAPayment: boolean;
     isVBAPaymentComplete: boolean;
     custom_order_id: string;

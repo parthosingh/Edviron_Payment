@@ -239,6 +239,12 @@ let EdvironPgService = class EdvironPgService {
             const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
             collectReq.paymentIds = paymentInfo;
             await collectReq.save();
+            if (collectReq.isCFNonSeamless) {
+                console.log('cfnion seamless');
+                return {
+                    url: `${process.env.URL}/cashfree/redirect?session_id=${cf_payment_id}`
+                };
+            }
             return {
                 url: process.env.URL +
                     '/edviron-pg/redirect?session_id=' +

@@ -467,6 +467,7 @@ export class CcavenueService {
         paramObject['enc_response'],
         ccavenue_working_key,
       );
+      console.log({decrypt_res});
       
       const order_status_result = JSON.parse(decrypt_res).Order_Status_Result;
 

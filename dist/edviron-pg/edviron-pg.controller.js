@@ -143,6 +143,35 @@ let EdvironPgController = class EdvironPgController {
             new: true,
         });
         const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (collectReq?.easebuzz_non_partner) {
+            res.redirect(`${process.env.EASEBUZZ_ENDPOINT_PROD}/pay/${collectReq.paymentIds.easebuzz_id}`);
+        }
+        if (collectReq?.isCFNonSeamless) {
+            const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Redirecting to Payment...</title>
+          <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+      </head>
+      <body>
+          <p>Redirecting to payment page...</p>
+          <script>
+              const cashfree = Cashfree({ mode: "production" });
+              const checkoutOptions = {
+                  paymentSessionId: "${sessionId}",
+                  redirectTarget: "_self"
+              };
+              cashfree.checkout(checkoutOptions);
+          </script>
+      </body>
+      </html>
+    `;
+            res.setHeader('Content-Type', 'text/html');
+            res.send(html);
+        }
         const payload = { school_id: collectReq?.school_id };
         const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET, {
             noTimestamp: true,

@@ -157,6 +157,9 @@ export class CollectRequest {
   sdkPayment: boolean;
 
   @Prop({ required: false, default: false })
+  isCFNonSeamless: boolean;
+
+  @Prop({ required: false, default: false })
   isVBAPayment: boolean;
 
   @Prop({ required: false, default: false })

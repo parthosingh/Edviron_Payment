@@ -84,7 +84,7 @@ export declare class CollectService {
         gatepay_terminal_id?: string | null;
         gatepay_key?: string | null;
         gatepay_iv?: string | null;
-    }): Promise<{
+    }, isCFNonSeamless?: boolean): Promise<{
         url: string;
         request: CollectRequest;
     }>;

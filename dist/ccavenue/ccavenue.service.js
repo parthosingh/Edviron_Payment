@@ -307,6 +307,7 @@ let CcavenueService = class CcavenueService {
             const params = new URLSearchParams(res.data);
             const paramObject = Object.fromEntries(params.entries());
             const decrypt_res = this.decrypt(paramObject['enc_response'], ccavenue_working_key);
+            console.log({ decrypt_res });
             const order_status_result = JSON.parse(decrypt_res).Order_Status_Result;
             const paymentInstrument = order_status_result['order_option_type'];
             const paymentInstrumentBank = order_status_result['order_card_name'];
