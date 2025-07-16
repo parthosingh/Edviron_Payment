@@ -267,7 +267,7 @@ let EasebuzzController = class EasebuzzController {
                 return (0, sign_1.sign)(await this.easebuzzService.createOrderV2(request, platform_charges, schoolName));
             }
             console.log('nonsplit');
-            return (0, sign_1.sign)(await this.easebuzzService.createOrderV2NonSplit(request, platform_charges, schoolName));
+            return (0, sign_1.sign)(await this.easebuzzService.createOrderV2NonSplit(request, platform_charges, schoolName, easebuzz_school_label || null));
         }
         catch (e) {
             console.log(e);

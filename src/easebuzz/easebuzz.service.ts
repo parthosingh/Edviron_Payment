@@ -500,6 +500,7 @@ export class EasebuzzService {
     request: CollectRequest,
     platform_charges: platformChange[],
     school_name: string,
+    easebuzz_school_label?: string | null,
   ) {
     try {
       console.log('11');
@@ -565,52 +566,12 @@ export class EasebuzzService {
       encodedParams.set('hash', hash);
       encodedParams.set('request_flow', 'SEAMLESS');
       encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
-      // let ezb_split_payments: { [key: string]: number } = {};
+      let ezb_split_payments: { [key: string]: number } = {};
 
-      // if (
-      //   request.isSplitPayments &&
-      //   request.easebuzzVendors &&
-      //   request.easebuzz_split_label &&
-      //   request.easebuzzVendors.length > 0
-      // ) {
-      //   let vendorTotal = 0;
-      //   for (const vendor of request.easebuzzVendors) {
-      //     if (vendor.name && typeof vendor.amount === 'number') {
-      //       ezb_split_payments[vendor.vendor_id] = vendor.amount;
-      //       vendorTotal += vendor.amount;
-      //     }
-
-      //     await new this.databaseService.VendorTransactionModel({
-      //       vendor_id: vendor.vendor_id,
-      //       amount: vendor.amount,
-      //       collect_id: request._id,
-      //       gateway: Gateway.EDVIRON_EASEBUZZ,
-      //       status: TransactionStatus.PENDING,
-      //       trustee_id: request.trustee_id,
-      //       school_id: request.school_id,
-      //       custom_order_id: request.custom_order_id || '',
-      //       name: vendor.name, // Ensure you assign the vendor's name
-      //     }).save();
-      //   }
-
-      //   const remainingAmount = request.amount - vendorTotal;
-      //   // remainig balance will go to sub-merchant-id in split
-      //   if (remainingAmount > 0) {
-      //     ezb_split_payments[request.easebuzz_split_label] = remainingAmount;
-      //   }
-      //   encodedParams.set(
-      //     'split_payments',
-      //     JSON.stringify(ezb_split_payments),
-      //   );
-      // }
-      // // in case of split false 100% amount goes to sub merchant
-      // else {
-      //   ezb_split_payments[request.easebuzz_split_label] = request.amount;
-      //   encodedParams.set(
-      //     'split_payments',
-      //     JSON.stringify(ezb_split_payments),
-      //   );
-      // }
+      if (request.easebuzz_split_label) {
+        ezb_split_payments[request.easebuzz_split_label] = request.amount;
+        encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+      }
 
       const disabled_modes_string = request.disabled_modes
         .map((mode) => `${mode}=false`)
@@ -618,6 +579,9 @@ export class EasebuzzService {
       const encodedPlatformCharges = encodeURIComponent(
         JSON.stringify(platform_charges),
       );
+
+      console.log({encodedParams});
+      
 
       const Ezboptions = {
         method: 'POST',

@@ -435,6 +435,7 @@ export class EasebuzzController {
           request,
           platform_charges,
           schoolName,
+          easebuzz_school_label || null,
         ),
       );
     } catch (e) {

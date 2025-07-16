@@ -377,7 +377,7 @@ let EasebuzzService = class EasebuzzService {
             throw new common_1.BadRequestException(e.message);
         }
     }
-    async createOrderV2NonSplit(request, platform_charges, school_name) {
+    async createOrderV2NonSplit(request, platform_charges, school_name, easebuzz_school_label) {
         try {
             console.log('11');
             const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
@@ -426,10 +426,16 @@ let EasebuzzService = class EasebuzzService {
             encodedParams.set('hash', hash);
             encodedParams.set('request_flow', 'SEAMLESS');
             encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
+            let ezb_split_payments = {};
+            if (request.easebuzz_split_label) {
+                ezb_split_payments[request.easebuzz_split_label] = request.amount;
+                encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+            }
             const disabled_modes_string = request.disabled_modes
                 .map((mode) => `${mode}=false`)
                 .join('&');
             const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
+            console.log({ encodedParams });
             const Ezboptions = {
                 method: 'POST',
                 url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
