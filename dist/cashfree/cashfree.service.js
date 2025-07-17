@@ -821,7 +821,7 @@ let CashfreeService = class CashfreeService {
             merchant_id: response.school,
             merchant_email: kyc_mail,
             merchant_name: school.school_name,
-            poc_phone: school.number,
+            poc_phone: '7304071330',
             merchant_site_url: 'https://www.edviron.com/',
             business_details: {
                 business_legal_name: response.businessProofDetails?.business_name,

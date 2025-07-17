@@ -1130,7 +1130,7 @@ export class CashfreeService {
       merchant_id: response.school,
       merchant_email: kyc_mail,
       merchant_name: school.school_name,
-      poc_phone: school.number, //take from school
+      poc_phone: '7304071330', //hard coded
       merchant_site_url: 'https://www.edviron.com/',
       business_details: {
         business_legal_name: response.businessProofDetails?.business_name,
