@@ -1271,7 +1271,6 @@ export class EdvironPgService implements GatewayService {
           };
           const response = await axios.request(config);
 
-          console.log(response.data, 'response.data');
           const { transfer_utr, transfer_time } = response.data;
           transaction[0] = {
             ...transaction[0],

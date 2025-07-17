@@ -1016,7 +1016,6 @@ let EdvironPgService = class EdvironPgService {
                         },
                     };
                     const response = await axios_1.default.request(config);
-                    console.log(response.data, 'response.data');
                     const { transfer_utr, transfer_time } = response.data;
                     transaction[0] = {
                         ...transaction[0],
