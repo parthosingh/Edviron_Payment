@@ -309,6 +309,7 @@ let CashfreeService = class CashfreeService {
                     student_name: additionalData?.student_details?.student_name || null,
                     student_email: additionalData?.student_details?.student_email || null,
                     student_phone_no: additionalData?.student_details?.student_phone_no || null,
+                    additional_data: JSON.stringify(additionalData) || null,
                 };
             }));
             return {
