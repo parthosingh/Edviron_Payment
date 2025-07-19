@@ -144,6 +144,7 @@ export class CollectService {
       gatepay_key?: string | null;
       gatepay_iv?: string | null
     },
+    isCFNonSeamless?:boolean
   ): Promise<{ url: string; request: CollectRequest }> {
     if (custom_order_id) {
       const count =
@@ -198,6 +199,7 @@ export class CollectService {
         razorpay_secret: razorpay_credentials?.razorpay_secret || null,
         razorpay_mid: razorpay_credentials?.razorpay_mid || null,
       },
+      isCFNonSeamless: isCFNonSeamless || false,
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({

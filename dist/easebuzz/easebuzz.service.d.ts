@@ -32,6 +32,7 @@ export declare class EasebuzzService {
     easebuzzCheckStatus(collect_request_id: String, collect_request: CollectRequest): Promise<any>;
     statusResponse(requestId: string, collectReq: CollectRequest): Promise<any>;
     initiateRefund(collect_id: string, refund_amount: number, refund_id: string): Promise<any>;
+    initiateRefundv2(collect_id: string, refund_amount: number, refund_id: string): Promise<any>;
     checkRefundSttaus(collect_id: string): Promise<any>;
     getQrBase64(collect_id: string): Promise<{
         intentUrl: string;
@@ -46,7 +47,7 @@ export declare class EasebuzzService {
         collect_request_id: import("mongoose").Schema.Types.ObjectId;
         collect_request_url: string;
     } | undefined>;
-    createOrderV2NonSplit(request: CollectRequest, platform_charges: platformChange[], school_name: string): Promise<{
+    createOrderV2NonSplit(request: CollectRequest, platform_charges: platformChange[], school_name: string, easebuzz_school_label?: string | null): Promise<{
         collect_request_id: import("mongoose").Schema.Types.ObjectId;
         collect_request_url: string;
     }>;

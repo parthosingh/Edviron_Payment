@@ -84,6 +84,9 @@ let EdvironPgController = class EdvironPgController {
         if (!collectRequest) {
             res.redirect(`${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`);
         }
+        if (collectRequest?.easebuzz_non_partner) {
+            res.redirect(`${process.env.EASEBUZZ_ENDPOINT_PROD}/pay/${collectRequest.paymentIds.easebuzz_id}`);
+        }
         if (collectRequest &&
             collectRequest.worldline &&
             collectRequest.worldline.worldline_merchant_id) {
@@ -143,6 +146,32 @@ let EdvironPgController = class EdvironPgController {
             new: true,
         });
         const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (collectReq?.isCFNonSeamless) {
+            const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Redirecting to Payment...</title>
+          <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+      </head>
+      <body>
+          <p>Redirecting to payment page...</p>
+          <script>
+              const cashfree = Cashfree({ mode: "production" });
+              const checkoutOptions = {
+                  paymentSessionId: "${sessionId}",
+                  redirectTarget: "_self"
+              };
+              cashfree.checkout(checkoutOptions);
+          </script>
+      </body>
+      </html>
+    `;
+            res.setHeader('Content-Type', 'text/html');
+            res.send(html);
+        }
         const payload = { school_id: collectReq?.school_id };
         const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET, {
             noTimestamp: true,
@@ -1785,6 +1814,9 @@ let EdvironPgController = class EdvironPgController {
             }
             if (gateway === collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ) {
                 console.log('init refund from easebuzz');
+                if (request.easebuzz_non_partner) {
+                    return await this.easebuzzService.initiateRefundv2(collect_id, amount, refund_id);
+                }
                 const refund = await this.easebuzzService.initiateRefund(collect_id, amount, refund_id);
                 console.log(refund);
                 return refund;

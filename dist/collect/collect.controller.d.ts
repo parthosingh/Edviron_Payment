@@ -55,6 +55,7 @@ export declare class CollectController {
         worldline_encryption_key?: string | null;
         worldline_encryption_iV?: string | null;
         worldline_scheme_code?: string | null;
+        isCFNonSeamless?: boolean;
         razorpay_credentials?: {
             razorpay_id?: string | null;
             razorpay_secret?: string | null;

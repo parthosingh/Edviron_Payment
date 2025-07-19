@@ -91,4 +91,5 @@ export declare class CashfreeController {
         document: string;
         response: any;
     }[] | undefined>;
+    redirect(session_id: string, res: any): Promise<void>;
 }

@@ -239,6 +239,12 @@ let EdvironPgService = class EdvironPgService {
             const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
             collectReq.paymentIds = paymentInfo;
             await collectReq.save();
+            if (collectReq.isCFNonSeamless) {
+                console.log('cfnion seamless');
+                return {
+                    url: `${process.env.URL}/cashfree/redirect?session_id=${cf_payment_id}`
+                };
+            }
             return {
                 url: process.env.URL +
                     '/edviron-pg/redirect?session_id=' +
@@ -941,8 +947,13 @@ let EdvironPgService = class EdvironPgService {
         };
     }
     async getSingleTransactionInfo(collect_id) {
+        let transaction;
+        const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!request) {
+            throw new common_1.BadRequestException('order not found');
+        }
         try {
-            const transaction = await this.databaseService.CollectRequestModel.aggregate([
+            transaction = await this.databaseService.CollectRequestModel.aggregate([
                 {
                     $match: {
                         _id: new mongoose_1.Types.ObjectId(collect_id),
@@ -991,6 +1002,35 @@ let EdvironPgService = class EdvironPgService {
                     },
                 },
             ]);
+            if (request.gateway === 'EDVIRON_PG') {
+                try {
+                    const config = {
+                        method: 'GET',
+                        url: `https://api.cashfree.com/pg/orders/${collect_id}/settlements`,
+                        headers: {
+                            accept: 'application/json',
+                            'content-type': 'application/json',
+                            'x-api-version': '2023-08-01',
+                            'x-partner-apikey': process.env.CASHFREE_API_KEY,
+                            'x-partner-merchantid': request.clientId,
+                        },
+                    };
+                    const response = await axios_1.default.request(config);
+                    const { transfer_utr, transfer_time } = response.data;
+                    transaction[0] = {
+                        ...transaction[0],
+                        utr_number: transfer_utr || null,
+                        settlement_transfer_time: transfer_time || null,
+                    };
+                }
+                catch (error) {
+                    transaction[0] = {
+                        ...transaction[0],
+                        utr_number: null,
+                        settlement_transfer_time: null,
+                    };
+                }
+            }
             return transaction;
         }
         catch (error) {

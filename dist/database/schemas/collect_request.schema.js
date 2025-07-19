@@ -153,6 +153,10 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({ required: false, default: false }),
     __metadata("design:type", Boolean)
+], CollectRequest.prototype, "isCFNonSeamless", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
 ], CollectRequest.prototype, "isVBAPayment", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false, default: false }),
