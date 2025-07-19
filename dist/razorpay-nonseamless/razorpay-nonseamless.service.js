@@ -24,7 +24,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
     }
     async createOrder(collectRequest) {
         try {
-            const { _id, amount: totalRupees, razorpay, razorpay_vendors_info, additional_data } = collectRequest;
+            const { _id, amount: totalRupees, razorpay, razorpay_vendors_info, additional_data, } = collectRequest;
             const studentDetail = JSON.parse(additional_data);
             const totalPaise = Math.round(totalRupees * 100);
             const data = {
@@ -32,11 +32,11 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 currency: 'INR',
                 receipt: _id.toString(),
                 notes: {
-                    student_id: studentDetail?.student_details?.student_id || "N/A",
-                    student_name: studentDetail?.student_details?.student_name || "N/A",
-                    student_email: studentDetail?.student_details?.student_email || "N/A",
-                    student_phone_no: studentDetail?.student_details?.student_phone_no || "N/A",
-                }
+                    student_id: studentDetail?.student_details?.student_id || 'N/A',
+                    student_name: studentDetail?.student_details?.student_name || 'N/A',
+                    student_email: studentDetail?.student_details?.student_email || 'N/A',
+                    student_phone_no: studentDetail?.student_details?.student_phone_no || 'N/A',
+                },
             };
             if (razorpay_vendors_info?.length) {
                 let computed = 0;

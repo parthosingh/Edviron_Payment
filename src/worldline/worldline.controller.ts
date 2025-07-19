@@ -308,12 +308,12 @@ export class WorldlineController {
 
     switch (parsedMessage?.paymentMethod?.paymentMode) {
       case 'UPI collect':
-      detail = {
-            upi: {
-              channel: null,
-              upi_id: 'N/A',
-            },
-          };
+        detail = {
+          upi: {
+            channel: null,
+            upi_id: 'N/A',
+          },
+        };
         paymentMethod = 'upi';
         break;
       case 'Credit card':
@@ -391,7 +391,8 @@ export class WorldlineController {
         ? PaymentStatus.SUCCESS
         : PaymentStatus.PENDING;
     collectStatus.bank_reference =
-      parsedMessage?.paymentMethod?.paymentTransaction?.bankReferenceIdentifier || '';
+      parsedMessage?.paymentMethod?.paymentTransaction
+        ?.bankReferenceIdentifier || '';
     collectStatus.payment_time = paymentTime
       ? (() => {
           const [datePart, timePart] = paymentTime.split(' ');
@@ -472,10 +473,9 @@ export class WorldlineController {
 
   @Post('initiate-refund')
   async initiateRefund(
-    @Query("collect_id") collect_id:string,
-    @Query ('amount') amount : number
+    @Query('collect_id') collect_id: string,
+    @Query('amount') amount: number,
   ) {
-    return await this.worldlineService.initiateRefund(collect_id, amount)
+    return await this.worldlineService.initiateRefund(collect_id, amount);
   }
-
 }

@@ -23,7 +23,7 @@ export class PayUController {
     private readonly payUService: PayUService,
     private readonly databaseService: DatabaseService,
     private readonly edvironPgService: EdvironPgService,
-  ) { }
+  ) {}
   @Get('/nb')
   async testPayment() {
     try {
@@ -398,7 +398,7 @@ export class PayUController {
             };
             break;
         }
-      } catch (e) { }
+      } catch (e) {}
 
       // Add Commssion for transactions
       if (status.toUpperCase() === 'SUCCESS') {
@@ -513,7 +513,9 @@ export class PayUController {
         }
       }
       try {
-        await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
+        await this.edvironPgService.sendMailAfterTransaction(
+          collectIdObject.toString(),
+        );
       } catch (e) {
         await this.databaseService.ErrorLogsModel.create({
           type: 'sendMailAfterTransaction',

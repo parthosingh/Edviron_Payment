@@ -8,7 +8,12 @@ import { CashfreeService } from 'src/cashfree/cashfree.service';
 
 @Module({
   controllers: [HdfcRazorpayController],
-  providers: [HdfcRazorpayService, EdvironPgService, DatabaseService, CashfreeService],
+  providers: [
+    HdfcRazorpayService,
+    EdvironPgService,
+    DatabaseService,
+    CashfreeService,
+  ],
   imports: [DatabaseModule],
 })
 export class HdfcRazorpayModule {}

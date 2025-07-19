@@ -293,7 +293,11 @@ export class NttdataService {
     return hmac.digest('hex');
   }
 
-  async initiateRefund(collect_request_id: string, amount: number, refund_id: string) {
+  async initiateRefund(
+    collect_request_id: string,
+    amount: number,
+    refund_id: string,
+  ) {
     try {
       const collect_request =
         await this.databaseService.CollectRequestModel.findById(
@@ -344,7 +348,6 @@ export class NttdataService {
             merchTxnId: collect_request_id.toString(),
           },
           payDetails: {
-
             signature: signature,
             atomTxnId: ntt_data.ntt_atom_txn_id,
             totalRefundAmount: `${Number(amount).toFixed(2)}`,
@@ -355,7 +358,7 @@ export class NttdataService {
                 prodRefundAmount: `${Number(amount).toFixed(2)}`,
                 prodRefundId: refund_id,
               },
-            ]
+            ],
           },
         },
       };
@@ -364,7 +367,6 @@ export class NttdataService {
         JSON.stringify(payload),
         ntt_data.nttdata_req_salt,
         ntt_data.nttdata_req_salt,
-
       );
       const form = new URLSearchParams({
         merchId: ntt_data.nttdata_id,
@@ -372,9 +374,11 @@ export class NttdataService {
       });
       const config = {
         method: 'post',
-        url: `${process.env.NTT_AUTH_API_URL}/ots/payment/refund?${form.toString()}`,
+        url: `${
+          process.env.NTT_AUTH_API_URL
+        }/ots/payment/refund?${form.toString()}`,
         headers: {
-           'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
       };
       const { data: paymentStatusRes } = await axios.request(config);
@@ -404,5 +408,3 @@ export class NttdataService {
     }
   }
 }
-
-

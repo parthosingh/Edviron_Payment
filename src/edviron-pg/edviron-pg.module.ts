@@ -10,11 +10,17 @@ import { WorldlineService } from 'src/worldline/worldline.service';
 
 @Module({
   controllers: [EdvironPgController],
-  providers: [EdvironPgService, EasebuzzService, NttdataService, WorldlineService,PosPaytmService],
+  providers: [
+    EdvironPgService,
+    EasebuzzService,
+    NttdataService,
+    WorldlineService,
+    PosPaytmService,
+  ],
   imports: [
     DatabaseModule,
     forwardRef(() => CashfreeModule), // Use forwardRef to avoid circular dependency
   ],
-  exports: [EdvironPgService,CashfreeModule],
+  exports: [EdvironPgService, CashfreeModule],
 })
 export class EdvironPgModule {}

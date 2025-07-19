@@ -697,10 +697,10 @@ export class CashfreeController {
     }
   }
 
- @Get('/redirect')
-async redirect(@Query('session_id') session_id: string, @Res() res: any) {
-  try {
-    const html = `
+  @Get('/redirect')
+  async redirect(@Query('session_id') session_id: string, @Res() res: any) {
+    try {
+      const html = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
@@ -723,14 +723,13 @@ async redirect(@Query('session_id') session_id: string, @Res() res: any) {
       </html>
     `;
 
-    res.setHeader('Content-Type', 'text/html');
-    res.send(html);
-  } catch (e) {
-    console.error(e);
-    throw new BadRequestException(e.message);
+      res.setHeader('Content-Type', 'text/html');
+      res.send(html);
+    } catch (e) {
+      console.error(e);
+      throw new BadRequestException(e.message);
+    }
   }
-}
-
 }
 
 const u = {

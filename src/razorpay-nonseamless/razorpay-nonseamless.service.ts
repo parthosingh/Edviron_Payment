@@ -26,22 +26,23 @@ export class RazorpayNonseamlessService {
         amount: totalRupees,
         razorpay,
         razorpay_vendors_info,
-        additional_data
+        additional_data,
       } = collectRequest;
 
-      const studentDetail = JSON.parse(additional_data)
-     
+      const studentDetail = JSON.parse(additional_data);
+
       const totalPaise = Math.round(totalRupees * 100);
       const data: any = {
         amount: totalPaise,
         currency: 'INR',
         receipt: _id.toString(),
-        notes : {
-          student_id: studentDetail?.student_details?.student_id || "N/A",
-          student_name : studentDetail?.student_details?.student_name|| "N/A",
-          student_email : studentDetail?.student_details?.student_email|| "N/A",
-          student_phone_no : studentDetail?.student_details?.student_phone_no|| "N/A",
-        }
+        notes: {
+          student_id: studentDetail?.student_details?.student_id || 'N/A',
+          student_name: studentDetail?.student_details?.student_name || 'N/A',
+          student_email: studentDetail?.student_details?.student_email || 'N/A',
+          student_phone_no:
+            studentDetail?.student_details?.student_phone_no || 'N/A',
+        },
       };
       if (razorpay_vendors_info?.length) {
         let computed = 0;
@@ -561,14 +562,14 @@ export class RazorpayNonseamlessService {
           .map((order: any) => order.order_receipt);
 
         const objectIdOrderIds = orderIds
-          .map((id :any) => {
+          .map((id: any) => {
             try {
               return new mongoose.Types.ObjectId(id);
             } catch (e) {
               return null;
             }
           })
-          .filter((id :any) => id !== null);
+          .filter((id: any) => id !== null);
 
         const customOrders =
           await this.databaseService.CollectRequestModel.find({

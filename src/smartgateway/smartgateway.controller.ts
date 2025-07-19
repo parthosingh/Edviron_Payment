@@ -14,7 +14,7 @@ export class SmartgatewayController {
     private readonly databaseService: DatabaseService,
     private readonly smartgatewayService: SmartgatewayService,
     private readonly edvironPgService: EdvironPgService,
-  ) { }
+  ) {}
   @Post('/callback')
   async handleCallback(
     @Body()
@@ -118,22 +118,20 @@ export class SmartgatewayController {
 
   @Post('/webhook')
   async webhook(@Body() body: any, @Res() res: any) {
-    try{
-      const log=  await new this.databaseService.WebhooksModel({
+    try {
+      const log = await new this.databaseService.WebhooksModel({
         // collect_id: collectIdObject.toString(),
         body: JSON.stringify(body),
         gateway: 'smartgateway',
       }).save();
       console.log(log);
-      
-    }catch(e){
+    } catch (e) {
       console.log(e);
-      
     }
     const { content, date_created } = body;
     const { order } = body.content;
     const { order_id } = order;
-    const {txn_detail}=order
+    const { txn_detail } = order;
     try {
       console.log('Webhook body:', order_id);
       const collect_id = order_id;
@@ -171,8 +169,8 @@ export class SmartgatewayController {
         collectReq._id.toString(),
         collectReq,
       );
-      console.log(status_response,'status');
-      
+      console.log(status_response, 'status');
+
       let platform_type;
       let payment_method;
       let details;
@@ -182,8 +180,10 @@ export class SmartgatewayController {
           platform_type = 'Wallet';
           details = {
             app: {
-              channel: status_response.details.payment_methods.wallet.mode || "N/A",
-              provider: status_response.details.payment_methods.wallet.mode || "N/A",
+              channel:
+                status_response.details.payment_methods.wallet.mode || 'N/A',
+              provider:
+                status_response.details.payment_methods.wallet.mode || 'N/A',
             },
           };
           break;
@@ -192,7 +192,8 @@ export class SmartgatewayController {
           platform_type = 'UPI';
           details = {
             upi: {
-              upi_id: status_response.details.payment_methods.upi.payer_vpa || "N/A",
+              upi_id:
+                status_response.details.payment_methods.upi.payer_vpa || 'N/A',
             },
           };
           break;
@@ -201,8 +202,7 @@ export class SmartgatewayController {
           platform_type = 'NetBanking';
           details = {
             netbanking: {
-              netbanking_bank_name:
-                order.payment_method || '',
+              netbanking_bank_name: order.payment_method || '',
             },
           };
           break;
@@ -212,11 +212,14 @@ export class SmartgatewayController {
           details = {
             card: {
               card_bank_name:
-                status_response.details.payment_methods.card.card_bank_name || "N/A",
+                status_response.details.payment_methods.card.card_bank_name ||
+                'N/A',
               provicard_network:
-                status_response.details.payment_methods.card.card_network || "N/A",
+                status_response.details.payment_methods.card.card_network ||
+                'N/A',
               card_number:
-                status_response.details.payment_methods.card.card_number || "N/A",
+                status_response.details.payment_methods.card.card_number ||
+                'N/A',
               card_type: 'credit_card',
             },
           };
@@ -227,11 +230,14 @@ export class SmartgatewayController {
           details = {
             card: {
               card_bank_name:
-                status_response.details.payment_methods.card.card_bank_name || "N/A",
+                status_response.details.payment_methods.card.card_bank_name ||
+                'N/A',
               provicard_network:
-                status_response.details.payment_methods.card.card_network || "N/A",
+                status_response.details.payment_methods.card.card_network ||
+                'N/A',
               card_number:
-                status_response.details.payment_methods.card.card_number || "N/A",
+                status_response.details.payment_methods.card.card_number ||
+                'N/A',
               card_type: 'debit_card',
             },
           };
@@ -328,7 +334,7 @@ export class SmartgatewayController {
       const webHookDataInfo = {
         collect_id: collectReq._id.toString(),
         amount,
-        status:status_response.status,
+        status: status_response.status,
         trustee_id: collectReq.trustee_id,
         school_id: collectReq.school_id,
         req_webhook_urls: collectReq?.req_webhook_urls,
@@ -369,7 +375,7 @@ export class SmartgatewayController {
       return;
     } catch (e) {
       console.log(e);
-      
+
       res.status(500).send('Internal Server Error');
     }
   }

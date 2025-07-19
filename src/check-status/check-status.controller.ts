@@ -70,7 +70,7 @@ export class CheckStatusController {
   }
 
   @Get('/v2')
-   async checkStatusv2(
+  async checkStatusv2(
     @Query('transactionId') transactionId: String,
     @Query('jwt') jwt: string,
   ) {
@@ -92,6 +92,4 @@ export class CheckStatusController {
     return sign(status);
     // }
   }
-
-
 }

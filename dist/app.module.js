@@ -56,10 +56,25 @@ exports.AppModule = AppModule = __decorate([
             nttdata_module_1.NttdataModule,
             razorpay_nonseamless_module_1.RazorpayNonseamlessModule,
             worldline_module_1.WorldlineModule,
-            gatepay_module_1.GatepayModule
+            gatepay_module_1.GatepayModule,
         ],
-        controllers: [app_controller_1.AppController, easebuzz_controller_1.EasebuzzController, cashfree_controller_1.CashfreeController, pos_paytm_controller_1.PosPaytmController, worldline_controller_1.WorldlineController, razorpay_nonseamless_controller_1.RazorpayNonseamlessController],
-        providers: [app_service_1.AppService, cashfree_service_1.CashfreeService, easebuzz_service_1.EasebuzzService, ccavenue_service_1.CcavenueService, pos_paytm_service_1.PosPaytmService, worldline_service_1.WorldlineService, razorpay_nonseamless_service_1.RazorpayNonseamlessService],
+        controllers: [
+            app_controller_1.AppController,
+            easebuzz_controller_1.EasebuzzController,
+            cashfree_controller_1.CashfreeController,
+            pos_paytm_controller_1.PosPaytmController,
+            worldline_controller_1.WorldlineController,
+            razorpay_nonseamless_controller_1.RazorpayNonseamlessController,
+        ],
+        providers: [
+            app_service_1.AppService,
+            cashfree_service_1.CashfreeService,
+            easebuzz_service_1.EasebuzzService,
+            ccavenue_service_1.CcavenueService,
+            pos_paytm_service_1.PosPaytmService,
+            worldline_service_1.WorldlineService,
+            razorpay_nonseamless_service_1.RazorpayNonseamlessService,
+        ],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

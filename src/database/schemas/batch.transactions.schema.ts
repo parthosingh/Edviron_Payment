@@ -8,29 +8,30 @@ export class BatchTransactions {
   trustee_id: string;
   @Prop({ nullable: true })
   school_id: string;
-  @Prop({ })
+  @Prop({})
   total_order_amount: Number;
 
-  @Prop({ })
+  @Prop({})
   total_transaction_amount: Number;
 
-  @Prop({ })
+  @Prop({})
   total_transactions: Number;
 
-  @Prop({ })
+  @Prop({})
   month: string;
 
-  @Prop({ })
+  @Prop({})
   year: string;
 
   @Prop()
   updatedAt?: Date;
 
-  @Prop({ })
+  @Prop({})
   status: string;
 
   _id: ObjectId;
 }
 
 export type BatchTransactionsDocument = BatchTransactions & Document;
-export const BatchTransactionsSchema = SchemaFactory.createForClass(BatchTransactions);
+export const BatchTransactionsSchema =
+  SchemaFactory.createForClass(BatchTransactions);

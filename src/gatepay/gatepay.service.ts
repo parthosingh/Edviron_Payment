@@ -95,7 +95,7 @@ export class GatepayService {
         gatepay_key,
         gatepay_iv,
       );
-      
+
       const raw = {
         mid: gatepay_mid,
         terminalId: gatepay_terminal_id,
@@ -111,7 +111,7 @@ export class GatepayService {
         redirect: `${process.env.URL}/gatepay/callback?collect_id=${_id}`,
       };
       const response = await axios.request(config);
-      
+
       if (response.data.status !== 'SUCCESS') {
         throw new BadRequestException('payment link not created');
       }
@@ -121,7 +121,7 @@ export class GatepayService {
         gatepay_key,
         gatepay_iv,
       );
-      
+
       const parsedData = JSON.parse(decrypted);
       const { paymentUrl, qrPath, qrIntent, paymentId, token } = parsedData;
 

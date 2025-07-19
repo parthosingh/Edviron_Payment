@@ -161,23 +161,23 @@ let CollectService = class CollectService {
             gatepay_credentials.gatepay_terminal_id) {
             console.log('gatepay enter');
             if (!request.gatepay) {
-                request.gateway = collect_request_schema_1.Gateway.EDVIRON_GATEPAY,
-                    request.gatepay = {
+                (request.gateway = collect_request_schema_1.Gateway.EDVIRON_GATEPAY),
+                    (request.gatepay = {
                         gatepay_mid: gatepay_credentials?.gatepay_mid,
                         gatepay_key: gatepay_credentials?.gatepay_key,
                         gatepay_iv: gatepay_credentials?.gatepay_iv,
                         gatepay_terminal_id: gatepay_credentials?.gatepay_terminal_id,
-                        txnId: "",
-                        token: "",
-                    };
+                        txnId: '',
+                        token: '',
+                    });
             }
             else {
-                request.gateway = collect_request_schema_1.Gateway.EDVIRON_GATEPAY,
-                    request.gatepay.gatepay_mid = gatepay_credentials?.gatepay_mid;
+                (request.gateway = collect_request_schema_1.Gateway.EDVIRON_GATEPAY),
+                    (request.gatepay.gatepay_mid = gatepay_credentials?.gatepay_mid);
                 request.gatepay.gatepay_key = gatepay_credentials?.gatepay_key;
                 request.gatepay.gatepay_iv = gatepay_credentials?.gatepay_iv;
-                request.gatepay.txnId = "";
-                request.gatepay.token = "";
+                request.gatepay.txnId = '';
+                request.gatepay.token = '';
                 request.gatepay.gatepay_terminal_id =
                     gatepay_credentials?.gatepay_terminal_id;
             }

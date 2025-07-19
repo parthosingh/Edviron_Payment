@@ -91,7 +91,7 @@ export const generateSignature = (
   amount: string,
   txnCurrency: string,
   txnType: string,
-  coll_req : any
+  coll_req: any,
 ) => {
   // const resHashKey = process.env.NTT_REQUEST_HASH_KEY!;
   const signatureString =

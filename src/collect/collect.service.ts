@@ -142,9 +142,9 @@ export class CollectService {
       gatepay_mid?: string | null;
       gatepay_terminal_id?: string | null;
       gatepay_key?: string | null;
-      gatepay_iv?: string | null
+      gatepay_iv?: string | null;
     },
-    isCFNonSeamless?:boolean
+    isCFNonSeamless?: boolean,
   ): Promise<{ url: string; request: CollectRequest }> {
     if (custom_order_id) {
       const count =
@@ -293,22 +293,22 @@ export class CollectService {
     ) {
       console.log('gatepay enter');
       if (!request.gatepay) {
-        request.gateway = Gateway.EDVIRON_GATEPAY,
-        request.gatepay = {
-          gatepay_mid: gatepay_credentials?.gatepay_mid,
-          gatepay_key: gatepay_credentials?.gatepay_key,
-          gatepay_iv: gatepay_credentials?.gatepay_iv,
-          gatepay_terminal_id: gatepay_credentials?.gatepay_terminal_id,
-          txnId: "",
-          token: "",
-        };
+        (request.gateway = Gateway.EDVIRON_GATEPAY),
+          (request.gatepay = {
+            gatepay_mid: gatepay_credentials?.gatepay_mid,
+            gatepay_key: gatepay_credentials?.gatepay_key,
+            gatepay_iv: gatepay_credentials?.gatepay_iv,
+            gatepay_terminal_id: gatepay_credentials?.gatepay_terminal_id,
+            txnId: '',
+            token: '',
+          });
       } else {
-        request.gateway = Gateway.EDVIRON_GATEPAY,
-        request.gatepay.gatepay_mid = gatepay_credentials?.gatepay_mid;
+        (request.gateway = Gateway.EDVIRON_GATEPAY),
+          (request.gatepay.gatepay_mid = gatepay_credentials?.gatepay_mid);
         request.gatepay.gatepay_key = gatepay_credentials?.gatepay_key;
         request.gatepay.gatepay_iv = gatepay_credentials?.gatepay_iv;
-        request.gatepay.txnId= "";
-        request.gatepay.token= "";
+        request.gatepay.txnId = '';
+        request.gatepay.token = '';
         request.gatepay.gatepay_terminal_id =
           gatepay_credentials?.gatepay_terminal_id;
       }
@@ -411,15 +411,14 @@ export class CollectService {
       const { url, collect_req } =
         // await this.worldLineService.createOrder(request);
         await this.worldLineService.SingleUrlIntegeration(request);
-      
-      try{
-        request.payment_data=url
-        await request.save()
-      }catch(e){
+
+      try {
+        request.payment_data = url;
+        await request.save();
+      } catch (e) {
         console.log(e);
-        
       }
-      
+
       return { url, request: collect_req };
     }
 

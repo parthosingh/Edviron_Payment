@@ -84,7 +84,7 @@ let HdfcRazorpayService = class HdfcRazorpayService {
             };
             const { data: paymentStatus } = await axios_1.default.request(config);
             const formattedStatus = await this.formatRazorpayPaymentStatusResponse(paymentStatus, collectRequest);
-            console.log(formattedStatus, "format");
+            console.log(formattedStatus, 'format');
             return formattedStatus;
         }
         catch (error) {
@@ -123,7 +123,7 @@ let HdfcRazorpayService = class HdfcRazorpayService {
             if (!collectRequestStatus) {
                 throw new common_1.BadRequestException('Collect request not found');
             }
-            console.log(response, "resp");
+            console.log(response, 'resp');
             const status = (0, exports.formatRazorpayPaymentStatus)(response?.status);
             const statusCode = status === transactionStatus_1.TransactionStatus.SUCCESS
                 ? 200
@@ -150,7 +150,7 @@ let HdfcRazorpayService = class HdfcRazorpayService {
                 },
                 capture_status: response?.captured || null,
             };
-            console.log(formattedResponse, "formattedResponse");
+            console.log(formattedResponse, 'formattedResponse');
             if (response?.method === 'upi') {
                 formattedResponse.details.payment_methods['upi'] = response?.upi;
                 formattedResponse.details.bank_ref =

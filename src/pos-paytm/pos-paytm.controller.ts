@@ -21,7 +21,7 @@ export class PosPaytmController {
   constructor(
     private readonly posPaytmService: PosPaytmService,
     private readonly databaseService: DatabaseService,
-       private readonly edvironPgService: EdvironPgService,
+    private readonly edvironPgService: EdvironPgService,
   ) {}
   @Post('/initiate-payment')
   async initiatePayment(
@@ -253,7 +253,7 @@ export class PosPaytmController {
           {
             $set: {
               status: resultStatus,
-              transaction_amount: Number(transactionAmount/100),
+              transaction_amount: Number(transactionAmount / 100),
               payment_method,
               details: JSON.stringify(details),
               bank_reference: retrievalReferenceNo,
@@ -269,14 +269,14 @@ export class PosPaytmController {
       // ERP WEBHOOK
       if (webHookUrl && webHookUrl.length > 0) {
         try {
-            const transactionTime = requestStatus.payment_time;
+          const transactionTime = requestStatus.payment_time;
           const amount = request?.amount;
           const custom_order_id = request?.custom_order_id || '';
           const additional_data = request?.additional_data || '';
           const webHookDataInfo = {
-            collect_id:request._id,
+            collect_id: request._id,
             amount,
-            status:resultStatus,
+            status: resultStatus,
             trustee_id: request.trustee_id,
             school_id: request.school_id,
             req_webhook_urls: request?.req_webhook_urls,
@@ -285,7 +285,7 @@ export class PosPaytmController {
             transaction_time: transactionDateTime,
             additional_data,
             details: requestStatus.details,
-            transaction_amount:Number(transactionAmount/100),
+            transaction_amount: Number(transactionAmount / 100),
             bank_reference: requestStatus.bank_reference,
             payment_method: requestStatus.payment_method,
             payment_details: requestStatus.details,
@@ -299,10 +299,7 @@ export class PosPaytmController {
 
           if (webHookUrl !== null) {
             console.log('calling webhook');
-            if (
-              request?.trustee_id.toString() ===
-              '66505181ca3e97e19f142075'
-            ) {
+            if (request?.trustee_id.toString() === '66505181ca3e97e19f142075') {
               console.log('Webhook called for webschool');
               setTimeout(async () => {
                 await this.edvironPgService.sendErpWebhook(
@@ -341,15 +338,18 @@ export class PosPaytmController {
     return await this.posPaytmService.getTransactionStatus(collect_id);
   }
 
-  
   @Post('refund')
   async getRefund(
-    @Query('collect_id') collect_id:string,
-    @Query('refund_amount') refund_amount:number,
-    @Query('refund_id') refund_id:string,
-  ){
-    // take refund amount from user 
-    // refund amount cannot be greater than order amount 
-    return await this.posPaytmService.refund(collect_id, refund_amount, refund_id);
+    @Query('collect_id') collect_id: string,
+    @Query('refund_amount') refund_amount: number,
+    @Query('refund_id') refund_id: string,
+  ) {
+    // take refund amount from user
+    // refund amount cannot be greater than order amount
+    return await this.posPaytmService.refund(
+      collect_id,
+      refund_amount,
+      refund_id,
+    );
   }
 }

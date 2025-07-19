@@ -115,7 +115,7 @@ export class EdvironPgController {
         `${process.env.EASEBUZZ_ENDPOINT_PROD}/pay/${collectRequest.paymentIds.easebuzz_id}`,
       );
     }
-    if ( 
+    if (
       collectRequest &&
       collectRequest.worldline &&
       collectRequest.worldline.worldline_merchant_id
@@ -2974,7 +2974,7 @@ export class EdvironPgController {
     );
   }
 
-   @Post('/save-merchant-transactions')
+  @Post('/save-merchant-transactions')
   async saveMerchantBatchTransactions(
     @Body()
     body: {
@@ -3030,7 +3030,7 @@ export class EdvironPgController {
   ) {
     try {
       const { school_id, year, token } = query;
-     
+
       const decoded = jwt.verify(token, process.env.KEY!) as any;
       if (decoded.school_id !== school_id) {
         throw new UnauthorizedException('Invalid token');

@@ -193,11 +193,11 @@ export class CollectController {
       razorpay_vendors,
       razorpay_credentials,
       gatepay_credentials,
-      isCFNonSeamless
+      isCFNonSeamless,
     } = body;
     console.log(razorpay_credentials);
-    
-    console.log('hit')
+
+    console.log('hit');
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
     if (!callbackUrl)
@@ -256,10 +256,10 @@ export class CollectController {
           vba_account_number,
           worldLine_vendors,
           easebuzz_school_label,
-          razorpay_vendors, 
+          razorpay_vendors,
           razorpay_credentials,
           gatepay_credentials,
-          isCFNonSeamless
+          isCFNonSeamless,
         ),
       );
     } catch (e) {

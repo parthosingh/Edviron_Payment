@@ -580,8 +580,7 @@ export class EasebuzzService {
         JSON.stringify(platform_charges),
       );
 
-      console.log({encodedParams});
-      
+      console.log({ encodedParams });
 
       const Ezboptions = {
         method: 'POST',

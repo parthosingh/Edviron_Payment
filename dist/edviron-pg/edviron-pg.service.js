@@ -242,7 +242,7 @@ let EdvironPgService = class EdvironPgService {
             if (collectReq.isCFNonSeamless) {
                 console.log('cfnion seamless');
                 return {
-                    url: `${process.env.URL}/cashfree/redirect?session_id=${cf_payment_id}`
+                    url: `${process.env.URL}/cashfree/redirect?session_id=${cf_payment_id}`,
                 };
             }
             return {

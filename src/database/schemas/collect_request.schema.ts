@@ -80,8 +80,6 @@ interface I_Gatepay {
   paymentUrl?: string;
 }
 
-
-
 interface EASEBUZZ_NON_PARTNER_CRED {
   easebuzz_salt: string;
   easebuzz_key: string;
@@ -106,8 +104,6 @@ export class paytmPos {
   @Prop({ type: String, required: false })
   device_id?: string | null;
 }
-
-
 
 @Schema({ timestamps: true })
 export class CollectRequest {
@@ -315,7 +311,7 @@ export class CollectRequest {
   })
   worldline: I_WORLDLINE;
 
-   @Prop({
+  @Prop({
     required: false,
     type: {
       gatepay_mid: { type: String, required: false, default: null },

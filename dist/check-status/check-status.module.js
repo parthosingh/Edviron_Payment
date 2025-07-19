@@ -42,7 +42,7 @@ exports.CheckStatusModule = CheckStatusModule = __decorate([
             pos_paytm_service_1.PosPaytmService,
             worldline_service_1.WorldlineService,
             razorpay_nonseamless_service_1.RazorpayNonseamlessService,
-            gatepay_service_1.GatepayService
+            gatepay_service_1.GatepayService,
         ],
         imports: [
             database_module_1.DatabaseModule,

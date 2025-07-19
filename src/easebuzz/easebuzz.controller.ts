@@ -39,9 +39,9 @@ export class EasebuzzController {
 
   @Get('/redirect')
   async redirect(
-    @Query('collect_id') collect_id: string, 
-    @Query('easebuzzPaymentId') easebuzzPaymentId: string, 
-    @Res() res: any
+    @Query('collect_id') collect_id: string,
+    @Query('easebuzzPaymentId') easebuzzPaymentId: string,
+    @Res() res: any,
   ) {
     try {
       const collectRequest =
@@ -50,7 +50,9 @@ export class EasebuzzController {
       if (!easebuzzPaymentId) {
         throw new BadRequestException('payment url not found');
       }
-      res.redirect(`${process.env.EASEBUZZ_ENDPOINT_PROD}/pay/${easebuzzPaymentId}`);
+      res.redirect(
+        `${process.env.EASEBUZZ_ENDPOINT_PROD}/pay/${easebuzzPaymentId}`,
+      );
     } catch (error) {
       throw new BadRequestException(error.response?.data || error.message);
     }

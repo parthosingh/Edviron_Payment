@@ -128,13 +128,13 @@ export class CheckStatusService {
       };
     }
 
-    if(collectRequest.easebuzz_non_partner){
-      switch(collectRequest.gateway){
-        case  Gateway.EDVIRON_EASEBUZZ : 
-        return await this.easebuzzService.easebuzzWebhookCheckStatusV2(
-           collect_request_id,
-          collectRequest,
-        )
+    if (collectRequest.easebuzz_non_partner) {
+      switch (collectRequest.gateway) {
+        case Gateway.EDVIRON_EASEBUZZ:
+          return await this.easebuzzService.easebuzzWebhookCheckStatusV2(
+            collect_request_id,
+            collectRequest,
+          );
       }
     }
 
@@ -379,13 +379,13 @@ export class CheckStatusService {
         custom_order_id: collectRequest.custom_order_id || null,
       };
     }
-    if(collectRequest.easebuzz_non_partner){
-      switch(collectRequest.gateway){
-        case  Gateway.EDVIRON_EASEBUZZ : 
-        return await this.easebuzzService.easebuzzWebhookCheckStatusV2(
-          collectRequest._id.toString(),
-          collectRequest,
-        )
+    if (collectRequest.easebuzz_non_partner) {
+      switch (collectRequest.gateway) {
+        case Gateway.EDVIRON_EASEBUZZ:
+          return await this.easebuzzService.easebuzzWebhookCheckStatusV2(
+            collectRequest._id.toString(),
+            collectRequest,
+          );
       }
     }
     switch (collectRequest?.gateway) {

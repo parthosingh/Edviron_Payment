@@ -19,7 +19,7 @@ exports.GatepayModule = GatepayModule = __decorate([
     (0, common_1.Module)({
         controllers: [gatepay_controller_1.GatepayController],
         providers: [gatepay_service_1.GatepayService, database_service_1.DatabaseService],
-        imports: [database_module_1.DatabaseModule]
+        imports: [database_module_1.DatabaseModule],
     })
 ], GatepayModule);
 //# sourceMappingURL=gatepay.module.js.map

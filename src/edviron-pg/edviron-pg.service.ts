@@ -323,12 +323,12 @@ export class EdvironPgService implements GatewayService {
       );
       collectReq.paymentIds = paymentInfo;
       await collectReq.save();
-      if(collectReq.isCFNonSeamless){
+      if (collectReq.isCFNonSeamless) {
         console.log('cfnion seamless');
-        
+
         return {
-          url:`${process.env.URL}/cashfree/redirect?session_id=${cf_payment_id}`
-        }
+          url: `${process.env.URL}/cashfree/redirect?session_id=${cf_payment_id}`,
+        };
       }
       return {
         url:
@@ -1713,11 +1713,17 @@ export class EdvironPgService implements GatewayService {
       if (checkbatch) {
         await this.databaseService.ErrorLogsModel.create({
           type: 'BATCH TRANSACTION CORN',
-          des: `Batch transaction already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]} month`,
+          des: `Batch transaction already exists for trustee_id ${trustee_id} of ${
+            monthsFull[new Date(endDate).getMonth()]
+          } month`,
           identifier: trustee_id,
           body: `${JSON.stringify({ startDate, endDate, status })}`,
         });
-        throw new BadRequestException(`Already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]} month`);
+        throw new BadRequestException(
+          `Already exists for trustee_id ${trustee_id} of ${
+            monthsFull[new Date(endDate).getMonth()]
+          } month`,
+        );
       }
 
       const transactionsCount =
@@ -1782,7 +1788,7 @@ export class EdvironPgService implements GatewayService {
     }
   }
 
-   async generateMerchantBacthTransactions(
+  async generateMerchantBacthTransactions(
     school_id: string,
     start_date: string,
     end_date: string,
@@ -1898,11 +1904,17 @@ export class EdvironPgService implements GatewayService {
       if (checkbatch) {
         await this.databaseService.ErrorLogsModel.create({
           type: 'BATCH TRANSACTION CORN',
-          des: `Batch transaction already exists for school_id ${school_id} of ${monthsFull[new Date(endDate).getMonth()]} month`,
+          des: `Batch transaction already exists for school_id ${school_id} of ${
+            monthsFull[new Date(endDate).getMonth()]
+          } month`,
           identifier: school_id,
           body: `${JSON.stringify({ startDate, endDate, status })}`,
         });
-        throw new BadRequestException(`Already exists for school_id ${school_id} of ${monthsFull[new Date(endDate).getMonth()]} month`);
+        throw new BadRequestException(
+          `Already exists for school_id ${school_id} of ${
+            monthsFull[new Date(endDate).getMonth()]
+          } month`,
+        );
       }
 
       const transactionsCount =
@@ -1984,7 +1996,6 @@ export class EdvironPgService implements GatewayService {
   }
 
   async getMerchantBatchTransactions(school_id: string, year: string) {
-    
     try {
       const batch = await this.databaseService.BatchTransactionModel.find({
         school_id,

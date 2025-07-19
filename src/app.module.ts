@@ -45,9 +45,24 @@ import { GatepayModule } from './gatepay/gatepay.module';
     NttdataModule,
     RazorpayNonseamlessModule,
     WorldlineModule,
-    GatepayModule
+    GatepayModule,
   ],
-  controllers: [AppController, EasebuzzController, CashfreeController, PosPaytmController, WorldlineController, RazorpayNonseamlessController],
-  providers: [AppService, CashfreeService, EasebuzzService, CcavenueService, PosPaytmService, WorldlineService, RazorpayNonseamlessService],
+  controllers: [
+    AppController,
+    EasebuzzController,
+    CashfreeController,
+    PosPaytmController,
+    WorldlineController,
+    RazorpayNonseamlessController,
+  ],
+  providers: [
+    AppService,
+    CashfreeService,
+    EasebuzzService,
+    CcavenueService,
+    PosPaytmService,
+    WorldlineService,
+    RazorpayNonseamlessService,
+  ],
 })
 export class AppModule {}

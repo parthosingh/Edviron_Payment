@@ -4,8 +4,8 @@ import { CcavenueService } from './ccavenue.service';
 import { DatabaseModule } from 'src/database/database.module';
 
 @Module({
-    controllers:[CcavenueController],
-    providers:[CcavenueService],
-    imports:[DatabaseModule]
+  controllers: [CcavenueController],
+  providers: [CcavenueService],
+  imports: [DatabaseModule],
 })
 export class CcavenueModule {}
