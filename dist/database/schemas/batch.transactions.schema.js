@@ -15,9 +15,13 @@ let BatchTransactions = class BatchTransactions {
 };
 exports.BatchTransactions = BatchTransactions;
 __decorate([
-    (0, mongoose_1.Prop)({}),
+    (0, mongoose_1.Prop)({ nullable: true }),
     __metadata("design:type", String)
 ], BatchTransactions.prototype, "trustee_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ nullable: true }),
+    __metadata("design:type", String)
+], BatchTransactions.prototype, "school_id", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", Number)

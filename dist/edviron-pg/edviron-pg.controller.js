@@ -2037,6 +2037,10 @@ let EdvironPgController = class EdvironPgController {
         const status = body.status || null;
         return await this.edvironPgService.generateBacthTransactions(body.trustee_id, body.start_date, body.end_date, status);
     }
+    async saveMerchantBatchTransactions(body) {
+        const status = body.status || null;
+        return await this.edvironPgService.generateMerchantBacthTransactions(body.school_id, body.start_date, body.end_date, status);
+    }
     async getBatchTransactions(query) {
         try {
             const { trustee_id, year, token } = query;
@@ -2046,6 +2050,19 @@ let EdvironPgController = class EdvironPgController {
                 throw new common_1.UnauthorizedException('Invalid token');
             }
             return await this.edvironPgService.getBatchTransactions(query.trustee_id, query.year);
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async getMerchantBatchTransactions(query) {
+        try {
+            const { school_id, year, token } = query;
+            const decoded = jwt.verify(token, process.env.KEY);
+            if (decoded.school_id !== school_id) {
+                throw new common_1.UnauthorizedException('Invalid token');
+            }
+            return await this.edvironPgService.getMerchantBatchTransactions(query.school_id, query.year);
         }
         catch (e) {
             throw new common_1.BadRequestException(e.message);
@@ -3296,12 +3313,26 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "saveBatchTransactions", null);
 __decorate([
+    (0, common_1.Post)('/save-merchant-transactions'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "saveMerchantBatchTransactions", null);
+__decorate([
     (0, common_1.Get)('/get-batch-transactions'),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getBatchTransactions", null);
+__decorate([
+    (0, common_1.Get)('/get-merchant-batch-transactions'),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getMerchantBatchTransactions", null);
 __decorate([
     (0, common_1.Post)('/vendor-transactions-settlement'),
     __param(0, (0, common_1.Body)()),

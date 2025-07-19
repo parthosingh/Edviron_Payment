@@ -1281,26 +1281,51 @@ let EdvironPgService = class EdvironPgService {
                 'November',
                 'December',
             ];
-            const orders = await this.databaseService.CollectRequestModel.find({
+            if (!trustee_id) {
+                throw new common_1.BadRequestException('Trustee ID is required');
+            }
+            const startDate = new Date(start_date);
+            const startOfDayUTC = new Date(await this.convertISTStartToUTC(start_date));
+            const endDate = end_date;
+            const endOfDay = new Date(endDate);
+            const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
+            let collectQuery = {
                 trustee_id: trustee_id,
+                createdAt: {
+                    $gte: new Date(startDate.getTime() - 24 * 60 * 60 * 1000),
+                    $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
+                },
+            };
+            const orders = await this.databaseService.CollectRequestModel.find({
+                ...collectQuery,
             }).select('_id');
             let transactions = [];
             const orderIds = orders.map((order) => order._id);
             let query = {
                 collect_id: { $in: orderIds },
             };
-            const startDate = new Date(start_date);
-            const startOfDayUTC = new Date(await this.convertISTStartToUTC(start_date));
-            const endDate = end_date;
-            const endOfDay = new Date(endDate);
-            const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
             if (startDate && endDate) {
                 query = {
                     ...query,
-                    createdAt: {
-                        $gte: startOfDayUTC,
-                        $lt: endOfDayUTC,
-                    },
+                    $or: [
+                        {
+                            payment_time: {
+                                $gte: startOfDayUTC,
+                                $lt: endOfDayUTC,
+                            },
+                        },
+                        {
+                            $and: [
+                                { payment_time: { $eq: null } },
+                                {
+                                    updatedAt: {
+                                        $gte: startOfDayUTC,
+                                        $lt: endOfDayUTC,
+                                    },
+                                },
+                            ],
+                        },
+                    ],
                 };
             }
             if ((status && status === 'SUCCESS') || status === 'PENDING') {
@@ -1317,11 +1342,11 @@ let EdvironPgService = class EdvironPgService {
             if (checkbatch) {
                 await this.databaseService.ErrorLogsModel.create({
                     type: 'BATCH TRANSACTION CORN',
-                    des: `Batch transaction already exists for trustee_id ${transactions[0].trustee_id}`,
+                    des: `Batch transaction already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]} month`,
                     identifier: trustee_id,
                     body: `${JSON.stringify({ startDate, endDate, status })}`,
                 });
-                throw new Error(`Batch transaction`);
+                throw new common_1.BadRequestException(`Already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]} month`);
             }
             const transactionsCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
             transactions =
@@ -1377,13 +1402,168 @@ let EdvironPgService = class EdvironPgService {
             };
         }
         catch (error) {
-            throw new Error(error.message);
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
+    async generateMerchantBacthTransactions(school_id, start_date, end_date, status) {
+        try {
+            const monthsFull = [
+                'January',
+                'February',
+                'March',
+                'April',
+                'May',
+                'June',
+                'July',
+                'August',
+                'September',
+                'October',
+                'November',
+                'December',
+            ];
+            if (!school_id) {
+                throw new common_1.BadRequestException('School ID is required');
+            }
+            const startDate = new Date(start_date);
+            const startOfDayUTC = new Date(await this.convertISTStartToUTC(start_date));
+            const endDate = end_date;
+            const endOfDay = new Date(endDate);
+            const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
+            let collectQuery = {
+                school_id: school_id,
+                createdAt: {
+                    $gte: new Date(startDate.getTime() - 24 * 60 * 60 * 1000),
+                    $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
+                },
+            };
+            const orders = await this.databaseService.CollectRequestModel.find({
+                ...collectQuery,
+            }).select('_id');
+            let transactions = [];
+            const orderIds = orders.map((order) => order._id);
+            let query = {
+                collect_id: { $in: orderIds },
+            };
+            if (startDate && endDate) {
+                query = {
+                    ...query,
+                    $or: [
+                        {
+                            payment_time: {
+                                $gte: startOfDayUTC,
+                                $lt: endOfDayUTC,
+                            },
+                        },
+                        {
+                            $and: [
+                                { payment_time: { $eq: null } },
+                                {
+                                    updatedAt: {
+                                        $gte: startOfDayUTC,
+                                        $lt: endOfDayUTC,
+                                    },
+                                },
+                            ],
+                        },
+                    ],
+                };
+            }
+            if ((status && status === 'SUCCESS') || status === 'PENDING') {
+                query = {
+                    ...query,
+                    status: { $regex: new RegExp(`^${status}$`, 'i') },
+                };
+            }
+            const checkbatch = await this.databaseService.BatchTransactionModel.findOne({
+                school_id: school_id,
+                month: monthsFull[new Date(endDate).getMonth()],
+                year: new Date(endDate).getFullYear().toString(),
+            });
+            if (checkbatch) {
+                await this.databaseService.ErrorLogsModel.create({
+                    type: 'BATCH TRANSACTION CORN',
+                    des: `Batch transaction already exists for school_id ${school_id} of ${monthsFull[new Date(endDate).getMonth()]} month`,
+                    identifier: school_id,
+                    body: `${JSON.stringify({ startDate, endDate, status })}`,
+                });
+                throw new common_1.BadRequestException(`Already exists for school_id ${school_id} of ${monthsFull[new Date(endDate).getMonth()]} month`);
+            }
+            const transactionsCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
+            transactions =
+                await this.databaseService.CollectRequestStatusModel.aggregate([
+                    {
+                        $match: query,
+                    },
+                    {
+                        $lookup: {
+                            from: 'collectrequests',
+                            localField: 'collect_id',
+                            foreignField: '_id',
+                            as: 'collect_request',
+                        },
+                    },
+                    {
+                        $unwind: '$collect_request',
+                    },
+                    {
+                        $group: {
+                            _id: '$collect_request.trustee_id',
+                            totalTransactionAmount: { $sum: '$transaction_amount' },
+                            totalOrderAmount: { $sum: '$order_amount' },
+                            totalTransactions: { $sum: 1 },
+                        },
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            trustee_id: '$_id',
+                            totalTransactionAmount: 1,
+                            totalOrderAmount: 1,
+                            totalTransactions: 1,
+                        },
+                    },
+                ]);
+            if (transactions.length > 0) {
+                await new this.databaseService.BatchTransactionModel({
+                    school_id: school_id,
+                    total_order_amount: transactions[0].totalOrderAmount,
+                    total_transaction_amount: transactions[0].totalTransactionAmount,
+                    total_transactions: transactions[0].totalTransactions,
+                    month: monthsFull[new Date(endDate).getMonth()],
+                    year: new Date(endDate).getFullYear().toString(),
+                    status,
+                }).save();
+            }
+            return {
+                transactions,
+                totalTransactions: transactionsCount,
+                month: monthsFull[new Date(endDate).getMonth()],
+                year: new Date(endDate).getFullYear().toString(),
+            };
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message);
         }
     }
     async getBatchTransactions(trustee_id, year) {
         try {
             const batch = await this.databaseService.BatchTransactionModel.find({
                 trustee_id,
+                year,
+            });
+            if (!batch) {
+                throw new Error('Batch not found');
+            }
+            return batch;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async getMerchantBatchTransactions(school_id, year) {
+        try {
+            const batch = await this.databaseService.BatchTransactionModel.find({
+                school_id,
                 year,
             });
             if (!batch) {

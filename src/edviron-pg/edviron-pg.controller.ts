@@ -2974,6 +2974,25 @@ export class EdvironPgController {
     );
   }
 
+   @Post('/save-merchant-transactions')
+  async saveMerchantBatchTransactions(
+    @Body()
+    body: {
+      school_id: string;
+      start_date: string;
+      end_date: string;
+      status?: string;
+    },
+  ) {
+    const status = body.status || null;
+    return await this.edvironPgService.generateMerchantBacthTransactions(
+      body.school_id,
+      body.start_date,
+      body.end_date,
+      status,
+    );
+  }
+
   @Get('/get-batch-transactions')
   async getBatchTransactions(
     @Query()
@@ -2993,6 +3012,31 @@ export class EdvironPgController {
       }
       return await this.edvironPgService.getBatchTransactions(
         query.trustee_id,
+        query.year,
+      );
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Get('/get-merchant-batch-transactions')
+  async getMerchantBatchTransactions(
+    @Query()
+    query: {
+      school_id: string;
+      year: string;
+      token: string;
+    },
+  ) {
+    try {
+      const { school_id, year, token } = query;
+     
+      const decoded = jwt.verify(token, process.env.KEY!) as any;
+      if (decoded.school_id !== school_id) {
+        throw new UnauthorizedException('Invalid token');
+      }
+      return await this.edvironPgService.getMerchantBatchTransactions(
+        query.school_id,
         query.year,
       );
     } catch (e) {

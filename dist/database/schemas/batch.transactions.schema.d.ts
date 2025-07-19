@@ -1,6 +1,7 @@
 import mongoose, { ObjectId } from 'mongoose';
 export declare class BatchTransactions {
     trustee_id: string;
+    school_id: string;
     total_order_amount: Number;
     total_transaction_amount: Number;
     total_transactions: Number;

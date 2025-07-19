@@ -1638,18 +1638,9 @@ export class EdvironPgService implements GatewayService {
         'November',
         'December',
       ];
-
-      const orders = await this.databaseService.CollectRequestModel.find({
-        trustee_id: trustee_id,
-      }).select('_id');
-
-      let transactions: any[] = [];
-
-      const orderIds = orders.map((order: any) => order._id);
-
-      let query: any = {
-        collect_id: { $in: orderIds },
-      };
+      if (!trustee_id) {
+        throw new BadRequestException('Trustee ID is required');
+      }
 
       const startDate = new Date(start_date);
       const startOfDayUTC = new Date(
@@ -1658,16 +1649,51 @@ export class EdvironPgService implements GatewayService {
       const endDate = end_date;
       const endOfDay = new Date(endDate);
       const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
+      let collectQuery: any = {
+        trustee_id: trustee_id,
+        createdAt: {
+          $gte: new Date(startDate.getTime() - 24 * 60 * 60 * 1000),
+          $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
+        },
+      };
+
+      const orders = await this.databaseService.CollectRequestModel.find({
+        ...collectQuery,
+      }).select('_id');
+
+      let transactions: any[] = [];
+
+      const orderIds = orders.map((order: any) => order._id);
+      let query: any = {
+        collect_id: { $in: orderIds },
+      };
+
       // Set hours, minutes, seconds, and milliseconds to the last moment of the day
       // endOfDay.setHours(23, 59, 59, 999);
-
+      // console.log(startOfDayUTC, 'startOfDayUTC');
+      // console.log(endOfDayUTC, 'endOfDayUTC');
       if (startDate && endDate) {
         query = {
           ...query,
-          createdAt: {
-            $gte: startOfDayUTC,
-            $lt: endOfDayUTC,
-          },
+          $or: [
+            {
+              payment_time: {
+                $gte: startOfDayUTC,
+                $lt: endOfDayUTC,
+              },
+            },
+            {
+              $and: [
+                { payment_time: { $eq: null } }, // Matches documents where payment_time is null or doesn't exist
+                {
+                  updatedAt: {
+                    $gte: startOfDayUTC,
+                    $lt: endOfDayUTC,
+                  },
+                },
+              ],
+            },
+          ],
         };
       }
 
@@ -1687,11 +1713,11 @@ export class EdvironPgService implements GatewayService {
       if (checkbatch) {
         await this.databaseService.ErrorLogsModel.create({
           type: 'BATCH TRANSACTION CORN',
-          des: `Batch transaction already exists for trustee_id ${transactions[0].trustee_id}`,
+          des: `Batch transaction already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]} month`,
           identifier: trustee_id,
           body: `${JSON.stringify({ startDate, endDate, status })}`,
         });
-        throw new Error(`Batch transaction`);
+        throw new BadRequestException(`Already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]} month`);
       }
 
       const transactionsCount =
@@ -1752,7 +1778,192 @@ export class EdvironPgService implements GatewayService {
         year: new Date(endDate).getFullYear().toString(),
       };
     } catch (error) {
-      throw new Error(error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+   async generateMerchantBacthTransactions(
+    school_id: string,
+    start_date: string,
+    end_date: string,
+    status?: string | null,
+  ) {
+    try {
+      // const page = Number(req.query.page) || 1;
+      // const limit = Number(req.query.limit) || 10;
+
+      // const startDate = req.query.startDate || null;
+      // const endDate = req.query.endDate || null;
+      // const status = req.query.status || null;
+
+      // let decrypted = jwt.verify(token, process.env.KEY!) as any;
+      // if (
+      //   JSON.stringify({
+      //     ...JSON.parse(JSON.stringify(decrypted)),
+      //     iat: undefined,
+      //     exp: undefined,
+      //   }) !==
+      //   JSON.stringify({
+      //     trustee_id,
+      //   })
+      // ) {
+      //   throw new ForbiddenException('Request forged');
+      // }
+      const monthsFull = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ];
+      if (!school_id) {
+        throw new BadRequestException('School ID is required');
+      }
+
+      const startDate = new Date(start_date);
+      const startOfDayUTC = new Date(
+        await this.convertISTStartToUTC(start_date),
+      );
+      const endDate = end_date;
+      const endOfDay = new Date(endDate);
+      const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
+      let collectQuery: any = {
+        school_id: school_id,
+        createdAt: {
+          $gte: new Date(startDate.getTime() - 24 * 60 * 60 * 1000),
+          $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
+        },
+      };
+
+      const orders = await this.databaseService.CollectRequestModel.find({
+        ...collectQuery,
+      }).select('_id');
+
+      let transactions: any[] = [];
+
+      const orderIds = orders.map((order: any) => order._id);
+      let query: any = {
+        collect_id: { $in: orderIds },
+      };
+
+      // Set hours, minutes, seconds, and milliseconds to the last moment of the day
+      // endOfDay.setHours(23, 59, 59, 999);
+      // console.log(startOfDayUTC, 'startOfDayUTC');
+      // console.log(endOfDayUTC, 'endOfDayUTC');
+      if (startDate && endDate) {
+        query = {
+          ...query,
+          $or: [
+            {
+              payment_time: {
+                $gte: startOfDayUTC,
+                $lt: endOfDayUTC,
+              },
+            },
+            {
+              $and: [
+                { payment_time: { $eq: null } }, // Matches documents where payment_time is null or doesn't exist
+                {
+                  updatedAt: {
+                    $gte: startOfDayUTC,
+                    $lt: endOfDayUTC,
+                  },
+                },
+              ],
+            },
+          ],
+        };
+      }
+
+      if ((status && status === 'SUCCESS') || status === 'PENDING') {
+        query = {
+          ...query,
+          status: { $regex: new RegExp(`^${status}$`, 'i') },
+        };
+      }
+
+      const checkbatch =
+        await this.databaseService.BatchTransactionModel.findOne({
+          school_id: school_id,
+          month: monthsFull[new Date(endDate).getMonth()],
+          year: new Date(endDate).getFullYear().toString(),
+        });
+      if (checkbatch) {
+        await this.databaseService.ErrorLogsModel.create({
+          type: 'BATCH TRANSACTION CORN',
+          des: `Batch transaction already exists for school_id ${school_id} of ${monthsFull[new Date(endDate).getMonth()]} month`,
+          identifier: school_id,
+          body: `${JSON.stringify({ startDate, endDate, status })}`,
+        });
+        throw new BadRequestException(`Already exists for school_id ${school_id} of ${monthsFull[new Date(endDate).getMonth()]} month`);
+      }
+
+      const transactionsCount =
+        await this.databaseService.CollectRequestStatusModel.countDocuments(
+          query,
+        );
+
+      transactions =
+        await this.databaseService.CollectRequestStatusModel.aggregate([
+          {
+            $match: query, // Apply your filters
+          },
+          {
+            $lookup: {
+              from: 'collectrequests',
+              localField: 'collect_id',
+              foreignField: '_id',
+              as: 'collect_request',
+            },
+          },
+          {
+            $unwind: '$collect_request', // Flatten the joined data
+          },
+          {
+            $group: {
+              _id: '$collect_request.trustee_id', // Group by `trustee_id`
+              totalTransactionAmount: { $sum: '$transaction_amount' },
+              totalOrderAmount: { $sum: '$order_amount' },
+              totalTransactions: { $sum: 1 }, // Count total transactions
+            },
+          },
+          {
+            $project: {
+              _id: 0, // Remove the `_id` field
+              trustee_id: '$_id', // Rename `_id` to `trustee_id`
+              totalTransactionAmount: 1,
+              totalOrderAmount: 1,
+              totalTransactions: 1,
+            },
+          },
+        ]);
+
+      if (transactions.length > 0) {
+        await new this.databaseService.BatchTransactionModel({
+          school_id: school_id,
+          total_order_amount: transactions[0].totalOrderAmount,
+          total_transaction_amount: transactions[0].totalTransactionAmount,
+          total_transactions: transactions[0].totalTransactions,
+          month: monthsFull[new Date(endDate).getMonth()],
+          year: new Date(endDate).getFullYear().toString(),
+          status,
+        }).save();
+      }
+      return {
+        transactions,
+        totalTransactions: transactionsCount,
+        month: monthsFull[new Date(endDate).getMonth()],
+        year: new Date(endDate).getFullYear().toString(),
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -1760,6 +1971,23 @@ export class EdvironPgService implements GatewayService {
     try {
       const batch = await this.databaseService.BatchTransactionModel.find({
         trustee_id,
+        year,
+      });
+
+      if (!batch) {
+        throw new Error('Batch not found');
+      }
+      return batch;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  async getMerchantBatchTransactions(school_id: string, year: string) {
+    
+    try {
+      const batch = await this.databaseService.BatchTransactionModel.find({
+        school_id,
         year,
       });
 
@@ -1857,7 +2085,7 @@ export class EdvironPgService implements GatewayService {
     }
   }
 
-  async retriveEasebuzz(txnid:string, key:string, salt:string) {
+  async retriveEasebuzz(txnid: string, key: string, salt: string) {
     const hashString = `${key}|${txnid}|${salt}`;
     const hashValue = await calculateSHA512Hash(hashString);
 
@@ -1880,7 +2108,7 @@ export class EdvironPgService implements GatewayService {
       const { data } = await axios.request(config);
       return data;
     } catch (error) {
-      throw new BadRequestException(error.message)
+      throw new BadRequestException(error.message);
     }
   }
 }
