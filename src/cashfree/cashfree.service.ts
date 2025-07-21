@@ -318,6 +318,7 @@ export class CashfreeService {
 
       let custom_order_id: string | null = null;
       let school_id: string | null = null;
+      let payment_id: string | null = null;
       // const enrichedOrders = response.data.map((order: any) => ({
       //   ...order,
       //   custom_order_id: customOrderMap.get(order.order_id) || null,
@@ -333,10 +334,33 @@ export class CashfreeService {
           .map(async (order: any) => {
             let customData: any = {};
             let additionalData: any = {};
+            const request =
+              await this.databaseService.CollectRequestModel.findById(
+                order.order_id,
+              );
 
+            if (!request) {
+              console.log('order not found');
+              throw new BadRequestException('order not found');
+            }
+            if (
+              request.payment_id === null ||
+              request.payment_id === '' ||
+              request.payment_id === undefined
+            ) {
+              const cf_payment_id = await this.edvironPgService.getPaymentId(
+                order.order_id,
+                request,
+              );
+              request.payment_id = cf_payment_id;
+              payment_id = cf_payment_id;
+              await request.save();
+            } else {
+              console.log(request.payment_id)
+              payment_id = request.payment_id
+            }
             if (order.order_id) {
               customData = customOrderMap.get(order.order_id) || {};
-
               try {
                 custom_order_id = customData.custom_order_id || null;
                 (school_id = customData.school_id || null),
@@ -395,6 +419,7 @@ export class CashfreeService {
               student_phone_no:
                 additionalData?.student_details?.student_phone_no || null,
               additional_data: JSON.stringify(additionalData) || null,
+              payment_id: payment_id || null,
             };
           }),
       );

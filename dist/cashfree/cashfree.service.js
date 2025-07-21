@@ -251,11 +251,29 @@ let CashfreeService = class CashfreeService {
             ]));
             let custom_order_id = null;
             let school_id = null;
+            let payment_id = null;
             const enrichedOrders = await Promise.all(response.data
                 .filter((order) => order.order_id && order.event_type !== 'DISPUTE')
                 .map(async (order) => {
                 let customData = {};
                 let additionalData = {};
+                const request = await this.databaseService.CollectRequestModel.findById(order.order_id);
+                if (!request) {
+                    console.log('order not found');
+                    throw new common_1.BadRequestException('order not found');
+                }
+                if (request.payment_id === null ||
+                    request.payment_id === '' ||
+                    request.payment_id === undefined) {
+                    const cf_payment_id = await this.edvironPgService.getPaymentId(order.order_id, request);
+                    request.payment_id = cf_payment_id;
+                    payment_id = cf_payment_id;
+                    await request.save();
+                }
+                else {
+                    console.log(request.payment_id);
+                    payment_id = request.payment_id;
+                }
                 if (order.order_id) {
                     customData = customOrderMap.get(order.order_id) || {};
                     try {
@@ -310,6 +328,7 @@ let CashfreeService = class CashfreeService {
                     student_email: additionalData?.student_details?.student_email || null,
                     student_phone_no: additionalData?.student_details?.student_phone_no || null,
                     additional_data: JSON.stringify(additionalData) || null,
+                    payment_id: payment_id || null,
                 };
             }));
             return {

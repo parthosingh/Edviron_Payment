@@ -117,6 +117,7 @@ export declare class EdvironPgService implements GatewayService {
         totalPages: number;
     }>;
     getSingleTransactionInfo(collect_id: string): Promise<any[]>;
+    getPaymentId(collect_id: string, request: CollectRequest): Promise<any>;
     getTransactionReportBatched(trustee_id: string, start_date: string, end_date: string, status?: string | null, school_id?: string | null): Promise<{
         length: number;
         transactions: any[];
