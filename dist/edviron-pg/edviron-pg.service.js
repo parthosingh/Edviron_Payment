@@ -982,7 +982,7 @@ let EdvironPgService = class EdvironPgService {
                         trustee_id: 1,
                         custom_order_id: 1,
                         vendors_info: 1,
-                        payment_id: '$cf_payment_id',
+                        payment_id: '$payment_id',
                         additional_data: 1,
                         isQRPayment: 1,
                         status: '$collect_req_status.status',
@@ -1018,8 +1018,8 @@ let EdvironPgService = class EdvironPgService {
                     };
                     const response = await axios_1.default.request(config);
                     const { transfer_utr, transfer_time } = response.data;
-                    if (transaction[0].payment_id === null ||
-                        transaction[0].payment_id === '') {
+                    if (request.payment_id === null ||
+                        request.payment_id === '' || request.payment_id === undefined) {
                         const cf_payment_id = await this.getPaymentId(collect_id, request);
                         request.payment_id = cf_payment_id;
                         await request.save();
