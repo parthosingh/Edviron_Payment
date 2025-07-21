@@ -106,6 +106,7 @@ export declare class CollectRequest {
     clientId: string;
     easebuzz_sub_merchant_id: string;
     clientSecret: string;
+    payment_id: string;
     webHookUrl: string;
     disabled_modes: string[];
     additional_data: string;

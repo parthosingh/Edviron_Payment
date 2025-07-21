@@ -264,12 +264,14 @@ export class EdvironPgController {
     if (!info) {
       throw new Error('transaction not found');
     }
+    
     info.gateway = Gateway.EDVIRON_PG;
     await info.save();
     const { status } = await this.edvironPgService.checkStatus(
       collect_request_id,
       collectRequest,
     );
+
 
     if (collectRequest?.sdkPayment) {
       if (status === `SUCCESS`) {
@@ -462,8 +464,8 @@ export class EdvironPgController {
       res.status(200).send('OK');
       return;
     }
-
     collectReq.gateway = Gateway.EDVIRON_PG;
+    collectReq.payment_id = body.payment.cf_payment_id.toString() ?? '';
     await collectReq.save();
 
     // Auto Refund Code Replicate on easebuzz

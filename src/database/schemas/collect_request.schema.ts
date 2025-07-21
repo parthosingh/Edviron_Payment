@@ -132,6 +132,9 @@ export class CollectRequest {
   clientSecret: string;
 
   @Prop({ required: false })
+  payment_id: string;
+
+  @Prop({ required: false })
   webHookUrl: string;
 
   @Prop({ required: true, default: [] })
