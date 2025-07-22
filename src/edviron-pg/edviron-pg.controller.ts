@@ -264,14 +264,13 @@ export class EdvironPgController {
     if (!info) {
       throw new Error('transaction not found');
     }
-    
+
     info.gateway = Gateway.EDVIRON_PG;
     await info.save();
     const { status } = await this.edvironPgService.checkStatus(
       collect_request_id,
       collectRequest,
     );
-
 
     if (collectRequest?.sdkPayment) {
       if (status === `SUCCESS`) {
@@ -1436,7 +1435,7 @@ export class EdvironPgController {
         throw new ForbiddenException('Request forged');
       }
 
-      const transactions =
+      let transactions =
         await this.databaseService.CollectRequestStatusModel.aggregate([
           {
             $match: {
@@ -1532,6 +1531,30 @@ export class EdvironPgController {
             $sort: { createdAt: -1 },
           },
         ]);
+
+      const collect_request =
+        await this.databaseService.CollectRequestModel.findById(
+          collect_request_id,
+        );
+      let paymentId: string | null = null;
+      if (collect_request) {
+        try {
+          paymentId = await this.edvironPgService.getPaymentId(
+            collect_request_id.toString(),
+            collect_request,
+          );
+          if (paymentId) {
+            paymentId = paymentId?.toString();
+          }
+        } catch (e) {
+          paymentId = null;
+        }
+      }
+      try{
+        transactions[0].paymentId = paymentId;
+      }catch(e){
+        console.log('Error setting paymentId:', e);}
+      console.log(transactions, 'transactions found');
 
       return transactions;
     } catch (e) {
@@ -4351,4 +4374,3 @@ export class EdvironPgController {
     } catch (error) {}
   }
 }
- 

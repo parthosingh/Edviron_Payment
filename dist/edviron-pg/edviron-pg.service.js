@@ -323,6 +323,16 @@ let EdvironPgService = class EdvironPgService {
                 collect_status.status.toUpperCase() === 'FAILURE') {
                 formatedStatus = transactionStatus_1.TransactionStatus.FAILURE;
             }
+            let paymentId = null;
+            try {
+                paymentId = await this.getPaymentId(collect_request_id.toString(), collect_request);
+                if (paymentId) {
+                    paymentId = paymentId?.toString();
+                }
+            }
+            catch (e) {
+                paymentId = null;
+            }
             return {
                 status: formatedStatus,
                 amount: cashfreeRes.order_amount,
@@ -339,6 +349,7 @@ let EdvironPgService = class EdvironPgService {
                     isSettlementComplete: settlementInfo.isSettlementComplete,
                     transfer_utr: settlementInfo.transfer_utr,
                     service_charge: settlementInfo.service_charge,
+                    paymentId: paymentId,
                 },
             };
         }
@@ -1019,7 +1030,8 @@ let EdvironPgService = class EdvironPgService {
                     const response = await axios_1.default.request(config);
                     const { transfer_utr, transfer_time } = response.data;
                     if (request.payment_id === null ||
-                        request.payment_id === '' || request.payment_id === undefined) {
+                        request.payment_id === '' ||
+                        request.payment_id === undefined) {
                         const cf_payment_id = await this.getPaymentId(collect_id, request);
                         request.payment_id = cf_payment_id;
                         await request.save();
@@ -1071,8 +1083,13 @@ let EdvironPgService = class EdvironPgService {
                     'x-partner-apikey': process.env.CASHFREE_API_KEY,
                 },
             };
-            const { data: response } = await axios_1.default.request(config);
-            return response[0].cf_payment_id || null;
+            try {
+                const { data: response } = await axios_1.default.request(config);
+                return response[0].cf_payment_id || null;
+            }
+            catch (e) {
+                return null;
+            }
         }
         catch (error) {
             throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');

@@ -384,6 +384,7 @@ export class EdvironPgService implements GatewayService {
     };
     try {
       const { data: cashfreeRes } = await axios.request(config);
+
       const order_status_to_transaction_status_map = {
         ACTIVE: TransactionStatus.PENDING,
         PAID: TransactionStatus.SUCCESS,
@@ -439,6 +440,18 @@ export class EdvironPgService implements GatewayService {
       ) {
         formatedStatus = TransactionStatus.FAILURE;
       }
+      let paymentId: string | null = null;
+      try {
+        paymentId = await this.getPaymentId(
+          collect_request_id.toString(),
+          collect_request,
+        );
+        if (paymentId) {
+          paymentId = paymentId?.toString();
+        }
+      } catch (e) {
+        paymentId = null;
+      }
       return {
         status: formatedStatus,
         amount: cashfreeRes.order_amount,
@@ -457,6 +470,7 @@ export class EdvironPgService implements GatewayService {
           isSettlementComplete: settlementInfo.isSettlementComplete,
           transfer_utr: settlementInfo.transfer_utr,
           service_charge: settlementInfo.service_charge,
+          paymentId: paymentId,
         },
       };
     } catch (e) {
@@ -1273,11 +1287,12 @@ export class EdvironPgService implements GatewayService {
           const { transfer_utr, transfer_time } = response.data;
           if (
             request.payment_id === null ||
-            request.payment_id === '' || request.payment_id === undefined
+            request.payment_id === '' ||
+            request.payment_id === undefined
           ) {
             const cf_payment_id = await this.getPaymentId(collect_id, request);
-            request.payment_id = cf_payment_id
-            await request.save()
+            request.payment_id = cf_payment_id;
+            await request.save();
             try {
               transaction[0] = {
                 ...transaction[0],
@@ -1327,8 +1342,12 @@ export class EdvironPgService implements GatewayService {
           'x-partner-apikey': process.env.CASHFREE_API_KEY,
         },
       };
-      const { data: response } = await axios.request(config);
-      return response[0].cf_payment_id || null;
+      try {
+        const { data: response } = await axios.request(config);
+        return response[0].cf_payment_id || null;
+      } catch (e) {
+        return null;
+      }
     } catch (error) {
       throw new InternalServerErrorException(
         error.message || 'Something went wrong',
@@ -2166,4 +2185,3 @@ export class EdvironPgService implements GatewayService {
     }
   }
 }
-

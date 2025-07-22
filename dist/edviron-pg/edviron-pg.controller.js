@@ -1016,7 +1016,7 @@ let EdvironPgController = class EdvironPgController {
             if (decrypted.collect_request_id != collect_request_id) {
                 throw new common_1.ForbiddenException('Request forged');
             }
-            const transactions = await this.databaseService.CollectRequestStatusModel.aggregate([
+            let transactions = await this.databaseService.CollectRequestStatusModel.aggregate([
                 {
                     $match: {
                         collect_id: new mongoose_1.Types.ObjectId(collect_request_id),
@@ -1110,6 +1110,26 @@ let EdvironPgController = class EdvironPgController {
                     $sort: { createdAt: -1 },
                 },
             ]);
+            const collect_request = await this.databaseService.CollectRequestModel.findById(collect_request_id);
+            let paymentId = null;
+            if (collect_request) {
+                try {
+                    paymentId = await this.edvironPgService.getPaymentId(collect_request_id.toString(), collect_request);
+                    if (paymentId) {
+                        paymentId = paymentId?.toString();
+                    }
+                }
+                catch (e) {
+                    paymentId = null;
+                }
+            }
+            try {
+                transactions[0].paymentId = paymentId;
+            }
+            catch (e) {
+                console.log('Error setting paymentId:', e);
+            }
+            console.log(transactions, 'transactions found');
             return transactions;
         }
         catch (e) {
