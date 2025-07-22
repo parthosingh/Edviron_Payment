@@ -322,7 +322,6 @@ let EdvironPgController = class EdvironPgController {
             return;
         }
         collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
-        collectReq.payment_id = body.payment.cf_payment_id.toString() ?? '';
         await collectReq.save();
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
         const status = webHookData.payment.payment_status;

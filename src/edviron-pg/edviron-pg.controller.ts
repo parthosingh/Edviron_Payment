@@ -465,7 +465,7 @@ export class EdvironPgController {
       return;
     }
     collectReq.gateway = Gateway.EDVIRON_PG;
-    collectReq.payment_id = body.payment.cf_payment_id.toString() ?? '';
+    // collectReq.payment_id = body.payment.cf_payment_id.toString() ?? '';
     await collectReq.save();
 
     // Auto Refund Code Replicate on easebuzz
@@ -4351,3 +4351,4 @@ export class EdvironPgController {
     } catch (error) {}
   }
 }
+ 
