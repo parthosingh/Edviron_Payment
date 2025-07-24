@@ -287,7 +287,7 @@ export class EdvironPgController {
       console.log(`SDK payment failed for ${collect_request_id}`);
 
       return res.redirect(
-        `${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}}`,
+        `${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}`,
       );
     }
     const callbackUrl = new URL(collectRequest?.callbackUrl);
