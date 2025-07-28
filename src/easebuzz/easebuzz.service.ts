@@ -343,7 +343,7 @@ export class EasebuzzService {
       throw new BadRequestException(error.message || 'Something went wrong');
     }
   }
-
+  
   // split payment order creation
   async createOrderV2(
     request: CollectRequest,
@@ -484,7 +484,7 @@ export class EasebuzzService {
         );
 
         const { data: easebuzzRes } = await axios.request(Ezboptions);
-        console.log(easebuzzRes);
+        console.log({easebuzzRes});
         
         const easebuzzPaymentId = easebuzzRes.data;
         collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
@@ -618,6 +618,8 @@ export class EasebuzzService {
       };
 
       const { data: easebuzzRes } = await axios.request(Ezboptions);
+      console.log({easebuzzRes});
+      
       const easebuzzPaymentId = easebuzzRes.data;
       collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
       await collectReq.save();
@@ -626,7 +628,7 @@ export class EasebuzzService {
       //   collect_request_id: request._id,
       //   collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
       // };
-
+      const schoolName = school_name.replace(/ /g, '_');
       return {
          collect_request_id: request._id,
         url:
@@ -641,7 +643,7 @@ export class EasebuzzService {
           '&platform_charges=' +
           encodedPlatformCharges +
           '&school_name=' +
-          school_name +
+          schoolName +
           '&easebuzz_pg=' +
           true +
           '&payment_id=' +
@@ -819,7 +821,7 @@ export class EasebuzzService {
       encodedParams.set('furl', easebuzz_cb_furl);
       encodedParams.set('hash', hash);
       encodedParams.set('request_flow', 'SEAMLESS');
-      encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
+      // encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
       const options = {
         method: 'POST',
         url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
