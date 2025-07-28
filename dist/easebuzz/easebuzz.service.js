@@ -425,7 +425,6 @@ let EasebuzzService = class EasebuzzService {
             encodedParams.set('furl', easebuzz_cb_furl);
             encodedParams.set('hash', hash);
             encodedParams.set('request_flow', 'SEAMLESS');
-            encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
             let ezb_split_payments = {};
             if (request.easebuzz_split_label) {
                 ezb_split_payments[request.easebuzz_split_label] = request.amount;
@@ -452,7 +451,22 @@ let EasebuzzService = class EasebuzzService {
             await this.getQrNonSplit(request._id.toString(), request);
             return {
                 collect_request_id: request._id,
-                collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
+                url: process.env.URL +
+                    '/edviron-pg/redirect?' +
+                    '&collect_request_id=' +
+                    request._id +
+                    '&amount=' +
+                    request.amount.toFixed(2) +
+                    '&' +
+                    disabled_modes_string +
+                    '&platform_charges=' +
+                    encodedPlatformCharges +
+                    '&school_name=' +
+                    school_name +
+                    '&easebuzz_pg=' +
+                    true +
+                    '&payment_id=' +
+                    easebuzzPaymentId,
             };
         }
         catch (e) {

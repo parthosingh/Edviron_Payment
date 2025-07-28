@@ -49,7 +49,7 @@ export declare class EasebuzzService {
     } | undefined>;
     createOrderV2NonSplit(request: CollectRequest, platform_charges: platformChange[], school_name: string, easebuzz_school_label?: string | null): Promise<{
         collect_request_id: import("mongoose").Schema.Types.ObjectId;
-        collect_request_url: string;
+        url: string;
     }>;
     getQr(collect_id: string, request: CollectRequest, ezb_split_payments: {
         [key: string]: number;

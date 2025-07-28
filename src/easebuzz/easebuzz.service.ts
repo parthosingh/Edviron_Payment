@@ -287,7 +287,7 @@ export class EasebuzzService {
     }
   }
 
-  async getQrBase64(collect_id: string) {
+  async getQrBase64(collect_id: string) { 
     try {
       const collectRequest =
         await this.databaseService.CollectRequestModel.findById(collect_id);
@@ -301,7 +301,7 @@ export class EasebuzzService {
       const qrCodeBase64 = await QRCode.toDataURL(upiIntentUrl, {
         margin: 2,
         width: 300,
-      });
+      }); 
       return {
         intentUrl: upiIntentUrl,
         qrCodeBase64: qrCodeBase64,
@@ -565,7 +565,7 @@ export class EasebuzzService {
       encodedParams.set('furl', easebuzz_cb_furl);
       encodedParams.set('hash', hash);
       encodedParams.set('request_flow', 'SEAMLESS');
-      encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
+      // encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
       let ezb_split_payments: { [key: string]: number } = {};
 
       if (request.easebuzz_split_label) {
@@ -597,9 +597,30 @@ export class EasebuzzService {
       collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
       await collectReq.save();
       await this.getQrNonSplit(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
+      // return {
+      //   collect_request_id: request._id,
+      //   collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
+      // };
+
       return {
-        collect_request_id: request._id,
-        collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
+         collect_request_id: request._id,
+        url:
+          process.env.URL +
+          '/edviron-pg/redirect?' +
+          '&collect_request_id=' +
+          request._id +
+          '&amount=' +
+          request.amount.toFixed(2) +
+          '&' +
+          disabled_modes_string +
+          '&platform_charges=' +
+          encodedPlatformCharges +
+          '&school_name=' +
+          school_name +
+          '&easebuzz_pg=' +
+          true +
+          '&payment_id=' +
+          easebuzzPaymentId,
       };
     } catch (e) {
       console.log(e);
