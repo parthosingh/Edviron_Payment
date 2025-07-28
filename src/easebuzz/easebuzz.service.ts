@@ -8,6 +8,7 @@ import { calculateSHA512Hash } from 'src/utils/sign';
 import axios from 'axios';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import { platformChange } from 'src/collect/collect.controller';
+import e from 'express';
 
 @Injectable()
 export class EasebuzzService {
@@ -343,6 +344,7 @@ export class EasebuzzService {
     }
   }
 
+  // split payment order creation
   async createOrderV2(
     request: CollectRequest,
     platform_charges: platformChange[],
@@ -416,7 +418,7 @@ export class EasebuzzService {
         encodedParams.set('furl', easebuzz_cb_furl);
         encodedParams.set('hash', hash);
         encodedParams.set('request_flow', 'SEAMLESS');
-        encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
+        // encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
         let ezb_split_payments: { [key: string]: number } = {};
 
         if (
@@ -482,14 +484,37 @@ export class EasebuzzService {
         );
 
         const { data: easebuzzRes } = await axios.request(Ezboptions);
+        console.log(easebuzzRes);
+        
         const easebuzzPaymentId = easebuzzRes.data;
         collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
         await collectReq.save();
         await this.getQr(request._id.toString(), request, ezb_split_payments); // uncomment after fixing easebuzz QR code issue
+        // return {
+        //   collect_request_id: request._id,
+        //   collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
+        // };
+
         return {
-          collect_request_id: request._id,
-          collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
-        };
+         collect_request_id: request._id,
+        url:
+          process.env.URL +
+          '/edviron-pg/redirect?' +
+          '&collect_request_id=' +
+          request._id +
+          '&amount=' +
+          request.amount.toFixed(2) +
+          '&' +
+          disabled_modes_string +
+          '&platform_charges=' +
+          encodedPlatformCharges +
+          '&school_name=' +
+          school_name +
+          '&easebuzz_pg=' +
+          true +
+          '&payment_id=' +
+          easebuzzPaymentId,
+      };
       }
     } catch (e) {
       throw new BadRequestException(e.message);
@@ -642,8 +667,6 @@ export class EasebuzzService {
       }
       const easebuzz_key = request.easebuzz_non_partner_cred.easebuzz_key;
       const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
-      const easebuzz_sub_merchant_id =
-        request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
       const upi_collect_id = `upi_${collect_id}`;
       let productinfo = 'payment gateway customer';
       let firstname = 'customer';
@@ -677,7 +700,7 @@ export class EasebuzzService {
 
       let hash = await calculateSHA512Hash(hashData);
       let encodedParams = new URLSearchParams();
-      encodedParams.set('key', process.env.EASEBUZZ_KEY!);
+      encodedParams.set('key', easebuzz_key);
       encodedParams.set('txnid', upi_collect_id);
       encodedParams.set(
         'amount',
@@ -692,7 +715,7 @@ export class EasebuzzService {
       encodedParams.set('furl', easebuzz_cb_furl);
       encodedParams.set('hash', hash);
       encodedParams.set('request_flow', 'SEAMLESS');
-      encodedParams.set('sub_merchant_id', request.easebuzz_sub_merchant_id);
+      // encodedParams.set('sub_merchant_id', request.easebuzz_sub_merchant_id);
       encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
 
       const options = {
@@ -706,6 +729,8 @@ export class EasebuzzService {
       };
 
       const { data: easebuzzRes } = await axios.request(options);
+      console.log({easebuzzRes});
+      
       const access_key = easebuzzRes.data;
       let formData = new FormData();
       formData.append('access_key', access_key);
@@ -722,7 +747,7 @@ export class EasebuzzService {
         data: formData,
       };
       const response = await axios.request(config);
-      console.log(response.data);
+      // console.log(response.data);
 
       await this.databaseService.CollectRequestModel.findByIdAndUpdate(
         collect_id,

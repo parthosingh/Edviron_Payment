@@ -71,9 +71,16 @@ let EasebuzzController = class EasebuzzController {
         }
     }
     async getEncryptedInfo(res, req, body) {
-        const { card_number, card_holder, card_cvv, card_exp } = req.query;
+        const { card_number, card_holder, card_cvv, card_exp, collect_id } = req.query;
+        if (!card_number || !card_holder || !card_cvv || !card_exp) {
+            throw new common_1.BadRequestException('Card details are required');
+        }
+        const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!request) {
+            throw new common_1.BadRequestException('Collect Request not found');
+        }
         console.log('encrypting key and iv');
-        const { key, iv } = await (0, sign_1.merchantKeySHA256)();
+        const { key, iv } = await (0, sign_1.merchantKeySHA256)(request);
         console.log('key and iv generated', { key, iv });
         console.log(`encrypting data: ${card_number}`);
         const enc_card_number = await (0, sign_2.encryptCard)(card_number, key, iv);

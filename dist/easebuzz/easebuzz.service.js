@@ -315,7 +315,6 @@ let EasebuzzService = class EasebuzzService {
                 encodedParams.set('furl', easebuzz_cb_furl);
                 encodedParams.set('hash', hash);
                 encodedParams.set('request_flow', 'SEAMLESS');
-                encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
                 let ezb_split_payments = {};
                 if (request.isSplitPayments &&
                     request.easebuzzVendors &&
@@ -363,13 +362,29 @@ let EasebuzzService = class EasebuzzService {
                     .join('&');
                 const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
                 const { data: easebuzzRes } = await axios_1.default.request(Ezboptions);
+                console.log(easebuzzRes);
                 const easebuzzPaymentId = easebuzzRes.data;
                 collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
                 await collectReq.save();
                 await this.getQr(request._id.toString(), request, ezb_split_payments);
                 return {
                     collect_request_id: request._id,
-                    collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
+                    url: process.env.URL +
+                        '/edviron-pg/redirect?' +
+                        '&collect_request_id=' +
+                        request._id +
+                        '&amount=' +
+                        request.amount.toFixed(2) +
+                        '&' +
+                        disabled_modes_string +
+                        '&platform_charges=' +
+                        encodedPlatformCharges +
+                        '&school_name=' +
+                        school_name +
+                        '&easebuzz_pg=' +
+                        true +
+                        '&payment_id=' +
+                        easebuzzPaymentId,
                 };
             }
         }
@@ -482,7 +497,6 @@ let EasebuzzService = class EasebuzzService {
             }
             const easebuzz_key = request.easebuzz_non_partner_cred.easebuzz_key;
             const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
-            const easebuzz_sub_merchant_id = request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
             const upi_collect_id = `upi_${collect_id}`;
             let productinfo = 'payment gateway customer';
             let firstname = 'customer';
@@ -510,7 +524,7 @@ let EasebuzzService = class EasebuzzService {
                 '&status=fail';
             let hash = await (0, sign_1.calculateSHA512Hash)(hashData);
             let encodedParams = new URLSearchParams();
-            encodedParams.set('key', process.env.EASEBUZZ_KEY);
+            encodedParams.set('key', easebuzz_key);
             encodedParams.set('txnid', upi_collect_id);
             encodedParams.set('amount', parseFloat(request.amount.toFixed(2)).toString());
             encodedParams.set('productinfo', productinfo);
@@ -521,7 +535,6 @@ let EasebuzzService = class EasebuzzService {
             encodedParams.set('furl', easebuzz_cb_furl);
             encodedParams.set('hash', hash);
             encodedParams.set('request_flow', 'SEAMLESS');
-            encodedParams.set('sub_merchant_id', request.easebuzz_sub_merchant_id);
             encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
             const options = {
                 method: 'POST',
@@ -533,6 +546,7 @@ let EasebuzzService = class EasebuzzService {
                 data: encodedParams,
             };
             const { data: easebuzzRes } = await axios_1.default.request(options);
+            console.log({ easebuzzRes });
             const access_key = easebuzzRes.data;
             let formData = new FormData();
             formData.append('access_key', access_key);
@@ -548,7 +562,6 @@ let EasebuzzService = class EasebuzzService {
                 data: formData,
             };
             const response = await axios_1.default.request(config);
-            console.log(response.data);
             await this.databaseService.CollectRequestModel.findByIdAndUpdate(collect_id, {
                 deepLink: response.data.qr_link,
             });
