@@ -631,7 +631,7 @@ export class EasebuzzService {
       const schoolName = school_name.replace(/ /g, '_');
       return {
          collect_request_id: request._id,
-        url:
+        collect_request_url:
           process.env.URL +
           '/edviron-pg/redirect?' +
           '&collect_request_id=' +
