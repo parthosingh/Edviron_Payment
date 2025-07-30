@@ -213,7 +213,7 @@ let EdvironPgController = class EdvironPgController {
                 return res.redirect(`${process.env.PG_FRONTEND}/payment-success?collect_id=${collect_request_id}`);
             }
             console.log(`SDK payment failed for ${collect_request_id}`);
-            return res.redirect(`${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}}`);
+            res.redirect(`${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}`);
         }
         const callbackUrl = new URL(collectRequest?.callbackUrl);
         if (status !== `SUCCESS`) {

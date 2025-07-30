@@ -1,4 +1,5 @@
 import * as _jwt from 'jsonwebtoken';
+import { CollectRequest } from 'src/database/schemas/collect_request.schema';
 const crypto = require('crypto');
 
 export const sign = async (body: any) => {
@@ -19,9 +20,19 @@ export const calculateSHA256 = async (data: any) => {
   return hash.digest('hex');
 };
 
-export const merchantKeySHA256 = async () => {
-  const merchantKey = process.env.EASEBUZZ_KEY;
-  const salt = process.env.EASEBUZZ_SALT;
+export const merchantKeySHA256 = async (request?: CollectRequest) => {
+  let merchantKey = process.env.EASEBUZZ_KEY;
+  let salt = process.env.EASEBUZZ_SALT;
+  if (request) {
+    try {
+      merchantKey =
+        request.easebuzz_non_partner_cred?.easebuzz_key || merchantKey;
+      salt = request.easebuzz_non_partner_cred?.easebuzz_salt || salt;
+    } catch (e) {
+      merchantKey = process.env.EASEBUZZ_KEY;
+      salt = process.env.EASEBUZZ_SALT;
+    }
+  }
   console.log({ merchantKey, salt });
 
   const key = crypto

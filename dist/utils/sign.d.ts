@@ -1,7 +1,8 @@
+import { CollectRequest } from 'src/database/schemas/collect_request.schema';
 export declare const sign: (body: any) => Promise<any>;
 export declare const calculateSHA512Hash: (data: any) => Promise<any>;
 export declare const calculateSHA256: (data: any) => Promise<any>;
-export declare const merchantKeySHA256: () => Promise<{
+export declare const merchantKeySHA256: (request?: CollectRequest) => Promise<{
     key: any;
     iv: any;
 }>;
