@@ -72,6 +72,16 @@ export declare class EdvironPgController {
         isQRCode?: boolean;
         gateway?: string[];
     }, res: any, req: any): Promise<void>;
+    bulkTransactionsCSV(body: {
+        trustee_id: string;
+        token: string;
+        searchParams?: string;
+        isCustomSearch?: boolean;
+        seachFilter?: string;
+        payment_modes?: string[];
+        isQRCode?: boolean;
+        gateway?: string[];
+    }, res: any, req: any): Promise<void>;
     singleTransactionReport(body: {
         collect_id: string;
         trustee_id: string;
