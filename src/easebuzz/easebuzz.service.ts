@@ -76,18 +76,26 @@ export class EasebuzzService {
   }
 
   async statusResponsev2(requestId: string, collectReq: CollectRequest) {
-    let statusResponse = await this.easebuzzWebhookCheckStatusV2(requestId, collectReq);
-    if (statusResponse.msg.mode === 'NA') {
-      console.log(`Status 0 for ${requestId}, retrying with 'upi_' suffix`);
-      statusResponse = await this.easebuzzWebhookCheckStatusV2(
-        `upi_${requestId}`,
-        collectReq,
-      );
+    try{
+
+      let statusResponse = await this.easebuzzWebhookCheckStatusV2(requestId, collectReq);
+      if (statusResponse.msg.mode === 'NA') {
+        console.log(`Status 0 for ${requestId}, retrying with 'upi_' suffix`);
+        statusResponse = await this.easebuzzWebhookCheckStatusV2(
+          `upi_${requestId}`,
+          collectReq,
+        );
+      }
+      console.log(statusResponse);
+      
+      return statusResponse;
+    }catch (e) {
+      console.log(e);
+      
+      throw new BadRequestException(e.message);
     }
-
-    return statusResponse;
   }
-
+ 
   async initiateRefund(
     collect_id: string,
     refund_amount: number,
