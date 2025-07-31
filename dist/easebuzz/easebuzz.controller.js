@@ -547,7 +547,7 @@ let EasebuzzController = class EasebuzzController {
         const collectRequest = (await this.databaseService.CollectRequestModel.findById(collect_request_id));
         collectRequest.gateway = collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ;
         await collectRequest.save();
-        const statusResponse = await this.easebuzzService.easebuzzWebhookCheckStatusV2(collect_request_id, collectRequest);
+        const statusResponse = await this.easebuzzService.statusResponsev2(collect_request_id, collectRequest);
         const reqToCheck = statusResponse;
         console.log(statusResponse, 'status response check');
         const status = reqToCheck.msg.status;
@@ -574,6 +574,7 @@ let EasebuzzController = class EasebuzzController {
             return res.redirect(`${callbackUrl.toString()}&status=cancelled&reason=${reason}`);
         }
         callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
+        callbackUrl.searchParams.set('status', 'SUCCESS');
         return res.redirect(callbackUrl.toString());
     }
     async handleEasebuzzCallbackPost(req, res) {

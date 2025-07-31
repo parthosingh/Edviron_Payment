@@ -829,7 +829,7 @@ export class EasebuzzController {
     collectRequest.gateway = Gateway.EDVIRON_EASEBUZZ;
     await collectRequest.save();
     const statusResponse =
-      await this.easebuzzService.easebuzzWebhookCheckStatusV2(
+      await this.easebuzzService.statusResponsev2(
         collect_request_id,
         collectRequest,
       );
@@ -875,6 +875,7 @@ export class EasebuzzController {
       );
     }
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
+    callbackUrl.searchParams.set('status', 'SUCCESS');
     return res.redirect(callbackUrl.toString());
   }
 
