@@ -130,4 +130,12 @@ export declare class CashfreeService {
         virtual_account_email: string;
         virtual_account_phone: string;
     }, notification_group: string, amount: number): Promise<any>;
+    createNonSeamlessOrder(request: CollectRequest, cashfreeVedors?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
+    ], isSplitPayments?: boolean): Promise<any>;
 }

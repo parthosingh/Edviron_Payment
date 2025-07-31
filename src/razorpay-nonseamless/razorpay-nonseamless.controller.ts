@@ -523,7 +523,7 @@ export class RazorpayNonseamlessController {
         body.cursor,
         body.fromDate,
         limit,
-        skip
+        skip,
       );
     } catch (error) {
       throw new BadRequestException(error.message);

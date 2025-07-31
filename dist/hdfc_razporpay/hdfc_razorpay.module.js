@@ -20,7 +20,12 @@ exports.HdfcRazorpayModule = HdfcRazorpayModule;
 exports.HdfcRazorpayModule = HdfcRazorpayModule = __decorate([
     (0, common_1.Module)({
         controllers: [hdfc_razorpay_controller_1.HdfcRazorpayController],
-        providers: [hdfc_razorpay_service_1.HdfcRazorpayService, edviron_pg_service_1.EdvironPgService, database_service_1.DatabaseService, cashfree_service_1.CashfreeService],
+        providers: [
+            hdfc_razorpay_service_1.HdfcRazorpayService,
+            edviron_pg_service_1.EdvironPgService,
+            database_service_1.DatabaseService,
+            cashfree_service_1.CashfreeService,
+        ],
         imports: [database_module_1.DatabaseModule],
     })
 ], HdfcRazorpayModule);

@@ -84,6 +84,9 @@ let EdvironPgController = class EdvironPgController {
         if (!collectRequest) {
             res.redirect(`${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`);
         }
+        if (collectRequest?.easebuzz_non_partner) {
+            res.redirect(`${process.env.EASEBUZZ_ENDPOINT_PROD}/pay/${collectRequest.paymentIds.easebuzz_id}`);
+        }
         if (collectRequest &&
             collectRequest.worldline &&
             collectRequest.worldline.worldline_merchant_id) {
@@ -143,6 +146,32 @@ let EdvironPgController = class EdvironPgController {
             new: true,
         });
         const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (collectReq?.isCFNonSeamless) {
+            const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Redirecting to Payment...</title>
+          <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+      </head>
+      <body>
+          <p>Redirecting to payment page...</p>
+          <script>
+              const cashfree = Cashfree({ mode: "production" });
+              const checkoutOptions = {
+                  paymentSessionId: "${sessionId}",
+                  redirectTarget: "_self"
+              };
+              cashfree.checkout(checkoutOptions);
+          </script>
+      </body>
+      </html>
+    `;
+            res.setHeader('Content-Type', 'text/html');
+            res.send(html);
+        }
         const payload = { school_id: collectReq?.school_id };
         const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET, {
             noTimestamp: true,
@@ -184,7 +213,7 @@ let EdvironPgController = class EdvironPgController {
                 return res.redirect(`${process.env.PG_FRONTEND}/payment-success?collect_id=${collect_request_id}`);
             }
             console.log(`SDK payment failed for ${collect_request_id}`);
-            return res.redirect(`${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}}`);
+            res.redirect(`${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}`);
         }
         const callbackUrl = new URL(collectRequest?.callbackUrl);
         if (status !== `SUCCESS`) {
@@ -987,7 +1016,7 @@ let EdvironPgController = class EdvironPgController {
             if (decrypted.collect_request_id != collect_request_id) {
                 throw new common_1.ForbiddenException('Request forged');
             }
-            const transactions = await this.databaseService.CollectRequestStatusModel.aggregate([
+            let transactions = await this.databaseService.CollectRequestStatusModel.aggregate([
                 {
                     $match: {
                         collect_id: new mongoose_1.Types.ObjectId(collect_request_id),
@@ -1081,6 +1110,26 @@ let EdvironPgController = class EdvironPgController {
                     $sort: { createdAt: -1 },
                 },
             ]);
+            const collect_request = await this.databaseService.CollectRequestModel.findById(collect_request_id);
+            let paymentId = null;
+            if (collect_request) {
+                try {
+                    paymentId = await this.edvironPgService.getPaymentId(collect_request_id.toString(), collect_request);
+                    if (paymentId) {
+                        paymentId = paymentId?.toString();
+                    }
+                }
+                catch (e) {
+                    paymentId = null;
+                }
+            }
+            try {
+                transactions[0].paymentId = paymentId;
+            }
+            catch (e) {
+                console.log('Error setting paymentId:', e);
+            }
+            console.log(transactions, 'transactions found');
             return transactions;
         }
         catch (e) {
@@ -1961,6 +2010,9 @@ let EdvironPgController = class EdvironPgController {
             }
             if (gateway === collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ) {
                 console.log('init refund from easebuzz');
+                if (request.easebuzz_non_partner) {
+                    return await this.easebuzzService.initiateRefundv2(collect_id, amount, refund_id);
+                }
                 const refund = await this.easebuzzService.initiateRefund(collect_id, amount, refund_id);
                 console.log(refund);
                 return refund;
@@ -2181,6 +2233,10 @@ let EdvironPgController = class EdvironPgController {
         const status = body.status || null;
         return await this.edvironPgService.generateBacthTransactions(body.trustee_id, body.start_date, body.end_date, status);
     }
+    async saveMerchantBatchTransactions(body) {
+        const status = body.status || null;
+        return await this.edvironPgService.generateMerchantBacthTransactions(body.school_id, body.start_date, body.end_date, status);
+    }
     async getBatchTransactions(query) {
         try {
             const { trustee_id, year, token } = query;
@@ -2190,6 +2246,19 @@ let EdvironPgController = class EdvironPgController {
                 throw new common_1.UnauthorizedException('Invalid token');
             }
             return await this.edvironPgService.getBatchTransactions(query.trustee_id, query.year);
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async getMerchantBatchTransactions(query) {
+        try {
+            const { school_id, year, token } = query;
+            const decoded = jwt.verify(token, process.env.KEY);
+            if (decoded.school_id !== school_id) {
+                throw new common_1.UnauthorizedException('Invalid token');
+            }
+            return await this.edvironPgService.getMerchantBatchTransactions(query.school_id, query.year);
         }
         catch (e) {
             throw new common_1.BadRequestException(e.message);
@@ -3449,12 +3518,26 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "saveBatchTransactions", null);
 __decorate([
+    (0, common_1.Post)('/save-merchant-transactions'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "saveMerchantBatchTransactions", null);
+__decorate([
     (0, common_1.Get)('/get-batch-transactions'),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getBatchTransactions", null);
+__decorate([
+    (0, common_1.Get)('/get-merchant-batch-transactions'),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getMerchantBatchTransactions", null);
 __decorate([
     (0, common_1.Post)('/vendor-transactions-settlement'),
     __param(0, (0, common_1.Body)()),

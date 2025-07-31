@@ -211,8 +211,7 @@ let PosPaytmController = class PosPaytmController {
                     };
                     if (webHookUrl !== null) {
                         console.log('calling webhook');
-                        if (request?.trustee_id.toString() ===
-                            '66505181ca3e97e19f142075') {
+                        if (request?.trustee_id.toString() === '66505181ca3e97e19f142075') {
                             console.log('Webhook called for webschool');
                             setTimeout(async () => {
                                 await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo);

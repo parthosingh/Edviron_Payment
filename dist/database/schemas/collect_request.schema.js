@@ -125,6 +125,10 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
+], CollectRequest.prototype, "payment_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
 ], CollectRequest.prototype, "webHookUrl", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: true, default: [] }),
@@ -150,6 +154,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false, default: false }),
     __metadata("design:type", Boolean)
 ], CollectRequest.prototype, "sdkPayment", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], CollectRequest.prototype, "isCFNonSeamless", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false, default: false }),
     __metadata("design:type", Boolean)

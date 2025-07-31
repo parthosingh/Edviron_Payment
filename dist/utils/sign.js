@@ -20,9 +20,20 @@ const calculateSHA256 = async (data) => {
     return hash.digest('hex');
 };
 exports.calculateSHA256 = calculateSHA256;
-const merchantKeySHA256 = async () => {
-    const merchantKey = process.env.EASEBUZZ_KEY;
-    const salt = process.env.EASEBUZZ_SALT;
+const merchantKeySHA256 = async (request) => {
+    let merchantKey = process.env.EASEBUZZ_KEY;
+    let salt = process.env.EASEBUZZ_SALT;
+    if (request) {
+        try {
+            merchantKey =
+                request.easebuzz_non_partner_cred?.easebuzz_key || merchantKey;
+            salt = request.easebuzz_non_partner_cred?.easebuzz_salt || salt;
+        }
+        catch (e) {
+            merchantKey = process.env.EASEBUZZ_KEY;
+            salt = process.env.EASEBUZZ_SALT;
+        }
+    }
     console.log({ merchantKey, salt });
     const key = crypto
         .createHash('sha256')

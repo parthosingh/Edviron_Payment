@@ -299,14 +299,14 @@ let CcavenueService = class CcavenueService {
             try {
                 await this.databaseService.ErrorLogsModel.create({
                     identifier: collect_request_id,
-                    body: res.data || JSON.stringify(res.data)
+                    body: res.data || JSON.stringify(res.data),
                 });
             }
-            catch (e) {
-            }
+            catch (e) { }
             const params = new URLSearchParams(res.data);
             const paramObject = Object.fromEntries(params.entries());
             const decrypt_res = this.decrypt(paramObject['enc_response'], ccavenue_working_key);
+            console.log({ decrypt_res });
             const order_status_result = JSON.parse(decrypt_res).Order_Status_Result;
             const paymentInstrument = order_status_result['order_option_type'];
             const paymentInstrumentBank = order_status_result['order_card_name'];
@@ -339,7 +339,7 @@ let CcavenueService = class CcavenueService {
                     status: transactionStatus_1.TransactionStatus.FAILURE,
                     status_code: '400',
                     amount: order_status_result['order_amt'],
-                    decrypt_res
+                    decrypt_res,
                 };
             }
             return {
@@ -354,11 +354,10 @@ let CcavenueService = class CcavenueService {
                 try {
                     await this.databaseService.ErrorLogsModel.create({
                         identifier: collect_request_id,
-                        body: err.response.data
+                        body: err.response.data,
                     });
                 }
-                catch (e) {
-                }
+                catch (e) { }
             }
             throw new common_1.UnprocessableEntityException(err.message);
         }

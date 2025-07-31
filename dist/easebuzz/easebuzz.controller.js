@@ -30,6 +30,20 @@ let EasebuzzController = class EasebuzzController {
         this.databaseService = databaseService;
         this.edvironPgService = edvironPgService;
     }
+    async redirect(collect_id, easebuzzPaymentId, res) {
+        try {
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest)
+                throw new common_1.BadRequestException('Order Id not found');
+            if (!easebuzzPaymentId) {
+                throw new common_1.BadRequestException('payment url not found');
+            }
+            res.redirect(`${process.env.EASEBUZZ_ENDPOINT_PROD}/pay/${easebuzzPaymentId}`);
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.response?.data || error.message);
+        }
+    }
     async getQr(res, req) {
         try {
             const collect_id = req.query.collect_id;
@@ -57,9 +71,16 @@ let EasebuzzController = class EasebuzzController {
         }
     }
     async getEncryptedInfo(res, req, body) {
-        const { card_number, card_holder, card_cvv, card_exp } = req.query;
+        const { card_number, card_holder, card_cvv, card_exp, collect_id } = req.query;
+        if (!card_number || !card_holder || !card_cvv || !card_exp) {
+            throw new common_1.BadRequestException('Card details are required');
+        }
+        const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!request) {
+            throw new common_1.BadRequestException('Collect Request not found');
+        }
         console.log('encrypting key and iv');
-        const { key, iv } = await (0, sign_1.merchantKeySHA256)();
+        const { key, iv } = await (0, sign_1.merchantKeySHA256)(request);
         console.log('key and iv generated', { key, iv });
         console.log(`encrypting data: ${card_number}`);
         const enc_card_number = await (0, sign_2.encryptCard)(card_number, key, iv);
@@ -253,7 +274,7 @@ let EasebuzzController = class EasebuzzController {
                 return (0, sign_1.sign)(await this.easebuzzService.createOrderV2(request, platform_charges, schoolName));
             }
             console.log('nonsplit');
-            return (0, sign_1.sign)(await this.easebuzzService.createOrderV2NonSplit(request, platform_charges, schoolName));
+            return (0, sign_1.sign)(await this.easebuzzService.createOrderV2NonSplit(request, platform_charges, schoolName, easebuzz_school_label || null));
         }
         catch (e) {
             console.log(e);
@@ -592,6 +613,15 @@ let EasebuzzController = class EasebuzzController {
     }
 };
 exports.EasebuzzController = EasebuzzController;
+__decorate([
+    (0, common_1.Get)('/redirect'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __param(1, (0, common_1.Query)('easebuzzPaymentId')),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], EasebuzzController.prototype, "redirect", null);
 __decorate([
     (0, common_1.Get)('/upiqr'),
     __param(0, (0, common_1.Res)()),

@@ -52,7 +52,9 @@ let CcavenueController = class CcavenueController {
             if (collectReq.school_id === '6819e115e79a645e806c0a70') {
                 console.log('new flow');
                 const status = await this.ccavenueService.checkStatusProd(collectReq, collectIdObject);
-                const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: new mongoose_1.Types.ObjectId(collectIdObject) });
+                const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                    collect_id: new mongoose_1.Types.ObjectId(collectIdObject),
+                });
                 if (!requestStatus) {
                     throw new common_1.BadRequestException('status not foubnd');
                 }
@@ -184,7 +186,9 @@ let CcavenueController = class CcavenueController {
             if (collectReq.school_id === '6819e115e79a645e806c0a70') {
                 console.log('new flow');
                 const status = await this.ccavenueService.checkStatusProd(collectReq, collectIdObject);
-                const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: new mongoose_1.Types.ObjectId(collectIdObject) });
+                const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                    collect_id: new mongoose_1.Types.ObjectId(collectIdObject),
+                });
                 if (!requestStatus) {
                     throw new common_1.BadRequestException('status not foubnd');
                 }

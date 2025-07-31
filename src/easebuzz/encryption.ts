@@ -15,10 +15,16 @@ export class EncryptionService {
     const salt = process.env.EASEBUZZ_SALT;
 
     if (!merchantKey || !salt) {
-      throw new Error('EASEBUZZ_KEY and EASEBUZZ_SALT must be set in environment variables');
+      throw new Error(
+        'EASEBUZZ_KEY and EASEBUZZ_SALT must be set in environment variables',
+      );
     }
 
-    this.key = crypto.createHash('sha256').update(merchantKey).digest().slice(0, 32);
+    this.key = crypto
+      .createHash('sha256')
+      .update(merchantKey)
+      .digest()
+      .slice(0, 32);
     this.iv = crypto.createHash('sha256').update(salt).digest().slice(0, 16);
   }
 

@@ -7,6 +7,6 @@ import { DatabaseModule } from 'src/database/database.module';
 @Module({
   controllers: [GatepayController],
   providers: [GatepayService, DatabaseService],
-  imports:[DatabaseModule]
+  imports: [DatabaseModule],
 })
 export class GatepayModule {}

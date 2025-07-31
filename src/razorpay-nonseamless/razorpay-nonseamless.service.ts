@@ -26,13 +26,23 @@ export class RazorpayNonseamlessService {
         amount: totalRupees,
         razorpay,
         razorpay_vendors_info,
+        additional_data,
       } = collectRequest;
+
+      const studentDetail = JSON.parse(additional_data);
 
       const totalPaise = Math.round(totalRupees * 100);
       const data: any = {
         amount: totalPaise,
         currency: 'INR',
         receipt: _id.toString(),
+        notes: {
+          student_id: studentDetail?.student_details?.student_id || 'N/A',
+          student_name: studentDetail?.student_details?.student_name || 'N/A',
+          student_email: studentDetail?.student_details?.student_email || 'N/A',
+          student_phone_no:
+            studentDetail?.student_details?.student_phone_no || 'N/A',
+        },
       };
       if (razorpay_vendors_info?.length) {
         let computed = 0;
@@ -521,8 +531,8 @@ export class RazorpayNonseamlessService {
 
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-
+      const day = String(date.getDate() + 1).padStart(2, '0');
+      console.log(year, month, day, 'check');
       const config = {
         method: 'get',
         url: `https://api.razorpay.com/v1/settlements/recon/combined?year=${year}&month=${month}&day=${day}&count=${limit}&skip=${skip}`,
@@ -546,20 +556,19 @@ export class RazorpayNonseamlessService {
         const filteredItems = settlements.filter(
           (item: any) => item.settlement_utr === utr,
         );
-
         const orderIds = filteredItems
           .filter((order: any) => order.order_receipt !== null)
           .map((order: any) => order.order_receipt);
 
         const objectIdOrderIds = orderIds
-          .map((id :any) => {
+          .map((id: any) => {
             try {
               return new mongoose.Types.ObjectId(id);
             } catch (e) {
               return null;
             }
           })
-          .filter((id :any) => id !== null);
+          .filter((id: any) => id !== null);
 
         const customOrders =
           await this.databaseService.CollectRequestModel.find({
@@ -580,7 +589,6 @@ export class RazorpayNonseamlessService {
             },
           ]),
         );
-
         const enrichedOrders = await Promise.all(
           response.data.items
             .filter((order: any) => order.order_receipt)

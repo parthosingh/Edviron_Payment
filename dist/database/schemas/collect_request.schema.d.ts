@@ -106,6 +106,7 @@ export declare class CollectRequest {
     clientId: string;
     easebuzz_sub_merchant_id: string;
     clientSecret: string;
+    payment_id: string;
     webHookUrl: string;
     disabled_modes: string[];
     additional_data: string;
@@ -113,6 +114,7 @@ export declare class CollectRequest {
     trustee_id: string;
     payment_data: string;
     sdkPayment: boolean;
+    isCFNonSeamless: boolean;
     isVBAPayment: boolean;
     isVBAPaymentComplete: boolean;
     custom_order_id: string;

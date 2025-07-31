@@ -24,13 +24,13 @@ import { GatepayService } from 'src/gatepay/gatepay.service';
     CcavenueService,
     EasebuzzService,
     SmartgatewayService,
-    PayUService, 
+    PayUService,
     HdfcRazorpayService,
     NttdataService,
     PosPaytmService,
     WorldlineService,
     RazorpayNonseamlessService,
-    GatepayService
+    GatepayService,
   ],
   imports: [
     DatabaseModule,

@@ -84,7 +84,6 @@ export class CollectRequestStatus {
 
   @Prop({ required: false, default: '' })
   cf_payment_id: string;
- 
 
   @Prop({ required: false, default: '' })
   capture_status: string;
@@ -106,10 +105,8 @@ export class CollectRequestStatus {
   })
   error_details: error_details;
 
-
   @Prop({ required: false, default: false })
   isPosTransaction: boolean;
-
 
   @Prop({
     required: false,

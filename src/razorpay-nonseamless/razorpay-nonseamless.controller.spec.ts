@@ -9,7 +9,9 @@ describe('RazorpayNonseamlessController', () => {
       controllers: [RazorpayNonseamlessController],
     }).compile();
 
-    controller = module.get<RazorpayNonseamlessController>(RazorpayNonseamlessController);
+    controller = module.get<RazorpayNonseamlessController>(
+      RazorpayNonseamlessController,
+    );
   });
 
   it('should be defined', () => {

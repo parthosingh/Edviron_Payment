@@ -269,7 +269,7 @@ let NttdataService = class NttdataService {
                                 prodRefundAmount: `${Number(amount).toFixed(2)}`,
                                 prodRefundId: refund_id,
                             },
-                        ]
+                        ],
                     },
                 },
             };

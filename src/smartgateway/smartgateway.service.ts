@@ -419,4 +419,3 @@ export class SmartgatewayService {
     return;
   }
 }
-

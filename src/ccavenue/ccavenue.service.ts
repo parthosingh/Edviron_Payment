@@ -340,12 +340,12 @@ export class CcavenueService {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      data: {data},
+      data: { data },
     };
     // await sleep(10000);
     try {
       const res = await axios.request(config);
-      console.log(res.data,'data');
+      console.log(res.data, 'data');
       const params = new URLSearchParams(res.data);
       const paramObject = Object.fromEntries(params.entries());
 
@@ -402,8 +402,8 @@ export class CcavenueService {
   ): Promise<{
     status: TransactionStatus;
     amount: number;
-    transaction_amount?:number | null,
-    status_code?:string | null,
+    transaction_amount?: number | null;
+    status_code?: string | null;
     details?: any;
     paymentInstrument?: string | null;
     paymentInstrumentBank?: string | null;
@@ -412,8 +412,8 @@ export class CcavenueService {
     bank_ref?: string;
   }> {
     const { ccavenue_working_key, ccavenue_access_code } = collect_request;
-    console.log('data',{collect_request_id});
-     
+    console.log('data', { collect_request_id });
+
     const collectRequest =
       await this.databaseService.CollectRequestModel.findById(
         collect_request_id,
@@ -423,7 +423,7 @@ export class CcavenueService {
       JSON.stringify({ order_no: collect_request_id }),
       ccavenue_working_key,
     );
-    
+
     const collectReqStatus =
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: collectRequest?._id,
@@ -435,31 +435,29 @@ export class CcavenueService {
       command: 'orderStatusTracker',
       order_no: collect_request_id,
     });
-   
+
     const config = {
-        method: 'post',
-        maxBodyLength: Infinity,
-        url: 'https://api.ccavenue.com/apis/servlet/DoWebTrans',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        data: data,
-      };
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'https://api.ccavenue.com/apis/servlet/DoWebTrans',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      data: data,
+    };
 
     try {
       console.log('ppp');
-      
-      const res:any = await axios.request(config);
-      console.log(res.data,'res');
-      
-      try{
-        await this.databaseService.ErrorLogsModel.create({
-         identifier:collect_request_id,
-         body:res.data || JSON.stringify(res.data)
-        })
-      }catch(e){
 
-      }
+      const res: any = await axios.request(config);
+      console.log(res.data, 'res');
+
+      try {
+        await this.databaseService.ErrorLogsModel.create({
+          identifier: collect_request_id,
+          body: res.data || JSON.stringify(res.data),
+        });
+      } catch (e) {}
       const params = new URLSearchParams(res.data);
       const paramObject = Object.fromEntries(params.entries());
 
@@ -467,7 +465,8 @@ export class CcavenueService {
         paramObject['enc_response'],
         ccavenue_working_key,
       );
-      
+      console.log({ decrypt_res });
+
       const order_status_result = JSON.parse(decrypt_res).Order_Status_Result;
 
       const paymentInstrument = order_status_result['order_option_type'];
@@ -482,24 +481,25 @@ export class CcavenueService {
         return {
           status: TransactionStatus.SUCCESS,
           amount: order_status_result['order_amt'],
-          transaction_amount:Number(collectReqStatus?.transaction_amount) || null,
-          status_code:'200',
+          transaction_amount:
+            Number(collectReqStatus?.transaction_amount) || null,
+          status_code: '200',
           paymentInstrument,
           paymentInstrumentBank,
           decrypt_res,
           transaction_time:
             collectReqStatus?.updatedAt?.toISOString() || 'null',
-            details:{
-                payment_mode:collectReqStatus?.payment_method,
-                bank_ref:collectReqStatus?.bank_reference,
-                // payment_methods:
-                // collectReqStatus?.details &&
-                // JSON.parse(collectReqStatus.details as string),
-                transaction_time:
-                collectReqStatus?.updatedAt?.toISOString() || 'null',
-                status:TransactionStatus.SUCCESS,
-            },
-            
+          details: {
+            payment_mode: collectReqStatus?.payment_method,
+            bank_ref: collectReqStatus?.bank_reference,
+            // payment_methods:
+            // collectReqStatus?.details &&
+            // JSON.parse(collectReqStatus.details as string),
+            transaction_time:
+              collectReqStatus?.updatedAt?.toISOString() || 'null',
+            status: TransactionStatus.SUCCESS,
+          },
+
           bank_ref: order_status_result['order_bank_ref_no'],
         };
       } else if (
@@ -509,9 +509,9 @@ export class CcavenueService {
       ) {
         return {
           status: TransactionStatus.FAILURE,
-          status_code:'400',
+          status_code: '400',
           amount: order_status_result['order_amt'],
-          decrypt_res
+          decrypt_res,
         };
       }
       return {
@@ -521,15 +521,13 @@ export class CcavenueService {
       };
     } catch (err) {
       console.log(err.response.data);
-      if(err?.response?.data){
-        try{
+      if (err?.response?.data) {
+        try {
           await this.databaseService.ErrorLogsModel.create({
-           identifier:collect_request_id,
-           body:err.response.data
-          })
-        }catch(e){
-  
-        }
+            identifier: collect_request_id,
+            body: err.response.data,
+          });
+        } catch (e) {}
       }
       throw new UnprocessableEntityException(err.message);
     }

@@ -68,7 +68,10 @@ export class HdfcRazorpayService {
   }
 
   async checkPaymentStatus(paymentId: string, collectRequest: CollectRequest) {
-    const rzp_payment_id = await this.databaseService.CollectRequestModel.findById(collectRequest._id)
+    const rzp_payment_id =
+      await this.databaseService.CollectRequestModel.findById(
+        collectRequest._id,
+      );
     try {
       const config = {
         method: 'get',
@@ -88,7 +91,7 @@ export class HdfcRazorpayService {
         paymentStatus,
         collectRequest,
       );
-      console.log(formattedStatus, "format")
+      console.log(formattedStatus, 'format');
       return formattedStatus;
     } catch (error) {
       console.log(error.message);
@@ -132,7 +135,7 @@ export class HdfcRazorpayService {
         await this.databaseService.CollectRequestStatusModel.findOne({
           collect_id: collectRequest._id,
         });
-        // console.log(collectRequestStatus)
+      // console.log(collectRequestStatus)
       if (!collectRequestStatus) {
         throw new BadRequestException('Collect request not found');
       }
@@ -180,7 +183,7 @@ export class HdfcRazorpayService {
       //   captured_at: 1745302427,
       //   late_authorized: false
       // } resp
-console.log(response, "resp")
+      console.log(response, 'resp');
       const status = formatRazorpayPaymentStatus(response?.status);
       const statusCode =
         status === TransactionStatus.SUCCESS
@@ -211,7 +214,7 @@ console.log(response, "resp")
         capture_status: response?.captured || null,
       };
 
-      console.log(formattedResponse, "formattedResponse")
+      console.log(formattedResponse, 'formattedResponse');
       if (response?.method === 'upi') {
         formattedResponse.details.payment_methods['upi'] = response?.upi;
         formattedResponse.details.bank_ref =

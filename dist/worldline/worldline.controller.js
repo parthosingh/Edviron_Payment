@@ -331,7 +331,8 @@ let WorldlineController = class WorldlineController {
                 ? collect_req_status_schema_1.PaymentStatus.SUCCESS
                 : collect_req_status_schema_1.PaymentStatus.PENDING;
         collectStatus.bank_reference =
-            parsedMessage?.paymentMethod?.paymentTransaction?.bankReferenceIdentifier || '';
+            parsedMessage?.paymentMethod?.paymentTransaction
+                ?.bankReferenceIdentifier || '';
         collectStatus.payment_time = paymentTime
             ? (() => {
                 const [datePart, timePart] = paymentTime.split(' ');
@@ -427,7 +428,7 @@ __decorate([
 ], WorldlineController.prototype, "handleWebhook", null);
 __decorate([
     (0, common_1.Post)('initiate-refund'),
-    __param(0, (0, common_1.Query)("collect_id")),
+    __param(0, (0, common_1.Query)('collect_id')),
     __param(1, (0, common_1.Query)('amount')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Number]),

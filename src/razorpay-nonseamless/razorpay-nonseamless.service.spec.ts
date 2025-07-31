@@ -9,7 +9,9 @@ describe('RazorpayNonseamlessService', () => {
       providers: [RazorpayNonseamlessService],
     }).compile();
 
-    service = module.get<RazorpayNonseamlessService>(RazorpayNonseamlessService);
+    service = module.get<RazorpayNonseamlessService>(
+      RazorpayNonseamlessService,
+    );
   });
 
   it('should be defined', () => {

@@ -77,6 +77,7 @@ export class CollectController {
       worldline_encryption_key?: string | null;
       worldline_encryption_iV?: string | null;
       worldline_scheme_code?: string | null;
+      isCFNonSeamless?: boolean;
       razorpay_credentials?: {
         razorpay_id?: string | null;
         razorpay_secret?: string | null;
@@ -192,10 +193,11 @@ export class CollectController {
       razorpay_vendors,
       razorpay_credentials,
       gatepay_credentials,
+      isCFNonSeamless,
     } = body;
     console.log(razorpay_credentials);
-    
-    console.log('hit')
+
+    console.log('hit');
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
     if (!callbackUrl)
@@ -254,9 +256,10 @@ export class CollectController {
           vba_account_number,
           worldLine_vendors,
           easebuzz_school_label,
-          razorpay_vendors, 
+          razorpay_vendors,
           razorpay_credentials,
-          gatepay_credentials
+          gatepay_credentials,
+          isCFNonSeamless,
         ),
       );
     } catch (e) {

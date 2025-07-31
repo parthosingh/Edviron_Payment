@@ -16,7 +16,6 @@ import { HdfcRazorpayModule } from 'src/hdfc_razporpay/hdfc_razorpay.module';
     EdvironPgService,
     CashfreeService,
     // CheckStatusService,
-    
   ],
 })
 export class SmartgatewayModule {}

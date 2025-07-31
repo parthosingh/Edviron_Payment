@@ -16,10 +16,7 @@ let RazorpayNonseamlessModule = class RazorpayNonseamlessModule {
 exports.RazorpayNonseamlessModule = RazorpayNonseamlessModule;
 exports.RazorpayNonseamlessModule = RazorpayNonseamlessModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            database_module_1.DatabaseModule,
-            (0, common_1.forwardRef)(() => cashfree_module_1.CashfreeModule),
-        ],
+        imports: [database_module_1.DatabaseModule, (0, common_1.forwardRef)(() => cashfree_module_1.CashfreeModule)],
         controllers: [],
         providers: [edviron_pg_service_1.EdvironPgService],
         exports: [],

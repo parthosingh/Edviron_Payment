@@ -23,7 +23,7 @@ export class CashfreeController {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly cashfreeService: CashfreeService,
-        private readonly edvironPgService: EdvironPgService,
+    private readonly edvironPgService: EdvironPgService,
   ) {}
   @Post('/refund')
   async initiateRefund(@Body() body: any) {
@@ -385,17 +385,12 @@ export class CashfreeController {
   }
 
   @Post('upload-kyc')
-  async testUpload(
-    @Body() body:{
-      school_id:string
-    }
-  ){
-    try{
-      return await this.cashfreeService.uploadKycDocs(body.school_id)
-
-    }catch(e){
+  async testUpload(@Body() body: { school_id: string }) {
+    try {
+      return await this.cashfreeService.uploadKycDocs(body.school_id);
+    } catch (e) {
       console.log(e);
-      throw new BadRequestException(e.message)
+      throw new BadRequestException(e.message);
     }
   }
 
@@ -418,7 +413,7 @@ export class CashfreeController {
       bank_reference,
       payment_method,
       payment_group,
-      cf_payment_id
+      cf_payment_id,
     } = payment;
 
     const {
@@ -451,7 +446,7 @@ export class CashfreeController {
     if (!request) {
       return res.status(200).send('Request Not found');
     }
-    request.gateway=Gateway.EDVIRON_PG
+    request.gateway = Gateway.EDVIRON_PG;
     const collectRequestStatus =
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: request._id,
@@ -462,19 +457,19 @@ export class CashfreeController {
 
     if (payment_status === 'SUCCESS') {
       request.isVBAPaymentComplete = true;
-      collectRequestStatus.isVBAPaymentComplete=true
-      await collectRequestStatus.save()
+      collectRequestStatus.isVBAPaymentComplete = true;
+      await collectRequestStatus.save();
       await request.save();
     }
     collectRequestStatus.transaction_amount = payment_amount;
     collectRequestStatus.payment_method = 'vba';
-    collectRequestStatus.status=payment_status;
+    collectRequestStatus.status = payment_status;
     collectRequestStatus.details = JSON.stringify(payment_method.vba_transfer);
     collectRequestStatus.bank_reference = bank_reference;
     collectRequestStatus.payment_time = new Date(payment_time);
     collectRequestStatus.payment_message = payment_message;
-    if(cf_payment_id){
-      collectRequestStatus.cf_payment_id=cf_payment_id
+    if (cf_payment_id) {
+      collectRequestStatus.cf_payment_id = cf_payment_id;
     }
     await collectRequestStatus.save();
 
@@ -530,16 +525,16 @@ export class CashfreeController {
     } catch (e) {}
     const webHookUrl = request.req_webhook_urls;
     const webHookDataInfo = {
-      collect_id:request._id.toString(),
-      amount:request.amount,
-      status:payment_status,
+      collect_id: request._id.toString(),
+      amount: request.amount,
+      status: payment_status,
       trustee_id: request.trustee_id,
       school_id: request.school_id,
       req_webhook_urls: request.req_webhook_urls,
-      custom_order_id:request.custom_order_id || null,
+      custom_order_id: request.custom_order_id || null,
       createdAt: collectRequestStatus?.createdAt,
-      transaction_time: payment_time ,
-      additional_data:request.additional_data,
+      transaction_time: payment_time,
+      additional_data: request.additional_data,
       details: collectRequestStatus.details,
       transaction_amount: collectRequestStatus.transaction_amount,
       bank_reference: collectRequestStatus.bank_reference,
@@ -548,7 +543,9 @@ export class CashfreeController {
       // formattedTransaction_time: transactionTime.toLocaleDateString('en-GB') || null,
       formattedDate: `${collectRequestStatus.payment_time.getFullYear()}-${String(
         collectRequestStatus.payment_time.getMonth() + 1,
-      ).padStart(2, '0')}-${String(collectRequestStatus.payment_time.getDate()).padStart(2, '0')}`,
+      ).padStart(2, '0')}-${String(
+        collectRequestStatus.payment_time.getDate(),
+      ).padStart(2, '0')}`,
     };
 
     if (webHookUrl !== null) {
@@ -576,9 +573,7 @@ export class CashfreeController {
         console.error('Error getting webhook key:', error.message);
       }
 
-      if (
-        request?.trustee_id.toString() === '66505181ca3e97e19f142075'
-      ) {
+      if (request?.trustee_id.toString() === '66505181ca3e97e19f142075') {
         console.log('Webhook called for webschool');
         setTimeout(async () => {
           try {
@@ -694,14 +689,45 @@ export class CashfreeController {
   }
 
   @Post('/upload-kyc-docs')
-  async uploadKYC(@Body() body:{
-    school_id:string
-  }){
-    try{
-      return await this.cashfreeService.uploadKycDocs(body.school_id)
-    }catch(e){
+  async uploadKYC(@Body() body: { school_id: string }) {
+    try {
+      return await this.cashfreeService.uploadKycDocs(body.school_id);
+    } catch (e) {
       console.log(e);
-      
+    }
+  }
+
+  @Get('/redirect')
+  async redirect(@Query('session_id') session_id: string, @Res() res: any) {
+    try {
+      const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Redirecting to Payment...</title>
+          <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+      </head>
+      <body>
+          <p>Redirecting to payment page...</p>
+          <script>
+              const cashfree = Cashfree({ mode: "production" });
+              const checkoutOptions = {
+                  paymentSessionId: "${session_id}",
+                  redirectTarget: "_self"
+              };
+              cashfree.checkout(checkoutOptions);
+          </script>
+      </body>
+      </html>
+    `;
+
+      res.setHeader('Content-Type', 'text/html');
+      res.send(html);
+    } catch (e) {
+      console.error(e);
+      throw new BadRequestException(e.message);
     }
   }
 }

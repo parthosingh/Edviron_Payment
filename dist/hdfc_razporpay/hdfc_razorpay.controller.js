@@ -117,7 +117,7 @@ let HdfcRazorpayController = class HdfcRazorpayController {
             gateway: collect_request_schema_1.Gateway.EDVIRON_HDFC_RAZORPAY,
         }).save();
         const { payload } = body;
-        const { order_id, amount, method, bank, acquirer_data, error_reason, card, card_id, wallet } = payload.payment.entity;
+        const { order_id, amount, method, bank, acquirer_data, error_reason, card, card_id, wallet, } = payload.payment.entity;
         let { status } = payload.payment.entity;
         const { created_at } = payload.payment.entity;
         const { receipt } = payload.order.entity;
@@ -152,20 +152,24 @@ let HdfcRazorpayController = class HdfcRazorpayController {
                         upi: {
                             channel: null,
                             upi_id: payload.payment.entity.vpa || null,
-                        }
+                        },
                     };
                     break;
                 case 'card':
                     detail = {
                         card: {
                             card_bank_name: card.type || null,
-                            card_country: card.international === false ? "IN" : card.international === true ? "OI" : null,
+                            card_country: card.international === false
+                                ? 'IN'
+                                : card.international === true
+                                    ? 'OI'
+                                    : null,
                             card_network: card.network || null,
                             card_number: card_id || null,
                             card_sub_type: card.sub_type || null,
                             card_type: card.type || null,
-                            channel: null
-                        }
+                            channel: null,
+                        },
                     };
                     break;
                 case 'netbanking':
@@ -174,15 +178,15 @@ let HdfcRazorpayController = class HdfcRazorpayController {
                             channel: null,
                             netbanking_bank_code: acquirer_data.bank_transaction_id,
                             netbanking_bank_name: bank,
-                        }
+                        },
                     };
                     break;
                 case 'wallet':
                     detail = {
                         wallet: {
                             channel: wallet,
-                            provider: wallet
-                        }
+                            provider: wallet,
+                        },
                     };
                     break;
                 default:
