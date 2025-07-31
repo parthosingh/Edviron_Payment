@@ -28,6 +28,7 @@ import { RazorpayNonseamlessModule } from './razorpay-nonseamless/razorpay-nonse
 import { RazorpayNonseamlessController } from './razorpay-nonseamless/razorpay-nonseamless.controller';
 import { RazorpayNonseamlessService } from './razorpay-nonseamless/razorpay-nonseamless.service';
 import { GatepayModule } from './gatepay/gatepay.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { GatepayModule } from './gatepay/gatepay.module';
     RazorpayNonseamlessModule,
     WorldlineModule,
     GatepayModule,
+    ReportsModule,
   ],
   controllers: [
     AppController,
