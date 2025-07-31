@@ -531,8 +531,8 @@ export class RazorpayNonseamlessService {
 
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-
+      const day = String(date.getDate() + 1).padStart(2, '0');
+      console.log(year, month, day, 'check');
       const config = {
         method: 'get',
         url: `https://api.razorpay.com/v1/settlements/recon/combined?year=${year}&month=${month}&day=${day}&count=${limit}&skip=${skip}`,
@@ -556,7 +556,6 @@ export class RazorpayNonseamlessService {
         const filteredItems = settlements.filter(
           (item: any) => item.settlement_utr === utr,
         );
-
         const orderIds = filteredItems
           .filter((order: any) => order.order_receipt !== null)
           .map((order: any) => order.order_receipt);
@@ -590,7 +589,6 @@ export class RazorpayNonseamlessService {
             },
           ]),
         );
-
         const enrichedOrders = await Promise.all(
           response.data.items
             .filter((order: any) => order.order_receipt)
