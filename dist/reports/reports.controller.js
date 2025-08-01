@@ -26,11 +26,18 @@ let ReportsController = class ReportsController {
         this.reportsService = reportsService;
     }
     async getSettlementsTransactions(body, req) {
-        const { utr, client_id, token, school_name } = req.query;
         try {
-            const limit = body.limit || 40;
+            console.log('test');
+            const limit = 1000;
             console.log(limit, 'limit');
-            return await this.reportsService.getTransactionForSettlements(utr, client_id, limit, school_name, body.cursor);
+            setImmediate(async () => {
+                try {
+                    console.log('test01');
+                    await this.reportsService.getBulkReport(body.utrs, body.report_id);
+                }
+                catch (e) { }
+            });
+            return { msg: 'Report generation started' };
         }
         catch (e) {
             throw new common_1.BadRequestException(e.message);

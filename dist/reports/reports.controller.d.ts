@@ -9,11 +9,15 @@ export declare class ReportsController {
     private readonly reportsService;
     constructor(databaseService: DatabaseService, cashfreeService: CashfreeService, edvironPgService: EdvironPgService, reportsService: ReportsService);
     getSettlementsTransactions(body: {
-        limit: number;
-        cursor: string | null;
+        utrs: [
+            {
+                utr: string;
+                client_id: string;
+                school_name: string;
+            }
+        ];
+        report_id: string;
     }, req: any): Promise<{
-        cursor: any;
-        limit: any;
-        settlements_transactions: any[];
+        msg: string;
     }>;
 }
