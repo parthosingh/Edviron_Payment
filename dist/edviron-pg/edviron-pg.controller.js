@@ -2116,29 +2116,38 @@ let EdvironPgController = class EdvironPgController {
     }
     async getVendorTransactions(body) {
         console.log('post req');
-        const { vendor_id, trustee_id, school_id, collect_id, token, limit, page, custom_id, start_date, end_date, status, } = body;
-        const dataLimit = Number(limit) || 100;
-        const dataPage = Number(page) || 1;
-        const decrypted = jwt.verify(token, process.env.KEY);
-        if (decrypted.validate_trustee !== trustee_id) {
-            throw new common_1.ForbiddenException('Request forged');
+        try {
+            const { vendor_id, trustee_id, school_id, collect_id, token, limit, page, custom_id, start_date, end_date, status, } = body;
+            const dataLimit = Number(limit) || 100;
+            const dataPage = Number(page) || 1;
+            const decrypted = jwt.verify(token, process.env.KEY);
+            if (decrypted.validate_trustee !== trustee_id) {
+                throw new common_1.ForbiddenException('Request forged');
+            }
+            const query = {
+                trustee_id,
+                ...(vendor_id && { vendor_id }),
+                ...(school_id && { school_id }),
+                ...(status && { status: { $regex: new RegExp(`^${status}$`, 'i') } }),
+                ...(collect_id && { collect_id: new mongoose_1.Types.ObjectId(collect_id) }),
+                ...(custom_id && { custom_order_id: custom_id }),
+                ...(start_date &&
+                    end_date && {
+                    updatedAt: {
+                        $gte: new Date(start_date),
+                        $lte: new Date(new Date(end_date).setHours(23, 59, 59, 999)),
+                    },
+                }),
+            };
+            return await this.edvironPgService.getVendorTransactions(query, dataLimit, dataPage);
         }
-        const query = {
-            trustee_id,
-            ...(vendor_id && { vendor_id }),
-            ...(school_id && { school_id }),
-            ...(status && { status: { $regex: new RegExp(`^${status}$`, 'i') } }),
-            ...(collect_id && { collect_id: new mongoose_1.Types.ObjectId(collect_id) }),
-            ...(custom_id && { custom_order_id: custom_id }),
-            ...(start_date &&
-                end_date && {
-                updatedAt: {
-                    $gte: new Date(start_date),
-                    $lte: new Date(new Date(end_date).setHours(23, 59, 59, 999)),
-                },
-            }),
-        };
-        return await this.edvironPgService.getVendorTransactions(query, dataLimit, dataPage);
+        catch (error) {
+            throw new common_1.BadRequestException({
+                statusCode: 400,
+                message: error.message || 'Something went wrong',
+                error: 'Bad Request'
+            });
+        }
     }
     async vendorSettlementRecon(body) {
         try {

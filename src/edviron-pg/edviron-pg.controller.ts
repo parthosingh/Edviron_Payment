@@ -286,7 +286,7 @@ export class EdvironPgController {
       }
       console.log(`SDK payment failed for ${collect_request_id}`);
 
-       res.redirect(
+      res.redirect(
         `${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}`,
       );
     }
@@ -1550,10 +1550,11 @@ export class EdvironPgController {
           paymentId = null;
         }
       }
-      try{
+      try {
         transactions[0].paymentId = paymentId;
-      }catch(e){
-        console.log('Error setting paymentId:', e);}
+      } catch (e) {
+        console.log('Error setting paymentId:', e);
+      }
       console.log(transactions, 'transactions found');
 
       return transactions;
@@ -2960,47 +2961,54 @@ export class EdvironPgController {
     },
   ) {
     console.log('post req');
+    try {
+      const {
+        vendor_id,
+        trustee_id,
+        school_id,
+        collect_id,
+        token,
+        limit,
+        page,
+        custom_id,
+        start_date,
+        end_date,
+        status,
+      } = body;
+      const dataLimit = Number(limit) || 100;
+      const dataPage = Number(page) || 1;
+      const decrypted = jwt.verify(token, process.env.KEY!) as any;
+      if (decrypted.validate_trustee !== trustee_id) {
+        throw new ForbiddenException('Request forged');
+      }
+      const query = {
+        trustee_id,
+        ...(vendor_id && { vendor_id }),
+        ...(school_id && { school_id }),
+        ...(status && { status: { $regex: new RegExp(`^${status}$`, 'i') } }), // Case-insensitive comparison
+        ...(collect_id && { collect_id: new Types.ObjectId(collect_id) }),
+        ...(custom_id && { custom_order_id: custom_id }),
+        ...(start_date &&
+          end_date && {
+            updatedAt: {
+              $gte: new Date(start_date),
+              $lte: new Date(new Date(end_date).setHours(23, 59, 59, 999)),
+            },
+          }),
+      };
 
-    const {
-      vendor_id,
-      trustee_id,
-      school_id,
-      collect_id,
-      token,
-      limit,
-      page,
-      custom_id,
-      start_date,
-      end_date,
-      status,
-    } = body;
-    const dataLimit = Number(limit) || 100;
-    const dataPage = Number(page) || 1;
-    const decrypted = jwt.verify(token, process.env.KEY!) as any;
-    if (decrypted.validate_trustee !== trustee_id) {
-      throw new ForbiddenException('Request forged');
+      return await this.edvironPgService.getVendorTransactions(
+        query,
+        dataLimit,
+        dataPage,
+      );
+    } catch (error) {
+      throw new BadRequestException({
+      statusCode: 400,
+      message: error.message || 'Something went wrong',
+      error: 'Bad Request'
+    });
     }
-    const query = {
-      trustee_id,
-      ...(vendor_id && { vendor_id }),
-      ...(school_id && { school_id }),
-      ...(status && { status: { $regex: new RegExp(`^${status}$`, 'i') } }), // Case-insensitive comparison
-      ...(collect_id && { collect_id: new Types.ObjectId(collect_id) }),
-      ...(custom_id && { custom_order_id: custom_id }),
-      ...(start_date &&
-        end_date && {
-          updatedAt: {
-            $gte: new Date(start_date),
-            $lte: new Date(new Date(end_date).setHours(23, 59, 59, 999)),
-          },
-        }),
-    };
-
-    return await this.edvironPgService.getVendorTransactions(
-      query,
-      dataLimit,
-      dataPage,
-    );
   }
 
   @Post('/vendors-settlement-recon')
