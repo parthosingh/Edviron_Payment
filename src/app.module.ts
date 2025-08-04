@@ -28,6 +28,8 @@ import { RazorpayNonseamlessModule } from './razorpay-nonseamless/razorpay-nonse
 import { RazorpayNonseamlessController } from './razorpay-nonseamless/razorpay-nonseamless.controller';
 import { RazorpayNonseamlessService } from './razorpay-nonseamless/razorpay-nonseamless.service';
 import { GatepayModule } from './gatepay/gatepay.module';
+import { ReportsModule } from './reports/reports.module';
+import { AwsS3ServiceModule } from './aws-s3-service/aws-s3-service.module';
 
 @Module({
   imports: [
@@ -46,6 +48,8 @@ import { GatepayModule } from './gatepay/gatepay.module';
     RazorpayNonseamlessModule,
     WorldlineModule,
     GatepayModule,
+    ReportsModule,
+    AwsS3ServiceModule,
   ],
   controllers: [
     AppController,

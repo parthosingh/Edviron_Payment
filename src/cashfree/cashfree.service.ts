@@ -820,7 +820,7 @@ export class CashfreeService {
       'x-partner-apikey': process.env.CASHFREE_API_KEY,
     };
     const data = {
-      merchant_id,
+      merchant_id:`${merchant_id}_1`,
       merchant_email,
       merchant_name,
       poc_phone,
@@ -846,6 +846,8 @@ export class CashfreeService {
     };
 
     try {
+      console.log(config, 'config for cashfree merchant');
+      
       const response = await axios.request(config);
       await this.uploadKycDocs(merchant_id);
       // return response.data;
@@ -862,7 +864,7 @@ export class CashfreeService {
       merchant_id,
       merchant_email,
       merchant_name,
-      poc_phone,
+      poc_phone, 
       merchant_site_url,
       business_details,
       website_details,
