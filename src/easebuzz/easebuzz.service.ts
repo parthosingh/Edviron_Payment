@@ -324,9 +324,11 @@ export class EasebuzzService {
         margin: 2,
         width: 300,
       }); 
+
+      const qrBase64 = qrCodeBase64.split(',')[1];
       return {
         intentUrl: upiIntentUrl,
-        qrCodeBase64: qrCodeBase64,
+        qrCodeBase64: qrBase64,
         collect_id,
       };
     } catch (e) {
