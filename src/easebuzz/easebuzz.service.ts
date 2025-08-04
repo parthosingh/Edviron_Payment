@@ -57,7 +57,7 @@ export class EasebuzzService {
     };
 
     const { data: statusRes } = await axios.request(config);
-    console.log(statusRes);
+    console.log({statusRes});
 
     return statusRes;
   }
@@ -75,6 +75,27 @@ export class EasebuzzService {
     return statusResponse;
   }
 
+  async statusResponsev2(requestId: string, collectReq: CollectRequest) {
+    try{
+
+      let statusResponse = await this.easebuzzWebhookCheckStatusV2(requestId, collectReq);
+      if (statusResponse.msg.mode === 'NA') {
+        console.log(`Status 0 for ${requestId}, retrying with 'upi_' suffix`);
+        statusResponse = await this.easebuzzWebhookCheckStatusV2(
+          `upi_${requestId}`,
+          collectReq,
+        );
+      }
+      console.log(statusResponse);
+      
+      return statusResponse;
+    }catch (e) {
+      console.log(e);
+      
+      throw new BadRequestException(e.message);
+    }
+  }
+ 
   async initiateRefund(
     collect_id: string,
     refund_amount: number,

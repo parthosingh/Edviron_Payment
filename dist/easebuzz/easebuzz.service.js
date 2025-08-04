@@ -54,7 +54,7 @@ let EasebuzzService = class EasebuzzService {
             data: data,
         };
         const { data: statusRes } = await axios.request(config);
-        console.log(statusRes);
+        console.log({ statusRes });
         return statusRes;
     }
     async statusResponse(requestId, collectReq) {
@@ -64,6 +64,21 @@ let EasebuzzService = class EasebuzzService {
             statusResponse = await this.easebuzzCheckStatus(`upi_${requestId}`, collectReq);
         }
         return statusResponse;
+    }
+    async statusResponsev2(requestId, collectReq) {
+        try {
+            let statusResponse = await this.easebuzzWebhookCheckStatusV2(requestId, collectReq);
+            if (statusResponse.msg.mode === 'NA') {
+                console.log(`Status 0 for ${requestId}, retrying with 'upi_' suffix`);
+                statusResponse = await this.easebuzzWebhookCheckStatusV2(`upi_${requestId}`, collectReq);
+            }
+            console.log(statusResponse);
+            return statusResponse;
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
     }
     async initiateRefund(collect_id, refund_amount, refund_id) {
         const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);

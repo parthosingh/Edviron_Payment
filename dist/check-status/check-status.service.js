@@ -121,10 +121,41 @@ let CheckStatusService = class CheckStatusService {
             };
         }
         if (collectRequest.easebuzz_non_partner) {
-            switch (collectRequest.gateway) {
-                case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
-                    return await this.easebuzzService.easebuzzWebhookCheckStatusV2(collect_request_id, collectRequest);
+            console.log('Checking status for easebuzz non-partner collect request');
+            if (collectRequest.gateway === collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ) {
+                const easebuzzStatus = await this.easebuzzService.statusResponsev2(collect_request_id.toString(), collectRequest);
+                let status_code;
+                if (easebuzzStatus.msg.status.toUpperCase() === 'SUCCESS') {
+                    status_code = 200;
+                }
+                else if (easebuzzStatus.msg.status.toUpperCase() === 'PREINITIATED') {
+                    easebuzzStatus.msg.status = 'NOT INITIATED';
+                    status_code = 202;
+                }
+                else {
+                    status_code = 400;
+                }
+                const date = collect_req_status.payment_time || collect_req_status.updatedAt;
+                if (!date) {
+                    throw new Error('No date found in the transaction status');
+                }
+                const ezb_status_response = {
+                    status: easebuzzStatus.msg.status.toUpperCase(),
+                    status_code,
+                    custom_order_id,
+                    amount: parseInt(easebuzzStatus.msg.amount),
+                    details: {
+                        payment_mode: collect_req_status.payment_time,
+                        bank_ref: easebuzzStatus.msg.bank_ref_num,
+                        payment_method: { mode: easebuzzStatus.msg.mode },
+                        transaction_time: collect_req_status?.updatedAt,
+                        formattedTransactionDate: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+                        order_status: easebuzzStatus.msg.status,
+                    },
+                };
+                return ezb_status_response;
             }
+            return await this.checkExpiry(collectRequest);
         }
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:
@@ -148,6 +179,7 @@ let CheckStatusService = class CheckStatusService {
                 const razorpayData = await this.razorpayServiceModel.getPaymentStatus(collectRequest.razorpay.order_id.toString(), collectRequest);
                 return razorpayData;
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
+                console.log('testing easebuzz status response');
                 const easebuzzStatus = await this.easebuzzService.statusResponse(collect_request_id.toString(), collectRequest);
                 let status_code;
                 if (easebuzzStatus.msg.status.toUpperCase() === 'SUCCESS') {
@@ -307,10 +339,41 @@ let CheckStatusService = class CheckStatusService {
             };
         }
         if (collectRequest.easebuzz_non_partner) {
-            switch (collectRequest.gateway) {
-                case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
-                    return await this.easebuzzService.easebuzzWebhookCheckStatusV2(collectRequest._id.toString(), collectRequest);
+            console.log('Checking status for easebuzz non-partner collect request');
+            if (collectRequest.gateway === collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ) {
+                const easebuzzStatus = await this.easebuzzService.statusResponsev2(collectidString, collectRequest);
+                let status_code;
+                if (easebuzzStatus.msg.status.toUpperCase() === 'SUCCESS') {
+                    status_code = 200;
+                }
+                else if (easebuzzStatus.msg.status.toUpperCase() === 'PREINITIATED') {
+                    easebuzzStatus.msg.status = 'NOT INITIATED';
+                    status_code = 202;
+                }
+                else {
+                    status_code = 400;
+                }
+                const date = collect_req_status.payment_time || collect_req_status.updatedAt;
+                if (!date) {
+                    throw new Error('No date found in the transaction status');
+                }
+                const ezb_status_response = {
+                    status: easebuzzStatus.msg.status.toUpperCase(),
+                    status_code,
+                    custom_order_id: collectRequest.custom_order_id || null,
+                    amount: parseInt(easebuzzStatus.msg.amount),
+                    details: {
+                        payment_mode: collect_req_status.payment_time,
+                        bank_ref: easebuzzStatus.msg.bank_ref_num,
+                        payment_method: { mode: easebuzzStatus.msg.mode },
+                        transaction_time: collect_req_status?.updatedAt,
+                        formattedTransactionDate: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+                        order_status: easebuzzStatus.msg.status,
+                    },
+                };
+                return ezb_status_response;
             }
+            return await this.checkExpiry(collectRequest);
         }
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:

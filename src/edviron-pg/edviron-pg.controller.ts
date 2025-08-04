@@ -2249,6 +2249,241 @@ export class EdvironPgController {
     }
   }
 
+  @Get('bulk-transactions-report-csv')
+  async bulkTransactionsCSV(
+    @Body()
+    body: {
+      trustee_id: string;
+      token: string;
+      searchParams?: string;
+      isCustomSearch?: boolean;
+      seachFilter?: string;
+      payment_modes?: string[];
+      isQRCode?: boolean;
+      gateway?: string[];
+    },
+    @Res() res: any,
+    @Req() req: any,
+  ) {
+    console.time('bulk-transactions-report');
+    const { trustee_id, token, searchParams, seachFilter, isQRCode, gateway } =
+      body;
+    let { payment_modes } = body;
+
+    if (!token) throw new Error('Token not provided');
+
+    // Handle UPI payment modes
+    if (payment_modes?.includes('upi')) {
+      payment_modes = [...payment_modes, 'upi_credit_card'];
+    }
+
+    try {
+      // Parse query parameters
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 10;
+      const startDate = req.query.startDate || null;
+      const endDate = req.query.endDate || null;
+      const status = req.query.status || null;
+      const school_id = req.query.school_id || null;
+
+      // Convert dates to UTC
+      const startOfDayUTC = startDate
+        ? new Date(await this.edvironPgService.convertISTStartToUTC(startDate))
+        : null;
+      const endOfDayUTC = endDate
+        ? new Date(await this.edvironPgService.convertISTEndToUTC(endDate))
+        : null;
+
+      // Verify JWT token early
+      const decrypted = jwt.verify(token, process.env.KEY!) as any;
+      if (
+        JSON.stringify({ trustee_id }) !==
+        JSON.stringify({
+          ...JSON.parse(JSON.stringify(decrypted)),
+          iat: undefined,
+          exp: undefined,
+        })
+      ) {
+        throw new ForbiddenException('Request forged');
+      }
+
+      // Build base query
+      const query: any = {};
+      const collectRequestLookup: any = {
+        from: 'collectrequests',
+        let: { collect_id: '$collect_id' },
+        pipeline: [],
+        as: 'collect_request',
+      };
+      // 1. Handle date filters
+      if (startDate && endDate) {
+        query.$or = [
+          {
+            payment_time: { $ne: null, $gte: startOfDayUTC, $lt: endOfDayUTC },
+          },
+          {
+            $and: [
+              { payment_time: { $eq: null } },
+              { updatedAt: { $gte: startOfDayUTC, $lt: endOfDayUTC } },
+            ],
+          },
+        ];
+
+        collectRequestLookup.pipeline.push({
+          $match: {
+            $expr: { $eq: ['$_id', '$$collect_id'] },
+            createdAt: { $gte: startOfDayUTC, $lt: endOfDayUTC },
+          },
+        });
+      }
+
+      // 2. Handle status filters
+      if (status) {
+        if (['SUCCESS', 'PENDING', 'USER_DROPPED'].includes(status)) {
+          query.status = { $in: [status.toLowerCase(), status.toUpperCase()] };
+        } else if (status === 'FAILED') {
+          query.status = { $in: ['FAILED', 'FAILURE', 'failure'] };
+        }
+      }
+
+      // 3. Handle payment modes
+      if (payment_modes) {
+        query.payment_method = { $in: payment_modes };
+      }
+
+      // 4. Handle special search filters
+      switch (seachFilter) {
+        case 'upi_id':
+          query.details = { $regex: searchParams };
+          break;
+
+        case 'bank_reference':
+          query.bank_reference = { $regex: searchParams };
+          break;
+
+        case 'order_id':
+          query.collect_id = new Types.ObjectId(searchParams);
+          break;
+
+        case 'custom_order_id':
+          collectRequestLookup.pipeline.push({
+            $match: { custom_order_id: searchParams },
+          });
+          break;
+
+        case 'student_info':
+          collectRequestLookup.pipeline.push({
+            $match: {
+              additional_data: { $regex: searchParams, $options: 'i' },
+            },
+          });
+          break;
+      }
+
+      // 5. Add common collect request filters
+      collectRequestLookup.pipeline.push({
+        $match: {
+          trustee_id,
+          ...(school_id !== 'null' && { school_id }),
+          ...(isQRCode && { isQRPayment: true }),
+          ...(gateway && { gateway: { $in: gateway } }),
+        },
+      });
+
+      // 6. Project only necessary fields
+      collectRequestLookup.pipeline.push({
+        $project: {
+          __v: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          callbackUrl: 0,
+          clientId: 0,
+          clientSecret: 0,
+          webHookUrl: 0,
+          disabled_modes: 0,
+          amount: 0,
+          trustee_id: 0,
+          sdkPayment: 0,
+          payment_data: 0,
+          ccavenue_merchant_id: 0,
+          ccavenue_access_code: 0,
+          ccavenue_working_key: 0,
+          easebuzz_sub_merchant_id: 0,
+          paymentIds: 0,
+          deepLink: 0,
+        },
+      });
+
+      // 7. Build main aggregation pipeline
+      const aggregationPipeline: any[] = [
+        { $match: query },
+        { $lookup: collectRequestLookup },
+        { $unwind: '$collect_request' },
+        {
+          $addFields: {
+            collect_request: {
+              $mergeObjects: [
+                '$collect_request',
+                {
+                  status: '$status',
+                  transaction_amount: '$transaction_amount',
+                  payment_method: '$payment_method',
+                  details: '$details',
+                  bank_reference: '$bank_reference',
+                  collect_id: '$collect_request._id',
+                  order_amount: '$order_amount',
+                  merchant_id: '$collect_request.school_id',
+                  currency: 'INR',
+                  createdAt: '$createdAt',
+                  updatedAt: '$updatedAt',
+                  transaction_time: '$updatedAt',
+                  custom_order_id: '$collect_request.custom_order_id',
+                  isSplitPayments: '$collect_request.isSplitPayments',
+                  vendors_info: '$collect_request.vendors_info',
+                  isAutoRefund: '$isAutoRefund',
+                  payment_time: '$payment_time',
+                  isQRPayment: '$collect_request.isQRPayment',
+                  reason: '$reason',
+                  gateway: '$gateway',
+                  capture_status: '$capture_status',
+                  isVBAPaymentComplete: '$isVBAPaymentComplete',
+                },
+              ],
+            },
+          },
+        },
+        { $replaceRoot: { newRoot: '$collect_request' } },
+        { $project: { school_id: 0 } },
+      ];
+
+      // 8. Handle pagination
+      if (
+        !['order_id', 'custom_order_id', 'bank_reference'].includes(
+          seachFilter ?? '',
+        )
+      ) {
+        aggregationPipeline.push(
+          { $skip: (page - 1) * limit },
+          { $limit: Number(limit) },
+        );
+      }
+
+      // 9. Execute in parallel: data + count
+      const [transactions, totalTransactions] = await Promise.all([
+        this.databaseService.CollectRequestStatusModel.aggregate(
+          aggregationPipeline,
+        ),
+        this.databaseService.CollectRequestStatusModel.countDocuments(query),
+      ]);
+      // console.log(transactions, 'transactions');
+      console.timeEnd('bulk-transactions-report');
+      res.status(201).send({ transactions, totalTransactions });
+    } catch (error) {
+      console.error('Error in bulkTransactionsCSV:', error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
+
   @Post('single-transaction-report')
   async singleTransactionReport(
     @Body()

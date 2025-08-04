@@ -1671,6 +1671,182 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(error.message);
         }
     }
+    async bulkTransactionsCSV(body, res, req) {
+        console.time('bulk-transactions-report');
+        const { trustee_id, token, searchParams, seachFilter, isQRCode, gateway } = body;
+        let { payment_modes } = body;
+        if (!token)
+            throw new Error('Token not provided');
+        if (payment_modes?.includes('upi')) {
+            payment_modes = [...payment_modes, 'upi_credit_card'];
+        }
+        try {
+            const page = Number(req.query.page) || 1;
+            const limit = Number(req.query.limit) || 10;
+            const startDate = req.query.startDate || null;
+            const endDate = req.query.endDate || null;
+            const status = req.query.status || null;
+            const school_id = req.query.school_id || null;
+            const startOfDayUTC = startDate
+                ? new Date(await this.edvironPgService.convertISTStartToUTC(startDate))
+                : null;
+            const endOfDayUTC = endDate
+                ? new Date(await this.edvironPgService.convertISTEndToUTC(endDate))
+                : null;
+            const decrypted = jwt.verify(token, process.env.KEY);
+            if (JSON.stringify({ trustee_id }) !==
+                JSON.stringify({
+                    ...JSON.parse(JSON.stringify(decrypted)),
+                    iat: undefined,
+                    exp: undefined,
+                })) {
+                throw new common_1.ForbiddenException('Request forged');
+            }
+            const query = {};
+            const collectRequestLookup = {
+                from: 'collectrequests',
+                let: { collect_id: '$collect_id' },
+                pipeline: [],
+                as: 'collect_request',
+            };
+            if (startDate && endDate) {
+                query.$or = [
+                    {
+                        payment_time: { $ne: null, $gte: startOfDayUTC, $lt: endOfDayUTC },
+                    },
+                    {
+                        $and: [
+                            { payment_time: { $eq: null } },
+                            { updatedAt: { $gte: startOfDayUTC, $lt: endOfDayUTC } },
+                        ],
+                    },
+                ];
+                collectRequestLookup.pipeline.push({
+                    $match: {
+                        $expr: { $eq: ['$_id', '$$collect_id'] },
+                        createdAt: { $gte: startOfDayUTC, $lt: endOfDayUTC },
+                    },
+                });
+            }
+            if (status) {
+                if (['SUCCESS', 'PENDING', 'USER_DROPPED'].includes(status)) {
+                    query.status = { $in: [status.toLowerCase(), status.toUpperCase()] };
+                }
+                else if (status === 'FAILED') {
+                    query.status = { $in: ['FAILED', 'FAILURE', 'failure'] };
+                }
+            }
+            if (payment_modes) {
+                query.payment_method = { $in: payment_modes };
+            }
+            switch (seachFilter) {
+                case 'upi_id':
+                    query.details = { $regex: searchParams };
+                    break;
+                case 'bank_reference':
+                    query.bank_reference = { $regex: searchParams };
+                    break;
+                case 'order_id':
+                    query.collect_id = new mongoose_1.Types.ObjectId(searchParams);
+                    break;
+                case 'custom_order_id':
+                    collectRequestLookup.pipeline.push({
+                        $match: { custom_order_id: searchParams },
+                    });
+                    break;
+                case 'student_info':
+                    collectRequestLookup.pipeline.push({
+                        $match: {
+                            additional_data: { $regex: searchParams, $options: 'i' },
+                        },
+                    });
+                    break;
+            }
+            collectRequestLookup.pipeline.push({
+                $match: {
+                    trustee_id,
+                    ...(school_id !== 'null' && { school_id }),
+                    ...(isQRCode && { isQRPayment: true }),
+                    ...(gateway && { gateway: { $in: gateway } }),
+                },
+            });
+            collectRequestLookup.pipeline.push({
+                $project: {
+                    __v: 0,
+                    createdAt: 0,
+                    updatedAt: 0,
+                    callbackUrl: 0,
+                    clientId: 0,
+                    clientSecret: 0,
+                    webHookUrl: 0,
+                    disabled_modes: 0,
+                    amount: 0,
+                    trustee_id: 0,
+                    sdkPayment: 0,
+                    payment_data: 0,
+                    ccavenue_merchant_id: 0,
+                    ccavenue_access_code: 0,
+                    ccavenue_working_key: 0,
+                    easebuzz_sub_merchant_id: 0,
+                    paymentIds: 0,
+                    deepLink: 0,
+                },
+            });
+            const aggregationPipeline = [
+                { $match: query },
+                { $lookup: collectRequestLookup },
+                { $unwind: '$collect_request' },
+                {
+                    $addFields: {
+                        collect_request: {
+                            $mergeObjects: [
+                                '$collect_request',
+                                {
+                                    status: '$status',
+                                    transaction_amount: '$transaction_amount',
+                                    payment_method: '$payment_method',
+                                    details: '$details',
+                                    bank_reference: '$bank_reference',
+                                    collect_id: '$collect_request._id',
+                                    order_amount: '$order_amount',
+                                    merchant_id: '$collect_request.school_id',
+                                    currency: 'INR',
+                                    createdAt: '$createdAt',
+                                    updatedAt: '$updatedAt',
+                                    transaction_time: '$updatedAt',
+                                    custom_order_id: '$collect_request.custom_order_id',
+                                    isSplitPayments: '$collect_request.isSplitPayments',
+                                    vendors_info: '$collect_request.vendors_info',
+                                    isAutoRefund: '$isAutoRefund',
+                                    payment_time: '$payment_time',
+                                    isQRPayment: '$collect_request.isQRPayment',
+                                    reason: '$reason',
+                                    gateway: '$gateway',
+                                    capture_status: '$capture_status',
+                                    isVBAPaymentComplete: '$isVBAPaymentComplete',
+                                },
+                            ],
+                        },
+                    },
+                },
+                { $replaceRoot: { newRoot: '$collect_request' } },
+                { $project: { school_id: 0 } },
+            ];
+            if (!['order_id', 'custom_order_id', 'bank_reference'].includes(seachFilter ?? '')) {
+                aggregationPipeline.push({ $skip: (page - 1) * limit }, { $limit: Number(limit) });
+            }
+            const [transactions, totalTransactions] = await Promise.all([
+                this.databaseService.CollectRequestStatusModel.aggregate(aggregationPipeline),
+                this.databaseService.CollectRequestStatusModel.countDocuments(query),
+            ]);
+            console.timeEnd('bulk-transactions-report');
+            res.status(201).send({ transactions, totalTransactions });
+        }
+        catch (error) {
+            console.error('Error in bulkTransactionsCSV:', error.message);
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
     async singleTransactionReport(body) {
         try {
             const { collect_id, trustee_id, token } = body;
@@ -3167,6 +3343,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "bulkTransactions", null);
+__decorate([
+    (0, common_1.Get)('bulk-transactions-report-csv'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "bulkTransactionsCSV", null);
 __decorate([
     (0, common_1.Post)('single-transaction-report'),
     __param(0, (0, common_1.Body)()),
