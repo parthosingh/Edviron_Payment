@@ -446,6 +446,7 @@ export class CashfreeService {
     await request.save();
     const cashfreeId = request.paymentIds.cashfree_id;
     if (!cashfreeId) {
+      
       throw new BadRequestException('Error in Getting QR Code');
     }
     let intentData = JSON.stringify({

@@ -1,11 +1,13 @@
 import { DatabaseService } from 'src/database/database.service';
 import { CashfreeService } from './cashfree.service';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
+import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 export declare class CashfreeController {
     private readonly databaseService;
     private readonly cashfreeService;
     private readonly edvironPgService;
-    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService, edvironPgService: EdvironPgService);
+    private readonly easebuzzService;
+    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService, edvironPgService: EdvironPgService, easebuzzService: EasebuzzService);
     initiateRefund(body: any): Promise<any>;
     initiateSplitRefund(body: {
         token: string;
@@ -27,7 +29,7 @@ export declare class CashfreeController {
         intentUrl: any;
         qrCodeBase64: any;
         collect_id: any;
-    }>;
+    } | undefined>;
     getSettlementsTransactions(body: {
         limit: number;
         cursor: string | null;

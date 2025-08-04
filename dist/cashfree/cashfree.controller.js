@@ -22,11 +22,13 @@ const sign_1 = require("../utils/sign");
 const webhooks_schema_1 = require("../database/schemas/webhooks.schema");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const axios_1 = require("axios");
+const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 let CashfreeController = class CashfreeController {
-    constructor(databaseService, cashfreeService, edvironPgService) {
+    constructor(databaseService, cashfreeService, edvironPgService, easebuzzService) {
         this.databaseService = databaseService;
         this.cashfreeService = cashfreeService;
         this.edvironPgService = edvironPgService;
+        this.easebuzzService = easebuzzService;
     }
     async initiateRefund(body) {
         const { collect_id, amount, refund_id } = body;
@@ -120,7 +122,12 @@ let CashfreeController = class CashfreeController {
         await request.save();
         const cashfreeId = request.paymentIds.cashfree_id;
         if (!cashfreeId) {
-            throw new common_1.BadRequestException('Error in Getting QR Code');
+            try {
+                return await this.easebuzzService.getQrBase64(collect_id);
+            }
+            catch (e) {
+                throw new common_1.BadRequestException('Error in Getting QR Code');
+            }
         }
         let intentData = JSON.stringify({
             payment_method: {
@@ -629,7 +636,8 @@ exports.CashfreeController = CashfreeController = __decorate([
     (0, common_1.Controller)('cashfree'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
         cashfree_service_1.CashfreeService,
-        edviron_pg_service_1.EdvironPgService])
+        edviron_pg_service_1.EdvironPgService,
+        easebuzz_service_1.EasebuzzService])
 ], CashfreeController);
 const u = {
     data: { test_object: { test_key: 'test_value' } },
