@@ -56,8 +56,9 @@ let EasebuzzController = class EasebuzzController {
             }
             const baseUrl = collectReq.deepLink;
             const phonePe = baseUrl.replace('upi:', 'phonepe:');
-            const googlePe = 'tez://' + baseUrl;
             const paytm = baseUrl.replace('upi:', 'paytmmp:');
+            const gpay = baseUrl.replace('upi://', 'upi:/');
+            const googlePe = 'tez://' + gpay;
             return res.send({
                 qr_code: collectReq.deepLink,
                 phonePe,
