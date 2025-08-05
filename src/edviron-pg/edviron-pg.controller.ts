@@ -1768,12 +1768,14 @@ export class EdvironPgController {
         };
       }
 
-      if (school_id != 'null') {
+       if (school_id !== null && school_id !== 'null') {
+        console.log(school_id, 'school_id');
         collectQuery = {
           ...collectQuery,
           school_id: school_id,
         };
       }
+      
 
       if (isQRCode) {
         collectQuery = {
