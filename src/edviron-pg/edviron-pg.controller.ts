@@ -1288,7 +1288,7 @@ export class EdvironPgController {
       if (status === 'SUCCESS' || status === 'PENDING') {
         query = {
           ...query,
-          status,
+          status: { $in: [status.toLowerCase(), status.toUpperCase()] },
         };
       }
 
