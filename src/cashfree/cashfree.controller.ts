@@ -18,12 +18,14 @@ import { generateHMACBase64Type } from 'src/utils/sign';
 import { WebhookSource } from 'src/database/schemas/webhooks.schema';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import axios from 'axios';
+import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 @Controller('cashfree')
 export class CashfreeController {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly cashfreeService: CashfreeService,
     private readonly edvironPgService: EdvironPgService,
+    private readonly easebuzzService: EasebuzzService, // Assuming easebuzzService is defined elsewhere
   ) {}
   @Post('/refund')
   async initiateRefund(@Body() body: any) {
@@ -152,7 +154,13 @@ export class CashfreeController {
     await request.save();
     const cashfreeId = request.paymentIds.cashfree_id;
     if (!cashfreeId) {
-      throw new BadRequestException('Error in Getting QR Code');
+      try{
+
+        return await this.easebuzzService.getQrBase64(collect_id)
+      }catch(e){
+
+        throw new BadRequestException('Error in Getting QR Code');
+      }
     }
     let intentData = JSON.stringify({
       payment_method: {

@@ -6,25 +6,22 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CashfreeModule = void 0;
+exports.ReportsModule = void 0;
 const common_1 = require("@nestjs/common");
-const cashfree_service_1 = require("./cashfree.service");
+const reports_service_1 = require("./reports.service");
+const reports_controller_1 = require("./reports.controller");
 const database_module_1 = require("../database/database.module");
-const cashfree_controller_1 = require("./cashfree.controller");
+const cashfree_module_1 = require("../cashfree/cashfree.module");
 const edviron_pg_module_1 = require("../edviron-pg/edviron-pg.module");
-const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
-let CashfreeModule = class CashfreeModule {
+const aws_s3_service_service_1 = require("../aws-s3-service/aws-s3-service.service");
+let ReportsModule = class ReportsModule {
 };
-exports.CashfreeModule = CashfreeModule;
-exports.CashfreeModule = CashfreeModule = __decorate([
+exports.ReportsModule = ReportsModule;
+exports.ReportsModule = ReportsModule = __decorate([
     (0, common_1.Module)({
-        providers: [cashfree_service_1.CashfreeService, easebuzz_service_1.EasebuzzService],
-        imports: [
-            database_module_1.DatabaseModule,
-            (0, common_1.forwardRef)(() => edviron_pg_module_1.EdvironPgModule),
-        ],
-        exports: [cashfree_service_1.CashfreeService],
-        controllers: [cashfree_controller_1.CashfreeController],
+        providers: [reports_service_1.ReportsService, aws_s3_service_service_1.AwsS3ServiceService],
+        imports: [database_module_1.DatabaseModule, cashfree_module_1.CashfreeModule, edviron_pg_module_1.EdvironPgModule],
+        controllers: [reports_controller_1.ReportsController]
     })
-], CashfreeModule);
-//# sourceMappingURL=cashfree.module.js.map
+], ReportsModule);
+//# sourceMappingURL=reports.module.js.map

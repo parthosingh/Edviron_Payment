@@ -625,7 +625,7 @@ let CashfreeService = class CashfreeService {
             'x-partner-apikey': process.env.CASHFREE_API_KEY,
         };
         const data = {
-            merchant_id,
+            merchant_id: `${merchant_id}`,
             merchant_email,
             merchant_name,
             poc_phone,
@@ -648,6 +648,7 @@ let CashfreeService = class CashfreeService {
             data,
         };
         try {
+            console.log(config, 'config for cashfree merchant');
             const response = await axios_1.default.request(config);
             await this.uploadKycDocs(merchant_id);
             return 'Merchant Request Created Successfully on Cashfree';

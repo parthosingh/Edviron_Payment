@@ -75,8 +75,9 @@ export class EasebuzzController {
       }
       const baseUrl = collectReq.deepLink;
       const phonePe = baseUrl.replace('upi:', 'phonepe:');
-      const googlePe = 'tez://' + baseUrl;
       const paytm = baseUrl.replace('upi:', 'paytmmp:');
+      const gpay = baseUrl.replace('upi://', 'upi:/');
+      const googlePe = 'tez://' + gpay;
       return res.send({
         qr_code: collectReq.deepLink,
         phonePe,
@@ -91,14 +92,16 @@ export class EasebuzzController {
 
   @Get('/encrypted-info')
   async getEncryptedInfo(@Res() res: any, @Req() req: any, @Body() body: any) {
-    const { card_number, card_holder, card_cvv, card_exp,collect_id } = req.query;
+    const { card_number, card_holder, card_cvv, card_exp, collect_id } =
+      req.query;
     if (!card_number || !card_holder || !card_cvv || !card_exp) {
       throw new BadRequestException('Card details are required');
     }
-    const request = await this.databaseService.CollectRequestModel.findById(collect_id);
-   if(!request){
-     throw new BadRequestException('Collect Request not found');
-   }
+    const request =
+      await this.databaseService.CollectRequestModel.findById(collect_id);
+    if (!request) {
+      throw new BadRequestException('Collect Request not found');
+    }
     console.log('encrypting key and iv');
     const { key, iv } = await merchantKeySHA256(request);
     console.log('key and iv generated', { key, iv });
@@ -828,11 +831,10 @@ export class EasebuzzController {
 
     collectRequest.gateway = Gateway.EDVIRON_EASEBUZZ;
     await collectRequest.save();
-    const statusResponse =
-      await this.easebuzzService.statusResponsev2(
-        collect_request_id,
-        collectRequest,
-      );
+    const statusResponse = await this.easebuzzService.statusResponsev2(
+      collect_request_id,
+      collectRequest,
+    );
     const reqToCheck = statusResponse;
     console.log(statusResponse, 'status response check');
 
@@ -891,11 +893,10 @@ export class EasebuzzController {
 
     collectRequest.gateway = Gateway.EDVIRON_EASEBUZZ;
     await collectRequest.save();
-    const statusResponse =
-      await this.easebuzzService.easebuzzWebhookCheckStatusV2(
-        collect_request_id,
-        collectRequest,
-      );
+    const statusResponse = await this.easebuzzService.statusResponsev2(
+      collect_request_id,
+      collectRequest,
+    );
     const reqToCheck = statusResponse;
     console.log(statusResponse, 'status response check');
 
@@ -938,6 +939,7 @@ export class EasebuzzController {
       );
     }
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
+    callbackUrl.searchParams.set('status', 'SUCCESS');
     return res.redirect(callbackUrl.toString());
   }
 }
