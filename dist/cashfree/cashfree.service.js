@@ -625,7 +625,7 @@ let CashfreeService = class CashfreeService {
             'x-partner-apikey': process.env.CASHFREE_API_KEY,
         };
         const data = {
-            merchant_id: `${merchant_id}_1`,
+            merchant_id: `${merchant_id}`,
             merchant_email,
             merchant_name,
             poc_phone,
