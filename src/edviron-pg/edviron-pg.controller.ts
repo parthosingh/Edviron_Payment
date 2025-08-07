@@ -1769,14 +1769,13 @@ export class EdvironPgController {
         };
       }
 
-       if (school_id !== null && school_id !== 'null') {
+      if (school_id !== null && school_id !== 'null') {
         console.log(school_id, 'school_id');
         collectQuery = {
           ...collectQuery,
           school_id: school_id,
         };
       }
-      
 
       if (isQRCode) {
         collectQuery = {
@@ -3006,10 +3005,10 @@ export class EdvironPgController {
       );
     } catch (error) {
       throw new BadRequestException({
-      statusCode: 400,
-      message: error.message || 'Something went wrong',
-      error: 'Bad Request'
-    });
+        statusCode: 400,
+        message: error.message || 'Something went wrong',
+        error: 'Bad Request',
+      });
     }
   }
 
@@ -3728,9 +3727,9 @@ export class EdvironPgController {
     const { token, trustee_id, school_id, platform_charges } = body;
     try {
       await this.databaseService.PlatformChargeModel.findOneAndUpdate(
-        { school_id }, // Search criteria
-        { platform_charges }, // Fields to update
-        { upsert: true, new: true }, // Upsert to insert if not found, return the updated document
+        { school_id },
+        { $set: { platform_charges } },
+        { upsert: true, new: true },
       );
 
       return { message: 'School MDR updated successfully' };

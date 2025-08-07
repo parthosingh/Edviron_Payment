@@ -2146,7 +2146,7 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException({
                 statusCode: 400,
                 message: error.message || 'Something went wrong',
-                error: 'Bad Request'
+                error: 'Bad Request',
             });
         }
     }
@@ -2569,7 +2569,7 @@ let EdvironPgController = class EdvironPgController {
     async updateSchoolMdr(body) {
         const { token, trustee_id, school_id, platform_charges } = body;
         try {
-            await this.databaseService.PlatformChargeModel.findOneAndUpdate({ school_id }, { platform_charges }, { upsert: true, new: true });
+            await this.databaseService.PlatformChargeModel.findOneAndUpdate({ school_id }, { $set: { platform_charges } }, { upsert: true, new: true });
             return { message: 'School MDR updated successfully' };
         }
         catch (e) {
