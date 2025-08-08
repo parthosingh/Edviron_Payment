@@ -1088,134 +1088,110 @@ export class EdvironPgService implements GatewayService {
     return istEndDate.toISOString();
   }
 
-  async getVendorTransactions(query: any, limit: number, page: number) {
+  async getVendorTransactions(
+    query: any,
+    limit: number,
+    page: number,
+    payment_modes?: string[],
+  ) {
     try {
       console.time('overallTransaction');
-      console.time('getting order ids...');
-      const orderId =
-        await this.databaseService.VendorTransactionModel.find(query).select(
-          'collect_id -_id',
-        );
+      if (payment_modes?.includes('upi')) {
+        payment_modes = [...payment_modes, 'upi_credit_card'];
+      }
 
-      const orderIds = orderId.map((order: any) => order.collect_id);
-       
-      console.timeEnd('getting order ids...');
+      let mainQuery = { ...query };
+      if (payment_modes?.length) {
+        const paymentFilteredIds =
+          await this.databaseService.CollectRequestStatusModel.distinct(
+            'collect_id',
+            { payment_method: { $in: payment_modes } },
+          );
+        mainQuery.collect_id = { $in: paymentFilteredIds };
+      }
+
       console.time('Getting vendor transaction');
-      const vendorsTransaction =
-        await this.databaseService.VendorTransactionModel.aggregate([
-          {
-            $match: query,
+      const pipeline: any[] = [
+        { $match: mainQuery },
+        { $sort: { createdAt: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: 'collectrequeststatuses',
+            localField: 'collect_id',
+            foreignField: 'collect_id',
+            pipeline: [
+              {
+                $project: {
+                  payment_method: 1,
+                  transaction_amount: 1,
+                  status: 1,
+                  payment_time: 1,
+                  isAutoRefund: 1,
+                },
+              },
+            ],
+            as: 'collectrequeststatuses',
           },
-          {
-            $sort: { createdAt: -1 },
+        },
+        {
+          $lookup: {
+            from: 'collectrequests',
+            localField: 'collect_id',
+            foreignField: '_id',
+            pipeline: [
+              { $project: { additional_data: 1, custom_order_id: 1 } },
+            ],
+            as: 'collectRequest',
           },
-          {
-            $skip: (page - 1) * limit,
+        },
+        {
+          $addFields: {
+            collectrequeststatuses: {
+              $arrayElemAt: ['$collectrequeststatuses', 0],
+            },
+            collectRequest: { $arrayElemAt: ['$collectRequest', 0] },
           },
-          {
-            $limit: limit,
+        },
+        {
+          $project: {
+            'collectrequeststatuses._id': 0,
+            'collectRequest._id': 0,
+            'collectrequeststatuses.collect_id': 0,
           },
-          // {
-          //   $lookup: {
-          //     from: 'collectrequeststatuses',
-          //     // localField: 'collect_id',
-          //     // foreignField: 'collect_id',
-          //     let: { collect_id: '$collect_id' },
-          //     pipeline: [
-          //       {
-          //         $project: {
-          //           // status: 1,
-          //           payment_method: 1,
-          //           // payment_time: 1,
-          //           transaction_amount: 1,
-          //           // isAutoRefund: 1,
-          //         },
-          //       },
-          //     ],
-          //     as: 'collect_req_status',
-          //   },
-          // },
-          {
-            $lookup: {
-              from: 'collectrequests',
-              localField: 'collect_id',
-              foreignField: '_id',
-              pipeline: [
-                { $project: { additional_data: 1, custom_order_id: 1 } },
+        },
+        {
+          $replaceRoot: {
+            newRoot: {
+              $mergeObjects: [
+                '$$ROOT',
+                '$collectrequeststatuses',
+                '$collectRequest',
               ],
-              as: 'collectRequest',
             },
           },
-          {
-            $set: {
-              // studentDetail:{$arrayElemAt: ['$collectRequest.additional_data', 0]},
-              additional_data: {
-                $arrayElemAt: ['$collectRequest.additional_data', 0],
-              },
-              custom_order_id: {
-                $arrayElemAt: ['$collectRequest.custom_order_id', 0],
-              },
-              status: { $arrayElemAt: ['$collect_req_status.status', 0] },
-              payment_method: {
-                $arrayElemAt: ['$collect_req_status.payment_method', 0],
-              },
-              payment_time: {
-                $arrayElemAt: ['$collect_req_status.payment_time', 0],
-              },
-              transaction_amount: {
-                $arrayElemAt: ['$collect_req_status.transaction_amount', 0],
-              },
-              isAutoRefund: {
-                $arrayElemAt: ['$collect_req_status.isAutoRefund', 0],
-              },
-            },
-          },
-          {
-            $project: {
-              collectRequest: 0,
-              collect_req_status: 0,
-              _id: 0,
-            },
-          },
-        ]);
-      const collectRequestStatuses =
-        await this.databaseService.CollectRequestStatusModel.find({
-          collect_id: { $in: orderIds },
-        }).select(
-          'collect_id status payment_method payment_time transaction_amount isAutoRefund',
-        );
+        },
+        { $project: { collectrequeststatuses: 0, collectRequest: 0 } },
+      ];
+
+      const vendorsTransaction =
+        await this.databaseService.VendorTransactionModel.aggregate(pipeline);
       console.timeEnd('Getting vendor transaction');
 
-      console.time('mapping...');
-      // const collectRequestStatusMap = new Map();
-      const collectRequestStatusMap = new Map(
-        collectRequestStatuses.map((status) => [
-          status.collect_id.toString(),
-          status.toObject(),
-        ]),
-      );
-
-      const finalResult = vendorsTransaction.map((vendor) => ({
-        ...vendor,
-        ...(collectRequestStatusMap.get(vendor.collect_id.toString()) || {}),
-      }));
-      console.timeEnd('mapping...');
+      // Step 3: Get total count
       console.time('counting transactions');
       const totalCount =
-        await this.databaseService.VendorTransactionModel.countDocuments(query);
+        await this.databaseService.VendorTransactionModel.countDocuments(
+          mainQuery,
+        );
       console.timeEnd('counting transactions');
+
       const totalPages = Math.ceil(totalCount / limit);
       console.timeEnd('overallTransaction');
-      if (
-        (query.custom_order_id || query.collect_id) &&
-        finalResult.length === 0
-      ) {
-        throw new BadRequestException(
-          'No transactions found for the given query',
-        );
-      }
+
       return {
-        vendorsTransaction: finalResult,
+        vendorsTransaction,
         totalCount,
         page,
         limit,

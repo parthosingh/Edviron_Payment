@@ -164,11 +164,13 @@ export declare class EdvironPgController {
         trustee_id: string;
         status?: string;
         vendor_id?: string;
-        school_id?: string;
+        school_id?: string[];
         start_date?: string;
         end_date?: string;
         custom_id?: string;
         collect_id?: string;
+        gateway?: string[];
+        payment_modes?: string[];
     }): Promise<{
         vendorsTransaction: any[];
         totalCount: number;
