@@ -2144,7 +2144,6 @@ let EdvironPgController = class EdvironPgController {
                     },
                 }),
             };
-            console.log(gateway, "gateway");
             return await this.edvironPgService.getVendorTransactions(query, dataLimit, dataPage, payment_modes);
         }
         catch (error) {

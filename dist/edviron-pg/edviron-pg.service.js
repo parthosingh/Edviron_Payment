@@ -950,6 +950,10 @@ let EdvironPgService = class EdvironPgService {
             console.timeEnd('counting transactions');
             const totalPages = Math.ceil(totalCount / limit);
             console.timeEnd('overallTransaction');
+            if ((query.custom_order_id || query.collect_id) &&
+                vendorsTransaction.length === 0) {
+                throw new common_1.BadRequestException('No transactions found for the given query');
+            }
             return {
                 vendorsTransaction,
                 totalCount,
