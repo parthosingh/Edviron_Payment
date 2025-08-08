@@ -3005,7 +3005,6 @@ export class EdvironPgController {
             },
           }),
       };
-      console.log(gateway, "gateway")
 
       return await this.edvironPgService.getVendorTransactions(
         query,
