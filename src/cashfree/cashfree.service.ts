@@ -1144,7 +1144,7 @@ export class CashfreeService {
       );
     }
     if (!response.businessCategory) {
-      throw new BadRequestException('businessCategory is required');
+      response.businessCategory = 'Education';
     }
     if (!response.business_type) {
       throw new BadRequestException('business_type is required');
