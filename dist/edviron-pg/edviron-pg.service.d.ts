@@ -109,7 +109,7 @@ export declare class EdvironPgService implements GatewayService {
     }>;
     convertISTStartToUTC(dateStr: string): Promise<string>;
     convertISTEndToUTC(dateStr: string): Promise<string>;
-    getVendorTransactions(query: any, limit: number, page: number): Promise<{
+    getVendorTransactions(query: any, limit: number, page: number, payment_modes?: string[]): Promise<{
         vendorsTransaction: any[];
         totalCount: number;
         page: number;

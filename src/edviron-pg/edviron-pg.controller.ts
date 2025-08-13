@@ -19,7 +19,7 @@ import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { calculateSHA512Hash, sign } from '../utils/sign';
 import axios from 'axios';
 import { Webhooks } from 'src/database/schemas/webhooks.schema';
-import { Types } from 'mongoose';
+import { isValidObjectId, Types } from 'mongoose';
 import * as jwt from 'jsonwebtoken';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import {
@@ -2954,11 +2954,13 @@ export class EdvironPgController {
       trustee_id: string;
       status?: string;
       vendor_id?: string;
-      school_id?: string;
+      school_id?: string[];
       start_date?: string;
       end_date?: string;
       custom_id?: string;
       collect_id?: string;
+      gateway?: string[];
+      payment_modes?: string[];
     },
   ) {
     console.log('post req');
@@ -2975,6 +2977,8 @@ export class EdvironPgController {
         start_date,
         end_date,
         status,
+        payment_modes,
+        gateway,
       } = body;
       const dataLimit = Number(limit) || 100;
       const dataPage = Number(page) || 1;
@@ -2982,13 +2986,17 @@ export class EdvironPgController {
       if (decrypted.validate_trustee !== trustee_id) {
         throw new ForbiddenException('Request forged');
       }
+      if(collect_id && !isValidObjectId(collect_id)){
+        throw new BadRequestException('please provide valid edviron order id')
+      }
       const query = {
         trustee_id,
         ...(vendor_id && { vendor_id }),
-        ...(school_id && { school_id }),
+        ...(school_id && { school_id : {$in : school_id} }),
         ...(status && { status: { $regex: new RegExp(`^${status}$`, 'i') } }), // Case-insensitive comparison
         ...(collect_id && { collect_id: new Types.ObjectId(collect_id) }),
         ...(custom_id && { custom_order_id: custom_id }),
+        ...(gateway && { gateway: { $in: gateway } }),
         ...(start_date &&
           end_date && {
             updatedAt: {
@@ -3002,6 +3010,7 @@ export class EdvironPgController {
         query,
         dataLimit,
         dataPage,
+        payment_modes,
       );
     } catch (error) {
       throw new BadRequestException({
