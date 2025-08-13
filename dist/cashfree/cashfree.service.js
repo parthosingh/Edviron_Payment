@@ -830,7 +830,7 @@ let CashfreeService = class CashfreeService {
             throw new common_1.BadRequestException('businessProofDetails?.business_name required');
         }
         if (!response.businessCategory) {
-            throw new common_1.BadRequestException('businessCategory is required');
+            response.businessCategory = 'Education';
         }
         if (!response.business_type) {
             throw new common_1.BadRequestException('business_type is required');
