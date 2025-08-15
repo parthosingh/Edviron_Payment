@@ -183,6 +183,10 @@ export class ReportsService {
     }
   }
 
+  async rateLimiting(ms:number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   async getBulkReport(
     utrs: [
       {
@@ -196,6 +200,8 @@ export class ReportsService {
     try {
       console.log(utrs, 'utrs');
       const allTransactions = [];
+      const maxRequestsPerSecond = 10;
+      const delayBetweenRequests = 1000 / maxRequestsPerSecond;
 
       for (const utr of utrs) {
         let cursor: string | null = null;
@@ -210,6 +216,7 @@ export class ReportsService {
 
           allTransactions.push(...result.settlements_transactions);
           cursor = result.cursor || null;
+          await this.rateLimiting(delayBetweenRequests);
         } while (cursor);
       }
 

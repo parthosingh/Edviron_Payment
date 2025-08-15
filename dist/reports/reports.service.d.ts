@@ -13,6 +13,7 @@ export declare class ReportsService {
         limit: any;
         settlements_transactions: any;
     }>;
+    rateLimiting(ms: number): Promise<unknown>;
     getBulkReport(utrs: [
         {
             utr: string;

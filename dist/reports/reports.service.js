@@ -154,16 +154,22 @@ let ReportsService = class ReportsService {
             throw new common_1.BadRequestException(e.message || 'Something went wrong while processing settlements');
         }
     }
+    async rateLimiting(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
     async getBulkReport(utrs, report_id) {
         try {
             console.log(utrs, 'utrs');
             const allTransactions = [];
+            const maxRequestsPerSecond = 10;
+            const delayBetweenRequests = 1000 / maxRequestsPerSecond;
             for (const utr of utrs) {
                 let cursor = null;
                 do {
                     const result = await this.getTransactionForSettlements(utr.utr, utr.client_id, 1000, utr.school_name, cursor);
                     allTransactions.push(...result.settlements_transactions);
                     cursor = result.cursor || null;
+                    await this.rateLimiting(delayBetweenRequests);
                 } while (cursor);
             }
             if (!allTransactions.length) {
