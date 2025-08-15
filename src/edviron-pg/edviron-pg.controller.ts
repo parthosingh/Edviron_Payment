@@ -2986,13 +2986,13 @@ export class EdvironPgController {
       if (decrypted.validate_trustee !== trustee_id) {
         throw new ForbiddenException('Request forged');
       }
-      if(collect_id && !isValidObjectId(collect_id)){
-        throw new BadRequestException('please provide valid edviron order id')
+      if (collect_id && !isValidObjectId(collect_id)) {
+        throw new BadRequestException('please provide valid edviron order id');
       }
       const query = {
         trustee_id,
         ...(vendor_id && { vendor_id }),
-        ...(school_id && { school_id : {$in : school_id} }),
+        ...(school_id && { school_id: { $in: school_id } }),
         ...(status && { status: { $regex: new RegExp(`^${status}$`, 'i') } }), // Case-insensitive comparison
         ...(collect_id && { collect_id: new Types.ObjectId(collect_id) }),
         ...(custom_id && { custom_order_id: custom_id }),
@@ -3216,15 +3216,35 @@ export class EdvironPgController {
         collect_id: request._id,
       };
     }
-
     const totalRecords =
       await this.databaseService.ErpWebhooksLogsModel.countDocuments(query);
-    const logs = await this.databaseService.ErpWebhooksLogsModel.find(query)
-      .sort({
-        createdAt: -1,
-      })
-      .skip((page - 1) * limit)
-      .limit(limit);
+    const logs = await this.databaseService.ErpWebhooksLogsModel.aggregate([
+      { $match: query },
+      {
+        $lookup: {
+          from: 'collectrequests',
+          let: { collectId: '$collect_id' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$collectId'] } } },
+            { $project: { custom_order_id: 1, _id: 0 } },
+          ],
+          as: 'collectReq',
+        },
+      },
+      {
+        $addFields: {
+          custom_order_id: { $arrayElemAt: ['$collectReq.custom_order_id', 0] },
+        },
+      },
+      {
+        $project: {
+          collectReq: 0, 
+        },
+      },
+       { $sort: { createdAt: -1 } },
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
+    ]);
 
     return {
       erp_webhooks_logs: logs,
