@@ -2231,12 +2231,33 @@ let EdvironPgController = class EdvironPgController {
             };
         }
         const totalRecords = await this.databaseService.ErpWebhooksLogsModel.countDocuments(query);
-        const logs = await this.databaseService.ErpWebhooksLogsModel.find(query)
-            .sort({
-            createdAt: -1,
-        })
-            .skip((page - 1) * limit)
-            .limit(limit);
+        const logs = await this.databaseService.ErpWebhooksLogsModel.aggregate([
+            { $match: query },
+            {
+                $lookup: {
+                    from: 'collectrequests',
+                    let: { collectId: '$collect_id' },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ['$_id', '$$collectId'] } } },
+                        { $project: { custom_order_id: 1, _id: 0 } },
+                    ],
+                    as: 'collectReq',
+                },
+            },
+            {
+                $addFields: {
+                    custom_order_id: { $arrayElemAt: ['$collectReq.custom_order_id', 0] },
+                },
+            },
+            {
+                $project: {
+                    collectReq: 0,
+                },
+            },
+            { $sort: { createdAt: -1 } },
+            { $skip: (page - 1) * limit },
+            { $limit: limit },
+        ]);
         return {
             erp_webhooks_logs: logs,
             totalRecords: totalRecords / limit,
