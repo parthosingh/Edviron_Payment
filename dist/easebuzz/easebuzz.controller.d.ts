@@ -67,4 +67,6 @@ export declare class EasebuzzController {
     easebuzzWebhook(body: any, res: any): Promise<any>;
     handleEasebuzzCallback(req: any, res: any): Promise<any>;
     handleEasebuzzCallbackPost(req: any, res: any): Promise<any>;
+    handleEasebuzzNonSeamlessCallbackPost(body: any, req: any, res: any): Promise<any>;
+    handleEasebuzzNonSeamlessCallback(body: any, req: any, res: any): Promise<any>;
 }
