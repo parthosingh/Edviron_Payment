@@ -16,6 +16,7 @@ exports.CashfreeController = void 0;
 const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const jwt = require("jsonwebtoken");
+const _jwt = require("jsonwebtoken");
 const cashfree_service_1 = require("./cashfree.service");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const sign_1 = require("../utils/sign");
@@ -23,6 +24,7 @@ const webhooks_schema_1 = require("../database/schemas/webhooks.schema");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const axios_1 = require("axios");
 const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
+const sign_2 = require("../utils/sign");
 let CashfreeController = class CashfreeController {
     constructor(databaseService, cashfreeService, edvironPgService, easebuzzService) {
         this.databaseService = databaseService;
@@ -521,6 +523,35 @@ let CashfreeController = class CashfreeController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async createOrderV2(body) {
+        try {
+            const { amount, callbackUrl, jwt, school_id, trustee_id, platform_charges, clientId, clientSecret, webHook, disabled_modes, additional_data, custom_order_id, req_webhook_urls, school_name, split_payments, isVBAPayment, vba_account_number, vendors_info, vendorgateway, cashfreeVedors, cashfree_credentials, } = body;
+            console.log('creating cf order', cashfree_credentials);
+            if (!jwt)
+                throw new common_1.BadRequestException('JWT not provided');
+            if (!amount)
+                throw new common_1.BadRequestException('Amount not provided');
+            if (!callbackUrl)
+                throw new common_1.BadRequestException('Callback url not provided');
+            let decrypted = _jwt.verify(jwt, process.env.KEY);
+            if (Number(decrypted.amount) !== Number(amount) ||
+                decrypted.callbackUrl !== callbackUrl) {
+                throw new common_1.ForbiddenException('Request forged');
+            }
+            return (0, sign_2.sign)(await this.cashfreeService.createOrderV2(amount, callbackUrl, school_id, trustee_id, disabled_modes, platform_charges, cashfree_credentials, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, split_payments, vendors_info, vendorgateway, cashfreeVedors, isVBAPayment, vba_account_number));
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async handleWebhook(body) {
+        console.log(body);
+        await this.databaseService.WebhooksModel.create({
+            gateway: "CASHFREEV2",
+            body: JSON.stringify(body)
+        });
+        return { received: true };
+    }
 };
 exports.CashfreeController = CashfreeController;
 __decorate([
@@ -632,6 +663,20 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], CashfreeController.prototype, "redirect", null);
+__decorate([
+    (0, common_1.Post)('create-order-v2'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "createOrderV2", null);
+__decorate([
+    (0, common_1.Post)('webhook/v2'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "handleWebhook", null);
 exports.CashfreeController = CashfreeController = __decorate([
     (0, common_1.Controller)('cashfree'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

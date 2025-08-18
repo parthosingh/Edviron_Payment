@@ -2,6 +2,7 @@ import { DatabaseService } from 'src/database/database.service';
 import { CashfreeService } from './cashfree.service';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
+import { platformChange } from 'src/collect/collect.controller';
 export declare class CashfreeController {
     private readonly databaseService;
     private readonly cashfreeService;
@@ -94,4 +95,52 @@ export declare class CashfreeController {
         response: any;
     }[] | undefined>;
     redirect(session_id: string, res: any): Promise<void>;
+    createOrderV2(body: {
+        amount: Number;
+        callbackUrl: string;
+        jwt: string;
+        school_id: string;
+        trustee_id: string;
+        platform_charges: platformChange[];
+        clientId: string;
+        clientSecret: string;
+        cashfree_credentials: {
+            cf_x_client_id: string;
+            cf_x_client_secret: string;
+            cf_api_key: string;
+        };
+        webHook?: string;
+        disabled_modes?: string[];
+        additional_data?: {};
+        custom_order_id?: string;
+        req_webhook_urls?: string[];
+        school_name?: string;
+        split_payments?: boolean;
+        isVBAPayment: boolean;
+        vba_account_number: string;
+        vendors_info?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+                scheme_code?: string;
+            }
+        ];
+        vendorgateway?: {
+            easebuzz: boolean;
+            cashfree: boolean;
+        };
+        cashfreeVedors?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+            }
+        ];
+    }): Promise<any>;
+    handleWebhook(body: any): Promise<{
+        received: boolean;
+    }>;
 }

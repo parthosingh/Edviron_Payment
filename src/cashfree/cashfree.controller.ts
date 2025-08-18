@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   InternalServerErrorException,
   Post,
@@ -12,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import * as jwt from 'jsonwebtoken';
+import * as _jwt from 'jsonwebtoken';
 import { CashfreeService } from './cashfree.service';
 import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { generateHMACBase64Type } from 'src/utils/sign';
@@ -19,6 +21,8 @@ import { WebhookSource } from 'src/database/schemas/webhooks.schema';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import axios from 'axios';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
+import { platformChange } from 'src/collect/collect.controller';
+import { sign } from '../utils/sign';
 @Controller('cashfree')
 export class CashfreeController {
   constructor(
@@ -154,11 +158,9 @@ export class CashfreeController {
     await request.save();
     const cashfreeId = request.paymentIds.cashfree_id;
     if (!cashfreeId) {
-      try{
-
-        return await this.easebuzzService.getQrBase64(collect_id)
-      }catch(e){
-
+      try {
+        return await this.easebuzzService.getQrBase64(collect_id);
+      } catch (e) {
         throw new BadRequestException('Error in Getting QR Code');
       }
     }
@@ -737,6 +739,138 @@ export class CashfreeController {
       console.error(e);
       throw new BadRequestException(e.message);
     }
+  }
+
+  @Post('create-order-v2')
+  async createOrderV2(
+    @Body()
+    body: {
+      amount: Number;
+      callbackUrl: string;
+      jwt: string;
+      school_id: string;
+      trustee_id: string;
+      platform_charges: platformChange[];
+      clientId: string;
+      clientSecret: string;
+      cashfree_credentials: {
+        cf_x_client_id: string;
+        cf_x_client_secret: string;
+        cf_api_key: string;
+      };
+      webHook?: string;
+      disabled_modes?: string[];
+      additional_data?: {};
+      custom_order_id?: string;
+      req_webhook_urls?: string[];
+      school_name?: string;
+      split_payments?: boolean;
+      isVBAPayment: boolean;
+      vba_account_number: string;
+      vendors_info?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+          scheme_code?: string;
+        },
+      ];
+      vendorgateway?: {
+        easebuzz: boolean;
+        cashfree: boolean;
+      };
+      cashfreeVedors?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+        },
+      ];
+    },
+  ) {
+    try {
+      const {
+        amount,
+        callbackUrl,
+        jwt,
+        school_id,
+        trustee_id,
+        platform_charges,
+        clientId,
+        clientSecret,
+        webHook,
+        disabled_modes,
+        additional_data,
+        custom_order_id,
+        req_webhook_urls,
+        school_name,
+        split_payments,
+        isVBAPayment,
+        vba_account_number,
+        vendors_info,
+        vendorgateway,
+        cashfreeVedors,
+        cashfree_credentials,
+      } = body;
+
+      console.log('creating cf order', cashfree_credentials);
+
+      if (!jwt) throw new BadRequestException('JWT not provided');
+      if (!amount) throw new BadRequestException('Amount not provided');
+      if (!callbackUrl)
+        throw new BadRequestException('Callback url not provided');
+      let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
+
+      if (
+        Number(decrypted.amount) !== Number(amount) ||
+        decrypted.callbackUrl !== callbackUrl
+      ) {
+        throw new ForbiddenException('Request forged');
+      }
+
+      return sign(
+        await this.cashfreeService.createOrderV2(
+          amount,
+          callbackUrl,
+          school_id,
+          trustee_id,
+          disabled_modes,
+          platform_charges,
+          cashfree_credentials,
+          clientId,
+          clientSecret,
+          webHook,
+          additional_data,
+          custom_order_id,
+          req_webhook_urls,
+          school_name,
+          split_payments,
+          vendors_info,
+          vendorgateway,
+          cashfreeVedors,
+          isVBAPayment,
+          vba_account_number,
+        ),
+      );
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Post('webhook/v2')
+  async handleWebhook(@Body() body: any) {
+    // Handle the webhook event
+
+    console.log(body);
+    
+    await this.databaseService.WebhooksModel.create({
+      gateway: "CASHFREEV2",
+      body: JSON.stringify(body)
+    });
+
+    return { received: true };
   }
 }
 

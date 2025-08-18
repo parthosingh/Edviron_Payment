@@ -1,7 +1,33 @@
+/// <reference types="mongoose/types/aggregate" />
+/// <reference types="mongoose/types/callback" />
+/// <reference types="mongoose/types/collection" />
+/// <reference types="mongoose/types/connection" />
+/// <reference types="mongoose/types/cursor" />
+/// <reference types="mongoose/types/document" />
+/// <reference types="mongoose/types/error" />
+/// <reference types="mongoose/types/expressions" />
+/// <reference types="mongoose/types/helpers" />
+/// <reference types="mongoose/types/middlewares" />
+/// <reference types="mongoose/types/indexes" />
+/// <reference types="mongoose/types/models" />
+/// <reference types="mongoose/types/mongooseoptions" />
+/// <reference types="mongoose/types/pipelinestage" />
+/// <reference types="mongoose/types/populate" />
+/// <reference types="mongoose/types/query" />
+/// <reference types="mongoose/types/schemaoptions" />
+/// <reference types="mongoose/types/schematypes" />
+/// <reference types="mongoose/types/session" />
+/// <reference types="mongoose/types/types" />
+/// <reference types="mongoose/types/utility" />
+/// <reference types="mongoose/types/validation" />
+/// <reference types="mongoose/types/virtuals" />
+/// <reference types="mongoose" />
+/// <reference types="mongoose/types/inferschematype" />
 import { DatabaseService } from 'src/database/database.service';
 import { CollectRequest } from 'src/database/schemas/collect_request.schema';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import { TransactionStatus } from 'src/types/transactionStatus';
+import { platformChange } from 'src/collect/collect.controller';
 export declare class CashfreeService {
     private readonly databaseService;
     private readonly edvironPgService;
@@ -138,4 +164,30 @@ export declare class CashfreeService {
             name?: string;
         }
     ], isSplitPayments?: boolean): Promise<any>;
+    createOrderV2(amount: Number, callbackUrl: string, school_id: string, trustee_id: string, disabled_modes: string[] | undefined, platform_charges: platformChange[], cashfree_credentials: {
+        cf_x_client_id: string;
+        cf_x_client_secret: string;
+        cf_api_key: string;
+    }, clientId: string, clientSecret: string, webHook?: string, additional_data?: {}, custom_order_id?: string, req_webhook_urls?: string[], school_name?: string, splitPayments?: boolean, vendor?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+            scheme_code?: string;
+        }
+    ], vendorgateway?: {
+        easebuzz: boolean;
+        cashfree: boolean;
+    }, cashfreeVedors?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
+    ], isVBAPayment?: boolean, vba_account_number?: string): Promise<{
+        _id: import("mongoose").Schema.Types.ObjectId;
+        url: string;
+    }>;
 }

@@ -1026,6 +1026,174 @@ let CashfreeService = class CashfreeService {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async createOrderV2(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, cashfree_credentials, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, splitPayments, vendor, vendorgateway, cashfreeVedors, isVBAPayment, vba_account_number) {
+        try {
+            if (custom_order_id) {
+                const count = await this.databaseService.CollectRequestModel.countDocuments({
+                    school_id,
+                    custom_order_id,
+                });
+                if (count > 0) {
+                    throw new common_1.ConflictException('OrderId must be unique');
+                }
+            }
+            const request = await new this.databaseService.CollectRequestModel({
+                amount,
+                callbackUrl,
+                gateway: collect_request_schema_1.Gateway.PENDING,
+                clientId,
+                clientSecret,
+                webHookUrl: webHook || null,
+                disabled_modes,
+                school_id,
+                trustee_id,
+                additional_data: JSON.stringify(additional_data),
+                custom_order_id,
+                req_webhook_urls,
+                cashfreeVedors,
+                isVBAPayment: isVBAPayment || false,
+                vba_account_number: vba_account_number || 'NA',
+                isSplitPayments: splitPayments || false,
+                cashfree_credentials: cashfree_credentials,
+            }).save();
+            await new this.databaseService.CollectRequestStatusModel({
+                collect_id: request._id,
+                status: collect_req_status_schema_1.PaymentStatus.PENDING,
+                order_amount: request.amount,
+                transaction_amount: request.amount,
+                payment_method: null,
+            }).save();
+            let paymentInfo = {
+                cashfree_id: null,
+                easebuzz_id: null,
+                easebuzz_cc_id: null,
+                easebuzz_dc_id: null,
+                ccavenue_id: null,
+                easebuzz_upi_id: null,
+            };
+            let schoolName = '';
+            if (school_name) {
+                schoolName = school_name.replace(/ /g, '-');
+            }
+            const axios = require('axios');
+            const currentTime = new Date();
+            const expiryTime = new Date(currentTime.getTime() + 20 * 60000);
+            const isoExpiryTime = expiryTime.toISOString();
+            let data = JSON.stringify({
+                customer_details: {
+                    customer_id: '7112AAA812234',
+                    customer_phone: '9898989898',
+                },
+                order_currency: 'INR',
+                order_amount: request.amount.toFixed(2),
+                order_id: request._id,
+                order_meta: {
+                    return_url: process.env.URL +
+                        '/edviron-pg/callback?collect_request_id=' +
+                        request._id,
+                },
+                order_expiry_time: isoExpiryTime,
+            });
+            if (splitPayments && cashfreeVedors && cashfreeVedors.length > 0) {
+                const vendor_data = cashfreeVedors
+                    .filter(({ amount, percentage }) => {
+                    return (amount && amount > 0) || (percentage && percentage > 0);
+                })
+                    .map(({ vendor_id, percentage, amount }) => ({
+                    vendor_id,
+                    percentage,
+                    amount,
+                }));
+                data = JSON.stringify({
+                    customer_details: {
+                        customer_id: '7112AAA812234',
+                        customer_phone: '9898989898',
+                    },
+                    order_currency: 'INR',
+                    order_amount: request.amount.toFixed(2),
+                    order_id: request._id,
+                    order_meta: {
+                        return_url: process.env.URL +
+                            '/edviron-pg/callback?collect_request_id=' +
+                            request._id,
+                    },
+                    order_splits: vendor_data,
+                });
+                console.log(data);
+                request.isSplitPayments = true;
+                request.vendors_info = vendor;
+                await request.save();
+                cashfreeVedors.map(async (info) => {
+                    const { vendor_id, percentage, amount, name } = info;
+                    let split_amount = 0;
+                    if (amount) {
+                        split_amount = amount;
+                    }
+                    if (percentage && percentage !== 0) {
+                        split_amount = (request.amount * percentage) / 100;
+                    }
+                    await new this.databaseService.VendorTransactionModel({
+                        vendor_id: vendor_id,
+                        amount: split_amount,
+                        collect_id: request._id,
+                        gateway: collect_request_schema_1.Gateway.EDVIRON_PG,
+                        status: transactionStatus_1.TransactionStatus.PENDING,
+                        trustee_id: request.trustee_id,
+                        school_id: request.school_id,
+                        custom_order_id: request.custom_order_id || '',
+                        name,
+                    }).save();
+                });
+            }
+            console.log(cashfree_credentials);
+            let config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/orders`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': cashfree_credentials.cf_x_client_id || null,
+                    'x-partner-apikey': cashfree_credentials.cf_api_key,
+                },
+                data: data,
+            };
+            const { data: cashfreeRes } = await axios.request(config);
+            const cf_payment_id = cashfreeRes.payment_session_id;
+            paymentInfo.cashfree_id = cf_payment_id || null;
+            if (!request.isVBAPayment) {
+                setTimeout(() => {
+                    this.terminateOrder(request._id.toString());
+                }, 25 * 60 * 1000);
+            }
+            const disabled_modes_string = request.disabled_modes
+                .map((mode) => `${mode}=false`)
+                .join('&');
+            const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
+            request.paymentIds = paymentInfo;
+            await request.save();
+            return {
+                _id: request._id,
+                url: process.env.URL +
+                    '/edviron-pg/redirect?session_id=' +
+                    cf_payment_id +
+                    '&collect_request_id=' +
+                    request._id +
+                    '&amount=' +
+                    request.amount.toFixed(2) +
+                    '&' +
+                    disabled_modes_string +
+                    '&platform_charges=' +
+                    encodedPlatformCharges +
+                    '&school_name=' +
+                    schoolName,
+            };
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.CashfreeService = CashfreeService;
 exports.CashfreeService = CashfreeService = __decorate([
