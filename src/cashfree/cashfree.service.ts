@@ -1473,11 +1473,12 @@ export class CashfreeService {
         additional_data: JSON.stringify(additional_data),
         custom_order_id,
         req_webhook_urls,
-        cashfreeVedors,
+        cashfreeVedors, 
         isVBAPayment: isVBAPayment || false,
         vba_account_number: vba_account_number || 'NA',
         isSplitPayments: splitPayments || false,
         cashfree_credentials: cashfree_credentials,
+        cashfree_non_partner:true
       }).save();
 
       await new this.databaseService.CollectRequestStatusModel({

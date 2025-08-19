@@ -158,6 +158,7 @@ export class CashfreeController {
     request.gateway = Gateway.EDVIRON_PG;
     await request.save();
     const cashfreeId = request.paymentIds.cashfree_id;
+    
     if (!cashfreeId) {
       try {
         return await this.easebuzzService.getQrBase64(collect_id);
