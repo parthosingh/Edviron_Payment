@@ -1123,8 +1123,10 @@ export class EasebuzzController {
       pendingCollectReq.status !== PaymentStatus.PENDING
     ) {
       console.log('No pending request found for', collect_request_id);
-      res.status(200).send('OK');
-      return;
+     const callbackUrl = new URL(collectRequest?.callbackUrl);
+     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
+    callbackUrl.searchParams.set('status', pendingCollectReq.status.toString());
+      return res.redirect(callbackUrl.toString());
     }
 
     if (collectRequest.school_id === '65d443168b8aa46fcb5af3e4') {

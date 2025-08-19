@@ -273,11 +273,15 @@ export class EdvironPgController {
       if (!collectRequest) {
         throw new NotFoundException('Collect request not found');
       }
-      let status:any
-      if(collectRequest.cashfree_non_partner && collectRequest.cashfree_credentials){
-        const status2=await this.cashfreeService.checkStatusV2(collect_request_id)
+      let status: any;
+      if (
+        collectRequest.cashfree_non_partner &&
+        collectRequest.cashfree_credentials
+      ) {
+        const status2 =
+          await this.cashfreeService.checkStatusV2(collect_request_id);
         status = status2.status;
-      }else{
+      } else {
         const status1 = await this.edvironPgService.checkStatus(
           collect_request_id,
           collectRequest,

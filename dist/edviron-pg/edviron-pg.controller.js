@@ -210,7 +210,8 @@ let EdvironPgController = class EdvironPgController {
                 throw new common_1.NotFoundException('Collect request not found');
             }
             let status;
-            if (collectRequest.cashfree_non_partner && collectRequest.cashfree_credentials) {
+            if (collectRequest.cashfree_non_partner &&
+                collectRequest.cashfree_credentials) {
                 const status2 = await this.cashfreeService.checkStatusV2(collect_request_id);
                 status = status2.status;
             }
