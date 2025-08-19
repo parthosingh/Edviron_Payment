@@ -354,6 +354,7 @@ let EdvironPgService = class EdvironPgService {
             };
         }
         catch (e) {
+            console.log(e);
             throw new common_1.BadRequestException(e.message);
         }
     }
