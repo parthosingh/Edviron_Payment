@@ -664,19 +664,19 @@ let EasebuzzController = class EasebuzzController {
     }
     async handleEasebuzzNonSeamlessCallbackPost(body, req, res) {
         const { collect_request_id } = req.query;
-        console.log(req.query.status, 'easebuzz callback status');
-        const collectRequest = (await this.databaseService.CollectRequestModel.findById(collect_request_id));
         const collectIdObject = new mongoose_1.Types.ObjectId(collect_request_id);
+        console.log(req.query.status, 'easebuzz callback status');
+        const saveWebhook = await new this.databaseService.WebhooksModel({
+            collect_id: collectIdObject,
+            body: JSON.stringify(body),
+        }).save();
+        const collectRequest = (await this.databaseService.CollectRequestModel.findById(collect_request_id));
         collectRequest.gateway = collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ;
         await collectRequest.save();
         const transaction_amount = body.net_amount_debit || null;
         const statusResponse = await this.easebuzzService.statusResponsev2(collect_request_id, collectRequest);
         let payment_method;
         let details;
-        const saveWebhook = await new this.databaseService.WebhooksModel({
-            collect_id: collectIdObject,
-            body: JSON.stringify(body),
-        }).save();
         const reqToCheck = statusResponse;
         console.log(statusResponse, 'status response check');
         const status = reqToCheck.msg.status;
@@ -1007,19 +1007,19 @@ let EasebuzzController = class EasebuzzController {
     }
     async handleEasebuzzNonSeamlessCallback(body, req, res) {
         const { collect_request_id } = req.query;
-        console.log(req.query.status, 'easebuzz callback status');
-        const collectRequest = (await this.databaseService.CollectRequestModel.findById(collect_request_id));
         const collectIdObject = new mongoose_1.Types.ObjectId(collect_request_id);
+        console.log(req.query.status, 'easebuzz callback status');
+        const saveWebhook = await new this.databaseService.WebhooksModel({
+            collect_id: collectIdObject,
+            body: JSON.stringify(body),
+        }).save();
+        const collectRequest = (await this.databaseService.CollectRequestModel.findById(collect_request_id));
         collectRequest.gateway = collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ;
         await collectRequest.save();
         const transaction_amount = body.net_amount_debit || null;
         const statusResponse = await this.easebuzzService.statusResponsev2(collect_request_id, collectRequest);
         let payment_method;
         let details;
-        const saveWebhook = await new this.databaseService.WebhooksModel({
-            collect_id: collectIdObject,
-            body: JSON.stringify(body),
-        }).save();
         const reqToCheck = statusResponse;
         console.log(statusResponse, 'status response check');
         const status = reqToCheck.msg.status;

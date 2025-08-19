@@ -950,14 +950,17 @@ export class EasebuzzController {
     @Res() res: any,
   ) {
     const { collect_request_id } = req.query;
+    const collectIdObject = new Types.ObjectId(collect_request_id);
     console.log(req.query.status, 'easebuzz callback status');
-
+    const saveWebhook = await new this.databaseService.WebhooksModel({
+      collect_id: collectIdObject,
+      body: JSON.stringify(body),
+    }).save();
     const collectRequest =
       (await this.databaseService.CollectRequestModel.findById(
         collect_request_id,
       ))!;
 
-    const collectIdObject = new Types.ObjectId(collect_request_id);
     collectRequest.gateway = Gateway.EDVIRON_EASEBUZZ;
     await collectRequest.save();
     const transaction_amount = body.net_amount_debit || null;
@@ -968,10 +971,6 @@ export class EasebuzzController {
     let payment_method;
     let details;
 
-    const saveWebhook = await new this.databaseService.WebhooksModel({
-      collect_id: collectIdObject,
-      body: JSON.stringify(body),
-    }).save();
     const reqToCheck = statusResponse;
     console.log(statusResponse, 'status response check');
 
@@ -1380,14 +1379,18 @@ export class EasebuzzController {
     @Res() res: any,
   ) {
     const { collect_request_id } = req.query;
+    const collectIdObject = new Types.ObjectId(collect_request_id);
     console.log(req.query.status, 'easebuzz callback status');
+    const saveWebhook = await new this.databaseService.WebhooksModel({
+      collect_id: collectIdObject,
+      body: JSON.stringify(body),
+    }).save();
 
     const collectRequest =
       (await this.databaseService.CollectRequestModel.findById(
         collect_request_id,
       ))!;
 
-    const collectIdObject = new Types.ObjectId(collect_request_id);
     collectRequest.gateway = Gateway.EDVIRON_EASEBUZZ;
     await collectRequest.save();
     const transaction_amount = body.net_amount_debit || null;
@@ -1398,10 +1401,6 @@ export class EasebuzzController {
     let payment_method;
     let details;
 
-    const saveWebhook = await new this.databaseService.WebhooksModel({
-      collect_id: collectIdObject,
-      body: JSON.stringify(body),
-    }).save();
     const reqToCheck = statusResponse;
     console.log(statusResponse, 'status response check');
 
