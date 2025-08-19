@@ -59,4 +59,12 @@ export declare class EasebuzzService {
     easebuzzCheckStatusV2(collect_request_id: String, collect_request: CollectRequest): Promise<any>;
     statusResponseV2(requestId: string, collectReq: CollectRequest): Promise<any>;
     easebuzzWebhookCheckStatusV2(collect_request_id: String, collect_request: CollectRequest): Promise<any>;
+    createOrderNonseamless(request: CollectRequest, platform_charges: platformChange[], school_name: string): Promise<{
+        collect_request_id: import("mongoose").Schema.Types.ObjectId;
+        collect_request_url: string;
+    } | undefined>;
+    createOrderNonSplitNonSeamless(request: CollectRequest, platform_charges: platformChange[], school_name: string, easebuzz_school_label?: string | null): Promise<{
+        collect_request_id: import("mongoose").Schema.Types.ObjectId;
+        collect_request_url: string;
+    }>;
 }

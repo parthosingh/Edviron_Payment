@@ -64,6 +64,37 @@ export declare class EasebuzzController {
             easebuzz_submerchant_id: string;
         };
     }): Promise<any>;
+    createOrderNonSeamless(body: {
+        amount: Number;
+        callbackUrl: string;
+        jwt: string;
+        school_id: string;
+        trustee_id: string;
+        webHook?: string;
+        disabled_modes?: string[];
+        platform_charges: platformChange[];
+        additional_data?: {};
+        custom_order_id?: string;
+        req_webhook_urls?: string[];
+        school_name?: string;
+        easebuzz_sub_merchant_id?: string;
+        split_payments?: boolean;
+        easebuzz_school_label?: string | null;
+        easebuzzVendors?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+            }
+        ];
+        easebuzz_non_partner_cred: {
+            easebuzz_salt: string;
+            easebuzz_key: string;
+            easebuzz_merchant_email: string;
+            easebuzz_submerchant_id: string;
+        };
+    }): Promise<any>;
     easebuzzWebhook(body: any, res: any): Promise<any>;
     handleEasebuzzCallback(req: any, res: any): Promise<any>;
     handleEasebuzzCallbackPost(req: any, res: any): Promise<any>;

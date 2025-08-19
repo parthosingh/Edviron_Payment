@@ -457,6 +457,145 @@ export class EasebuzzController {
     }
   }
 
+
+  @Post('/create-order-nonseamless')
+  async createOrderNonSeamless(
+    @Body()
+    body: {
+      amount: Number;
+      callbackUrl: string;
+      jwt: string;
+      school_id: string;
+      trustee_id: string;
+      webHook?: string;
+      disabled_modes?: string[];
+      platform_charges: platformChange[];
+      additional_data?: {};
+      custom_order_id?: string;
+      req_webhook_urls?: string[];
+      school_name?: string;
+      easebuzz_sub_merchant_id?: string;
+      split_payments?: boolean;
+      easebuzz_school_label?: string | null;
+      easebuzzVendors?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+        },
+      ];
+      easebuzz_non_partner_cred: {
+        easebuzz_salt: string;
+        easebuzz_key: string;
+        easebuzz_merchant_email: string;
+        easebuzz_submerchant_id: string;
+      };
+    },
+  ) {
+    // console.log(body);
+
+    const {
+      amount,
+      callbackUrl,
+      jwt,
+      webHook,
+      disabled_modes,
+      platform_charges,
+      additional_data,
+      school_id,
+      trustee_id,
+      custom_order_id,
+      req_webhook_urls,
+      school_name,
+      easebuzz_sub_merchant_id,
+      split_payments,
+      easebuzzVendors,
+      easebuzz_school_label,
+      easebuzz_non_partner_cred,
+    } = body;
+    try {
+      // CHECK FOR DUPLICATE CUSTOM ID
+      if (custom_order_id) {
+        const count =
+          await this.databaseService.CollectRequestModel.countDocuments({
+            school_id,
+            custom_order_id,
+          });
+        if (count > 0) {
+          throw new ConflictException('OrderId must be unique');
+        }
+      }
+      console.log(easebuzz_non_partner_cred);
+
+      if (!easebuzz_non_partner_cred) {
+        throw new BadRequestException('EASEBUZZ CREDENTIAL IS MISSING');
+      }
+      if (
+        !easebuzz_non_partner_cred.easebuzz_key ||
+        !easebuzz_non_partner_cred.easebuzz_merchant_email ||
+        !easebuzz_non_partner_cred.easebuzz_salt ||
+        !easebuzz_non_partner_cred.easebuzz_submerchant_id
+      ) {
+        throw new BadRequestException('EASEBUZZ CREDENTIAL IS MISSING');
+      }
+
+      const request = await new this.databaseService.CollectRequestModel({
+        amount,
+        callbackUrl,
+        gateway: Gateway.PENDING,
+        webHookUrl: webHook || null,
+        disabled_modes,
+        school_id,
+        trustee_id,
+        additional_data: JSON.stringify(additional_data),
+        custom_order_id,
+        req_webhook_urls,
+        easebuzz_sub_merchant_id:
+          easebuzz_non_partner_cred.easebuzz_submerchant_id,
+        easebuzzVendors,
+        paymentIds: { easebuzz_id: null },
+        easebuzz_non_partner: true,
+        easebuzz_non_partner_cred,
+        isSplitPayments: split_payments,
+        easebuzz_split_label: easebuzz_school_label,
+      }).save();
+
+      await new this.databaseService.CollectRequestStatusModel({
+        collect_id: request._id,
+        status: PaymentStatus.PENDING,
+        order_amount: request.amount,
+        transaction_amount: request.amount,
+        payment_method: null,
+      }).save();
+      const schoolName = school_name || '';
+      if (split_payments) {
+        console.log(split_payments);
+
+        return sign(
+          await this.easebuzzService.createOrderNonseamless(
+            request,
+            platform_charges,
+            schoolName,
+          ),
+        );
+      }
+      console.log('nonsplit');
+      return sign(
+        await this.easebuzzService.createOrderNonSplitNonSeamless(
+          request,
+          platform_charges,
+          schoolName,
+          easebuzz_school_label || null,
+        ),
+      );
+    } catch (e) {
+      console.log(e);
+
+      throw new BadRequestException(e.message);
+    }
+  }
+
   @Post('/webhook')
   async easebuzzWebhook(@Body() body: any, @Res() res: any) {
     console.log('easebuzz webhook recived with data', body);

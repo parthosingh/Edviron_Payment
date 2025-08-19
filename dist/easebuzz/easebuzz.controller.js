@@ -282,6 +282,67 @@ let EasebuzzController = class EasebuzzController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async createOrderNonSeamless(body) {
+        const { amount, callbackUrl, jwt, webHook, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, split_payments, easebuzzVendors, easebuzz_school_label, easebuzz_non_partner_cred, } = body;
+        try {
+            if (custom_order_id) {
+                const count = await this.databaseService.CollectRequestModel.countDocuments({
+                    school_id,
+                    custom_order_id,
+                });
+                if (count > 0) {
+                    throw new common_1.ConflictException('OrderId must be unique');
+                }
+            }
+            console.log(easebuzz_non_partner_cred);
+            if (!easebuzz_non_partner_cred) {
+                throw new common_1.BadRequestException('EASEBUZZ CREDENTIAL IS MISSING');
+            }
+            if (!easebuzz_non_partner_cred.easebuzz_key ||
+                !easebuzz_non_partner_cred.easebuzz_merchant_email ||
+                !easebuzz_non_partner_cred.easebuzz_salt ||
+                !easebuzz_non_partner_cred.easebuzz_submerchant_id) {
+                throw new common_1.BadRequestException('EASEBUZZ CREDENTIAL IS MISSING');
+            }
+            const request = await new this.databaseService.CollectRequestModel({
+                amount,
+                callbackUrl,
+                gateway: collect_request_schema_1.Gateway.PENDING,
+                webHookUrl: webHook || null,
+                disabled_modes,
+                school_id,
+                trustee_id,
+                additional_data: JSON.stringify(additional_data),
+                custom_order_id,
+                req_webhook_urls,
+                easebuzz_sub_merchant_id: easebuzz_non_partner_cred.easebuzz_submerchant_id,
+                easebuzzVendors,
+                paymentIds: { easebuzz_id: null },
+                easebuzz_non_partner: true,
+                easebuzz_non_partner_cred,
+                isSplitPayments: split_payments,
+                easebuzz_split_label: easebuzz_school_label,
+            }).save();
+            await new this.databaseService.CollectRequestStatusModel({
+                collect_id: request._id,
+                status: collect_req_status_schema_1.PaymentStatus.PENDING,
+                order_amount: request.amount,
+                transaction_amount: request.amount,
+                payment_method: null,
+            }).save();
+            const schoolName = school_name || '';
+            if (split_payments) {
+                console.log(split_payments);
+                return (0, sign_1.sign)(await this.easebuzzService.createOrderNonseamless(request, platform_charges, schoolName));
+            }
+            console.log('nonsplit');
+            return (0, sign_1.sign)(await this.easebuzzService.createOrderNonSplitNonSeamless(request, platform_charges, schoolName, easebuzz_school_label || null));
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
     async easebuzzWebhook(body, res) {
         console.log('easebuzz webhook recived with data', body);
         if (!body)
@@ -1411,6 +1472,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EasebuzzController.prototype, "createOrderV2", null);
+__decorate([
+    (0, common_1.Post)('/create-order-nonseamless'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EasebuzzController.prototype, "createOrderNonSeamless", null);
 __decorate([
     (0, common_1.Post)('/webhook'),
     __param(0, (0, common_1.Body)()),
