@@ -178,10 +178,8 @@ export class CheckStatusService {
       case Gateway.PHONEPE:
         return await this.phonePeService.checkStatus(collect_request_id);
       case Gateway.EDVIRON_PG:
-        console.log('cashfree');
         let edvironPgResponse;
         if (collectRequest.cashfree_non_partner) {
-          console.log('checking for non p');
           edvironPgResponse = await this.cashfreeService.checkStatusV2(
             collect_request_id.toString(),
           );
