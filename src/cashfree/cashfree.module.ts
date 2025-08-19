@@ -6,7 +6,7 @@ import { EdvironPgModule } from 'src/edviron-pg/edviron-pg.module';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 
 @Module({
-  providers: [CashfreeService,EasebuzzService],
+  providers: [CashfreeService, EasebuzzService],
   imports: [
     DatabaseModule,
     forwardRef(() => EdvironPgModule), // Use forwardRef to avoid circular dependency

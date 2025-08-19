@@ -1,7 +1,8 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as AWS from 'aws-sdk';
 @Injectable()
-export class AwsS3ServiceService {private s3Bucket: AWS.S3;
+export class AwsS3ServiceService {
+  private s3Bucket: AWS.S3;
   constructor() {
     if (process.env.NODE_ENV !== 'test')
       this.s3Bucket = new AWS.S3({
