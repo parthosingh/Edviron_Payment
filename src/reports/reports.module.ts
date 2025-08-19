@@ -7,8 +7,8 @@ import { EdvironPgModule } from 'src/edviron-pg/edviron-pg.module';
 import { AwsS3ServiceService } from 'src/aws-s3-service/aws-s3-service.service';
 
 @Module({
-  providers: [ReportsService,AwsS3ServiceService],
-  imports: [DatabaseModule,CashfreeModule,EdvironPgModule],
-  controllers: [ReportsController]
+  providers: [ReportsService, AwsS3ServiceService],
+  imports: [DatabaseModule, CashfreeModule, EdvironPgModule],
+  controllers: [ReportsController],
 })
 export class ReportsModule {}

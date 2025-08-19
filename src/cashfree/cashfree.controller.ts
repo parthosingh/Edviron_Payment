@@ -23,6 +23,7 @@ import axios from 'axios';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { platformChange } from 'src/collect/collect.controller';
 import { sign } from '../utils/sign';
+import { TransactionStatus } from 'src/types/transactionStatus';
 @Controller('cashfree')
 export class CashfreeController {
   constructor(
@@ -860,17 +861,392 @@ export class CashfreeController {
   }
 
   @Post('webhook/v2')
-  async handleWebhook(@Body() body: any) {
+  async handleWebhook(@Body() body: any, @Res() res: any) {
     // Handle the webhook event
-
-    console.log(body);
-    
     await this.databaseService.WebhooksModel.create({
-      gateway: "CASHFREEV2",
-      body: JSON.stringify(body)
+      gateway: 'CASHFREEV2',
+      body: JSON.stringify(body),
     });
+    const sample = {
+      data: {
+        customer_details: {
+          customer_email: null,
+          customer_id: '7112AAA812234',
+          customer_name: null,
+          customer_phone: '9898989898',
+        },
+        order: {
+          order_amount: 1,
+          order_currency: 'INR',
+          order_id: '68a2c4b91e5cd8e23b53bf40',
+          order_tags: null,
+        },
+        payment: {
+          auth_id: null,
+          bank_reference: '535110682735',
+          cf_payment_id: 4257461280,
+          payment_amount: 1,
+          payment_currency: 'INR',
+          payment_group: 'upi',
+          payment_message: '00::TRANSACTION HAS BEEN APPROVED',
+          payment_method: {
+            upi: { channel: null, upi_id: 'rajpbarmaiya@ibl' },
+          },
+          payment_status: 'SUCCESS',
+          payment_time: '2025-08-18T11:44:35+05:30',
+        },
+        payment_gateway_details: {
+          gateway_name: 'CASHFREE',
+          gateway_order_id: null,
+          gateway_order_reference_id: null,
+          gateway_payment_id: null,
+          gateway_settlement: 'CASHFREE',
+          gateway_status_code: null,
+        },
+        payment_offers: null,
+      },
+      event_time: '2025-08-18T11:44:52+05:30',
+      merchant: { merchant_id: 'CF_4f4a2b23-dbd0-4345-9970-8f138f1aa2e3' },
+      type: 'PAYMENT_SUCCESS_WEBHOOK',
+    };
 
-    return { received: true };
+    const SAMPLE2 = {
+      data: {
+        customer_details: {
+          customer_email: null,
+          customer_id: '7112AAA812234',
+          customer_name: null,
+          customer_phone: '9898989898',
+        },
+        order: {
+          order_amount: 1,
+          order_currency: 'INR',
+          order_id: '68a2ef2a2d63e8144b51124b',
+          order_tags: null,
+        },
+        payment: {
+          auth_id: null,
+          bank_reference: '780700764068',
+          cf_payment_id: 4258181066,
+          payment_amount: 1,
+          payment_currency: 'INR',
+          payment_group: 'upi',
+          payment_message: '00::Transaction Success',
+          payment_method: { upi: { channel: null, upi_id: '9074296363@ibl' } },
+          payment_status: 'SUCCESS',
+          payment_time: '2025-08-18T14:45:29+05:30',
+        },
+        payment_gateway_details: {
+          gateway_name: 'CASHFREE',
+          gateway_order_id: null,
+          gateway_order_reference_id: null,
+          gateway_payment_id: null,
+          gateway_settlement: 'CASHFREE',
+          gateway_status_code: null,
+        },
+        payment_offers: null,
+      },
+      event_time: '2025-08-18T14:45:44+05:30',
+      merchant: { merchant_id: 'CF_4f4a2b23-dbd0-4345-9970-8f138f1aa2e3' },
+      type: 'PAYMENT_SUCCESS_WEBHOOK',
+    };
+    console.log(body);
+    const webhookData = body.data;
+    const collect_id = webhookData.order.order_id;
+
+    const collectReq =
+      await this.databaseService.CollectRequestModel.findById(collect_id);
+    if (!collectReq) {
+      throw new BadRequestException('Invalid Order For Edviron');
+    }
+
+    const reqStatus =
+      await this.databaseService.CollectRequestStatusModel.findOne({
+        collect_id: collectReq._id,
+      });
+
+    if (!reqStatus) {
+      throw new BadRequestException('Invalid Request Status For Edviron');
+    }
+
+    const transaction_amount = webhookData?.payment?.payment_amount || null;
+    const payment_method = webhookData?.payment?.payment_group || null;
+    const payment_message = webhookData?.payment?.payment_message || 'NA';
+    if (reqStatus.status === 'SUCCESS' || reqStatus.status === 'success') {
+      console.log('NO PENDING REQUEST');
+      res.status(200).json({ message: 'No pending request' });
+    }
+    const status = webhookData.payment.payment_status;
+    const payment_time = new Date(webhookData.payment.payment_time);
+    let webhookStatus = status;
+    let paymentMode = payment_method;
+    let paymentdetails: any = JSON.stringify(
+      webhookData.payment.payment_method,
+    );
+    if (reqStatus?.status === 'FAILED' && webhookStatus === 'USER_DROPPED') {
+      webhookStatus = 'FAILED';
+      paymentMode = reqStatus.payment_method;
+      paymentdetails = reqStatus.details;
+    }
+    // dont skip Commisions
+    try {
+      if (status == TransactionStatus.SUCCESS) {
+        let platform_type: string | null = null;
+        const method = payment_method.toLowerCase() as
+          | 'net_banking'
+          | 'debit_card'
+          | 'credit_card'
+          | 'upi'
+          | 'wallet'
+          | 'cardless_emi'
+          | 'pay_later'
+          | 'corporate_card';
+
+        const platformMap: { [key: string]: any } = {
+          net_banking:
+            webhookData.payment.payment_method?.netbanking
+              ?.netbanking_bank_name,
+          debit_card: webhookData.payment.payment_method?.card?.card_network,
+          credit_card: webhookData.payment.payment_method?.card?.card_network,
+          upi: 'Others',
+          wallet: webhookData.payment.payment_method?.app?.provider,
+          cardless_emi:
+            webhookData.payment.payment_method?.cardless_emi?.provider,
+          pay_later: webhookData.payment?.payment_method?.pay_later?.provider,
+        };
+
+        const methodMap: { [key: string]: string } = {
+          net_banking: 'NetBanking',
+          debit_card: 'DebitCard',
+          credit_card: 'CreditCard',
+          upi: 'UPI',
+          wallet: 'Wallet',
+          cardless_emi: 'CardLess EMI',
+          pay_later: 'PayLater',
+          corporate_card: 'CORPORATE CARDS',
+        };
+
+        platform_type = platformMap[method];
+
+        const mappedPaymentMethod = methodMap[method];
+
+        const axios = require('axios');
+
+        const tokenData = {
+          school_id: collectReq?.school_id,
+          trustee_id: collectReq?.trustee_id,
+          order_amount: reqStatus?.order_amount,
+          transaction_amount,
+          platform_type: mappedPaymentMethod,
+          payment_mode: platform_type,
+          collect_id: collectReq._id,
+        };
+
+        console.log({
+          platform_type: mappedPaymentMethod,
+          payment_mode: platform_type,
+        });
+
+        const _jwt = jwt.sign(tokenData, process.env.KEY!, {
+          noTimestamp: true,
+        });
+
+        let data = JSON.stringify({
+          token: _jwt,
+          school_id: collectReq?.school_id,
+          trustee_id: collectReq?.trustee_id,
+          order_amount: reqStatus?.order_amount,
+          transaction_amount,
+          platform_type: mappedPaymentMethod,
+          payment_mode: platform_type,
+          collect_id: collectReq._id,
+        });
+
+        // save commission data on trustee service
+
+        let config = {
+          method: 'post',
+          maxBodyLength: Infinity,
+          url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+            'x-api-version': '2023-08-01',
+          },
+          data: data,
+        };
+
+        try {
+          const { data: commissionRes } = await axios.request(config);
+          console.log('Commission calculation response:', commissionRes);
+        } catch (error) {
+          console.error('Error calculating commission:', error.message);
+        }
+      }
+    } catch (e) {
+      console.log(e);
+
+      console.log('Error in saving Commission');
+    }
+    if (collectReq.isSplitPayments) {
+      try {
+        const vendor =
+          await this.databaseService.VendorTransactionModel.updateMany(
+            {
+              collect_id: collectReq._id,
+            },
+            {
+              $set: {
+                payment_time: payment_time,
+                status: webhookStatus,
+                gateway: Gateway.EDVIRON_PG,
+              },
+            },
+          );
+      } catch (e) {
+        console.log('Error in updating vendor transactions');
+      }
+    }
+
+    const { error_details } = webhookData;
+    const updateReq =
+      await this.databaseService.CollectRequestStatusModel.updateOne(
+        {
+          collect_id: collectReq._id,
+        },
+        {
+          $set: {
+            status: webhookStatus,
+            transaction_amount,
+            payment_method: paymentMode,
+            details: paymentdetails,
+            bank_reference: webhookData.payment.bank_reference,
+            payment_time,
+            reason: payment_message || 'NA',
+            payment_message: payment_message || 'NA',
+            error_details: {
+              error_description: error_details?.error_description || 'NA',
+              error_source: error_details?.error_source || 'NA',
+              error_reason: error_details?.error_reason || 'NA',
+            },
+          },
+        },
+        {
+          upsert: true,
+          new: true,
+        },
+      );
+
+    const webHookUrl = collectReq?.req_webhook_urls;
+
+    const collectRequest = collectReq;
+    const collectRequestStatus =
+      await this.databaseService.CollectRequestStatusModel.findOne({
+        collect_id: collectRequest._id,
+      });
+
+    if (!collectRequestStatus) {
+      throw new Error('Collect Request Not Found');
+    }
+
+    const transactionTime = collectRequestStatus.updatedAt;
+    if (!transactionTime) {
+      throw new Error('Transaction Time Not Found');
+    }
+
+    const amount = collectRequest?.amount;
+    const custom_order_id = collectRequest?.custom_order_id || '';
+    const additional_data = collectRequest?.additional_data || '';
+    const webHookDataInfo = {
+      collect_id,
+      amount,
+      status,
+      trustee_id: collectReq.trustee_id,
+      school_id: collectReq.school_id,
+      req_webhook_urls: collectReq?.req_webhook_urls,
+      custom_order_id,
+      createdAt: collectRequestStatus?.createdAt,
+      transaction_time: payment_time || collectRequestStatus?.updatedAt,
+      additional_data,
+      details: collectRequestStatus.details,
+      transaction_amount: collectRequestStatus.transaction_amount,
+      bank_reference: collectRequestStatus.bank_reference,
+      payment_method: collectRequestStatus.payment_method,
+      payment_details: collectRequestStatus.details,
+      // formattedTransaction_time: transactionTime.toLocaleDateString('en-GB') || null,
+      formattedDate: `${payment_time.getFullYear()}-${String(
+        payment_time.getMonth() + 1,
+      ).padStart(2, '0')}-${String(payment_time.getDate()).padStart(2, '0')}`,
+    };
+
+    if (webHookUrl !== null) {
+      console.log('calling webhook');
+      let webhook_key: null | string = null;
+      try {
+        const token = _jwt.sign(
+          { trustee_id: collectReq.trustee_id.toString() },
+          process.env.KEY!,
+        );
+        const config = {
+          method: 'get',
+          maxBodyLength: Infinity,
+          url: `${
+            process.env.VANILLA_SERVICE_ENDPOINT
+          }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+          },
+        };
+        const { data } = await axios.request(config);
+        webhook_key = data?.webhook_key;
+      } catch (error) {
+        console.error('Error getting webhook key:', error.message);
+      }
+
+      if (
+        collectRequest?.trustee_id.toString() === '66505181ca3e97e19f142075'
+      ) {
+        console.log('Webhook called for webschool');
+        setTimeout(async () => {
+          try {
+            await this.edvironPgService.sendErpWebhook(
+              webHookUrl,
+              webHookDataInfo,
+              webhook_key,
+            );
+          } catch (e) {
+            console.log(`Error sending webhook to ${webHookUrl}:`, e.message);
+          }
+        }, 60000);
+      } else {
+        console.log('Webhook called for other schools');
+        console.log(webHookDataInfo);
+        try {
+          await this.edvironPgService.sendErpWebhook(
+            webHookUrl,
+            webHookDataInfo,
+            webhook_key,
+          );
+        } catch (e) {
+          console.log(`Error sending webhook to ${webHookUrl}:`, e.message);
+        }
+      }
+    }
+
+    try {
+      await this.edvironPgService.sendMailAfterTransaction(
+        collectReq._id.toString(),
+      );
+    } catch (e) {
+      await this.databaseService.ErrorLogsModel.create({
+        type: 'sendMailAfterTransaction',
+        des: collectReq._id.toString(),
+        identifier: 'EdvironPg webhook',
+        body: e.message || e.toString(),
+      });
+    }
+    res.status(200).send('OK');
   }
 }
 

@@ -169,7 +169,7 @@ export class CheckStatusService {
         };
         return ezb_status_response;
       }
-       return await this.checkExpiry(collectRequest);
+      return await this.checkExpiry(collectRequest);
     }
 
     switch (collectRequest?.gateway) {
@@ -178,13 +178,22 @@ export class CheckStatusService {
       case Gateway.PHONEPE:
         return await this.phonePeService.checkStatus(collect_request_id);
       case Gateway.EDVIRON_PG:
-        const edvironPgResponse = await this.edvironPgService.checkStatus(
-          collect_request_id,
-          collectRequest,
-        );
+        console.log('cashfree');
+        let edvironPgResponse;
+        if (collectRequest.cashfree_non_partner) {
+          console.log('checking for non p');
+          edvironPgResponse = await this.cashfreeService.checkStatusV2(
+            collect_request_id.toString(),
+          );
+        } else {
+          edvironPgResponse = await this.edvironPgService.checkStatus(
+            collect_request_id,
+            collectRequest,
+          );
+        }
         return {
           ...edvironPgResponse,
-          custom_order_id,
+          custom_order_id: collectRequest.custom_order_id || null,
           capture_status: collect_req_status.capture_status || 'PENDING',
         };
 
@@ -415,7 +424,7 @@ export class CheckStatusService {
         custom_order_id: collectRequest.custom_order_id || null,
       };
     }
-     if (collectRequest.easebuzz_non_partner) {
+    if (collectRequest.easebuzz_non_partner) {
       console.log('Checking status for easebuzz non-partner collect request');
 
       if (collectRequest.gateway === Gateway.EDVIRON_EASEBUZZ) {
@@ -456,7 +465,7 @@ export class CheckStatusService {
         };
         return ezb_status_response;
       }
-       return await this.checkExpiry(collectRequest);
+      return await this.checkExpiry(collectRequest);
     }
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
@@ -468,13 +477,22 @@ export class CheckStatusService {
           collectRequest._id.toString(),
         );
       case Gateway.EDVIRON_PG:
-        const edv_response = await this.edvironPgService.checkStatus(
-          collectRequest._id.toString(),
-          collectRequest,
-        );
+        let edvironPgResponse;
+        if (collectRequest.cashfree_non_partner) {
+          console.log('checking for non p');
+          edvironPgResponse = await this.cashfreeService.checkStatusV2(
+            collectRequest._id.toString(),
+          );
+        } else {
+          edvironPgResponse = await this.edvironPgService.checkStatus(
+            collectRequest._id.toString(),
+            collectRequest,
+          );
+        }
         return {
-          ...edv_response,
-          edviron_order_id: collectRequest._id.toString(),
+          ...edvironPgResponse,
+          custom_order_id: collectRequest.custom_order_id || null,
+          capture_status: collect_req_status.capture_status || 'PENDING',
         };
 
       case Gateway.EDVIRON_RAZORPAY:

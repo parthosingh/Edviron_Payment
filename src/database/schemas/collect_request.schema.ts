@@ -87,6 +87,12 @@ interface EASEBUZZ_NON_PARTNER_CRED {
   easebuzz_submerchant_id: string;
 }
 
+interface CASHFREE_CREDENTIALS {
+  cf_x_client_id: string;
+  cf_x_client_secret: string;
+  cf_api_key: string;
+}
+
 @Schema()
 export class paytmPos {
   @Prop({ type: String, required: false })
@@ -300,6 +306,17 @@ export class CollectRequest {
   @Prop({
     required: false,
     type: {
+      cf_x_client_id: { type: String, required: false, default: null },
+      cf_x_client_secret: { type: String, required: false, default: null },
+      cf_api_key: { type: String, required: false, default: null },
+    },
+    _id: false,
+  })
+  cashfree_credentials: CASHFREE_CREDENTIALS;
+
+  @Prop({
+    required: false,
+    type: {
       worldline_merchant_id: { type: String, required: false, default: null },
       worldline_encryption_key: {
         type: String,
@@ -351,6 +368,9 @@ export class CollectRequest {
 
   @Prop({ required: false, default: false })
   easebuzz_non_partner: boolean;
+
+   @Prop({ required: false, default: false })
+  cashfree_non_partner: boolean;
 
   // @Prop({ required: false })
   // worldline_merchant_id: string;

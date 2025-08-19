@@ -36,13 +36,13 @@ export class ReportsController {
   ) {
     try {
       console.log('test');
-      
+
       const limit = 1000;
       console.log(limit, 'limit');
       setImmediate(async () => {
         try {
           console.log('test01');
-          
+
           await this.reportsService.getBulkReport(body.utrs, body.report_id);
         } catch (e) {}
       });

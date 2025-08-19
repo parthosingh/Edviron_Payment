@@ -183,7 +183,7 @@ export class ReportsService {
     }
   }
 
-  async rateLimiting(ms:number) {
+  async rateLimiting(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
@@ -270,19 +270,19 @@ export class ReportsService {
         'text/csv',
         process.env.REPORT_BUCKET || 'edviron-reports',
       );
-      const config={
+      const config = {
         method: 'post',
         maxBodyLength: Infinity,
         url: `${process.env.VANILLA_SERVICE}/main-backend/update-report`,
         headers: {
           accept: 'application/json',
         },
-        data:{
+        data: {
           report_id: report_id,
           status: 'COMPLETED',
           url: s3Url,
-        }
-      }
+        },
+      };
       await axios.request(config);
       return { report_url: s3Url, total_transactions: allTransactions.length };
     } catch (e) {

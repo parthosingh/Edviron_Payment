@@ -57,7 +57,7 @@ export class EasebuzzService {
     };
 
     const { data: statusRes } = await axios.request(config);
-    console.log({statusRes});
+    console.log({ statusRes });
 
     return statusRes;
   }
@@ -76,9 +76,11 @@ export class EasebuzzService {
   }
 
   async statusResponsev2(requestId: string, collectReq: CollectRequest) {
-    try{
-
-      let statusResponse = await this.easebuzzWebhookCheckStatusV2(requestId, collectReq);
+    try {
+      let statusResponse = await this.easebuzzWebhookCheckStatusV2(
+        requestId,
+        collectReq,
+      );
       if (statusResponse.msg.mode === 'NA') {
         console.log(`Status 0 for ${requestId}, retrying with 'upi_' suffix`);
         statusResponse = await this.easebuzzWebhookCheckStatusV2(
@@ -87,15 +89,15 @@ export class EasebuzzService {
         );
       }
       console.log(statusResponse);
-      
+
       return statusResponse;
-    }catch (e) {
+    } catch (e) {
       console.log(e);
-      
+
       throw new BadRequestException(e.message);
     }
   }
- 
+
   async initiateRefund(
     collect_id: string,
     refund_amount: number,
@@ -309,7 +311,7 @@ export class EasebuzzService {
     }
   }
 
-  async getQrBase64(collect_id: string) { 
+  async getQrBase64(collect_id: string) {
     try {
       const collectRequest =
         await this.databaseService.CollectRequestModel.findById(collect_id);
@@ -323,7 +325,7 @@ export class EasebuzzService {
       const qrCodeBase64 = await QRCode.toDataURL(upiIntentUrl, {
         margin: 2,
         width: 300,
-      }); 
+      });
 
       const qrBase64 = qrCodeBase64.split(',')[1];
       return {
@@ -366,7 +368,7 @@ export class EasebuzzService {
       throw new BadRequestException(error.message || 'Something went wrong');
     }
   }
-  
+
   // split payment order creation
   async createOrderV2(
     request: CollectRequest,
@@ -507,8 +509,8 @@ export class EasebuzzService {
         );
 
         const { data: easebuzzRes } = await axios.request(Ezboptions);
-        console.log({easebuzzRes});
-        
+        console.log({ easebuzzRes });
+
         const easebuzzPaymentId = easebuzzRes.data;
         collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
         await collectReq.save();
@@ -519,25 +521,25 @@ export class EasebuzzService {
         // };
 
         return {
-         collect_request_id: request._id,
-        url:
-          process.env.URL +
-          '/edviron-pg/redirect?' +
-          '&collect_request_id=' +
-          request._id +
-          '&amount=' +
-          request.amount.toFixed(2) +
-          '&' +
-          disabled_modes_string +
-          '&platform_charges=' +
-          encodedPlatformCharges +
-          '&school_name=' +
-          school_name +
-          '&easebuzz_pg=' +
-          true +
-          '&payment_id=' +
-          easebuzzPaymentId,
-      };
+          collect_request_id: request._id,
+          url:
+            process.env.URL +
+            '/edviron-pg/redirect?' +
+            '&collect_request_id=' +
+            request._id +
+            '&amount=' +
+            request.amount.toFixed(2) +
+            '&' +
+            disabled_modes_string +
+            '&platform_charges=' +
+            encodedPlatformCharges +
+            '&school_name=' +
+            school_name +
+            '&easebuzz_pg=' +
+            true +
+            '&payment_id=' +
+            easebuzzPaymentId,
+        };
       }
     } catch (e) {
       throw new BadRequestException(e.message);
@@ -641,8 +643,8 @@ export class EasebuzzService {
       };
 
       const { data: easebuzzRes } = await axios.request(Ezboptions);
-      console.log({easebuzzRes});
-      
+      console.log({ easebuzzRes });
+
       const easebuzzPaymentId = easebuzzRes.data;
       collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
       await collectReq.save();
@@ -653,7 +655,7 @@ export class EasebuzzService {
       // };
       const schoolName = school_name.replace(/ /g, '_');
       return {
-         collect_request_id: request._id,
+        collect_request_id: request._id,
         collect_request_url:
           process.env.URL +
           '/edviron-pg/redirect?' +
@@ -754,8 +756,8 @@ export class EasebuzzService {
       };
 
       const { data: easebuzzRes } = await axios.request(options);
-      console.log({easebuzzRes});
-      
+      console.log({ easebuzzRes });
+
       const access_key = easebuzzRes.data;
       let formData = new FormData();
       formData.append('access_key', access_key);
