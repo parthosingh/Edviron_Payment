@@ -474,6 +474,8 @@ export class EdvironPgService implements GatewayService {
         },
       };
     } catch (e) {
+      console.log(e);
+      
       throw new BadRequestException(e.message);
     }
   }

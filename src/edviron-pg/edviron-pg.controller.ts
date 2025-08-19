@@ -251,64 +251,84 @@ export class EdvironPgController {
 
   @Get('/callback')
   async handleCallback(@Req() req: any, @Res() res: any) {
-    const { collect_request_id } = req.query;
-    const collectRequest =
-      (await this.databaseService.CollectRequestModel.findById(
-        collect_request_id,
-      ))!;
+    try {
+      const { collect_request_id } = req.query;
+      console.log({ collect_request_id });
 
-    const info =
-      await this.databaseService.CollectRequestModel.findById(
-        collect_request_id,
-      );
-    if (!info) {
-      throw new Error('transaction not found');
-    }
+      const collectRequest =
+        (await this.databaseService.CollectRequestModel.findById(
+          collect_request_id,
+        ))!;
 
-    info.gateway = Gateway.EDVIRON_PG;
-    await info.save();
-    const { status } = await this.edvironPgService.checkStatus(
-      collect_request_id,
-      collectRequest,
-    );
+      const info =
+        await this.databaseService.CollectRequestModel.findById(
+          collect_request_id,
+        );
+      if (!info) {
+        throw new Error('transaction not found');
+      }
 
-    if (collectRequest?.sdkPayment) {
-      if (status === `SUCCESS`) {
-        const callbackUrl = new URL(collectRequest?.callbackUrl);
-        callbackUrl.searchParams.set('status', 'SUCCESS');
+      info.gateway = Gateway.EDVIRON_PG;
+      await info.save();
+      if (!collectRequest) {
+        throw new NotFoundException('Collect request not found');
+      }
+      let status:any
+      if(collectRequest.cashfree_non_partner && collectRequest.cashfree_credentials){
+        const status2=await this.cashfreeService.checkStatusV2(collect_request_id)
+        status = status2.status;
+      }else{
+        const status1 = await this.edvironPgService.checkStatus(
+          collect_request_id,
+          collectRequest,
+        );
+        status = status1.status;
+      }
+
+      if (collectRequest?.sdkPayment) {
+        if (status === `SUCCESS`) {
+          const callbackUrl = new URL(collectRequest?.callbackUrl);
+          callbackUrl.searchParams.set('status', 'SUCCESS');
+          callbackUrl.searchParams.set(
+            'EdvironCollectRequestId',
+            collect_request_id,
+          );
+          return res.redirect(
+            `${process.env.PG_FRONTEND}/payment-success?collect_id=${collect_request_id}`,
+          );
+        }
+        console.log(`SDK payment failed for ${collect_request_id}`);
+
+        res.redirect(
+          `${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}`,
+        );
+      }
+      const callbackUrl = new URL(collectRequest?.callbackUrl);
+      if (status !== `SUCCESS`) {
         callbackUrl.searchParams.set(
           'EdvironCollectRequestId',
           collect_request_id,
         );
         return res.redirect(
-          `${process.env.PG_FRONTEND}/payment-success?collect_id=${collect_request_id}`,
+          `${callbackUrl.toString()}&status=cancelled&reason=Payment-declined`,
         );
       }
-      console.log(`SDK payment failed for ${collect_request_id}`);
-
-      res.redirect(
-        `${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}`,
-      );
-    }
-    const callbackUrl = new URL(collectRequest?.callbackUrl);
-    if (status !== `SUCCESS`) {
+      if (collectRequest.isSplitPayments) {
+        await this.databaseService.VendorTransactionModel.updateMany(
+          { collect_id: info._id },
+          { $set: { status: 'SUCCESS' } },
+        );
+      }
       callbackUrl.searchParams.set(
         'EdvironCollectRequestId',
         collect_request_id,
       );
-      return res.redirect(
-        `${callbackUrl.toString()}&status=cancelled&reason=Payment-declined`,
-      );
+      callbackUrl.searchParams.set('status', 'SUCCESS');
+      return res.redirect(callbackUrl.toString());
+    } catch (e) {
+      console.log(e);
+      return res.status(500).send('Internal Server Error');
     }
-    if (collectRequest.isSplitPayments) {
-      await this.databaseService.VendorTransactionModel.updateMany(
-        { collect_id: info._id },
-        { $set: { status: 'SUCCESS' } },
-      );
-    }
-    callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
-    callbackUrl.searchParams.set('status', 'SUCCESS');
-    return res.redirect(callbackUrl.toString());
   }
 
   @Get('/easebuzz-callback')
