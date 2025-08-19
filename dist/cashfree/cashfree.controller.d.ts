@@ -140,7 +140,5 @@ export declare class CashfreeController {
             }
         ];
     }): Promise<any>;
-    handleWebhook(body: any): Promise<{
-        received: boolean;
-    }>;
+    handleWebhook(body: any, res: any): Promise<void>;
 }

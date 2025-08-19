@@ -21,7 +21,7 @@ exports.ReportsModule = ReportsModule = __decorate([
     (0, common_1.Module)({
         providers: [reports_service_1.ReportsService, aws_s3_service_service_1.AwsS3ServiceService],
         imports: [database_module_1.DatabaseModule, cashfree_module_1.CashfreeModule, edviron_pg_module_1.EdvironPgModule],
-        controllers: [reports_controller_1.ReportsController]
+        controllers: [reports_controller_1.ReportsController],
     })
 ], ReportsModule);
 //# sourceMappingURL=reports.module.js.map

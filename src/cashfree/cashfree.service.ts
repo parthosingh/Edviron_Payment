@@ -359,8 +359,8 @@ export class CashfreeService {
               payment_id = cf_payment_id;
               await request.save();
             } else {
-              console.log(request.payment_id)
-              payment_id = request.payment_id
+              console.log(request.payment_id);
+              payment_id = request.payment_id;
             }
             if (order.order_id) {
               customData = customOrderMap.get(order.order_id) || {};
@@ -449,7 +449,6 @@ export class CashfreeService {
     await request.save();
     const cashfreeId = request.paymentIds.cashfree_id;
     if (!cashfreeId) {
-      
       throw new BadRequestException('Error in Getting QR Code');
     }
     let intentData = JSON.stringify({
@@ -823,7 +822,7 @@ export class CashfreeService {
       'x-partner-apikey': process.env.CASHFREE_API_KEY,
     };
     const data = {
-      merchant_id:`${merchant_id}`,
+      merchant_id: `${merchant_id}`,
       merchant_email,
       merchant_name,
       poc_phone,
@@ -850,7 +849,7 @@ export class CashfreeService {
 
     try {
       console.log(config, 'config for cashfree merchant');
-      
+
       const response = await axios.request(config);
       await this.uploadKycDocs(merchant_id);
       // return response.data;
@@ -867,7 +866,7 @@ export class CashfreeService {
       merchant_id,
       merchant_email,
       merchant_name,
-      poc_phone, 
+      poc_phone,
       merchant_site_url,
       business_details,
       website_details,
@@ -1404,7 +1403,7 @@ export class CashfreeService {
     }
   }
 
-   async createOrderV2(
+  async createOrderV2(
     amount: Number,
     callbackUrl: string,
     school_id: string,
@@ -1474,11 +1473,12 @@ export class CashfreeService {
         additional_data: JSON.stringify(additional_data),
         custom_order_id,
         req_webhook_urls,
-        cashfreeVedors,
+        cashfreeVedors, 
         isVBAPayment: isVBAPayment || false,
         vba_account_number: vba_account_number || 'NA',
         isSplitPayments: splitPayments || false,
         cashfree_credentials: cashfree_credentials,
+        cashfree_non_partner:true
       }).save();
 
       await new this.databaseService.CollectRequestStatusModel({
@@ -1638,6 +1638,87 @@ export class CashfreeService {
       };
     } catch (e) {
       // console.error('Error:', e);
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  async checkStatusV2(collect_id: string) {
+    try {
+      const request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!request) {
+        throw new BadRequestException('Collect Request not found');
+      }
+      const axios = require('axios');
+
+      let config = {
+        method: 'get',
+        url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/${collect_id}`,
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-api-version': '2023-08-01',
+          'x-partner-merchantid':
+            request.cashfree_credentials.cf_x_client_id || null,
+          'x-partner-apikey': request.cashfree_credentials.cf_api_key,
+        },
+      };
+
+      const { data: cashfreeRes } = await axios.request(config);
+
+      const order_status_to_transaction_status_map = {
+        ACTIVE: TransactionStatus.PENDING,
+        PAID: TransactionStatus.SUCCESS,
+        EXPIRED: TransactionStatus.FAILURE,
+        TERMINATED: TransactionStatus.FAILURE,
+        TERMINATION_REQUESTED: TransactionStatus.FAILURE,
+      };
+
+      const collect_status =
+        await this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: request._id,
+        });
+      let transaction_time = '';
+      if (
+        order_status_to_transaction_status_map[
+          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+        ] === TransactionStatus.SUCCESS
+      ) {
+        transaction_time = collect_status?.updatedAt?.toISOString() as string;
+      }
+      const checkStatus =
+        order_status_to_transaction_status_map[
+          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+        ];
+      let status_code;
+      if (checkStatus === TransactionStatus.SUCCESS) {
+        status_code = 200;
+      } else {
+        status_code = 400;
+      }
+
+      const date = new Date(transaction_time);
+      const uptDate = moment(date);
+      const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
+      return {
+        status:
+          order_status_to_transaction_status_map[
+            cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+          ],
+        amount: cashfreeRes.order_amount,
+        status_code,
+        details: {
+          bank_ref:
+            collect_status?.bank_reference && collect_status?.bank_reference,
+          payment_methods:
+            collect_status?.details &&
+            JSON.parse(collect_status.details as string),
+          transaction_time,
+          formattedTransactionDate: istDate,
+          order_status: cashfreeRes.order_status,
+        },
+      };
+    } catch (e) {
       throw new BadRequestException(e.message);
     }
   }

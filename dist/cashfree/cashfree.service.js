@@ -1055,6 +1055,7 @@ let CashfreeService = class CashfreeService {
                 vba_account_number: vba_account_number || 'NA',
                 isSplitPayments: splitPayments || false,
                 cashfree_credentials: cashfree_credentials,
+                cashfree_non_partner: true
             }).save();
             await new this.databaseService.CollectRequestStatusModel({
                 collect_id: request._id,
@@ -1188,6 +1189,68 @@ let CashfreeService = class CashfreeService {
                     encodedPlatformCharges +
                     '&school_name=' +
                     schoolName,
+            };
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async checkStatusV2(collect_id) {
+        try {
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request) {
+                throw new common_1.BadRequestException('Collect Request not found');
+            }
+            const axios = require('axios');
+            let config = {
+                method: 'get',
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/${collect_id}`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': request.cashfree_credentials.cf_x_client_id || null,
+                    'x-partner-apikey': request.cashfree_credentials.cf_api_key,
+                },
+            };
+            const { data: cashfreeRes } = await axios.request(config);
+            const order_status_to_transaction_status_map = {
+                ACTIVE: transactionStatus_1.TransactionStatus.PENDING,
+                PAID: transactionStatus_1.TransactionStatus.SUCCESS,
+                EXPIRED: transactionStatus_1.TransactionStatus.FAILURE,
+                TERMINATED: transactionStatus_1.TransactionStatus.FAILURE,
+                TERMINATION_REQUESTED: transactionStatus_1.TransactionStatus.FAILURE,
+            };
+            const collect_status = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: request._id,
+            });
+            let transaction_time = '';
+            if (order_status_to_transaction_status_map[cashfreeRes.order_status] === transactionStatus_1.TransactionStatus.SUCCESS) {
+                transaction_time = collect_status?.updatedAt?.toISOString();
+            }
+            const checkStatus = order_status_to_transaction_status_map[cashfreeRes.order_status];
+            let status_code;
+            if (checkStatus === transactionStatus_1.TransactionStatus.SUCCESS) {
+                status_code = 200;
+            }
+            else {
+                status_code = 400;
+            }
+            const date = new Date(transaction_time);
+            const uptDate = moment(date);
+            const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
+            return {
+                status: order_status_to_transaction_status_map[cashfreeRes.order_status],
+                amount: cashfreeRes.order_amount,
+                status_code,
+                details: {
+                    bank_ref: collect_status?.bank_reference && collect_status?.bank_reference,
+                    payment_methods: collect_status?.details &&
+                        JSON.parse(collect_status.details),
+                    transaction_time,
+                    formattedTransactionDate: istDate,
+                    order_status: cashfreeRes.order_status,
+                },
             };
         }
         catch (e) {

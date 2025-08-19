@@ -163,10 +163,16 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.PHONEPE:
                 return await this.phonePeService.checkStatus(collect_request_id);
             case collect_request_schema_1.Gateway.EDVIRON_PG:
-                const edvironPgResponse = await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
+                let edvironPgResponse;
+                if (collectRequest.cashfree_non_partner) {
+                    edvironPgResponse = await this.cashfreeService.checkStatusV2(collect_request_id.toString());
+                }
+                else {
+                    edvironPgResponse = await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
+                }
                 return {
                     ...edvironPgResponse,
-                    custom_order_id,
+                    custom_order_id: collectRequest.custom_order_id || null,
                     capture_status: collect_req_status.capture_status || 'PENDING',
                 };
             case collect_request_schema_1.Gateway.SMART_GATEWAY:
@@ -381,10 +387,18 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.PHONEPE:
                 return await this.phonePeService.checkStatus(collectRequest._id.toString());
             case collect_request_schema_1.Gateway.EDVIRON_PG:
-                const edv_response = await this.edvironPgService.checkStatus(collectRequest._id.toString(), collectRequest);
+                let edvironPgResponse;
+                if (collectRequest.cashfree_non_partner) {
+                    console.log('checking for non p');
+                    edvironPgResponse = await this.cashfreeService.checkStatusV2(collectRequest._id.toString());
+                }
+                else {
+                    edvironPgResponse = await this.edvironPgService.checkStatus(collectRequest._id.toString(), collectRequest);
+                }
                 return {
-                    ...edv_response,
-                    edviron_order_id: collectRequest._id.toString(),
+                    ...edvironPgResponse,
+                    custom_order_id: collectRequest.custom_order_id || null,
+                    capture_status: collect_req_status.capture_status || 'PENDING',
                 };
             case collect_request_schema_1.Gateway.EDVIRON_RAZORPAY:
                 const razorpayData = await this.razorpayServiceModel.getPaymentStatus(collectRequest.razorpay.order_id.toString(), collectRequest);

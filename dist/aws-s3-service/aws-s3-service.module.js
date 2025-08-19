@@ -14,7 +14,7 @@ let AwsS3ServiceModule = class AwsS3ServiceModule {
 exports.AwsS3ServiceModule = AwsS3ServiceModule;
 exports.AwsS3ServiceModule = AwsS3ServiceModule = __decorate([
     (0, common_1.Module)({
-        providers: [aws_s3_service_service_1.AwsS3ServiceService]
+        providers: [aws_s3_service_service_1.AwsS3ServiceService],
     })
 ], AwsS3ServiceModule);
 //# sourceMappingURL=aws-s3-service.module.js.map

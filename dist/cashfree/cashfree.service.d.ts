@@ -190,4 +190,16 @@ export declare class CashfreeService {
         _id: import("mongoose").Schema.Types.ObjectId;
         url: string;
     }>;
+    checkStatusV2(collect_id: string): Promise<{
+        status: TransactionStatus;
+        amount: any;
+        status_code: number;
+        details: {
+            bank_ref: string | undefined;
+            payment_methods: any;
+            transaction_time: string;
+            formattedTransactionDate: string;
+            order_status: any;
+        };
+    }>;
 }

@@ -223,7 +223,7 @@ let ReportsService = class ReportsService {
                     report_id: report_id,
                     status: 'COMPLETED',
                     url: s3Url,
-                }
+                },
             };
             await axios_1.default.request(config);
             return { report_url: s3Url, total_transactions: allTransactions.length };

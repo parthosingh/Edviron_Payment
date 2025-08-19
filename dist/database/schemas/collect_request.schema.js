@@ -307,6 +307,18 @@ __decorate([
     (0, mongoose_1.Prop)({
         required: false,
         type: {
+            cf_x_client_id: { type: String, required: false, default: null },
+            cf_x_client_secret: { type: String, required: false, default: null },
+            cf_api_key: { type: String, required: false, default: null },
+        },
+        _id: false,
+    }),
+    __metadata("design:type", Object)
+], CollectRequest.prototype, "cashfree_credentials", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        required: false,
+        type: {
             worldline_merchant_id: { type: String, required: false, default: null },
             worldline_encryption_key: {
                 type: String,
@@ -362,6 +374,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false, default: false }),
     __metadata("design:type", Boolean)
 ], CollectRequest.prototype, "easebuzz_non_partner", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], CollectRequest.prototype, "cashfree_non_partner", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
