@@ -4661,7 +4661,7 @@ export class EdvironPgController {
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
-        },
+        }, 
         data: requestData,
       };
 

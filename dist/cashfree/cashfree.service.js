@@ -1173,7 +1173,7 @@ let CashfreeService = class CashfreeService {
                 .join('&');
             const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
             request.paymentIds = paymentInfo;
-            request.payment_data = process.env.URL +
+            const url = process.env.URL +
                 '/edviron-pg/redirect?session_id=' +
                 cf_payment_id +
                 '&collect_request_id=' +
@@ -1185,8 +1185,9 @@ let CashfreeService = class CashfreeService {
                 '&platform_charges=' +
                 encodedPlatformCharges +
                 '&school_name=' +
-                schoolName,
-                await request.save();
+                schoolName;
+            request.payment_data = `"${url}"`;
+            await request.save();
             return {
                 _id: request._id,
                 url: process.env.URL +
