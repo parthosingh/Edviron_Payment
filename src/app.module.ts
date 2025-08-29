@@ -30,6 +30,9 @@ import { RazorpayNonseamlessService } from './razorpay-nonseamless/razorpay-nons
 import { GatepayModule } from './gatepay/gatepay.module';
 import { ReportsModule } from './reports/reports.module';
 import { AwsS3ServiceModule } from './aws-s3-service/aws-s3-service.module';
+import { EdvironPayController } from './edviron-pay/edviron-pay.controller';
+import { EdvironPayService } from './edviron-pay/edviron-pay.service';
+import { EdvironPayModule } from './edviron-pay/edviron-pay.module';
 
 @Module({
   imports: [
@@ -50,6 +53,7 @@ import { AwsS3ServiceModule } from './aws-s3-service/aws-s3-service.module';
     GatepayModule,
     ReportsModule,
     AwsS3ServiceModule,
+    EdvironPayModule,
   ],
   controllers: [
     AppController,
@@ -58,6 +62,7 @@ import { AwsS3ServiceModule } from './aws-s3-service/aws-s3-service.module';
     PosPaytmController,
     WorldlineController,
     RazorpayNonseamlessController,
+    EdvironPayController,
   ],
   providers: [
     AppService,
@@ -67,6 +72,7 @@ import { AwsS3ServiceModule } from './aws-s3-service/aws-s3-service.module';
     PosPaytmService,
     WorldlineService,
     RazorpayNonseamlessService,
+    EdvironPayService,
   ],
 })
 export class AppModule {}
