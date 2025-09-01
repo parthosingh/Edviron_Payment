@@ -433,9 +433,9 @@ let PayUController = class PayUController {
         }
     }
     async getSettlementsRecon(body) {
-        const { utr, page, limit } = body;
+        const { utr, page, limit, school_id } = body;
         try {
-            return await this.payUService.settlementRecon(utr, limit, page);
+            return await this.payUService.settlementRecon(utr, limit, page, school_id);
         }
         catch (e) {
             throw new common_1.BadRequestException(e.message);

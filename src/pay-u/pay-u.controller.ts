@@ -533,11 +533,12 @@ export class PayUController {
   async getSettlementsRecon(@Body() body: {
     utr: string,
     page: number,
-    limit: number
+    limit: number,
+    school_id: string,
   }) {
-  const { utr, page, limit } = body;
+  const { utr, page, limit, school_id } = body;
   try{
-    return await this.payUService.settlementRecon(utr, limit, page);
+    return await this.payUService.settlementRecon(utr, limit, page, school_id);
   }catch(e){
     throw new BadRequestException(e.message);
   }

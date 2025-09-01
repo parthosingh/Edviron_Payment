@@ -101,14 +101,94 @@ let PayUService = class PayUService {
             throw new common_1.BadRequestException(error.message || 'Failed to terminate order');
         }
     }
-    async settlementRecon(utr_number, limit = 1000, page = 0) {
+    async settlementRecon(utr_number, limit = 1000, page = 0, school_id) {
         try {
-            const transactions = await this.databaseService.CollectRequestStatusModel.find({
-                utr_number
-            })
-                .limit(limit)
-                .skip((page - 1) * limit);
-            return { transactions, count: transactions.length, page, limit };
+            const transactions = await this.databaseService.CollectRequestStatusModel.aggregate([
+                {
+                    $match: {
+                        utr_number
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'collectrequests',
+                        localField: 'collect_id',
+                        foreignField: '_id',
+                        as: 'collect_request',
+                    },
+                },
+                { $unwind: '$collect_request' },
+                {
+                    $match: {
+                        'collect_request.school_id': school_id,
+                    },
+                },
+                {
+                    $project: {
+                        adjustment: null,
+                        adjustment_remarks: null,
+                        amount_settled: null,
+                        cf_payment_id: 'NA',
+                        cf_settlement_id: 'NA',
+                        closed_in_favor_of: null,
+                        customer_email: null,
+                        customer_name: null,
+                        customer_phone: '9898989898',
+                        dispute_category: null,
+                        dispute_note: null,
+                        dispute_resolved_on: null,
+                        entity: 'recon',
+                        event_amount: '$transaction_amount',
+                        event_currency: 'INR',
+                        event_id: '$_id',
+                        event_settlement_amount: '$transaction_amount',
+                        event_status: '$status',
+                        event_time: '$payment_time',
+                        event_type: 'PAYMENT',
+                        order_amount: '$order_amount',
+                        order_id: '$collect_request._id',
+                        payment_amount: null,
+                        payment_from: null,
+                        payment_group: '$payment_method',
+                        payment_service_charge: `0`,
+                        payment_service_tax: `0`,
+                        payment_till: null,
+                        payment_time: null,
+                        payment_utr: '$bank_reference',
+                        reason: null,
+                        refund_arn: null,
+                        refund_id: null,
+                        refund_note: null,
+                        refund_processed_at: null,
+                        remarks: null,
+                        resolved_on: null,
+                        sale_type: 'CREDIT',
+                        service_charge: null,
+                        service_tax: null,
+                        settlement_charge: null,
+                        settlement_date: '$settlement_date',
+                        settlement_initiated_on: null,
+                        settlement_tax: null,
+                        settlement_type: null,
+                        settlement_utr: '$utr_number',
+                        custom_order_id: '$collect_request.custom_order_id',
+                        additional_data: '$collect_request.additional_data',
+                    }
+                }
+            ]);
+            console.log(transactions);
+            const enrichedOrders = await Promise.all(transactions.map(async (order) => {
+                const studentData = JSON.parse(order.additional_data) || {};
+                return {
+                    ...order,
+                    school_id: school_id || null,
+                    student_id: studentData?.student_details?.student_id || null,
+                    student_name: studentData?.student_details?.student_name || null,
+                    student_email: studentData?.student_details?.student_email || null,
+                    student_phone_no: studentData?.student_details?.student_phone_no || null,
+                };
+            }));
+            return { transactions: enrichedOrders, count: transactions.length, page, limit };
         }
         catch (error) {
             throw new Error(`Payment request failed: ${error.message}`);

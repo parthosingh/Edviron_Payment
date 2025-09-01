@@ -80,6 +80,10 @@ __decorate([
     __metadata("design:type", Date)
 ], CollectRequestStatus.prototype, "payment_time", void 0);
 __decorate([
+    (0, mongoose_1.Prop)({ required: false, default: '' }),
+    __metadata("design:type", Date)
+], CollectRequestStatus.prototype, "settlement_date", void 0);
+__decorate([
     (0, mongoose_1.Prop)({ required: false, default: false }),
     __metadata("design:type", Boolean)
 ], CollectRequestStatus.prototype, "isAttempted", void 0);

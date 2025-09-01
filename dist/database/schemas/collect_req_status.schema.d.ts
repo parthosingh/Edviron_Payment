@@ -39,6 +39,7 @@ export declare class CollectRequestStatus {
     bank_reference: string;
     utr_number: string;
     payment_time: Date;
+    settlement_date: Date;
     isAttempted: boolean;
     isAutoRefund: boolean;
     reason: string;

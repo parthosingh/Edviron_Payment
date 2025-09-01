@@ -73,6 +73,9 @@ export class CollectRequestStatus {
   @Prop({ required: false, default: '' })
   payment_time: Date;
 
+  @Prop({ required: false, default: '' })
+  settlement_date: Date;
+
   @Prop({ required: false, default: false })
   isAttempted: boolean;
 
