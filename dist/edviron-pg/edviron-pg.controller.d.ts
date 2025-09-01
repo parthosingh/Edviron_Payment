@@ -99,12 +99,15 @@ export declare class EdvironPgController {
     }): Promise<{
         cashfreeSum: number;
         easebuzzSum: number;
+        razorpaySum: number;
         percentageCashfree: number;
         percentageEasebuzz: number;
+        percentageRazorpay: number;
     }>;
     getPgStatus(collect_id: string): Promise<{
         cashfree: boolean;
         easebuzz: boolean;
+        razorpay: boolean;
     }>;
     initiaterefund(body: {
         collect_id: string;

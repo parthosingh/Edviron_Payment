@@ -1963,35 +1963,56 @@ let EdvironPgController = class EdvironPgController {
     }
     async getpaymentRatio(body) {
         const { school_id, mode, start_date } = body;
-        const payments = await this.edvironPgService.getPaymentDetails(school_id, start_date, mode);
-        let cashfreeSum = 0;
-        let easebuzzSum = 0;
-        for (const payment of payments) {
-            const gateway = payment.gateway;
-            const amount = payment.transaction_amount;
-            if (gateway === collect_request_schema_1.Gateway.EDVIRON_PG) {
-                cashfreeSum += amount;
+        try {
+            const payments = await this.edvironPgService.getPaymentDetails(school_id, start_date, mode);
+            let cashfreeSum = 0;
+            let easebuzzSum = 0;
+            let razorpaySum = 0;
+            for (const payment of payments) {
+                const gateway = payment.gateway;
+                const amount = payment.transaction_amount;
+                if (gateway === collect_request_schema_1.Gateway.EDVIRON_PG) {
+                    cashfreeSum += amount;
+                }
+                else if (gateway === collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ) {
+                    easebuzzSum += amount;
+                }
+                else if (gateway === collect_request_schema_1.Gateway.EDVIRON_RAZORPAY) {
+                    razorpaySum += amount;
+                }
             }
-            else if (gateway === collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ) {
-                easebuzzSum += amount;
+            const totalTransactionAmount = cashfreeSum + easebuzzSum + razorpaySum;
+            let percentageCashfree = 0;
+            let percentageEasebuzz = 0;
+            let percentageRazorpay = 0;
+            if (cashfreeSum !== 0) {
+                percentageCashfree = parseFloat(((cashfreeSum / totalTransactionAmount) * 100).toFixed(2));
             }
+            if (easebuzzSum !== 0) {
+                percentageEasebuzz = parseFloat(((easebuzzSum / totalTransactionAmount) * 100).toFixed(2));
+            }
+            if (razorpaySum !== 0) {
+                percentageRazorpay = parseFloat(((razorpaySum / totalTransactionAmount) * 100).toFixed(2));
+            }
+            console.log({
+                cashfreeSum,
+                easebuzzSum,
+                percentageCashfree,
+                percentageEasebuzz,
+                percentageRazorpay,
+            });
+            return {
+                cashfreeSum,
+                easebuzzSum,
+                razorpaySum,
+                percentageCashfree,
+                percentageEasebuzz,
+                percentageRazorpay,
+            };
         }
-        const totalTransactionAmount = cashfreeSum + easebuzzSum;
-        let percentageCashfree = 0;
-        let percentageEasebuzz = 0;
-        if (cashfreeSum !== 0) {
-            percentageCashfree = parseFloat(((cashfreeSum / totalTransactionAmount) * 100).toFixed(2));
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
         }
-        if (easebuzzSum !== 0) {
-            percentageEasebuzz = parseFloat(((easebuzzSum / totalTransactionAmount) * 100).toFixed(2));
-        }
-        console.log({
-            cashfreeSum,
-            easebuzzSum,
-            percentageCashfree,
-            percentageEasebuzz,
-        });
-        return { cashfreeSum, easebuzzSum, percentageCashfree, percentageEasebuzz };
     }
     async getPgStatus(collect_id) {
         console.log(collect_id);
@@ -2001,18 +2022,19 @@ let EdvironPgController = class EdvironPgController {
         }
         console.log(request, 'req');
         const { paymentIds } = request;
-        if (!paymentIds) {
-            throw new Error('Payment ids not found');
-        }
         let pgStatus = {
             cashfree: false,
             easebuzz: false,
+            razorpay: false,
         };
-        if (paymentIds.cashfree_id) {
+        if (paymentIds?.cashfree_id) {
             pgStatus.cashfree = true;
         }
-        if (paymentIds.easebuzz_id) {
+        if (paymentIds?.easebuzz_id) {
             pgStatus.easebuzz = true;
+        }
+        if (request.razorpay && request.razorpay.order_id) {
+            pgStatus.razorpay = true;
         }
         return pgStatus;
     }
