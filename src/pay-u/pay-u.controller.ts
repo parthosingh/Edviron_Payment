@@ -529,4 +529,17 @@ export class PayUController {
       return res.status(400).send(error.message || 'Error in saving webhook');
     }
   }
+  @Post('get-settlements-recon')
+  async getSettlementsRecon(@Body() body: {
+    utr: string,
+    page: number,
+    limit: number
+  }) {
+  const { utr, page, limit } = body;
+  try{
+    return await this.payUService.settlementRecon(utr, limit, page);
+  }catch(e){
+    throw new BadRequestException(e.message);
+  }
+  }
 }

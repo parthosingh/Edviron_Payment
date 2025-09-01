@@ -101,70 +101,23 @@ let PayUService = class PayUService {
             throw new common_1.BadRequestException(error.message || 'Failed to terminate order');
         }
     }
+    async settlementRecon(utr_number, limit = 1000, page = 0) {
+        try {
+            const transactions = await this.databaseService.CollectRequestStatusModel.find({
+                utr_number
+            })
+                .limit(limit)
+                .skip((page - 1) * limit);
+            return { transactions, count: transactions.length, page, limit };
+        }
+        catch (error) {
+            throw new Error(`Payment request failed: ${error.message}`);
+        }
+    }
 };
 exports.PayUService = PayUService;
 exports.PayUService = PayUService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [database_service_1.DatabaseService])
 ], PayUService);
-const dummy = {
-    mihpayid: '23192519459',
-    mode: 'CC',
-    status: 'success',
-    key: 'CQn2g6',
-    txnid: '67ffe8bc9138e26559ac7f25',
-    amount: '1.00',
-    addedon: '2025-04-16 22:58:30',
-    productinfo: 'school_fee',
-    firstname: 'edviron',
-    lastname: 'edviron',
-    address1: '',
-    address2: '',
-    city: '',
-    state: '',
-    country: '',
-    zipcode: '',
-    email: 'noreply@edviron.com',
-    phone: '0000000000',
-    udf1: '',
-    udf2: '',
-    udf3: '',
-    udf4: '',
-    udf5: '',
-    udf6: '',
-    udf7: '',
-    udf8: '',
-    udf9: '',
-    udf10: '',
-    card_token: '',
-    card_no: 'XXXXXXXXXXXX3004',
-    field0: '',
-    field1: '04162025 225922',
-    field2: '250436',
-    field3: '',
-    field4: '2',
-    field5: '',
-    field6: '05',
-    field7: 'AUTHPOSITIVE',
-    field8: '00 | Successful approval/completion or that V.I.P. PIN verification is valid',
-    field9: 'No Error',
-    payment_source: 'payu',
-    PG_TYPE: 'CC-PG',
-    error: 'E000',
-    error_Message: 'No Error',
-    cardToken: '',
-    net_amount_debit: '1',
-    discount: '0.00',
-    offer_key: '',
-    offer_availed: '',
-    unmappedstatus: 'captured',
-    hash: '1b35b83a58358adc75ad7936be097a20bd8bf819c20874dba84eea46c05ee6696a563ce36d8b0d0fde47cb329e0a88c38f739b28bef7c180ad03fd763c0cafe9',
-    bank_ref_no: '510622802038',
-    bank_ref_num: '510622802038',
-    bankcode: 'CC',
-    surl: 'https://payments.edviron.com/pay-u/callback/?collect_id=67ffe8bc9138e26559ac7f25',
-    curl: 'https://payments.edviron.com/pay-u/callback/?collect_id=67ffe8bc9138e26559ac7f25',
-    furl: 'https://payments.edviron.com/pay-u/callback/?collect_id=67ffe8bc9138e26559ac7f25',
-    card_hash: 'd48a73d6cfcdb6093bd02f3a40c4b33fa488512ea401f9f57bd4eeb0877e6d16',
-};
 //# sourceMappingURL=pay-u.service.js.map
