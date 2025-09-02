@@ -25,6 +25,7 @@ import {
   SchoolMdr,
   SchoolMdrDocument,
 } from './schemas/platform.charges.schema';
+import { Installments, InstallmentsDocument } from './schemas/installments.schema';
 
 @Injectable()
 export class DatabaseService {
@@ -45,5 +46,7 @@ export class DatabaseService {
     public ErrorLogsModel: Model<ErrorLogsDocument>,
     @InjectModel(SchoolMdr.name)
     public PlatformChargeModel: Model<SchoolMdrDocument>,
+    @InjectModel(Installments.name)
+    public InstallmentsModel: Model<InstallmentsDocument>,
   ) {}
 }

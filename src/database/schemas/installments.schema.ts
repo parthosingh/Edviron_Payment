@@ -3,7 +3,7 @@ import mongoose, { ObjectId } from 'mongoose';
 import { CollectRequest } from './collect_request.schema';
 
 @Schema({ timestamps: true })
-export class ErrorLogs {
+export class Installments {
   @Prop({})
   school_id: string;
 
@@ -15,6 +15,9 @@ export class ErrorLogs {
 
   @Prop({})
   student_name: string;
+
+  @Prop({})
+  status: string;
 
   @Prop({})
   student_number: string;
@@ -52,12 +55,11 @@ export class ErrorLogs {
       },
     ],
   })
-  installments: {
+  fee_heads: {
     label: string;
     amount: number;
     net_amount: number;
     discount: number;
-    gst: number;
   }[];
 
   
@@ -65,8 +67,8 @@ export class ErrorLogs {
   label: string;
 
   @Prop({})
-  body: string;
+  gst: string;
 }
 
-export type ErrorLogsDocument = ErrorLogs & Document;
-export const ErrorLogsSchema = SchemaFactory.createForClass(ErrorLogs);
+export type InstallmentsDocument = Installments & Document;
+export const InstallmentsSchema = SchemaFactory.createForClass(Installments);

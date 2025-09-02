@@ -9,59 +9,63 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ErrorLogsSchema = exports.ErrorLogs = void 0;
+exports.InstallmentsSchema = exports.Installments = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
-let ErrorLogs = class ErrorLogs {
+let Installments = class Installments {
 };
-exports.ErrorLogs = ErrorLogs;
+exports.Installments = Installments;
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
-], ErrorLogs.prototype, "school_id", void 0);
+], Installments.prototype, "school_id", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
-], ErrorLogs.prototype, "trustee_id", void 0);
+], Installments.prototype, "trustee_id", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
-], ErrorLogs.prototype, "student_id", void 0);
+], Installments.prototype, "student_id", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
-], ErrorLogs.prototype, "student_name", void 0);
+], Installments.prototype, "student_name", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
-], ErrorLogs.prototype, "student_number", void 0);
+], Installments.prototype, "status", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
-], ErrorLogs.prototype, "student_email", void 0);
+], Installments.prototype, "student_number", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
-], ErrorLogs.prototype, "additional_data", void 0);
+], Installments.prototype, "student_email", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({}),
+    __metadata("design:type", String)
+], Installments.prototype, "additional_data", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", Number)
-], ErrorLogs.prototype, "amount", void 0);
+], Installments.prototype, "amount", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", Number)
-], ErrorLogs.prototype, "net_amount", void 0);
+], Installments.prototype, "net_amount", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", Number)
-], ErrorLogs.prototype, "discount", void 0);
+], Installments.prototype, "discount", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
-], ErrorLogs.prototype, "year", void 0);
+], Installments.prototype, "year", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
-], ErrorLogs.prototype, "month", void 0);
+], Installments.prototype, "month", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
         required: false,
@@ -76,17 +80,17 @@ __decorate([
         ],
     }),
     __metadata("design:type", Array)
-], ErrorLogs.prototype, "installments", void 0);
+], Installments.prototype, "fee_heads", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
-], ErrorLogs.prototype, "label", void 0);
+], Installments.prototype, "label", void 0);
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
-], ErrorLogs.prototype, "body", void 0);
-exports.ErrorLogs = ErrorLogs = __decorate([
+], Installments.prototype, "gst", void 0);
+exports.Installments = Installments = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
-], ErrorLogs);
-exports.ErrorLogsSchema = mongoose_1.SchemaFactory.createForClass(ErrorLogs);
+], Installments);
+exports.InstallmentsSchema = mongoose_1.SchemaFactory.createForClass(Installments);
 //# sourceMappingURL=installments.schema.js.map
