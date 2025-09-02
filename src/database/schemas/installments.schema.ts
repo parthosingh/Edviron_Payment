@@ -7,6 +7,14 @@ export class Installments {
   @Prop({})
   school_id: string;
 
+
+  @Prop({
+    required: true,
+    ref: 'CollectRequest',
+    type: mongoose.Schema.Types.ObjectId,
+  })
+  collect_id: CollectRequest;
+
   @Prop({})
   trustee_id: string;
 
@@ -62,7 +70,7 @@ export class Installments {
     discount: number;
   }[];
 
-  
+
   @Prop({})
   label: string;
 

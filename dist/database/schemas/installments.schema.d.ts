@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
+import { CollectRequest } from './collect_request.schema';
 export declare class Installments {
     school_id: string;
+    collect_id: CollectRequest;
     trustee_id: string;
     student_id: string;
     student_name: string;
