@@ -58,6 +58,10 @@ __decorate([
     (0, mongoose_1.Prop)({ type: String, required: false }),
     __metadata("design:type", Object)
 ], PaymentIds.prototype, "ccavenue_id", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, required: false }),
+    __metadata("design:type", Object)
+], PaymentIds.prototype, "razorpay_order_id", void 0);
 exports.PaymentIds = PaymentIds = __decorate([
     (0, mongoose_1.Schema)()
 ], PaymentIds);
@@ -401,6 +405,21 @@ __decorate([
     }),
     __metadata("design:type", Object)
 ], CollectRequest.prototype, "razorpay", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        required: false,
+        type: {
+            razorpay_id: { type: String, required: false, default: null },
+            razorpay_secret: { type: String, required: false, default: null },
+            razorpay_mid: { type: String, required: false, default: null },
+            order_id: { type: String, required: false, default: null },
+            payment_id: { type: String, required: false, default: null },
+            razorpay_signature: { type: String, required: false, default: null },
+        },
+        _id: false,
+    }),
+    __metadata("design:type", Object)
+], CollectRequest.prototype, "razorpay_seamless", void 0);
 exports.CollectRequest = CollectRequest = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], CollectRequest);

@@ -67,6 +67,11 @@ export declare class CollectController {
             gatepay_key?: string | null;
             gatepay_iv?: string | null;
         };
+        razorpay_seamless_credentials?: {
+            razorpay_id?: string | null;
+            razorpay_secret?: string | null;
+            razorpay_mid?: string | null;
+        };
         vendors_info?: [
             {
                 vendor_id: string;

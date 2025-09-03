@@ -60,6 +60,9 @@ export class PaymentIds {
 
   @Prop({ type: String, required: false })
   ccavenue_id?: string | null;
+
+  @Prop({ type: String, required: false })
+  razorpay_order_id?: string | null;
 }
 
 interface I_WORLDLINE {
@@ -403,6 +406,20 @@ export class CollectRequest {
     _id: false,
   })
   razorpay: I_Razorpay;
+
+   @Prop({
+    required: false,
+    type: {
+      razorpay_id: { type: String, required: false, default: null },
+      razorpay_secret: { type: String, required: false, default: null },
+      razorpay_mid: { type: String, required: false, default: null },
+      order_id: { type: String, required: false, default: null },
+      payment_id: { type: String, required: false, default: null },
+      razorpay_signature: { type: String, required: false, default: null },
+    },
+    _id: false,
+  })
+  razorpay_seamless: I_Razorpay;
 
   _id: ObjectId;
 }

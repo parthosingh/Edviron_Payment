@@ -38,6 +38,7 @@ const razorpay_nonseamless_service_1 = require("./razorpay-nonseamless/razorpay-
 const gatepay_module_1 = require("./gatepay/gatepay.module");
 const reports_module_1 = require("./reports/reports.module");
 const aws_s3_service_module_1 = require("./aws-s3-service/aws-s3-service.module");
+const razorpay_module_1 = require("./razorpay/razorpay.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -58,6 +59,7 @@ exports.AppModule = AppModule = __decorate([
             nttdata_module_1.NttdataModule,
             razorpay_nonseamless_module_1.RazorpayNonseamlessModule,
             worldline_module_1.WorldlineModule,
+            razorpay_module_1.RazorpayModule,
             gatepay_module_1.GatepayModule,
             reports_module_1.ReportsModule,
             aws_s3_service_module_1.AwsS3ServiceModule,

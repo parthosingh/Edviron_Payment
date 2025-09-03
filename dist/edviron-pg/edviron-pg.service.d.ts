@@ -30,10 +30,12 @@ import { DatabaseService } from '../database/database.service';
 import { TransactionStatus } from '../types/transactionStatus';
 import { platformChange } from 'src/collect/collect.controller';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
+import { RazorpayService } from '../razorpay/razorpay.service';
 export declare class EdvironPgService implements GatewayService {
     private readonly databaseService;
     private readonly cashfreeService;
-    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService);
+    private readonly razorpayService;
+    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService, razorpayService: RazorpayService);
     collect(request: CollectRequest, platform_charges: platformChange[], school_name: any, splitPayments: boolean, vendor?: [
         {
             vendor_id: string;

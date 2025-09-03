@@ -6,21 +6,20 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RazorpayNonseamlessModule = void 0;
+exports.RazorpayModule = void 0;
 const common_1 = require("@nestjs/common");
-const cashfree_module_1 = require("../cashfree/cashfree.module");
+const razorpay_controller_1 = require("./razorpay.controller");
+const razorpay_service_1 = require("./razorpay.service");
 const database_module_1 = require("../database/database.module");
-const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
-const razorpay_service_1 = require("../razorpay/razorpay.service");
-let RazorpayNonseamlessModule = class RazorpayNonseamlessModule {
+const cashfree_module_1 = require("../cashfree/cashfree.module");
+let RazorpayModule = class RazorpayModule {
 };
-exports.RazorpayNonseamlessModule = RazorpayNonseamlessModule;
-exports.RazorpayNonseamlessModule = RazorpayNonseamlessModule = __decorate([
+exports.RazorpayModule = RazorpayModule;
+exports.RazorpayModule = RazorpayModule = __decorate([
     (0, common_1.Module)({
         imports: [database_module_1.DatabaseModule, (0, common_1.forwardRef)(() => cashfree_module_1.CashfreeModule)],
-        controllers: [],
-        providers: [edviron_pg_service_1.EdvironPgService, razorpay_service_1.RazorpayService],
-        exports: [],
+        controllers: [razorpay_controller_1.RazorpayController],
+        providers: [razorpay_service_1.RazorpayService],
     })
-], RazorpayNonseamlessModule);
-//# sourceMappingURL=razorpay-nonseamless.module.js.map
+], RazorpayModule);
+//# sourceMappingURL=razorpay.module.js.map

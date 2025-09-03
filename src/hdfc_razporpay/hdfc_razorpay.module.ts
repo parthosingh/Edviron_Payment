@@ -5,6 +5,7 @@ import { DatabaseModule } from '../database/database.module';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import { DatabaseService } from 'src/database/database.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
+import { RazorpayService } from 'src/razorpay/razorpay.service';
 
 @Module({
   controllers: [HdfcRazorpayController],
@@ -13,6 +14,7 @@ import { CashfreeService } from 'src/cashfree/cashfree.service';
     EdvironPgService,
     DatabaseService,
     CashfreeService,
+    RazorpayService
   ],
   imports: [DatabaseModule],
 })

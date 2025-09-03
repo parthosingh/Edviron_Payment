@@ -28,11 +28,13 @@ import { sign } from '../utils/sign';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { Types } from 'mongoose';
+import { RazorpayService } from '../razorpay/razorpay.service';
 @Injectable()
 export class EdvironPgService implements GatewayService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly cashfreeService: CashfreeService,
+    private readonly razorpayService: RazorpayService,
   ) {}
   async collect(
     request: CollectRequest,
@@ -76,6 +78,7 @@ export class EdvironPgService implements GatewayService {
         easebuzz_dc_id: null,
         ccavenue_id: null,
         easebuzz_upi_id: null,
+        razorpay_order_id: null,
       };
       const collectReq =
         await this.databaseService.CollectRequestModel.findById(request._id);
@@ -315,6 +318,23 @@ export class EdvironPgService implements GatewayService {
           ); // 25 minutes in milliseconds
         }
       }
+
+      console.log(request.razorpay_seamless.razorpay_mid, "mid")
+      let razorpay_id = '';
+      let razorpay_pg = false;
+      if (
+        request.razorpay_seamless.razorpay_mid &&
+        request.razorpay_seamless.razorpay_id
+      ) {
+        console.log('creating order with razorpay');
+        const data = await this.razorpayService.createOrder(request);
+        razorpay_id = data?.id;
+        paymentInfo.razorpay_order_id = razorpay_id || null;
+        if (razorpay_id) {
+          razorpay_pg = true;
+        }
+      }
+
       const disabled_modes_string = request.disabled_modes
         .map((mode) => `${mode}=false`)
         .join('&');
@@ -348,7 +368,11 @@ export class EdvironPgService implements GatewayService {
           '&easebuzz_pg=' +
           easebuzz_pg +
           '&payment_id=' +
-          id,
+          id +
+          '&razorpay_pg=' +
+          razorpay_pg +
+          '&razorpay_id=' +
+          razorpay_id,
       };
     } catch (err) {
       if (err.name === 'AxiosError')
