@@ -4175,7 +4175,12 @@ export class EdvironPgController {
         signatory_details,
       );
     } catch (e) {
+      if(e.response?.data){
+        console.log(e.response.data);
+        throw new BadRequestException(e.response.data.message);
+      }
       console.log(e);
+
 
       throw new BadRequestException(e.message);
     }

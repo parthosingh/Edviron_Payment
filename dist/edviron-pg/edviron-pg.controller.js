@@ -2909,6 +2909,10 @@ let EdvironPgController = class EdvironPgController {
             return await this.cashfreeService.createMerchant(merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details);
         }
         catch (e) {
+            if (e.response?.data) {
+                console.log(e.response.data);
+                throw new common_1.BadRequestException(e.response.data.message);
+            }
             console.log(e);
             throw new common_1.BadRequestException(e.message);
         }

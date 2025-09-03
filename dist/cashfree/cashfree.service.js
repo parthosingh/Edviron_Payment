@@ -648,14 +648,16 @@ let CashfreeService = class CashfreeService {
             data,
         };
         try {
-            console.log(config, 'config for cashfree merchant');
             const response = await axios_1.default.request(config);
             await this.uploadKycDocs(merchant_id);
             return 'Merchant Request Created Successfully on Cashfree';
         }
         catch (error) {
-            console.error('Cashfree API error:', error);
-            throw new Error('Cashfree API request failed');
+            console.log(error.response?.data || error.message);
+            if (error.response?.data?.message) {
+                throw new common_1.BadRequestException(error.response?.data?.message);
+            }
+            throw new common_1.BadRequestException('Cashfree API request failed');
         }
     }
     async initiateMerchantOnboarding(school_id, kyc_mail) {
