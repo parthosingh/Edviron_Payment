@@ -26,10 +26,12 @@ const sign_2 = require("../utils/sign");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
 const mongoose_1 = require("mongoose");
+const razorpay_service_1 = require("../razorpay/razorpay.service");
 let EdvironPgService = class EdvironPgService {
-    constructor(databaseService, cashfreeService) {
+    constructor(databaseService, cashfreeService, razorpayService) {
         this.databaseService = databaseService;
         this.cashfreeService = cashfreeService;
+        this.razorpayService = razorpayService;
     }
     async collect(request, platform_charges, school_name, splitPayments, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, easebuzz_school_label) {
         try {
@@ -40,6 +42,7 @@ let EdvironPgService = class EdvironPgService {
                 easebuzz_dc_id: null,
                 ccavenue_id: null,
                 easebuzz_upi_id: null,
+                razorpay_order_id: null,
             };
             const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
             if (!collectReq) {
@@ -233,6 +236,19 @@ let EdvironPgService = class EdvironPgService {
                     }, 25 * 60 * 1000);
                 }
             }
+            console.log(request.razorpay_seamless.razorpay_mid, "mid");
+            let razorpay_id = '';
+            let razorpay_pg = false;
+            if (request.razorpay_seamless.razorpay_mid &&
+                request.razorpay_seamless.razorpay_id) {
+                console.log('creating order with razorpay');
+                const data = await this.razorpayService.createOrder(request);
+                razorpay_id = data?.id;
+                paymentInfo.razorpay_order_id = razorpay_id || null;
+                if (razorpay_id) {
+                    razorpay_pg = true;
+                }
+            }
             const disabled_modes_string = request.disabled_modes
                 .map((mode) => `${mode}=false`)
                 .join('&');
@@ -262,7 +278,11 @@ let EdvironPgService = class EdvironPgService {
                     '&easebuzz_pg=' +
                     easebuzz_pg +
                     '&payment_id=' +
-                    id,
+                    id +
+                    '&razorpay_pg=' +
+                    razorpay_pg +
+                    '&razorpay_id=' +
+                    razorpay_id,
             };
         }
         catch (err) {
@@ -1755,6 +1775,7 @@ exports.EdvironPgService = EdvironPgService;
 exports.EdvironPgService = EdvironPgService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
-        cashfree_service_1.CashfreeService])
+        cashfree_service_1.CashfreeService,
+        razorpay_service_1.RazorpayService])
 ], EdvironPgService);
 //# sourceMappingURL=edviron-pg.service.js.map

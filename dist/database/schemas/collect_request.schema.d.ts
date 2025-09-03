@@ -67,6 +67,7 @@ export declare class PaymentIds {
     easebuzz_cc_id?: string | null;
     easebuzz_dc_id?: string | null;
     ccavenue_id?: string | null;
+    razorpay_order_id?: string | null;
 }
 interface I_WORLDLINE {
     worldline_merchant_id: string;
@@ -205,6 +206,7 @@ export declare class CollectRequest {
     worldline_token: string;
     vba_account_number: string;
     razorpay: I_Razorpay;
+    razorpay_seamless: I_Razorpay;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;

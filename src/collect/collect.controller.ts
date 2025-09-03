@@ -89,6 +89,11 @@ export class CollectController {
         gatepay_key?: string | null;
         gatepay_iv?: string | null;
       };
+      razorpay_seamless_credentials?: {
+        razorpay_id?: string | null;
+        razorpay_secret?: string | null;
+        razorpay_mid?: string | null;
+      };
       vendors_info?: [
         {
           vendor_id: string;
@@ -194,6 +199,7 @@ export class CollectController {
       razorpay_credentials,
       gatepay_credentials,
       isCFNonSeamless,
+      razorpay_seamless_credentials,
     } = body;
     console.log(razorpay_credentials);
 
@@ -260,6 +266,7 @@ export class CollectController {
           razorpay_credentials,
           gatepay_credentials,
           isCFNonSeamless,
+          razorpay_seamless_credentials
         ),
       );
     } catch (e) {

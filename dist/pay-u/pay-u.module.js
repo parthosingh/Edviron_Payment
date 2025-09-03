@@ -14,12 +14,13 @@ const database_service_1 = require("../database/database.service");
 const database_module_1 = require("../database/database.module");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const edviron_pg_module_1 = require("../edviron-pg/edviron-pg.module");
+const razorpay_service_1 = require("../razorpay/razorpay.service");
 let PayUModule = class PayUModule {
 };
 exports.PayUModule = PayUModule;
 exports.PayUModule = PayUModule = __decorate([
     (0, common_1.Module)({
-        providers: [pay_u_service_1.PayUService, database_service_1.DatabaseService, edviron_pg_service_1.EdvironPgService],
+        providers: [pay_u_service_1.PayUService, database_service_1.DatabaseService, edviron_pg_service_1.EdvironPgService, razorpay_service_1.RazorpayService],
         imports: [database_module_1.DatabaseModule, edviron_pg_module_1.EdvironPgModule],
         controllers: [pay_u_controller_1.PayUController],
     })

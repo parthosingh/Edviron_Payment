@@ -16,6 +16,7 @@ const cashfree_module_1 = require("../cashfree/cashfree.module");
 const nttdata_service_1 = require("../nttdata/nttdata.service");
 const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 const worldline_service_1 = require("../worldline/worldline.service");
+const razorpay_service_1 = require("../razorpay/razorpay.service");
 let EdvironPgModule = class EdvironPgModule {
 };
 exports.EdvironPgModule = EdvironPgModule;
@@ -28,6 +29,7 @@ exports.EdvironPgModule = EdvironPgModule = __decorate([
             nttdata_service_1.NttdataService,
             worldline_service_1.WorldlineService,
             pos_paytm_service_1.PosPaytmService,
+            razorpay_service_1.RazorpayService
         ],
         imports: [
             database_module_1.DatabaseModule,

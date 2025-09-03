@@ -84,7 +84,11 @@ export declare class CollectService {
         gatepay_terminal_id?: string | null;
         gatepay_key?: string | null;
         gatepay_iv?: string | null;
-    }, isCFNonSeamless?: boolean): Promise<{
+    }, isCFNonSeamless?: boolean, razorpay_seamless_credentials?: {
+        razorpay_id?: string | null;
+        razorpay_secret?: string | null;
+        razorpay_mid?: string | null;
+    }): Promise<{
         url: string;
         request: CollectRequest;
     }>;
