@@ -80,6 +80,7 @@ export class CollectService {
     vendor?: [
       {
         vendor_id: string;
+        edv_vendor_id?: string;
         percentage?: number;
         amount?: number;
         name?: string;
@@ -162,9 +163,9 @@ export class CollectService {
         throw new ConflictException('OrderId must be unique');
       }
     }
-
+    console.log({vendor},'debug log');
+    
     const gateway = clientId === 'edviron' ? Gateway.HDFC : Gateway.PENDING;
-
     const request = await new this.databaseService.CollectRequestModel({
       amount,
       callbackUrl,

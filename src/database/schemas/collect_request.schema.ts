@@ -204,7 +204,7 @@ export class CollectRequest {
 
   @Prop({ required: false })
   vendors_info?: [
-    { vendor_id: string; percentage?: number; amount?: number; name?: string },
+    { vendor_id: string; edv_vendor_id?: string; percentage?: number; amount?: number; name?: string },
   ];
 
   @Prop({ required: false })

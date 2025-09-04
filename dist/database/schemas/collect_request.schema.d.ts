@@ -136,6 +136,7 @@ export declare class CollectRequest {
     vendors_info?: [
         {
             vendor_id: string;
+            edv_vendor_id?: string;
             percentage?: number;
             amount?: number;
             name?: string;

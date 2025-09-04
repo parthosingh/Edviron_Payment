@@ -54,6 +54,7 @@ let CollectService = class CollectService {
                 throw new common_1.ConflictException('OrderId must be unique');
             }
         }
+        console.log({ vendor }, 'debug log');
         const gateway = clientId === 'edviron' ? collect_request_schema_1.Gateway.HDFC : collect_request_schema_1.Gateway.PENDING;
         const request = await new this.databaseService.CollectRequestModel({
             amount,
