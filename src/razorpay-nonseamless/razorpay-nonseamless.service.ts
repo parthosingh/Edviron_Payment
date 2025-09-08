@@ -182,8 +182,8 @@ export class RazorpayNonseamlessService {
 
       const formattedResponse: any = {
         status: status,
-        amount: response?.amount ? response?.amount / 100 : null,
-        transaction_amount: response?.amount ? response?.amount / 100 : null,
+        amount: response?.amount ? response?.amount / 100 : collectRequest.amount,
+        transaction_amount: response?.amount ? response?.amount / 100 : collectRequest.amount,
         status_code: statusCode,
         custom_order_id: collectRequest?.custom_order_id,
         details: {
