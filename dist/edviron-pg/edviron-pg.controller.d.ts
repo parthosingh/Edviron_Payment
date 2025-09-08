@@ -257,6 +257,11 @@ export declare class EdvironPgController {
     }): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{
         _id: import("mongoose").Schema.Types.ObjectId;
     }>)[]>;
+    getSubtrusteeBatchTransactions(body: {
+        school_ids: string[];
+        year: string;
+        token: string;
+    }): Promise<any>;
     getMerchantBatchTransactions(query: {
         school_id: string;
         year: string;
@@ -423,4 +428,7 @@ export declare class EdvironPgController {
         message: string;
     }>;
     retriveEasebuzz(body: any): Promise<any>;
+    setMdrZero(body: {
+        school_ids: string[];
+    }): Promise<import("mongoose").UpdateWriteOpResult | undefined>;
 }

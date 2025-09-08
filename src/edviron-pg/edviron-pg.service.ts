@@ -2097,6 +2097,53 @@ export class EdvironPgService implements GatewayService {
     }
   }
 
+  async getSubTrusteeBatchTransactions(school_ids: string[], year: string) {
+  try {
+    const batch = await this.databaseService.BatchTransactionModel.aggregate([
+  {
+    $match: {
+      school_id: { $in: school_ids },
+      year: year,
+    },
+  },
+  {
+    $project: {
+      order_amount: 1,
+      transaction_amount: {
+        $ifNull: ["$transaction_amount", "$order_amount"], // example projection
+      },
+    },
+  },
+  {
+    $group: {
+      _id: null,
+      total_order_amount: { $sum: "$order_amount" },
+      total_transaction_amount: { $sum: "$transaction_amount" },
+      total_transactions: { $sum: 1 },
+    },
+  },
+  {
+    $project: {
+      _id: 0,
+      total_order_amount: 1,
+      total_transaction_amount: 1,
+      total_transactions: 1,
+    },
+  },
+]);
+
+
+    if (!batch || batch.length === 0) {
+      throw new Error("Batch not found");
+    }
+
+    return batch[0];
+  } catch (e) {
+    throw new BadRequestException(e.message);
+  }
+}
+
+
   async getSingleTransaction(collect_id: string) {
     const objId = new Types.ObjectId(collect_id);
     const vendotTransaction =
