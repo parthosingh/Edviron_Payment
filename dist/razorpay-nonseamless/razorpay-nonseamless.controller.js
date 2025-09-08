@@ -141,6 +141,8 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             let payment_method = status.details.payment_mode || null;
             let payload = status?.details?.payment_methods || {};
             let detail;
+            let pg_mode = payment_method;
+            console.log(payment_method, "payment_method");
             switch (payment_method) {
                 case 'upi':
                     detail = {
@@ -150,20 +152,36 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                         },
                     };
                     break;
-                case 'card':
+                case 'credit':
+                    pg_mode = 'credit_card',
+                        console.log(payload, 'payloadin here');
                     detail = {
                         card: {
-                            card_bank_name: payload?.card_type || null,
-                            card_country: payload.card_country || null,
-                            card_network: payload.card_network || null,
-                            card_number: payload.card_number || null,
-                            card_sub_type: payload.card_sub_type || null,
-                            card_type: payload.card_type || null,
+                            card_bank_name: payload?.card?.card_type || null,
+                            card_country: payload?.card?.card_country || null,
+                            card_network: payload?.card?.card_network || null,
+                            card_number: payload?.card?.card_number || null,
+                            card_sub_type: payload?.card?.card_sub_type || null,
+                            card_type: payload?.card?.card_type || null,
                             channel: null,
                         },
                     };
                     break;
-                case 'netbanking':
+                case 'debit':
+                    pg_mode = 'debit_card',
+                        detail = {
+                            card: {
+                                card_bank_name: payload?.card?.card_type || null,
+                                card_country: payload?.card?.card_country || null,
+                                card_network: payload?.card?.card_network || null,
+                                card_number: payload?.card?.card_number || null,
+                                card_sub_type: payload?.card?.card_sub_type || null,
+                                card_type: payload?.card?.card_type || null,
+                                channel: null,
+                            },
+                        };
+                    break;
+                case 'net_banking':
                     detail = {
                         netbanking: {
                             channel: null,
@@ -194,7 +212,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             if (payment_status === collect_req_status_schema_1.PaymentStatus.SUCCESS) {
                 collect_req_status.status = collect_req_status_schema_1.PaymentStatus.SUCCESS;
                 collect_req_status.bank_reference = status.details?.bank_ref || '';
-                collect_req_status.payment_method = status.details?.payment_mode || '';
+                collect_req_status.payment_method = pg_mode || '';
                 collect_req_status.details =
                     JSON.stringify(status.details?.payment_methods) || '';
                 collect_req_status.payment_time =
@@ -211,8 +229,8 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             const callbackUrl = new URL(collect_request.callbackUrl);
             callbackUrl.searchParams.set('EdvironCollectRequestId', collect_id);
             const collectIdObject = new mongoose_1.Types.ObjectId(collect_id);
-            const transaction_time = status.transaction_time
-                ? new Date(status.transaction_time)
+            const transaction_time = status?.details?.transaction_time
+                ? new Date(status?.details?.transaction_time)
                 : null;
             const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
                 collect_id: collectIdObject,
@@ -223,7 +241,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                         ? transaction_time.toISOString()
                         : null,
                     transaction_amount: status?.transaction_amount || status?.amount,
-                    payment_method: status?.details?.payment_mode || '',
+                    payment_method: pg_mode || '',
                     details: JSON.stringify(detail),
                     bank_reference: status?.details?.bank_ref || '',
                     reason: status.details?.order_status || '',
@@ -233,6 +251,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                 upsert: true,
                 new: true,
             });
+            console.log(updateReq, "updateReq");
             const webhookUrl = collect_request?.req_webhook_urls;
             const transaction_time_str = transaction_time
                 ? transaction_time.toISOString()
