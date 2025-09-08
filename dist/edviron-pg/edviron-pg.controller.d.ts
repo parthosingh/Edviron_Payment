@@ -21,10 +21,10 @@
 /// <reference types="mongoose/types/utility" />
 /// <reference types="mongoose/types/validation" />
 /// <reference types="mongoose/types/virtuals" />
-/// <reference types="mongoose" />
 /// <reference types="mongoose/types/inferschematype" />
 import { DatabaseService } from '../database/database.service';
 import { EdvironPgService } from './edviron-pg.service';
+import { Types } from 'mongoose';
 import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
@@ -394,22 +394,16 @@ export declare class EdvironPgController {
         yearlyTotal?: undefined;
         monthlyReport?: undefined;
     }>;
-    getVba(collect_id: string): Promise<any>;
-    getDisputesbyOrderId(collect_id: string): Promise<{
-        data: {
-            cashfreeDispute: any;
-            custom_order_id: string;
-            collect_id: string;
-            school_id: string;
-            trustee_id: string;
-            gateway: Gateway;
-            bank_reference: string;
-            student_detail: string;
-        };
-    }>;
-    sendMailAfterTransaction(body: any): Promise<string>;
-    updateEasebuzzAmount(body: any): Promise<{
-        message: string;
-    }>;
-    retriveEasebuzz(body: any): Promise<any>;
+    bulkSubTrusteeTransactions(body: {
+        trustee_id: string;
+        token: string;
+        searchParams?: string;
+        isCustomSearch?: boolean;
+        seachFilter?: string;
+        payment_modes?: string[];
+        isQRCode?: boolean;
+        gateway?: string[];
+        school_ids: Types.ObjectId[];
+    }, res: any, req: any): Promise<void>;
+
 }
