@@ -15,6 +15,17 @@ interface error_details {
     error_reason: string | null;
     error_source: string | null;
 }
+interface vbaPaymentDetails {
+    utr: string | null;
+    credit_ref_no: string | null;
+    remitter_account: string | null;
+    remitter_name: string | null;
+    remitter_ifsc: string | null;
+    email: string | null;
+    phone: string | null;
+    vaccount_id: string | null;
+    vaccount_number: string | null;
+}
 export declare class CollectRequestStatus {
     createdAt?: Date;
     updatedAt?: Date;
@@ -26,13 +37,20 @@ export declare class CollectRequestStatus {
     details: String;
     status_details: String;
     bank_reference: string;
+    utr_number: string;
     payment_time: Date;
+    settlement_date: Date;
     isAttempted: boolean;
     isAutoRefund: boolean;
     reason: string;
     payment_message: string;
+    cf_payment_id: string;
     capture_status: string;
+    isVBAPaymentComplete: boolean;
+    vbaOrderId: string;
     error_details: error_details;
+    isPosTransaction: boolean;
+    vbaPaymentDetails: vbaPaymentDetails;
     _id: ObjectId;
 }
 export type CollectRequestStatusDocument = CollectRequestStatus & Document;

@@ -19,10 +19,12 @@ const database_service_1 = require("../database/database.service");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const mongoose_1 = require("mongoose");
+const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 let HdfcRazorpayController = class HdfcRazorpayController {
-    constructor(hdfcRazorpayService, databaseService) {
+    constructor(hdfcRazorpayService, databaseService, edvironPgService) {
         this.hdfcRazorpayService = hdfcRazorpayService;
         this.databaseService = databaseService;
+        this.edvironPgService = edvironPgService;
     }
     async handleCallback(body, collect_id, res) {
         try {
@@ -115,7 +117,7 @@ let HdfcRazorpayController = class HdfcRazorpayController {
             gateway: collect_request_schema_1.Gateway.EDVIRON_HDFC_RAZORPAY,
         }).save();
         const { payload } = body;
-        const { order_id, amount, method, bank, acquirer_data, error_reason, card, card_id, wallet } = payload.payment.entity;
+        const { order_id, amount, method, bank, acquirer_data, error_reason, card, card_id, wallet, } = payload.payment.entity;
         let { status } = payload.payment.entity;
         const { created_at } = payload.payment.entity;
         const { receipt } = payload.order.entity;
@@ -150,20 +152,24 @@ let HdfcRazorpayController = class HdfcRazorpayController {
                         upi: {
                             channel: null,
                             upi_id: payload.payment.entity.vpa || null,
-                        }
+                        },
                     };
                     break;
                 case 'card':
                     detail = {
                         card: {
                             card_bank_name: card.type || null,
-                            card_country: card.international === false ? "IN" : card.international === true ? "OI" : null,
+                            card_country: card.international === false
+                                ? 'IN'
+                                : card.international === true
+                                    ? 'OI'
+                                    : null,
                             card_network: card.network || null,
                             card_number: card_id || null,
                             card_sub_type: card.sub_type || null,
                             card_type: card.type || null,
-                            channel: null
-                        }
+                            channel: null,
+                        },
                     };
                     break;
                 case 'netbanking':
@@ -172,15 +178,15 @@ let HdfcRazorpayController = class HdfcRazorpayController {
                             channel: null,
                             netbanking_bank_code: acquirer_data.bank_transaction_id,
                             netbanking_bank_name: bank,
-                        }
+                        },
                     };
                     break;
                 case 'wallet':
                     detail = {
                         wallet: {
                             channel: wallet,
-                            provider: wallet
-                        }
+                            provider: wallet,
+                        },
                     };
                     break;
                 default:
@@ -219,6 +225,17 @@ let HdfcRazorpayController = class HdfcRazorpayController {
                 upsert: true,
                 new: true,
             });
+            try {
+                await this.edvironPgService.sendMailAfterTransaction(collectIdObject.toString());
+            }
+            catch (e) {
+                await this.databaseService.ErrorLogsModel.create({
+                    type: 'sendMailAfterTransaction',
+                    des: collectIdObject.toString(),
+                    identifier: 'Hdfc razorpay webhook',
+                    body: e.message || e.toString(),
+                });
+            }
             res.status(200).send('OK');
         }
         catch (e) {
@@ -257,6 +274,7 @@ __decorate([
 exports.HdfcRazorpayController = HdfcRazorpayController = __decorate([
     (0, common_1.Controller)('hdfc-razorpay'),
     __metadata("design:paramtypes", [hdfc_razorpay_service_1.HdfcRazorpayService,
-        database_service_1.DatabaseService])
+        database_service_1.DatabaseService,
+        edviron_pg_service_1.EdvironPgService])
 ], HdfcRazorpayController);
 //# sourceMappingURL=hdfc_razorpay.controller.js.map

@@ -19,6 +19,18 @@ interface error_details {
   error_source: string | null;
 }
 
+interface vbaPaymentDetails {
+  utr: string | null;
+  credit_ref_no: string | null;
+  remitter_account: string | null;
+  remitter_name: string | null;
+  remitter_ifsc: string | null;
+  email: string | null;
+  phone: string | null;
+  vaccount_id: string | null;
+  vaccount_number: string | null;
+}
+
 @Schema({ timestamps: true })
 export class CollectRequestStatus {
   @Prop()
@@ -56,7 +68,13 @@ export class CollectRequestStatus {
   bank_reference: string;
 
   @Prop({ required: false, default: '' })
+  utr_number: string;
+
+  @Prop({ required: false, default: '' })
   payment_time: Date;
+
+  @Prop({ required: false, default: '' })
+  settlement_date: Date;
 
   @Prop({ required: false, default: false })
   isAttempted: boolean;
@@ -71,7 +89,16 @@ export class CollectRequestStatus {
   payment_message: string;
 
   @Prop({ required: false, default: '' })
+  cf_payment_id: string;
+
+  @Prop({ required: false, default: '' })
   capture_status: string;
+
+  @Prop({ required: false, default: false })
+  isVBAPaymentComplete: boolean;
+
+  @Prop({ required: false, default: '' })
+  vbaOrderId: string;
 
   @Prop({
     required: false,
@@ -83,6 +110,26 @@ export class CollectRequestStatus {
     _id: false,
   })
   error_details: error_details;
+
+  @Prop({ required: false, default: false })
+  isPosTransaction: boolean;
+
+  @Prop({
+    required: false,
+    type: {
+      utr: { type: String, required: false, default: null },
+      credit_ref_no: { type: String, required: false, default: null },
+      remitter_account: { type: String, required: false, default: null },
+      remitter_name: { type: String, required: false, default: null },
+      remitter_ifsc: { type: String, required: false, default: null },
+      email: { type: String, required: false, default: null },
+      phone: { type: String, required: false, default: null },
+      vaccount_id: { type: String, required: false, default: null },
+      vaccount_number: { type: String, required: false, default: null },
+    },
+    _id: false,
+  })
+  vbaPaymentDetails: vbaPaymentDetails;
 
   _id: ObjectId;
 }

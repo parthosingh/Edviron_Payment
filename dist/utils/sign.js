@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.decrypt = exports.encryptCard = exports.generateHMACBase64Type = exports.merchantKeySHA256 = exports.calculateSHA256 = exports.calculateSHA512Hash = exports.sign = void 0;
+exports.generateSignature = exports.decrypt = exports.encryptCard = exports.generateHMACBase64Type = exports.merchantKeySHA256 = exports.calculateSHA256 = exports.calculateSHA512Hash = exports.sign = void 0;
 const _jwt = require("jsonwebtoken");
 const crypto = require('crypto');
 const sign = async (body) => {
@@ -20,9 +20,20 @@ const calculateSHA256 = async (data) => {
     return hash.digest('hex');
 };
 exports.calculateSHA256 = calculateSHA256;
-const merchantKeySHA256 = async () => {
-    const merchantKey = process.env.EASEBUZZ_KEY;
-    const salt = process.env.EASEBUZZ_SALT;
+const merchantKeySHA256 = async (request) => {
+    let merchantKey = process.env.EASEBUZZ_KEY;
+    let salt = process.env.EASEBUZZ_SALT;
+    if (request) {
+        try {
+            merchantKey =
+                request.easebuzz_non_partner_cred?.easebuzz_key || merchantKey;
+            salt = request.easebuzz_non_partner_cred?.easebuzz_salt || salt;
+        }
+        catch (e) {
+            merchantKey = process.env.EASEBUZZ_KEY;
+            salt = process.env.EASEBUZZ_SALT;
+        }
+    }
     console.log({ merchantKey, salt });
     const key = crypto
         .createHash('sha256')
@@ -63,4 +74,12 @@ const decrypt = async (encryptedData, key, iv) => {
     return decrypted;
 };
 exports.decrypt = decrypt;
+const generateSignature = (merchID, password, merchTxnID, amount, txnCurrency, txnType, coll_req) => {
+    const signatureString = merchID + password + merchTxnID + amount + txnCurrency + txnType;
+    const hmac = crypto.createHmac('sha512', coll_req.nttdata_hash_req_key);
+    const data = hmac.update(signatureString);
+    const gen_hmac = data.digest('hex');
+    return gen_hmac;
+};
+exports.generateSignature = generateSignature;
 //# sourceMappingURL=sign.js.map

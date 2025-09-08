@@ -29,12 +29,18 @@ import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { PlatformCharge, rangeCharge } from 'src/database/schemas/platform.charges.schema';
+import { NttdataService } from 'src/nttdata/nttdata.service';
+import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
+import { WorldlineService } from 'src/worldline/worldline.service';
 export declare class EdvironPgController {
     private readonly edvironPgService;
     private readonly databaseService;
     private readonly easebuzzService;
     private readonly cashfreeService;
-    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService);
+    private readonly nttDataService;
+    private readonly posPaytmService;
+    private readonly worldlineService;
+    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, nttDataService: NttdataService, posPaytmService: PosPaytmService, worldlineService: WorldlineService);
     handleRedirect(req: any, res: any): Promise<void>;
     handleSdkRedirect(req: any, res: any): Promise<any>;
     handleCallback(req: any, res: any): Promise<any>;
@@ -51,7 +57,22 @@ export declare class EdvironPgController {
         collect_request_id: string;
         token: string;
     }): Promise<any[]>;
+    getTransactionInfoOrder(body: {
+        school_id: string;
+        order_id: string;
+        token: string;
+    }): Promise<any[]>;
     bulkTransactions(body: {
+        trustee_id: string;
+        token: string;
+        searchParams?: string;
+        isCustomSearch?: boolean;
+        seachFilter?: string;
+        payment_modes?: string[];
+        isQRCode?: boolean;
+        gateway?: string[];
+    }, res: any, req: any): Promise<void>;
+    bulkTransactionsCSV(body: {
         trustee_id: string;
         token: string;
         searchParams?: string;
@@ -78,12 +99,15 @@ export declare class EdvironPgController {
     }): Promise<{
         cashfreeSum: number;
         easebuzzSum: number;
+        razorpaySum: number;
         percentageCashfree: number;
         percentageEasebuzz: number;
+        percentageRazorpay: number;
     }>;
     getPgStatus(collect_id: string): Promise<{
         cashfree: boolean;
         easebuzz: boolean;
+        razorpay: boolean;
     }>;
     initiaterefund(body: {
         collect_id: string;
@@ -143,11 +167,13 @@ export declare class EdvironPgController {
         trustee_id: string;
         status?: string;
         vendor_id?: string;
-        school_id?: string;
+        school_id?: string[];
         start_date?: string;
         end_date?: string;
         custom_id?: string;
         collect_id?: string;
+        gateway?: string[];
+        payment_modes?: string[];
     }): Promise<{
         vendorsTransaction: any[];
         totalCount: number;
@@ -198,9 +224,7 @@ export declare class EdvironPgController {
         collect_id?: string;
         custom_id?: string;
     }): Promise<{
-        erp_webhooks_logs: (import("mongoose").Document<unknown, {}, import("../database/schemas/erp.webhooks.logs.schema").ErpWebhooksLogs> & import("../database/schemas/erp.webhooks.logs.schema").ErpWebhooksLogs & Required<{
-            _id: import("mongoose").Schema.Types.ObjectId;
-        }>)[];
+        erp_webhooks_logs: any[];
         totalRecords: number;
         page: number;
     }>;
@@ -215,8 +239,26 @@ export declare class EdvironPgController {
         month: string;
         year: string;
     }>;
+    saveMerchantBatchTransactions(body: {
+        school_id: string;
+        start_date: string;
+        end_date: string;
+        status?: string;
+    }): Promise<{
+        transactions: any[];
+        totalTransactions: number;
+        month: string;
+        year: string;
+    }>;
     getBatchTransactions(query: {
         trustee_id: string;
+        year: string;
+        token: string;
+    }): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{
+        _id: import("mongoose").Schema.Types.ObjectId;
+    }>)[]>;
+    getMerchantBatchTransactions(query: {
+        school_id: string;
         year: string;
         token: string;
     }): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{
@@ -325,6 +367,17 @@ export declare class EdvironPgController {
         url: string;
         trustee_id: string;
     }): Promise<any>;
+    approve(body: {
+        gateway: string;
+        school_id: string;
+        kyc_mail: string;
+        token: string;
+    }): Promise<string>;
+    initiategatewayKyc(body: {
+        school_id: string;
+        kyc_mail: string;
+        gateway: string;
+    }): Promise<string | undefined>;
     genSchoolReport(body: {
         school_id: string;
         start_date: string;
@@ -352,4 +405,5 @@ export declare class EdvironPgController {
         gateway?: string[];
         school_ids: Types.ObjectId[];
     }, res: any, req: any): Promise<void>;
+
 }

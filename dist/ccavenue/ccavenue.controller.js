@@ -39,7 +39,7 @@ let CcavenueController = class CcavenueController {
                     }
                 </script>`);
     }
-    async handleCallback(body, res, req) {
+    async handleCcavenueCallbackPost(body, res, req) {
         console.log('callback recived from ccavenue');
         try {
             console.log(req.query.collect_id);
@@ -49,6 +49,37 @@ let CcavenueController = class CcavenueController {
                 throw new Error('Collect request not found');
             collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_CCAVENUE;
             await collectReq.save();
+            if (collectReq.school_id === '6819e115e79a645e806c0a70') {
+                console.log('new flow');
+                const status = await this.ccavenueService.checkStatusProd(collectReq, collectIdObject);
+                const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                    collect_id: new mongoose_1.Types.ObjectId(collectIdObject),
+                });
+                if (!requestStatus) {
+                    throw new common_1.BadRequestException('status not foubnd');
+                }
+                const order_info = JSON.parse(status.decrypt_res);
+                let payment_method = order_info.order_option_type;
+                let details = status.decrypt_res;
+                if (order_info.order_option_type === 'OPTUPI') {
+                    payment_method = 'upi';
+                    const details_data = {
+                        upi: { channel: null, upi_id: 'NA' },
+                    };
+                    details = JSON.stringify(details_data);
+                }
+                requestStatus.status = status.status;
+                requestStatus.payment_method = payment_method;
+                requestStatus.details = details;
+                await requestStatus.save();
+                const callbackUrl = new URL(collectReq?.callbackUrl);
+                if (status.status.toUpperCase() !== `SUCCESS`) {
+                    console.log('payment failure', status.status);
+                    return res.redirect(`${callbackUrl.toString()}?EdvironCollectRequestId=${collectIdObject}status=cancelled&reason=payment-declined`);
+                }
+                callbackUrl.searchParams.set('EdvironCollectRequestId', collectIdObject);
+                return res.redirect(callbackUrl.toString());
+            }
             const status = await this.ccavenueService.checkStatus(collectReq, collectIdObject);
             const orderDetails = JSON.parse(status.decrypt_res);
             console.log(orderDetails, 'order details');
@@ -131,11 +162,10 @@ let CcavenueController = class CcavenueController {
             const collectRequestId = await this.ccavenueService.ccavResponseToCollectRequestId(encResp, collectRequest.ccavenue_working_key);
             const callbackUrl = new URL(collectRequest?.callbackUrl);
             if (status.status.toUpperCase() !== `SUCCESS`) {
-                callbackUrl.searchParams.set('EdvironCollectRequestId', collectIdObject);
-                return res.redirect(`${callbackUrl.toString()}&status=cancelled&reason=payment-declined`);
+                console.log('payment failure', status.status);
+                return res.redirect(`${callbackUrl.toString()}?EdvironCollectRequestId=${collectIdObject}status=cancelled&reason=payment-declined`);
             }
             callbackUrl.searchParams.set('EdvironCollectRequestId', collectIdObject);
-            callbackUrl.searchParams.set('status', 'SUCCESS');
             return res.redirect(callbackUrl.toString());
         }
         catch (e) {
@@ -153,6 +183,37 @@ let CcavenueController = class CcavenueController {
                 throw new Error('Collect request not found');
             collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_CCAVENUE;
             await collectReq.save();
+            if (collectReq.school_id === '6819e115e79a645e806c0a70') {
+                console.log('new flow');
+                const status = await this.ccavenueService.checkStatusProd(collectReq, collectIdObject);
+                const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                    collect_id: new mongoose_1.Types.ObjectId(collectIdObject),
+                });
+                if (!requestStatus) {
+                    throw new common_1.BadRequestException('status not foubnd');
+                }
+                const order_info = JSON.parse(status.decrypt_res);
+                let payment_method = order_info.order_option_type;
+                let details = status.decrypt_res;
+                if (order_info.order_option_type === 'OPTUPI') {
+                    payment_method = 'upi';
+                    const details_data = {
+                        upi: { channel: null, upi_id: 'NA' },
+                    };
+                    details = JSON.stringify(details_data);
+                }
+                requestStatus.status = status.status;
+                requestStatus.payment_method = payment_method;
+                requestStatus.details = details;
+                await requestStatus.save();
+                const callbackUrl = new URL(collectReq?.callbackUrl);
+                if (status.status.toUpperCase() !== `SUCCESS`) {
+                    console.log('payment failure', status.status);
+                    return res.redirect(`${callbackUrl.toString()}?EdvironCollectRequestId=${collectIdObject}status=cancelled&reason=payment-declined`);
+                }
+                callbackUrl.searchParams.set('EdvironCollectRequestId', collectIdObject);
+                return res.redirect(callbackUrl.toString());
+            }
             const status = await this.ccavenueService.checkStatus(collectReq, collectIdObject);
             const orderDetails = JSON.parse(status.decrypt_res);
             console.log(orderDetails, 'order details');
@@ -264,7 +325,7 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
-], CcavenueController.prototype, "handleCallback", null);
+], CcavenueController.prototype, "handleCcavenueCallbackPost", null);
 __decorate([
     (0, common_1.Get)('/callback'),
     __param(0, (0, common_1.Body)()),

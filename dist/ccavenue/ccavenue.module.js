@@ -18,7 +18,7 @@ exports.CcavenueModule = CcavenueModule = __decorate([
     (0, common_1.Module)({
         controllers: [ccavenue_controller_1.CcavenueController],
         providers: [ccavenue_service_1.CcavenueService],
-        imports: [database_module_1.DatabaseModule]
+        imports: [database_module_1.DatabaseModule],
     })
 ], CcavenueModule);
 //# sourceMappingURL=ccavenue.module.js.map

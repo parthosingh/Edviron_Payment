@@ -30,10 +30,12 @@ import { DatabaseService } from '../database/database.service';
 import { TransactionStatus } from '../types/transactionStatus';
 import { platformChange } from 'src/collect/collect.controller';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
+import { RazorpayService } from '../razorpay/razorpay.service';
 export declare class EdvironPgService implements GatewayService {
     private readonly databaseService;
     private readonly cashfreeService;
-    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService);
+    private readonly razorpayService;
+    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService, razorpayService: RazorpayService);
     collect(request: CollectRequest, platform_charges: platformChange[], school_name: any, splitPayments: boolean, vendor?: [
         {
             vendor_id: string;
@@ -41,7 +43,23 @@ export declare class EdvironPgService implements GatewayService {
             amount?: number;
             name?: string;
         }
-    ]): Promise<Transaction | undefined>;
+    ], vendorgateway?: {
+        easebuzz: boolean;
+        cashfree: boolean;
+    }, easebuzzVendors?: [
+        {
+            vendor_id: string;
+            amount?: number;
+            name?: string;
+        }
+    ], cashfreeVedors?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
+    ], easebuzz_school_label?: string | null): Promise<Transaction | undefined>;
     checkStatus(collect_request_id: String, collect_request: CollectRequest): Promise<{
         status: TransactionStatus;
         amount: number;
@@ -53,8 +71,11 @@ export declare class EdvironPgService implements GatewayService {
     terminateOrder(collect_id: string): Promise<boolean>;
     easebuzzCheckStatus(collect_request_id: String, collect_request: CollectRequest): Promise<any>;
     getPaymentDetails(school_id: string, startDate: string, mode: string): Promise<any[]>;
-    getQr(collect_id: string, request: CollectRequest): Promise<void>;
+    getQr(collect_id: string, request: CollectRequest, ezb_split_payments: {
+        [key: string]: number;
+    }): Promise<void>;
     getSchoolInfo(school_id: string): Promise<any>;
+    getAllSchoolInfo(school_id: string): Promise<any>;
     sendTransactionmail(email: string, request: CollectRequest): Promise<string>;
     sendErpWebhook(webHookUrl: string[], webhookData: any, webhook_key?: string | null): Promise<void>;
     test(): Promise<void>;
@@ -90,7 +111,7 @@ export declare class EdvironPgService implements GatewayService {
     }>;
     convertISTStartToUTC(dateStr: string): Promise<string>;
     convertISTEndToUTC(dateStr: string): Promise<string>;
-    getVendorTransactions(query: any, limit: number, page: number): Promise<{
+    getVendorTransactions(query: any, limit: number, page: number, payment_modes?: string[]): Promise<{
         vendorsTransaction: any[];
         totalCount: number;
         page: number;
@@ -98,6 +119,7 @@ export declare class EdvironPgService implements GatewayService {
         totalPages: number;
     }>;
     getSingleTransactionInfo(collect_id: string): Promise<any[]>;
+    getPaymentId(collect_id: string, request: CollectRequest): Promise<any>;
     getTransactionReportBatched(trustee_id: string, start_date: string, end_date: string, status?: string | null, school_id?: string | null): Promise<{
         length: number;
         transactions: any[];
@@ -112,8 +134,19 @@ export declare class EdvironPgService implements GatewayService {
         month: string;
         year: string;
     }>;
+    generateMerchantBacthTransactions(school_id: string, start_date: string, end_date: string, status?: string | null): Promise<{
+        transactions: any[];
+        totalTransactions: number;
+        month: string;
+        year: string;
+    }>;
     getBatchTransactions(trustee_id: string, year: string): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{
         _id: import("mongoose").Schema.Types.ObjectId;
     }>)[]>;
+    getMerchantBatchTransactions(school_id: string, year: string): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{
+        _id: import("mongoose").Schema.Types.ObjectId;
+    }>)[]>;
     getSingleTransaction(collect_id: string): Promise<any>;
+    sendMailAfterTransaction(collect_id: string): Promise<boolean>;
+    retriveEasebuzz(txnid: string, key: string, salt: string): Promise<any>;
 }

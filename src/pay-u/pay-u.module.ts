@@ -5,10 +5,11 @@ import { DatabaseService } from 'src/database/database.service';
 import { DatabaseModule } from 'src/database/database.module';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import { EdvironPgModule } from 'src/edviron-pg/edviron-pg.module';
+import { RazorpayService } from 'src/razorpay/razorpay.service';
 
 @Module({
-  providers: [PayUService,DatabaseService,EdvironPgService],
-  imports:[DatabaseModule,EdvironPgModule],
-  controllers: [PayUController] 
+  providers: [PayUService, DatabaseService, EdvironPgService, RazorpayService],
+  imports: [DatabaseModule, EdvironPgModule],
+  controllers: [PayUController],
 })
 export class PayUModule {}

@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { CcavenueService } from './ccavenue.service';
 import { Types } from 'mongoose';
@@ -31,7 +39,11 @@ export class CcavenueController {
   }
 
   @Post('/callback')
-  async handleCallback(@Body() body: any, @Res() res: any, @Req() req: any) {
+  async handleCcavenueCallbackPost(
+    @Body() body: any,
+    @Res() res: any,
+    @Req() req: any,
+  ) {
     console.log('callback recived from ccavenue');
     try {
       console.log(req.query.collect_id);
@@ -44,7 +56,50 @@ export class CcavenueController {
 
       collectReq.gateway = Gateway.EDVIRON_CCAVENUE;
       await collectReq.save();
+      if (collectReq.school_id === '6819e115e79a645e806c0a70') {
+        console.log('new flow');
 
+        const status = await this.ccavenueService.checkStatusProd(
+          collectReq,
+          collectIdObject,
+        );
+        const requestStatus =
+          await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: new Types.ObjectId(collectIdObject),
+          });
+        if (!requestStatus) {
+          throw new BadRequestException('status not foubnd');
+        }
+        const order_info = JSON.parse(status.decrypt_res);
+        let payment_method = order_info.order_option_type;
+        let details = status.decrypt_res;
+
+        if (order_info.order_option_type === 'OPTUPI') {
+          payment_method = 'upi';
+          const details_data = {
+            upi: { channel: null, upi_id: 'NA' },
+          };
+          details = JSON.stringify(details_data);
+        }
+        requestStatus.status = status.status;
+        requestStatus.payment_method = payment_method;
+        requestStatus.details = details;
+
+        await requestStatus.save();
+        const callbackUrl = new URL(collectReq?.callbackUrl);
+        if (status.status.toUpperCase() !== `SUCCESS`) {
+          console.log('payment failure', status.status);
+
+          return res.redirect(
+            `${callbackUrl.toString()}?EdvironCollectRequestId=${collectIdObject}status=cancelled&reason=payment-declined`,
+          );
+        }
+        callbackUrl.searchParams.set(
+          'EdvironCollectRequestId',
+          collectIdObject,
+        );
+        return res.redirect(callbackUrl.toString());
+      }
       const status = await this.ccavenueService.checkStatus(
         collectReq,
         collectIdObject,
@@ -164,13 +219,13 @@ export class CcavenueController {
 
       const callbackUrl = new URL(collectRequest?.callbackUrl);
       if (status.status.toUpperCase() !== `SUCCESS`) {
-        callbackUrl.searchParams.set('EdvironCollectRequestId', collectIdObject);
+        console.log('payment failure', status.status);
+
         return res.redirect(
-          `${callbackUrl.toString()}&status=cancelled&reason=payment-declined`,
+          `${callbackUrl.toString()}?EdvironCollectRequestId=${collectIdObject}status=cancelled&reason=payment-declined`,
         );
       }
       callbackUrl.searchParams.set('EdvironCollectRequestId', collectIdObject);
-      callbackUrl.searchParams.set('status', 'SUCCESS');
       return res.redirect(callbackUrl.toString());
     } catch (e) {
       console.log(`Error,${e}`);
@@ -196,7 +251,50 @@ export class CcavenueController {
 
       collectReq.gateway = Gateway.EDVIRON_CCAVENUE;
       await collectReq.save();
+      if (collectReq.school_id === '6819e115e79a645e806c0a70') {
+        console.log('new flow');
 
+        const status = await this.ccavenueService.checkStatusProd(
+          collectReq,
+          collectIdObject,
+        );
+        const requestStatus =
+          await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: new Types.ObjectId(collectIdObject),
+          });
+        if (!requestStatus) {
+          throw new BadRequestException('status not foubnd');
+        }
+        const order_info = JSON.parse(status.decrypt_res);
+        let payment_method = order_info.order_option_type;
+        let details = status.decrypt_res;
+
+        if (order_info.order_option_type === 'OPTUPI') {
+          payment_method = 'upi';
+          const details_data = {
+            upi: { channel: null, upi_id: 'NA' },
+          };
+          details = JSON.stringify(details_data);
+        }
+        requestStatus.status = status.status;
+        requestStatus.payment_method = payment_method;
+        requestStatus.details = details;
+
+        await requestStatus.save();
+        const callbackUrl = new URL(collectReq?.callbackUrl);
+        if (status.status.toUpperCase() !== `SUCCESS`) {
+          console.log('payment failure', status.status);
+
+          return res.redirect(
+            `${callbackUrl.toString()}?EdvironCollectRequestId=${collectIdObject}status=cancelled&reason=payment-declined`,
+          );
+        }
+        callbackUrl.searchParams.set(
+          'EdvironCollectRequestId',
+          collectIdObject,
+        );
+        return res.redirect(callbackUrl.toString());
+      }
       const status = await this.ccavenueService.checkStatus(
         collectReq,
         collectIdObject,
@@ -316,8 +414,8 @@ export class CcavenueController {
 
       const callbackUrl = new URL(collectRequest?.callbackUrl);
       if (status.status.toUpperCase() !== `SUCCESS`) {
-        console.log('payment failure',status.status);
-        
+        console.log('payment failure', status.status);
+
         return res.redirect(
           `${callbackUrl.toString()}?EdvironCollectRequestId=${collectIdObject}status=cancelled&reason=payment-declined`,
         );

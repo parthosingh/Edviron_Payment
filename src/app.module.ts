@@ -18,6 +18,19 @@ import { PayUModule } from './pay-u/pay-u.module';
 import { HdfcRazorpayModule } from './hdfc_razporpay/hdfc_razorpay.module';
 import { CashfreeService } from './cashfree/cashfree.service';
 import { CcavenueService } from './ccavenue/ccavenue.service';
+import { PosPaytmController } from './pos-paytm/pos-paytm.controller';
+import { PosPaytmService } from './pos-paytm/pos-paytm.service';
+import { NttdataModule } from './nttdata/nttdata.module';
+import { WorldlineModule } from './worldline/worldline.module';
+import { WorldlineController } from './worldline/worldline.controller';
+import { WorldlineService } from './worldline/worldline.service';
+import { RazorpayNonseamlessModule } from './razorpay-nonseamless/razorpay-nonseamless.module';
+import { RazorpayNonseamlessController } from './razorpay-nonseamless/razorpay-nonseamless.controller';
+import { RazorpayNonseamlessService } from './razorpay-nonseamless/razorpay-nonseamless.service';
+import { GatepayModule } from './gatepay/gatepay.module';
+import { ReportsModule } from './reports/reports.module';
+import { AwsS3ServiceModule } from './aws-s3-service/aws-s3-service.module';
+import { RazorpayModule } from './razorpay/razorpay.module';
 
 @Module({
   imports: [
@@ -31,9 +44,31 @@ import { CcavenueService } from './ccavenue/ccavenue.service';
     CashfreeModule,
     PayUModule,
     HdfcRazorpayModule,
-    SmartgatewayModule
+    SmartgatewayModule,
+    NttdataModule,
+    RazorpayNonseamlessModule,
+    WorldlineModule,
+    RazorpayModule,
+    GatepayModule,
+    ReportsModule,
+    AwsS3ServiceModule,
   ],
-  controllers: [AppController, EasebuzzController, CashfreeController],
-  providers: [AppService, CashfreeService, EasebuzzService, CcavenueService],
+  controllers: [
+    AppController,
+    EasebuzzController,
+    CashfreeController,
+    PosPaytmController,
+    WorldlineController,
+    RazorpayNonseamlessController,
+  ],
+  providers: [
+    AppService,
+    CashfreeService,
+    EasebuzzService,
+    CcavenueService,
+    PosPaytmService,
+    WorldlineService,
+    RazorpayNonseamlessService,
+  ],
 })
 export class AppModule {}

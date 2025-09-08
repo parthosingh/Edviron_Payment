@@ -87,10 +87,22 @@ let SmartgatewayController = class SmartgatewayController {
         return res.redirect(callbackUrl.toString());
     }
     async webhook(body, res) {
-        const { content, txn_detail, date_created } = body;
-        const { order_id } = content.order;
-        const { order } = body.content;
         try {
+            const log = await new this.databaseService.WebhooksModel({
+                body: JSON.stringify(body),
+                gateway: 'smartgateway',
+            }).save();
+            console.log(log);
+        }
+        catch (e) {
+            console.log(e);
+        }
+        const { content, date_created } = body;
+        const { order } = body.content;
+        const { order_id } = order;
+        const { txn_detail } = order;
+        try {
+            console.log('Webhook body:', order_id);
             const collect_id = order_id;
             const collectIdObject = new mongoose_1.Types.ObjectId(collect_id);
             const orderDetail = order;
@@ -112,6 +124,7 @@ let SmartgatewayController = class SmartgatewayController {
                 return;
             }
             const status_response = await this.smartgatewayService.checkStatus(collectReq._id.toString(), collectReq);
+            console.log(status_response, 'status');
             let platform_type;
             let payment_method;
             let details;
@@ -121,8 +134,8 @@ let SmartgatewayController = class SmartgatewayController {
                     platform_type = 'Wallet';
                     details = {
                         app: {
-                            channel: status_response.details.payment_methods.wallet.mode,
-                            provider: status_response.details.payment_methods.wallet.mode,
+                            channel: status_response.details.payment_methods.wallet.mode || 'N/A',
+                            provider: status_response.details.payment_methods.wallet.mode || 'N/A',
                         },
                     };
                     break;
@@ -131,7 +144,7 @@ let SmartgatewayController = class SmartgatewayController {
                     platform_type = 'UPI';
                     details = {
                         upi: {
-                            upi_id: status_response.details.payment_methods.upi.payer_vpa,
+                            upi_id: status_response.details.payment_methods.upi.payer_vpa || 'N/A',
                         },
                     };
                     break;
@@ -140,7 +153,7 @@ let SmartgatewayController = class SmartgatewayController {
                     platform_type = 'NetBanking';
                     details = {
                         netbanking: {
-                            netbanking_bank_name: status_response.details.payment_methods.net_banking.payment_method?.substring(2) || '',
+                            netbanking_bank_name: order.payment_method || '',
                         },
                     };
                     break;
@@ -149,9 +162,12 @@ let SmartgatewayController = class SmartgatewayController {
                     platform_type = 'CreditCard';
                     details = {
                         card: {
-                            card_bank_name: status_response.details.payment_methods.card.card_bank_name,
-                            provicard_network: status_response.details.payment_methods.card.card_network,
-                            card_number: status_response.details.payment_methods.card.card_number,
+                            card_bank_name: status_response.details.payment_methods.card.card_bank_name ||
+                                'N/A',
+                            provicard_network: status_response.details.payment_methods.card.card_network ||
+                                'N/A',
+                            card_number: status_response.details.payment_methods.card.card_number ||
+                                'N/A',
                             card_type: 'credit_card',
                         },
                     };
@@ -161,9 +177,12 @@ let SmartgatewayController = class SmartgatewayController {
                     platform_type = 'DebitCard';
                     details = {
                         card: {
-                            card_bank_name: status_response.details.payment_methods.card.card_bank_name,
-                            provicard_network: status_response.details.payment_methods.card.card_network,
-                            card_number: status_response.details.payment_methods.card.card_number,
+                            card_bank_name: status_response.details.payment_methods.card.card_bank_name ||
+                                'N/A',
+                            provicard_network: status_response.details.payment_methods.card.card_network ||
+                                'N/A',
+                            card_number: status_response.details.payment_methods.card.card_number ||
+                                'N/A',
                             card_type: 'debit_card',
                         },
                     };
@@ -183,7 +202,7 @@ let SmartgatewayController = class SmartgatewayController {
                     school_id: collectReq.school_id,
                     trustee_id: collectReq.trustee_id,
                     order_amount: pendingCollectReq?.order_amount,
-                    transaction_amount: txn_detail.net_amount,
+                    transaction_amount: txn_detail?.net_amount,
                     platform_type,
                     payment_mode: status_response.details.payment_mode,
                     collect_id: collectReq?._id,
@@ -224,12 +243,12 @@ let SmartgatewayController = class SmartgatewayController {
                 collect_id: collectIdObject,
             }, {
                 $set: {
-                    status,
+                    status: status_response.status,
                     transaction_amount,
                     payment_method,
                     details: JSON.stringify(details),
                     payment_time,
-                    bank_reference: content.order.payment_gateway_response.gateway_response.authCode,
+                    bank_reference: content.order?.payment_gateway_response?.rrn || 'NA',
                 },
             }, {
                 upsert: true,
@@ -250,7 +269,7 @@ let SmartgatewayController = class SmartgatewayController {
             const webHookDataInfo = {
                 collect_id: collectReq._id.toString(),
                 amount,
-                status,
+                status: status_response.status,
                 trustee_id: collectReq.trustee_id,
                 school_id: collectReq.school_id,
                 req_webhook_urls: collectReq?.req_webhook_urls,
@@ -278,8 +297,23 @@ let SmartgatewayController = class SmartgatewayController {
             return;
         }
         catch (e) {
+            console.log(e);
             res.status(500).send('Internal Server Error');
         }
+    }
+    async testy(req) {
+        const { collect_id, school_id } = req.query;
+        const requests = await this.databaseService.CollectRequestModel.find({
+            school_id,
+        })
+            .select('_id')
+            .sort({ createdAt: -1 })
+            .lean();
+        for (const req of requests) {
+            await this.smartgatewayService.updateTransaction(req._id.toString());
+        }
+        return true;
+        return await this.smartgatewayService.updateTransaction(collect_id);
     }
 };
 exports.SmartgatewayController = SmartgatewayController;
@@ -307,6 +341,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], SmartgatewayController.prototype, "webhook", null);
+__decorate([
+    (0, common_1.Get)('test'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SmartgatewayController.prototype, "testy", null);
 exports.SmartgatewayController = SmartgatewayController = __decorate([
     (0, common_1.Controller)('smartgateway'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

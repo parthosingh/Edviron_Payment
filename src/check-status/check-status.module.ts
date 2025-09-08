@@ -12,10 +12,11 @@ import { CashfreeModule } from 'src/cashfree/cashfree.module';
 import { PayUService } from 'src/pay-u/pay-u.service';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
-
-
- 
-
+import { NttdataService } from 'src/nttdata/nttdata.service';
+import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
+import { WorldlineService } from 'src/worldline/worldline.service';
+import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
+import { GatepayService } from 'src/gatepay/gatepay.service';
 @Module({
   controllers: [CheckStatusController],
   providers: [
@@ -23,8 +24,13 @@ import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';
     CcavenueService,
     EasebuzzService,
     SmartgatewayService,
-    PayUService, 
-    HdfcRazorpayService
+    PayUService,
+    HdfcRazorpayService,
+    NttdataService,
+    PosPaytmService,
+    WorldlineService,
+    RazorpayNonseamlessService,
+    GatepayService,
   ],
   imports: [
     DatabaseModule,

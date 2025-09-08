@@ -41,8 +41,60 @@ export declare class CollectController {
         pay_u_salt: string | null;
         hdfc_razorpay_id?: string;
         hdfc_razorpay_secret?: string;
+        isVBAPayment: boolean;
+        vba_account_number: string;
         hdfc_razorpay_mid?: string;
+        nttdata_id?: string | null;
+        nttdata_secret?: string | null;
+        nttdata_hash_req_key?: string | null;
+        nttdata_hash_res_key?: string | null;
+        nttdata_res_salt?: string | null;
+        nttdata_req_salt?: string | null;
+        easebuzz_school_label?: string | null;
+        worldline_merchant_id?: string | null;
+        worldline_encryption_key?: string | null;
+        worldline_encryption_iV?: string | null;
+        worldline_scheme_code?: string | null;
+        isCFNonSeamless?: boolean;
+        razorpay_credentials?: {
+            razorpay_id?: string | null;
+            razorpay_secret?: string | null;
+            razorpay_mid?: string | null;
+        };
+        gatepay_credentials?: {
+            gatepay_mid?: string | null;
+            gatepay_terminal_id?: string | null;
+            gatepay_key?: string | null;
+            gatepay_iv?: string | null;
+        };
+        razorpay_seamless_credentials?: {
+            razorpay_id?: string | null;
+            razorpay_secret?: string | null;
+            razorpay_mid?: string | null;
+        };
         vendors_info?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+                scheme_code?: string;
+            }
+        ];
+        worldLine_vendors?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+                scheme_code?: string;
+            }
+        ];
+        vendorgateway?: {
+            easebuzz: boolean;
+            cashfree: boolean;
+        };
+        easebuzzVendors?: [
             {
                 vendor_id: string;
                 percentage?: number;
@@ -50,6 +102,49 @@ export declare class CollectController {
                 name?: string;
             }
         ];
+        cashfreeVedors?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+            }
+        ];
+        razorpay_vendors?: [
+            {
+                vendor_id: string;
+                account?: string;
+                percentage?: number;
+                amount?: number;
+                notes?: {
+                    branch?: string;
+                    name?: string;
+                };
+                linked_account_notes?: string[];
+                on_hold?: boolean;
+                on_hold_until?: Date;
+            }
+        ];
+    }): Promise<any>;
+    posCollect(body: {
+        amount: Number;
+        callbackUrl: string;
+        jwt: string;
+        school_id: string;
+        trustee_id: string;
+        machine_name?: string;
+        platform_charges?: platformChange[];
+        paytm_pos?: {
+            paytmMid?: string;
+            paytmTid?: string;
+            channel_id?: string;
+            paytm_merchant_key?: string;
+            device_id?: string;
+        };
+        additional_data?: {};
+        custom_order_id?: string;
+        req_webhook_urls?: string[];
+        school_name?: string;
     }): Promise<any>;
     callbackUrl(res: any, collect_id: string): Promise<void>;
 }

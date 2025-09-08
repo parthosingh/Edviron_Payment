@@ -21,6 +21,7 @@ export declare class Webhooks {
     createdAt?: Date;
     updatedAt?: Date;
     webhooktype: string;
+    gateway: string;
     body: string;
     webhook_header?: Webhook_Header;
     _id: ObjectId;

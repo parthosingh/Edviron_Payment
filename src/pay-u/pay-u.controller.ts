@@ -512,10 +512,35 @@ export class PayUController {
           );
         }
       }
-
+      try {
+        await this.edvironPgService.sendMailAfterTransaction(
+          collectIdObject.toString(),
+        );
+      } catch (e) {
+        await this.databaseService.ErrorLogsModel.create({
+          type: 'sendMailAfterTransaction',
+          des: collectIdObject.toString(),
+          identifier: 'pay u webhook',
+          body: e.message || e.toString(),
+        });
+      }
       return res.status(200).send('OK');
     } catch (error) {
       return res.status(400).send(error.message || 'Error in saving webhook');
     }
+  }
+  @Post('get-settlements-recon')
+  async getSettlementsRecon(@Body() body: {
+    utr: string,
+    page: number,
+    limit: number,
+    school_id: string,
+  }) {
+  const { utr, page, limit, school_id } = body;
+  try{
+    return await this.payUService.settlementRecon(utr, limit, page, school_id);
+  }catch(e){
+    throw new BadRequestException(e.message);
+  }
   }
 }

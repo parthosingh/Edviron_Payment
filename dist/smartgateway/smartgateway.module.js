@@ -13,6 +13,7 @@ const smartgateway_service_1 = require("./smartgateway.service");
 const database_module_1 = require("../database/database.module");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
+const razorpay_service_1 = require("../razorpay/razorpay.service");
 let SmartgatewayModule = class SmartgatewayModule {
 };
 exports.SmartgatewayModule = SmartgatewayModule;
@@ -20,7 +21,12 @@ exports.SmartgatewayModule = SmartgatewayModule = __decorate([
     (0, common_1.Module)({
         imports: [database_module_1.DatabaseModule],
         controllers: [smartgateway_controller_1.SmartgatewayController],
-        providers: [smartgateway_service_1.SmartgatewayService, edviron_pg_service_1.EdvironPgService, cashfree_service_1.CashfreeService],
+        providers: [
+            smartgateway_service_1.SmartgatewayService,
+            edviron_pg_service_1.EdvironPgService,
+            cashfree_service_1.CashfreeService,
+            razorpay_service_1.RazorpayService
+        ],
     })
 ], SmartgatewayModule);
 //# sourceMappingURL=smartgateway.module.js.map

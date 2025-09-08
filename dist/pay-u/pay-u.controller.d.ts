@@ -13,4 +13,15 @@ export declare class PayUController {
     handleCallbackPost(req: any, res: any): Promise<any>;
     checkStatus(req: any, res: any): Promise<void>;
     handleWebhook(body: any, res: any): Promise<any>;
+    getSettlementsRecon(body: {
+        utr: string;
+        page: number;
+        limit: number;
+        school_id: string;
+    }): Promise<{
+        transactions: any[];
+        count: number;
+        page: number;
+        limit: number;
+    }>;
 }

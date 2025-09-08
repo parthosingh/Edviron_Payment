@@ -59,17 +59,92 @@ export class CollectController {
       smartgateway_customer_id?: string | null;
       smart_gateway_api_key?: string | null;
       split_payments?: boolean;
-      pay_u_key?:string | null;
+      pay_u_key?: string | null;
       pay_u_salt: string | null;
       hdfc_razorpay_id?: string;
       hdfc_razorpay_secret?: string;
+      isVBAPayment: boolean;
+      vba_account_number: string;
       hdfc_razorpay_mid?: string;
+      nttdata_id?: string | null;
+      nttdata_secret?: string | null;
+      nttdata_hash_req_key?: string | null;
+      nttdata_hash_res_key?: string | null;
+      nttdata_res_salt?: string | null;
+      nttdata_req_salt?: string | null;
+      easebuzz_school_label?: string | null;
+      worldline_merchant_id?: string | null;
+      worldline_encryption_key?: string | null;
+      worldline_encryption_iV?: string | null;
+      worldline_scheme_code?: string | null;
+      isCFNonSeamless?: boolean;
+      razorpay_credentials?: {
+        razorpay_id?: string | null;
+        razorpay_secret?: string | null;
+        razorpay_mid?: string | null;
+      };
+      gatepay_credentials?: {
+        gatepay_mid?: string | null;
+        gatepay_terminal_id?: string | null;
+        gatepay_key?: string | null;
+        gatepay_iv?: string | null;
+      };
+      razorpay_seamless_credentials?: {
+        razorpay_id?: string | null;
+        razorpay_secret?: string | null;
+        razorpay_mid?: string | null;
+      };
       vendors_info?: [
         {
           vendor_id: string;
           percentage?: number;
           amount?: number;
           name?: string;
+          scheme_code?: string;
+        },
+      ];
+      worldLine_vendors?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+          scheme_code?: string;
+        },
+      ];
+      vendorgateway?: {
+        easebuzz: boolean;
+        cashfree: boolean;
+      };
+      easebuzzVendors?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+        },
+      ];
+      cashfreeVedors?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+        },
+      ];
+      razorpay_vendors?: [
+        {
+          vendor_id: string;
+          account?: string;
+          percentage?: number;
+          amount?: number;
+          notes?: {
+            branch?: string;
+            name?: string;
+          };
+          linked_account_notes?: string[];
+          on_hold?: boolean;
+          on_hold_until?: Date;
         },
       ];
     },
@@ -103,16 +178,38 @@ export class CollectController {
       hdfc_razorpay_id,
       hdfc_razorpay_secret,
       hdfc_razorpay_mid,
+      nttdata_id,
+      nttdata_secret,
+      nttdata_hash_req_key,
+      nttdata_hash_res_key,
+      nttdata_res_salt,
+      nttdata_req_salt,
+      isVBAPayment,
+      vendorgateway,
+      easebuzzVendors,
+      cashfreeVedors,
+      easebuzz_school_label,
+      worldline_merchant_id,
+      worldline_encryption_key,
+      worldline_encryption_iV,
+      worldline_scheme_code,
+      vba_account_number,
+      worldLine_vendors,
+      razorpay_vendors,
+      razorpay_credentials,
+      gatepay_credentials,
+      isCFNonSeamless,
+      razorpay_seamless_credentials,
     } = body;
+    console.log(razorpay_credentials);
 
+    console.log('hit');
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
     if (!callbackUrl)
       throw new BadRequestException('Callback url not provided');
     try {
-      console.log(disabled_modes);
       let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
-      console.log(decrypted);
 
       // if (
       //   decrypted.amount !== amount || decrypted.callbackUrl !== callbackUrl
@@ -147,7 +244,99 @@ export class CollectController {
           hdfc_razorpay_id,
           hdfc_razorpay_secret,
           hdfc_razorpay_mid,
+          nttdata_id,
+          nttdata_secret,
+          nttdata_hash_req_key,
+          nttdata_hash_res_key,
+          nttdata_res_salt,
+          nttdata_req_salt,
+          worldline_merchant_id,
+          worldline_encryption_key,
+          worldline_encryption_iV,
+          worldline_scheme_code,
           vendors_info,
+          vendorgateway,
+          easebuzzVendors,
+          cashfreeVedors,
+          isVBAPayment,
+          vba_account_number,
+          worldLine_vendors,
+          easebuzz_school_label,
+          razorpay_vendors,
+          razorpay_credentials,
+          gatepay_credentials,
+          isCFNonSeamless,
+          razorpay_seamless_credentials
+        ),
+      );
+    } catch (e) {
+      console.log(e);
+      if (e.name === 'JsonWebTokenError')
+        throw new UnauthorizedException('JWT invalid');
+      throw e;
+    }
+  }
+
+  @Post('/pos')
+  async posCollect(
+    @Body()
+    body: {
+      amount: Number;
+      callbackUrl: string;
+      jwt: string;
+      school_id: string;
+      trustee_id: string;
+      machine_name?: string;
+      platform_charges?: platformChange[];
+      paytm_pos?: {
+        paytmMid?: string;
+        paytmTid?: string;
+        channel_id?: string;
+        paytm_merchant_key?: string;
+        device_id?: string; //edviron
+      };
+      additional_data?: {};
+      custom_order_id?: string;
+      req_webhook_urls?: string[];
+      school_name?: string;
+    },
+  ) {
+    const {
+      amount,
+      callbackUrl,
+      jwt,
+      school_id,
+      trustee_id,
+      machine_name,
+      paytm_pos,
+      platform_charges,
+      additional_data,
+      custom_order_id,
+      req_webhook_urls,
+      school_name,
+    } = body;
+
+    if (!jwt) throw new BadRequestException('JWT not provided');
+    if (!amount) throw new BadRequestException('Amount not provided');
+    if (!callbackUrl)
+      throw new BadRequestException('Callback url not provided');
+
+    try {
+      let decrypted = _jwt.verify(jwt, process.env.KEY!) as any;
+      console.log(decrypted, 'decrypted pos collect');
+      return sign(
+        await this.collectService.posCollect(
+          amount,
+          callbackUrl,
+          school_id,
+          trustee_id,
+          machine_name,
+          platform_charges,
+          paytm_pos,
+          additional_data,
+          custom_order_id,
+          req_webhook_urls,
+          school_name,
         ),
       );
     } catch (e) {

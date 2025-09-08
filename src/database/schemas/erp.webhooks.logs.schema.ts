@@ -18,7 +18,7 @@ export class ErpWebhooksLogs {
 
   @Prop({ required: false })
   webhooktype: string;
- 
+
   @Prop({ required: true })
   payload: string;
 
@@ -47,4 +47,5 @@ export class ErpWebhooksLogs {
 }
 
 export type ErpWebhooksLogsDocument = ErpWebhooksLogs & Document;
-export const ErpWebhooksLogsSchema = SchemaFactory.createForClass(ErpWebhooksLogs);
+export const ErpWebhooksLogsSchema =
+  SchemaFactory.createForClass(ErpWebhooksLogs);

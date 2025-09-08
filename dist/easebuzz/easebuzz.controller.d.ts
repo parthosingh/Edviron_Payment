@@ -1,9 +1,13 @@
 import { DatabaseService } from 'src/database/database.service';
 import { EasebuzzService } from './easebuzz.service';
+import { platformChange } from 'src/collect/collect.controller';
+import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 export declare class EasebuzzController {
     private readonly easebuzzService;
     private readonly databaseService;
-    constructor(easebuzzService: EasebuzzService, databaseService: DatabaseService);
+    private readonly edvironPgService;
+    constructor(easebuzzService: EasebuzzService, databaseService: DatabaseService, edvironPgService: EdvironPgService);
+    redirect(collect_id: string, easebuzzPaymentId: string, res: any): Promise<void>;
     getQr(res: any, req: any): Promise<any>;
     getEncryptedInfo(res: any, req: any, body: any): Promise<any>;
     getRefundhash(req: any): Promise<any>;
@@ -29,4 +33,71 @@ export declare class EasebuzzController {
         }>;
         sign: string;
     }): Promise<any>;
+    createOrderV2(body: {
+        amount: Number;
+        callbackUrl: string;
+        jwt: string;
+        school_id: string;
+        trustee_id: string;
+        webHook?: string;
+        disabled_modes?: string[];
+        platform_charges: platformChange[];
+        additional_data?: {};
+        custom_order_id?: string;
+        req_webhook_urls?: string[];
+        school_name?: string;
+        easebuzz_sub_merchant_id?: string;
+        split_payments?: boolean;
+        easebuzz_school_label?: string | null;
+        easebuzzVendors?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+            }
+        ];
+        easebuzz_non_partner_cred: {
+            easebuzz_salt: string;
+            easebuzz_key: string;
+            easebuzz_merchant_email: string;
+            easebuzz_submerchant_id: string;
+        };
+    }): Promise<any>;
+    createOrderNonSeamless(body: {
+        amount: Number;
+        callbackUrl: string;
+        jwt: string;
+        school_id: string;
+        trustee_id: string;
+        webHook?: string;
+        disabled_modes?: string[];
+        platform_charges: platformChange[];
+        additional_data?: {};
+        custom_order_id?: string;
+        req_webhook_urls?: string[];
+        school_name?: string;
+        easebuzz_sub_merchant_id?: string;
+        split_payments?: boolean;
+        easebuzz_school_label?: string | null;
+        easebuzzVendors?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+            }
+        ];
+        easebuzz_non_partner_cred: {
+            easebuzz_salt: string;
+            easebuzz_key: string;
+            easebuzz_merchant_email: string;
+            easebuzz_submerchant_id: string;
+        };
+    }): Promise<any>;
+    easebuzzWebhook(body: any, res: any): Promise<any>;
+    handleEasebuzzCallback(req: any, res: any): Promise<any>;
+    handleEasebuzzCallbackPost(req: any, res: any): Promise<any>;
+    handleEasebuzzNonSeamlessCallbackPost(body: any, req: any, res: any): Promise<any>;
+    handleEasebuzzNonSeamlessCallback(body: any, req: any, res: any): Promise<any>;
 }

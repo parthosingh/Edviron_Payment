@@ -1,4 +1,5 @@
 import * as _jwt from 'jsonwebtoken';
+import { CollectRequest } from 'src/database/schemas/collect_request.schema';
 const crypto = require('crypto');
 
 export const sign = async (body: any) => {
@@ -19,9 +20,19 @@ export const calculateSHA256 = async (data: any) => {
   return hash.digest('hex');
 };
 
-export const merchantKeySHA256 = async () => {
-  const merchantKey = process.env.EASEBUZZ_KEY;
-  const salt = process.env.EASEBUZZ_SALT;
+export const merchantKeySHA256 = async (request?: CollectRequest) => {
+  let merchantKey = process.env.EASEBUZZ_KEY;
+  let salt = process.env.EASEBUZZ_SALT;
+  if (request) {
+    try {
+      merchantKey =
+        request.easebuzz_non_partner_cred?.easebuzz_key || merchantKey;
+      salt = request.easebuzz_non_partner_cred?.easebuzz_salt || salt;
+    } catch (e) {
+      merchantKey = process.env.EASEBUZZ_KEY;
+      salt = process.env.EASEBUZZ_SALT;
+    }
+  }
   console.log({ merchantKey, salt });
 
   const key = crypto
@@ -82,4 +93,22 @@ export const decrypt = async (
   let decrypted = decipher.update(encryptedData, 'base64', 'utf-8');
   decrypted += decipher.final('utf-8');
   return decrypted;
+};
+
+export const generateSignature = (
+  merchID: string,
+  password: string,
+  merchTxnID: string,
+  amount: string,
+  txnCurrency: string,
+  txnType: string,
+  coll_req: any,
+) => {
+  // const resHashKey = process.env.NTT_REQUEST_HASH_KEY!;
+  const signatureString =
+    merchID + password + merchTxnID + amount + txnCurrency + txnType;
+  const hmac = crypto.createHmac('sha512', coll_req.nttdata_hash_req_key);
+  const data = hmac.update(signatureString);
+  const gen_hmac = data.digest('hex');
+  return gen_hmac;
 };
