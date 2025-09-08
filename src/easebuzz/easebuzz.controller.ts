@@ -287,6 +287,110 @@ export class EasebuzzController {
     }
   }
 
+  
+  @Post('/settlement-recon/v2')
+  async settlementReconV2(
+    @Body()
+    body: {
+      submerchant_id: string;
+      easebuzz_key:string;
+      easebuzz_salt:string;
+      start_date: string;
+      end_date: string;
+      page_size: number;
+      token: string;
+    },
+  ) {
+    try {
+      const { submerchant_id, start_date, end_date, page_size, token,easebuzz_key,easebuzz_salt } = body;
+
+      if (!token) throw new BadRequestException('Token is required');
+      const data = jwt.verify(token, process.env.PAYMENTS_SERVICE_SECRET!) as {
+        submerchant_id: string;
+      };
+
+      if (!data) throw new BadRequestException('Request Forged');
+
+      if (data.submerchant_id !== submerchant_id)
+        throw new BadRequestException('Request Forged');
+
+      const hashString = `${easebuzz_key}|${start_date}|${end_date}|${easebuzz_salt}`;
+      const hash = await calculateSHA512Hash(hashString);
+      const payload = {
+        merchant_key: easebuzz_key,
+        //   "merchant_email": "aditya@edviron.com",
+        payout_date: {
+          start_date,
+          end_date,
+        },
+        page_size,
+        hash,
+        submerchant_id,
+      };
+
+      const config = {
+        method: 'post',
+        url: `https://dashboard.easebuzz.in/settlements/v1/retrieve`,
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        data: payload,
+      };
+
+      const { data: resData } = await axios.request(config);
+
+      const orderIds = resData?.data[0]?.peb_transactions.map(
+        (data: any) => data?.txnid,
+      );
+
+      const customOrders = await this.databaseService.CollectRequestModel.find({
+        _id: { $in: orderIds },
+      });
+
+      const customOrderMap = new Map(
+        customOrders.map((doc) => [
+          doc._id.toString(),
+          {
+            custom_order_id: doc.custom_order_id,
+            school_id: doc.school_id,
+            additional_data: doc.additional_data,
+          },
+        ]),
+      );
+
+      const enrichedOrders = resData?.data[0]?.peb_transactions.map(
+        (order: any) => {
+          let customData: any = {};
+          let additionalData: any = {};
+          if (order.txnid) {
+            customData = customOrderMap.get(order.txnid) || {};
+            additionalData = JSON.parse(customData?.additional_data);
+          }
+          return {
+            ...order,
+            custom_order_id: customData.custom_order_id || null,
+            school_id: customData.school_id || null,
+            student_id: additionalData?.student_details?.student_id || null,
+            student_name: additionalData.student_details?.student_name || null,
+            student_email:
+              additionalData.student_details?.student_email || null,
+            student_phone_no:
+              additionalData.student_details?.student_phone_no || null,
+          };
+        },
+      );
+
+      return {
+        transactions: enrichedOrders,
+        split_payouts: resData?.data[0]?.split_payouts,
+        peb_refunds: resData?.data[0]?.peb_refunds,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Something Went Wrong');
+    }
+  }
+
   @Post('/update-dispute')
   async updateEasebuzzDispute(
     @Body()

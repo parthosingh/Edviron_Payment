@@ -23,6 +23,19 @@ export declare class EasebuzzController {
         split_payouts: any;
         peb_refunds: any;
     }>;
+    settlementReconV2(body: {
+        submerchant_id: string;
+        easebuzz_key: string;
+        easebuzz_salt: string;
+        start_date: string;
+        end_date: string;
+        page_size: number;
+        token: string;
+    }): Promise<{
+        transactions: any;
+        split_payouts: any;
+        peb_refunds: any;
+    }>;
     updateEasebuzzDispute(body: {
         case_id: string;
         action: string;

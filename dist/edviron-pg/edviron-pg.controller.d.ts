@@ -431,4 +431,16 @@ export declare class EdvironPgController {
     setMdrZero(body: {
         school_ids: string[];
     }): Promise<import("mongoose").UpdateWriteOpResult | undefined>;
+    subTrusteeTransactionsSum(body: {
+        trustee_id: string;
+        school_id: string[];
+        gateway?: string[] | null;
+        start_date: string;
+        end_date: string;
+        status: string;
+        mode: string[] | null;
+        isQRPayment: boolean;
+    }): Promise<{
+        transactions: any;
+    }>;
 }
