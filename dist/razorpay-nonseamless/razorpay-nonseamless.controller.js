@@ -118,6 +118,16 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
     async handleCallback(req, res) {
         try {
             const { collect_id } = req.query;
+            try {
+                const details = JSON.stringify(req.body || {});
+                await new this.databaseService.WebhooksModel({
+                    body: details,
+                    gateway: 'RAZORPAY_CALLBACK_BANK'
+                }).save();
+            }
+            catch (e) {
+                console.log(e);
+            }
             const [collect_request, collect_req_status] = await Promise.all([
                 this.databaseService.CollectRequestModel.findById(collect_id),
                 this.databaseService.CollectRequestStatusModel.findOne({
