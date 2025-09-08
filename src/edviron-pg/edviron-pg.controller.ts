@@ -3364,6 +3364,29 @@ export class EdvironPgController {
     }
   }
 
+  @Post('fetch-subtrustee-batch-transactions')
+  async getSubtrusteeBatchTransactions(
+    @Body() body:{
+      school_ids:string[],
+      year:string,
+      token:string
+    }
+  ){
+
+    try{
+      const {
+        school_ids,
+        year
+      }=body
+      const response=await this.edvironPgService.getSubTrusteeBatchTransactions(
+        school_ids,year
+      ) 
+      return response
+    }catch(e){
+
+    }
+  }
+
   @Get('/get-merchant-batch-transactions')
   async getMerchantBatchTransactions(
     @Query()
@@ -5248,6 +5271,25 @@ export class EdvironPgController {
       console.log(data);
       return data;
     } catch (error) { }
+  }
+
+  @Post('set-mdr-zero')
+  async setMdrZero(@Body() body: {
+    school_ids: string[];
+  }) {
+    try{
+      // const reset1=await this.databaseService.PlatformChargeModel.find(
+      //   { school_id: { $in: body.school_ids } },
+      // )
+      const reset=await this.databaseService.PlatformChargeModel.updateMany(
+        { school_id: { $in: body.school_ids } },
+       { $set: { "platform_charges.$[].range_charge.$[].charge": 0 } },
+      )
+
+      return reset
+    }catch(e){
+
+    }
   }
 
 }

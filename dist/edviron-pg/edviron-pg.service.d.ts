@@ -146,6 +146,7 @@ export declare class EdvironPgService implements GatewayService {
     getMerchantBatchTransactions(school_id: string, year: string): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{
         _id: import("mongoose").Schema.Types.ObjectId;
     }>)[]>;
+    getSubTrusteeBatchTransactions(school_ids: string[], year: string): Promise<any>;
     getSingleTransaction(collect_id: string): Promise<any>;
     sendMailAfterTransaction(collect_id: string): Promise<boolean>;
     retriveEasebuzz(txnid: string, key: string, salt: string): Promise<any>;

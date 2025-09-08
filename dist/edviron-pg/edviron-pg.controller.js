@@ -2351,6 +2351,15 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async getSubtrusteeBatchTransactions(body) {
+        try {
+            const { school_ids, year } = body;
+            const response = await this.edvironPgService.getSubTrusteeBatchTransactions(school_ids, year);
+            return response;
+        }
+        catch (e) {
+        }
+    }
     async getMerchantBatchTransactions(query) {
         try {
             const { school_id, year, token } = query;
@@ -3775,6 +3784,14 @@ let EdvironPgController = class EdvironPgController {
         }
         catch (error) { }
     }
+    async setMdrZero(body) {
+        try {
+            const reset = await this.databaseService.PlatformChargeModel.updateMany({ school_id: { $in: body.school_ids } }, { $set: { "platform_charges.$[].range_charge.$[].charge": 0 } });
+            return reset;
+        }
+        catch (e) {
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -4054,6 +4071,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getBatchTransactions", null);
 __decorate([
+    (0, common_1.Post)('fetch-subtrustee-batch-transactions'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getSubtrusteeBatchTransactions", null);
+__decorate([
     (0, common_1.Get)('/get-merchant-batch-transactions'),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
@@ -4239,6 +4263,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "retriveEasebuzz", null);
+__decorate([
+    (0, common_1.Post)('set-mdr-zero'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "setMdrZero", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

@@ -128,6 +128,7 @@ export class RazorpayNonseamlessController {
     try {
       const { collect_id } = req.query;
       try {
+
         const details = JSON.stringify(req.body || {});
         await new this.databaseService.WebhooksModel({
           body: details,
