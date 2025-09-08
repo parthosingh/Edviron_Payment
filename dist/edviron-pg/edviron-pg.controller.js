@@ -3032,7 +3032,6 @@ let EdvironPgController = class EdvironPgController {
             return { error: 'Failed to generate report' };
         }
     }
-
     async bulkSubTrusteeTransactions(body, res, req) {
         console.time('bulk-transactions-report');
         const { trustee_id, token, searchParams, isCustomSearch, seachFilter, school_ids, isQRCode, gateway, } = body;
@@ -4197,7 +4196,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "genSchoolReport", null);
 __decorate([
-
     (0, common_1.Post)('bulk-transactions-subtrustee-report'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Res)()),
@@ -4206,7 +4204,7 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "bulkSubTrusteeTransactions", null);
-
+__decorate([
     (0, common_1.Get)('/vba-details'),
     __param(0, (0, common_1.Query)('collect_id')),
     __metadata("design:type", Function),
@@ -4241,7 +4239,6 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "retriveEasebuzz", null);
-
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
