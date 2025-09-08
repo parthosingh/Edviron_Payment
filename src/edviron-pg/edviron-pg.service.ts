@@ -100,7 +100,7 @@ export class EdvironPgService implements GatewayService {
           customer_id: '7112AAA812234',
           customer_phone: '9898989898',
         },
-        order_currency: 'INR',
+        order_currency: request.currency,
         order_amount: request.amount.toFixed(2),
         order_id: request._id,
         order_meta: {
