@@ -154,7 +154,10 @@ export class RazorpayNonseamlessController {
 
       let payment_method = status.details.payment_mode || null;
       let payload = status?.details?.payment_methods || {};
+      
       let detail;
+      let pg_mode=payment_method
+      console.log(payment_method, "payment_method")
       switch (payment_method) {
         case 'upi':
           detail = {
@@ -165,21 +168,38 @@ export class RazorpayNonseamlessController {
           };
           break;
 
-        case 'card':
+         case 'credit':
+          pg_mode='credit_card',
+          console.log(payload, 'payloadin here')
           detail = {
             card: {
-              card_bank_name: payload?.card_type || null,
-              card_country: payload.card_country || null,
-              card_network: payload.card_network || null,
-              card_number: payload.card_number || null,
-              card_sub_type: payload.card_sub_type || null,
-              card_type: payload.card_type || null,
+              card_bank_name: payload?.card?.card_type || null,
+              card_country: payload?.card?.card_country || null,
+              card_network: payload?.card?.card_network || null,
+              card_number: payload?.card?.card_number || null,
+              card_sub_type: payload?.card?.card_sub_type || null,
+              card_type: payload?.card?.card_type || null,
+              channel: null,
+            },
+          };
+          break;
+          
+        case 'debit':
+          pg_mode='debit_card',
+          detail = {
+            card: {
+              card_bank_name:  payload?.card?.card_type || null,
+              card_country:  payload?.card?.card_country || null,
+              card_network:  payload?.card?.card_network || null,
+              card_number:  payload?.card?.card_number || null,
+              card_sub_type:  payload?.card?.card_sub_type || null,
+              card_type:  payload?.card?.card_type || null,
               channel: null,
             },
           };
           break;
 
-        case 'netbanking':
+        case 'net_banking':
           detail = {
             netbanking: {
               channel: null,
@@ -212,12 +232,11 @@ export class RazorpayNonseamlessController {
           },
         },
       );
-
       let payment_status = status.status;
       if (payment_status === PaymentStatus.SUCCESS) {
         collect_req_status.status = PaymentStatus.SUCCESS;
         collect_req_status.bank_reference = status.details?.bank_ref || '';
-        collect_req_status.payment_method = status.details?.payment_mode || '';
+        collect_req_status.payment_method = pg_mode || '';
         collect_req_status.details =
           JSON.stringify(status.details?.payment_methods) || '';
         collect_req_status.payment_time =
@@ -240,9 +259,10 @@ export class RazorpayNonseamlessController {
       callbackUrl.searchParams.set('EdvironCollectRequestId', collect_id);
 
       const collectIdObject = new Types.ObjectId(collect_id);
-      const transaction_time = status.transaction_time
-        ? new Date(status.transaction_time)
+      const transaction_time = status?.details?.transaction_time
+        ? new Date(status?.details?.transaction_time)
         : null;
+
       const updateReq =
         await this.databaseService.CollectRequestStatusModel.updateOne(
           {
@@ -255,7 +275,7 @@ export class RazorpayNonseamlessController {
                 ? transaction_time.toISOString()
                 : null,
               transaction_amount: status?.transaction_amount || status?.amount,
-              payment_method: status?.details?.payment_mode || '',
+              payment_method: pg_mode || '',
               details: JSON.stringify(detail),
               bank_reference: status?.details?.bank_ref || '',
               reason: status.details?.order_status || '',
@@ -267,7 +287,8 @@ export class RazorpayNonseamlessController {
             new: true,
           },
         );
-
+      
+console.log(updateReq, "updateReq")
       const webhookUrl = collect_request?.req_webhook_urls;
       const transaction_time_str = transaction_time
         ? transaction_time.toISOString()
