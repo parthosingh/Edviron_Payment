@@ -119,4 +119,5 @@ export declare class CollectService {
         paytmResponse: any;
     } | undefined>;
     sendCallbackEmail(collect_id: string): Promise<"mail sent successfully" | undefined>;
+    scheduleUpdate(delay: number, collect_id: string): Promise<void>;
 }

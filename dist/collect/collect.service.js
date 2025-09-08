@@ -145,6 +145,10 @@ let CollectService = class CollectService {
                 });
             }
             const { url, collect_req } = await this.razorpayNonseamlessService.createOrder(request);
+            let collect_id = request._id.toString();
+            this.scheduleUpdate(15 * 60 * 1000, collect_id);
+            this.scheduleUpdate(20 * 60 * 1000, collect_id);
+            this.scheduleUpdate(60 * 60 * 1000, collect_id);
             return { url, request: collect_req };
         }
         if (pay_u_key && pay_u_salt) {
@@ -396,6 +400,17 @@ let CollectService = class CollectService {
         catch (e) {
             console.log(e.message);
         }
+    }
+    async scheduleUpdate(delay, collect_id) {
+        console.log(delay);
+        setTimeout(async () => {
+            try {
+                await this.razorpayNonseamlessService.updateOrder(collect_id);
+            }
+            catch (error) {
+                console.log(error.message);
+            }
+        }, delay);
     }
 };
 exports.CollectService = CollectService;
