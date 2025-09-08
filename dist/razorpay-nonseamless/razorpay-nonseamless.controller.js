@@ -139,7 +139,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             }
             const status = await this.razorpayServiceModel.getPaymentStatus(collect_request.razorpay.order_id.toString(), collect_request);
             let payment_method = status.details.payment_mode || null;
-            let payload = status.details.payment_methods || {};
+            let payload = status?.details?.payment_methods || {};
             let detail;
             switch (payment_method) {
                 case 'upi':

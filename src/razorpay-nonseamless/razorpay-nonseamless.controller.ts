@@ -153,7 +153,7 @@ export class RazorpayNonseamlessController {
       );
 
       let payment_method = status.details.payment_mode || null;
-      let payload = status.details.payment_methods || {};
+      let payload = status?.details?.payment_methods || {};
       let detail;
       switch (payment_method) {
         case 'upi':
