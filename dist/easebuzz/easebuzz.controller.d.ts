@@ -29,10 +29,12 @@ export declare class EasebuzzController {
         easebuzz_salt: string;
         start_date: string;
         end_date: string;
+        payout_date: string;
         page_size: number;
         token: string;
+        utr: string;
     }): Promise<{
-        transactions: any;
+        transactions: any[];
         split_payouts: any;
         peb_refunds: any;
     }>;
