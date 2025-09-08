@@ -103,6 +103,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
     }
     async getPaymentStatus(order_id, collectRequest) {
         try {
+            console.log('razorpay hit');
             const config = {
                 method: 'get',
                 maxBodyLength: Infinity,
@@ -116,8 +117,12 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 },
             };
             const { data: orderStatus } = await axios_1.default.request(config);
-            const status = orderStatus?.items[0];
-            return await this.formatRazorpayPaymentStatusResponse(status, collectRequest);
+            const items = orderStatus.items || [];
+            const capturedItem = items.find((item) => item.status === 'captured');
+            if (capturedItem) {
+                return await this.formatRazorpayPaymentStatusResponse(capturedItem, collectRequest);
+            }
+            return await this.formatRazorpayPaymentStatusResponse(items[items.length - 1] || [], collectRequest);
         }
         catch (error) {
             console.log(error);
@@ -164,10 +169,11 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     response?.acquirer_data?.rrn || null;
             }
             if (response?.method === 'card') {
-                const cardDetails = await this.fetchCardDetailsOfaPaymentFromRazorpay(response?.id, collectRequest);
+                console.log(response, "response");
+                const cardDetails = response.card;
                 formattedResponse.details.payment_mode = cardDetails?.type;
                 formattedResponse.details.payment_methods['card'] = {
-                    card_bank_name: cardDetails?.card_issuer || null,
+                    card_bank_name: cardDetails?.issuer || null,
                     card_country: cardDetails?.international ? null : 'IN',
                     card_network: cardDetails?.network || null,
                     card_number: `XXXXXXXXXXXX${cardDetails?.last4}` || null,
