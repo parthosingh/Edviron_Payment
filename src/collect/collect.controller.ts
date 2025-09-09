@@ -147,6 +147,7 @@ export class CollectController {
           on_hold_until?: Date;
         },
       ];
+      isSelectGateway?:boolean
     },
   ) {
     const {
@@ -200,10 +201,9 @@ export class CollectController {
       gatepay_credentials,
       isCFNonSeamless,
       razorpay_seamless_credentials,
+      isSelectGateway
     } = body;
-    console.log(razorpay_credentials);
 
-    console.log('hit');
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
     if (!callbackUrl)
@@ -266,7 +266,8 @@ export class CollectController {
           razorpay_credentials,
           gatepay_credentials,
           isCFNonSeamless,
-          razorpay_seamless_credentials
+          razorpay_seamless_credentials,
+          isSelectGateway
         ),
       );
     } catch (e) {

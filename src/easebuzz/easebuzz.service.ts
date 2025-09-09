@@ -12,7 +12,7 @@ import e from 'express';
 
 @Injectable()
 export class EasebuzzService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) { }
 
   async easebuzzCheckStatus(
     collect_request_id: String,
@@ -117,11 +117,9 @@ export class EasebuzzService {
     }
 
     // key|merchant_refund_id|easebuzz_id|refund_amount|salt
-    const hashStringV2 = `${
-      process.env.EASEBUZZ_KEY
-    }|${refund_id}|${order_id}|${refund_amount.toFixed(1)}|${
-      process.env.EASEBUZZ_SALT
-    }`;
+    const hashStringV2 = `${process.env.EASEBUZZ_KEY
+      }|${refund_id}|${order_id}|${refund_amount.toFixed(1)}|${process.env.EASEBUZZ_SALT
+      }`;
 
     let hash2 = await calculateSHA512Hash(hashStringV2);
     const data2 = {
@@ -601,12 +599,13 @@ export class EasebuzzService {
         '|' +
         firstname +
         '|' +
+        email +
+        '|' +
         student_id +
         '|' +
         student_phone_no +
         '|' +
-        email +
-        '|||||||||||' +
+        '||||||||' +
         easebuzz_salt;
 
       const easebuzz_cb_surl =
@@ -632,7 +631,7 @@ export class EasebuzzService {
 
       encodedParams.set('productinfo', productinfo);
       encodedParams.set('firstname', firstname);
-      encodedParams.set('phone', '9898989898');
+      encodedParams.set('phone', student_phone_no);
       encodedParams.set('email', email);
       encodedParams.set('surl', easebuzz_cb_surl);
       encodedParams.set('furl', easebuzz_cb_furl);
@@ -825,8 +824,16 @@ export class EasebuzzService {
         request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
       const upi_collect_id = `upi_${collect_id}`;
       let productinfo = 'payment gateway customer';
-      let firstname = 'customer';
-      let email = 'noreply@edviron.com';
+      const { additional_data } = collectReq;
+      const studentDetail = JSON.parse(additional_data);
+
+      let firstname = studentDetail.student_details?.student_name || 'customer';
+      let email =
+        studentDetail.student_details?.student_email || 'noreply@edviron.com';
+      let student_id = studentDetail?.student_details?.student_id || 'N/A';
+      let student_phone_no =
+        studentDetail?.student_details?.student_phone_no || 'N/A';
+
       let hashData =
         easebuzz_key +
         '|' +
@@ -839,8 +846,14 @@ export class EasebuzzService {
         firstname +
         '|' +
         email +
-        '|||||||||||' +
+        '|' +
+        student_id +
+        '|' +
+        student_phone_no +
+        '|' +
+        '||||||||' +
         easebuzz_salt;
+
 
       const easebuzz_cb_surl =
         process.env.URL +
@@ -865,12 +878,14 @@ export class EasebuzzService {
 
       encodedParams.set('productinfo', productinfo);
       encodedParams.set('firstname', firstname);
-      encodedParams.set('phone', '9898989898');
+      encodedParams.set('phone', student_phone_no);
       encodedParams.set('email', email);
       encodedParams.set('surl', easebuzz_cb_surl);
       encodedParams.set('furl', easebuzz_cb_furl);
       encodedParams.set('hash', hash);
       encodedParams.set('request_flow', 'SEAMLESS');
+      encodedParams.set('udf1', student_id);
+      encodedParams.set('udf2', student_phone_no);
       // encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
       const options = {
         method: 'POST',

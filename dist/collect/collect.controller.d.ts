@@ -125,6 +125,7 @@ export declare class CollectController {
                 on_hold_until?: Date;
             }
         ];
+        isSelectGateway?: boolean;
     }): Promise<any>;
     posCollect(body: {
         amount: Number;
