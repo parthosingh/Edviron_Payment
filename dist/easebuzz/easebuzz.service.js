@@ -287,16 +287,20 @@ let EasebuzzService = class EasebuzzService {
             if (!collectReq) {
                 throw new common_1.BadRequestException('Collect request not found');
             }
+            const { additional_data } = collectReq;
             if (request.isSplitPayments) {
                 if (!request.easebuzz_split_label) {
                     throw new common_1.BadRequestException(`Split Information Not Configure Please contact tarun.k@edviron.com`);
                 }
+                const studentDetail = JSON.parse(additional_data);
                 const easebuzz_key = request.easebuzz_non_partner_cred.easebuzz_key;
                 const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
                 const easebuzz_sub_merchant_id = request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
                 let productinfo = 'payment gateway customer';
-                let firstname = 'customer';
-                let email = 'noreply@edviron.com';
+                let firstname = studentDetail.student_details?.student_name || 'customer';
+                let email = studentDetail.student_details?.student_email || 'noreply@edviron.com';
+                let student_id = studentDetail?.student_details?.student_id || 'N/A';
+                let student_phone_no = studentDetail?.student_details?.student_phone_no || 'N/A';
                 let hashData = easebuzz_key +
                     '|' +
                     request._id +
@@ -306,6 +310,10 @@ let EasebuzzService = class EasebuzzService {
                     productinfo +
                     '|' +
                     firstname +
+                    '|' +
+                    student_id +
+                    '|' +
+                    student_phone_no +
                     '|' +
                     email +
                     '|||||||||||' +
@@ -331,6 +339,8 @@ let EasebuzzService = class EasebuzzService {
                 encodedParams.set('furl', easebuzz_cb_furl);
                 encodedParams.set('hash', hash);
                 encodedParams.set('request_flow', 'SEAMLESS');
+                encodedParams.set('udf1', student_id);
+                encodedParams.set('udf2', student_phone_no);
                 let ezb_split_payments = {};
                 if (request.isSplitPayments &&
                     request.easebuzzVendors &&
@@ -415,13 +425,17 @@ let EasebuzzService = class EasebuzzService {
             if (!collectReq) {
                 throw new common_1.BadRequestException('Collect request not found');
             }
+            const { additional_data } = collectReq;
+            const studentDetail = JSON.parse(additional_data);
             console.log('debud');
             const easebuzz_key = request.easebuzz_non_partner_cred.easebuzz_key;
             const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
             const easebuzz_sub_merchant_id = request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
             let productinfo = 'payment gateway customer';
-            let firstname = 'customer';
-            let email = 'noreply@edviron.com';
+            let firstname = studentDetail.student_details?.student_name || 'customer';
+            let email = studentDetail.student_details?.student_email || 'noreply@edviron.com';
+            let student_id = studentDetail?.student_details?.student_id || 'N/A';
+            let student_phone_no = studentDetail?.student_details?.student_phone_no || 'N/A';
             let hashData = easebuzz_key +
                 '|' +
                 request._id +
@@ -431,6 +445,10 @@ let EasebuzzService = class EasebuzzService {
                 productinfo +
                 '|' +
                 firstname +
+                '|' +
+                student_id +
+                '|' +
+                student_phone_no +
                 '|' +
                 email +
                 '|||||||||||' +
@@ -456,6 +474,8 @@ let EasebuzzService = class EasebuzzService {
             encodedParams.set('furl', easebuzz_cb_furl);
             encodedParams.set('hash', hash);
             encodedParams.set('request_flow', 'SEAMLESS');
+            encodedParams.set('udf1', student_id);
+            encodedParams.set('udf2', student_phone_no);
             let ezb_split_payments = {};
             if (request.easebuzz_split_label) {
                 ezb_split_payments[request.easebuzz_split_label] = request.amount;
@@ -767,6 +787,8 @@ let EasebuzzService = class EasebuzzService {
             if (!collectReq) {
                 throw new common_1.BadRequestException('Collect request not found');
             }
+            const { additional_data } = collectReq;
+            const studentDetail = JSON.parse(additional_data);
             if (request.isSplitPayments) {
                 if (!request.easebuzz_split_label) {
                     throw new common_1.BadRequestException(`Split Information Not Configure Please contact tarun.k@edviron.com`);
@@ -775,8 +797,10 @@ let EasebuzzService = class EasebuzzService {
                 const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
                 const easebuzz_sub_merchant_id = request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
                 let productinfo = 'payment gateway customer';
-                let firstname = 'customer';
-                let email = 'noreply@edviron.com';
+                let firstname = studentDetail.student_details?.student_name || 'customer';
+                let email = studentDetail.student_details?.student_email || 'noreply@edviron.com';
+                let student_id = studentDetail?.student_details?.student_id || 'N/A';
+                let student_phone_no = studentDetail?.student_details?.student_phone_no || 'N/A';
                 let hashData = easebuzz_key +
                     '|' +
                     request._id +
@@ -786,6 +810,10 @@ let EasebuzzService = class EasebuzzService {
                     productinfo +
                     '|' +
                     firstname +
+                    '|' +
+                    student_id +
+                    '|' +
+                    student_phone_no +
                     '|' +
                     email +
                     '|||||||||||' +
@@ -812,6 +840,8 @@ let EasebuzzService = class EasebuzzService {
                 encodedParams.set('hash', hash);
                 encodedParams.set('request_flow', 'SEAMLESS');
                 encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
+                encodedParams.set('udf1', student_id);
+                encodedParams.set('udf2', student_phone_no);
                 let ezb_split_payments = {};
                 if (request.isSplitPayments &&
                     request.easebuzzVendors &&

@@ -770,7 +770,7 @@ let EasebuzzController = class EasebuzzController {
             return res.redirect(`${process.env.PG_FRONTEND}/payment-failure?collect_id=${collect_request_id}&EdvironCollectRequestId=${collect_request_id}`);
         }
         const callbackUrl = new URL(collectRequest?.callbackUrl);
-        if (status.toLocaleLowerCase() !== `success`) {
+        if (status?.toLocaleLowerCase() !== `success`) {
             console.log('failure');
             let reason = reqToCheck?.msg?.error_Message || 'payment-declined';
             if (reason === 'Collect Expired') {

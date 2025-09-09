@@ -1136,7 +1136,7 @@ export class EasebuzzController {
     }
 
     const callbackUrl = new URL(collectRequest?.callbackUrl);
-    if (status.toLocaleLowerCase() !== `success`) {
+    if (status?.toLocaleLowerCase() !== `success`) {
       console.log('failure');
       let reason = reqToCheck?.msg?.error_Message || 'payment-declined';
       if (reason === 'Collect Expired') {
