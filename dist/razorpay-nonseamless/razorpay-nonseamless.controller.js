@@ -73,6 +73,8 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                 callback_url: `${process.env.URL}/razorpay-nonseamless/callback?collect_id=${collect_id}`,
                 handler: function (response) {
                     console.log('Payment successful:', response);
+                    window.location.href =
+                        `${process.env.URL}/razorpay-nonseamless/cancel?collect_id=${collect_id}`;
                 },
                 prefill: {
                     name: additional_data.student_details.student_name || '',
@@ -87,7 +89,8 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                 },
                 modal: {
                     ondismiss: function () {
-                        console.log('Checkout form closed');
+                        window.location.href =
+                            `${process.env.URL}/razorpay-nonseamless/cancel?collect_id=${collect_id}`;
                     },
                 },
             };

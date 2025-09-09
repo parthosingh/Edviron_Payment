@@ -81,6 +81,8 @@ export class RazorpayNonseamlessController {
           // You can perform an AJAX call here to your server to verify the payment
           // and update the payment status in your database
           // alert('Payment successful! Payment ID: ' + response.razorpay_payment_id);
+          window.location.href =
+            `${process.env.URL}/razorpay-nonseamless/cancel?collect_id=${collect_id}`;
         },
         prefill: {
           name: additional_data.student_details.student_name || '',
@@ -95,7 +97,8 @@ export class RazorpayNonseamlessController {
         },
         modal: {
           ondismiss: function () {
-            console.log('Checkout form closed');
+             window.location.href =
+            `${process.env.URL}/razorpay-nonseamless/cancel?collect_id=${collect_id}`;
           },
         },
       };
