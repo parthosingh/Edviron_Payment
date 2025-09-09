@@ -2351,6 +2351,15 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async getSubtrusteeBatchTransactions(body) {
+        try {
+            const { school_ids, year } = body;
+            const response = await this.edvironPgService.getSubTrusteeBatchTransactions(school_ids, year);
+            return response;
+        }
+        catch (e) {
+        }
+    }
     async getMerchantBatchTransactions(query) {
         try {
             const { school_id, year, token } = query;
@@ -3775,6 +3784,24 @@ let EdvironPgController = class EdvironPgController {
         }
         catch (error) { }
     }
+    async setMdrZero(body) {
+        try {
+            const reset = await this.databaseService.PlatformChargeModel.updateMany({ school_id: { $in: body.school_ids } }, { $set: { "platform_charges.$[].range_charge.$[].charge": 0 } });
+            return reset;
+        }
+        catch (e) {
+        }
+    }
+    async subTrusteeTransactionsSum(body) {
+        try {
+            const { trustee_id, school_id, gateway, start_date, end_date, status, mode, isQRPayment } = body;
+            const response = await this.edvironPgService.subtrusteeTransactionAggregation(trustee_id, start_date, end_date, school_id, status, mode, isQRPayment, gateway);
+            return response;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -4054,6 +4081,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getBatchTransactions", null);
 __decorate([
+    (0, common_1.Post)('fetch-subtrustee-batch-transactions'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getSubtrusteeBatchTransactions", null);
+__decorate([
     (0, common_1.Get)('/get-merchant-batch-transactions'),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
@@ -4239,6 +4273,20 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "retriveEasebuzz", null);
+__decorate([
+    (0, common_1.Post)('set-mdr-zero'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "setMdrZero", null);
+__decorate([
+    (0, common_1.Post)('sub-trustee-transactions-sum'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "subTrusteeTransactionsSum", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
@@ -4249,4 +4297,5 @@ exports.EdvironPgController = EdvironPgController = __decorate([
         pos_paytm_service_1.PosPaytmService,
         worldline_service_1.WorldlineService])
 ], EdvironPgController);
+const y = { "customer_details": { "customer_email": null, "customer_id": "7112AAA812234", "customer_name": null, "customer_phone": "9898989898" }, "error_details": { "error_code": "TRANSACTION_DECLINED", "error_code_raw": null, "error_description": "Transaction declined due to risk-Amount Less than Minimum Amount configured", "error_description_raw": null, "error_reason": "minimum_amount_limit", "error_source": "customer" }, "order": { "order_amount": 4, "order_currency": "INR", "order_id": "68beaff82b235974f1668f4c", "order_tags": null }, "payment": { "auth_id": null, "bank_reference": null, "cf_payment_id": 4327371039, "payment_amount": 4.03, "payment_currency": "INR", "payment_group": "credit_card", "payment_message": "Transaction declined due to risk-Amount Less than Minimum Amount configured", "payment_method": { "card": { "card_bank_name": "AXIS BANK", "card_country": "IN", "card_network": "mastercard", "card_number": "XXXXXXXXXXXX1978", "card_sub_type": "R", "card_type": "credit_card", "channel": null } }, "payment_status": "FAILED", "payment_time": "2025-09-08T15:59:36+05:30" }, "payment_gateway_details": { "gateway_name": "CASHFREE", "gateway_order_id": null, "gateway_order_reference_id": null, "gateway_payment_id": null, "gateway_settlement": null, "gateway_status_code": null }, "payment_offers": null };
 //# sourceMappingURL=edviron-pg.controller.js.map

@@ -38,6 +38,8 @@ import * as _jwt from 'jsonwebtoken';
 import { NttdataService } from 'src/nttdata/nttdata.service';
 import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
+import { stat } from 'fs';
+import { start } from 'repl';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -3364,6 +3366,29 @@ export class EdvironPgController {
     }
   }
 
+  @Post('fetch-subtrustee-batch-transactions')
+  async getSubtrusteeBatchTransactions(
+    @Body() body: {
+      school_ids: string[],
+      year: string,
+      token: string
+    }
+  ) {
+
+    try {
+      const {
+        school_ids,
+        year
+      } = body
+      const response = await this.edvironPgService.getSubTrusteeBatchTransactions(
+        school_ids, year
+      )
+      return response
+    } catch (e) {
+
+    }
+  }
+
   @Get('/get-merchant-batch-transactions')
   async getMerchantBatchTransactions(
     @Query()
@@ -4177,7 +4202,7 @@ export class EdvironPgController {
         signatory_details,
       );
     } catch (e) {
-      if(e.response?.data){
+      if (e.response?.data) {
         console.log(e.response.data);
         throw new BadRequestException(e.response.data.message);
       }
@@ -4358,10 +4383,10 @@ export class EdvironPgController {
     } = body;
     if (!token) throw new Error('Token not provided');
 
-    if(payment_modes?.includes('upi')){
+    if (payment_modes?.includes('upi')) {
       payment_modes = [...payment_modes, 'upi_credit_card']  //debit_card
     }
-    
+
     try {
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 10;
@@ -4755,8 +4780,8 @@ export class EdvironPgController {
             {
               $skip: (page - 1) * limit,
             },
-            { 
-              $limit: Number(limit) 
+            {
+              $limit: Number(limit)
             },
             {
               $lookup: {
@@ -4877,7 +4902,7 @@ export class EdvironPgController {
       throw new BadRequestException(error.message);
     }
   }
-   
+
   @Get('/vba-details')
   async getVba(@Query('collect_id') collect_id: string) {
     try {
@@ -5250,4 +5275,65 @@ export class EdvironPgController {
     } catch (error) { }
   }
 
+  @Post('set-mdr-zero')
+  async setMdrZero(@Body() body: {
+    school_ids: string[];
+  }) {
+    try {
+      // const reset1=await this.databaseService.PlatformChargeModel.find(
+      //   { school_id: { $in: body.school_ids } },
+      // )
+      const reset = await this.databaseService.PlatformChargeModel.updateMany(
+        { school_id: { $in: body.school_ids } },
+        { $set: { "platform_charges.$[].range_charge.$[].charge": 0 } },
+      )
+
+      return reset
+    } catch (e) {
+
+    }
+  }
+
+  @Post('sub-trustee-transactions-sum')
+  async subTrusteeTransactionsSum(@Body() body: {
+    trustee_id: string;
+    school_id: string[];
+    gateway?: string[] | null;
+    start_date: string;
+    end_date: string;
+    status: string;
+    mode: string[] | null;
+    isQRPayment: boolean;
+  }) {
+    try {
+      const {
+        trustee_id,
+        school_id,
+        gateway,
+        start_date,
+        end_date,
+        status,
+        mode,
+        isQRPayment
+      } = body
+      // console.log({start_date,end_date});
+
+      const response = await this.edvironPgService.subtrusteeTransactionAggregation(
+        trustee_id,
+        start_date,
+        end_date,
+        school_id,
+        status,
+        mode,
+        isQRPayment,
+        gateway
+      )
+      return response
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+
+  }
+
 }
+const y = { "customer_details": { "customer_email": null, "customer_id": "7112AAA812234", "customer_name": null, "customer_phone": "9898989898" }, "error_details": { "error_code": "TRANSACTION_DECLINED", "error_code_raw": null, "error_description": "Transaction declined due to risk-Amount Less than Minimum Amount configured", "error_description_raw": null, "error_reason": "minimum_amount_limit", "error_source": "customer" }, "order": { "order_amount": 4, "order_currency": "INR", "order_id": "68beaff82b235974f1668f4c", "order_tags": null }, "payment": { "auth_id": null, "bank_reference": null, "cf_payment_id": 4327371039, "payment_amount": 4.03, "payment_currency": "INR", "payment_group": "credit_card", "payment_message": "Transaction declined due to risk-Amount Less than Minimum Amount configured", "payment_method": { "card": { "card_bank_name": "AXIS BANK", "card_country": "IN", "card_network": "mastercard", "card_number": "XXXXXXXXXXXX1978", "card_sub_type": "R", "card_type": "credit_card", "channel": null } }, "payment_status": "FAILED", "payment_time": "2025-09-08T15:59:36+05:30" }, "payment_gateway_details": { "gateway_name": "CASHFREE", "gateway_order_id": null, "gateway_order_reference_id": null, "gateway_payment_id": null, "gateway_settlement": null, "gateway_status_code": null }, "payment_offers": null }

@@ -35,7 +35,7 @@ export class EdvironPgService implements GatewayService {
     private readonly databaseService: DatabaseService,
     private readonly cashfreeService: CashfreeService,
     private readonly razorpayService: RazorpayService,
-  ) {}
+  ) { }
   async collect(
     request: CollectRequest,
     platform_charges: platformChange[],
@@ -378,7 +378,7 @@ export class EdvironPgService implements GatewayService {
       if (err.name === 'AxiosError')
         throw new BadRequestException(
           'Invalid client id or client secret ' +
-            JSON.stringify(err.response.data),
+          JSON.stringify(err.response.data),
         );
     }
   }
@@ -426,14 +426,14 @@ export class EdvironPgService implements GatewayService {
       let transaction_time = '';
       if (
         order_status_to_transaction_status_map[
-          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ] === TransactionStatus.SUCCESS
       ) {
         transaction_time = collect_status?.updatedAt?.toISOString() as string;
       }
       const checkStatus =
         order_status_to_transaction_status_map[
-          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ];
       let status_code;
       if (checkStatus === TransactionStatus.SUCCESS) {
@@ -452,7 +452,7 @@ export class EdvironPgService implements GatewayService {
 
       let formatedStatus =
         order_status_to_transaction_status_map[
-          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ];
       if (collect_status.status === PaymentStatus.USER_DROPPED) {
         formatedStatus = TransactionStatus.USER_DROPPED;
@@ -499,7 +499,7 @@ export class EdvironPgService implements GatewayService {
       };
     } catch (e) {
       console.log(e);
-      
+
       throw new BadRequestException(e.message);
     }
   }
@@ -1511,6 +1511,173 @@ export class EdvironPgService implements GatewayService {
     }
   }
 
+  async subtrusteeTransactionAggregation(
+    trustee_id: string,
+    start_date: string,
+    end_date: string,
+    school_id : string[],
+    status?: string | null,
+    mode?: string[] | null,
+    isQRPayment?: boolean | null,
+    gateway?: string[] | null,
+  ) {
+    try {
+      const endOfDay = new Date(end_date);
+      const startDates = new Date(start_date);
+      const startOfDayUTC = new Date(
+        await this.convertISTStartToUTC(start_date),
+      ); // Start of December 6 in IST
+      const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
+      // Set hours, minutes, seconds, and milliseconds to the last moment of the day
+      endOfDay.setHours(23, 59, 59, 999);
+      let collectQuery: any = {
+        trustee_id: trustee_id,
+        school_id: { $in: school_id },
+        createdAt: {
+          // $gte: new Date(start_date),
+          // $lt: endOfDay,
+          $gte: new Date(startDates.getTime() - 24 * 60 * 60 * 1000),
+          $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
+        },
+      };
+      console.log({ collectQuery });
+      
+      if (isQRPayment) {
+        collectQuery = {
+          ...collectQuery,
+          isQRPayment: true,
+        };
+      }
+      if (gateway) {
+        collectQuery = {
+          ...collectQuery,
+          gateway: { $in: gateway },
+        };
+      }
+
+      const orders =
+        await this.databaseService.CollectRequestModel.find(
+          collectQuery,
+        ).select('_id');
+
+      let transactions: any[] = [];
+
+      const orderIds = orders.map((order: any) => order._id);
+      let query: any = {
+        collect_id: { $in: orderIds },
+        // status: { $regex: new RegExp(`^${status}$`, 'i') }
+      };
+
+      const startDate = new Date(start_date);
+      const endDate = end_date;
+
+      if (startDate && endDate) {
+        query = {
+          ...query,
+          $or: [
+            {
+              payment_time: {
+                $ne: null, // Matches documents where payment_time exists and is not null
+                $gte: startOfDayUTC,
+                $lt: endOfDayUTC,
+              },
+            },
+            {
+              $and: [
+                { payment_time: { $eq: null } }, // Matches documents where payment_time is null or doesn't exist
+                {
+                  updatedAt: {
+                    $gte: startOfDayUTC,
+                    $lt: endOfDayUTC,
+                  },
+                },
+              ],
+            },
+          ],
+        };
+      }
+
+      if ((status && status === 'SUCCESS') || status === 'PENDING') {
+        query = {
+          ...query,
+          status: { $in: [status.toUpperCase(), status.toLowerCase()] },
+        };
+      }
+      if (school_id) {
+      }
+
+      if (mode) {
+        query = {
+          ...query,
+          payment_method: { $in: mode },
+        };
+      }
+
+      transactions =
+        await this.databaseService.CollectRequestStatusModel.aggregate([
+          {
+            $match: query, // Apply your filters
+          },
+          {
+            $project: {
+              collect_id: 1,
+              transaction_amount: 1,
+              order_amount: 1,
+              status: 1,
+              createdAt: 1,
+            },
+          },
+          {
+            $lookup: {
+              from: 'collectrequests',
+              localField: 'collect_id',
+              foreignField: '_id',
+              as: 'collect_request',
+            },
+          },
+          {
+            $unwind: '$collect_request', // Flatten the joined data
+          },
+          // {
+          //   $project:{
+          //     collect_id:'$collect_id',
+          //     transaction_amount: 1,
+          //     order_amount: 1,
+          //     custom_id:'$collect_request.custom_order_id'
+
+          //   }
+          // },
+          {
+            $group: {
+              _id: '$collect_request.trustee_id', // Group by `trustee_id`
+              totalTransactionAmount: { $sum: '$transaction_amount' },
+              totalOrderAmount: { $sum: '$order_amount' },
+              totalTransactions: { $sum: 1 }, // Count total transactions
+            },
+          },
+          {
+            $project: {
+              _id: 0, // Remove the `_id` field
+              // trustee_id: '$_id', // Rename `_id` to `trustee_id`
+              totalTransactionAmount: 1,
+              totalOrderAmount: 1,
+              totalTransactions: 1,
+            },
+          },
+        ]);
+
+      console.timeEnd('transactionsCount');
+
+      return {
+        transactions:transactions[0],
+      };
+
+    } catch (e) {
+      console.log(e);
+      throw new Error(e.message);
+    }
+  }
+
   async getTransactionReportBatchedFilterd(
     trustee_id: string,
     start_date: string,
@@ -1799,15 +1966,13 @@ export class EdvironPgService implements GatewayService {
       if (checkbatch) {
         await this.databaseService.ErrorLogsModel.create({
           type: 'BATCH TRANSACTION CORN',
-          des: `Batch transaction already exists for trustee_id ${trustee_id} of ${
-            monthsFull[new Date(endDate).getMonth()]
-          } month`,
+          des: `Batch transaction already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]
+            } month`,
           identifier: trustee_id,
           body: `${JSON.stringify({ startDate, endDate, status })}`,
         });
         throw new BadRequestException(
-          `Already exists for trustee_id ${trustee_id} of ${
-            monthsFull[new Date(endDate).getMonth()]
+          `Already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]
           } month`,
         );
       }
@@ -1990,15 +2155,13 @@ export class EdvironPgService implements GatewayService {
       if (checkbatch) {
         await this.databaseService.ErrorLogsModel.create({
           type: 'BATCH TRANSACTION CORN',
-          des: `Batch transaction already exists for school_id ${school_id} of ${
-            monthsFull[new Date(endDate).getMonth()]
-          } month`,
+          des: `Batch transaction already exists for school_id ${school_id} of ${monthsFull[new Date(endDate).getMonth()]
+            } month`,
           identifier: school_id,
           body: `${JSON.stringify({ startDate, endDate, status })}`,
         });
         throw new BadRequestException(
-          `Already exists for school_id ${school_id} of ${
-            monthsFull[new Date(endDate).getMonth()]
+          `Already exists for school_id ${school_id} of ${monthsFull[new Date(endDate).getMonth()]
           } month`,
         );
       }
@@ -2096,6 +2259,53 @@ export class EdvironPgService implements GatewayService {
       throw new BadRequestException(e.message);
     }
   }
+
+  async getSubTrusteeBatchTransactions(school_ids: string[], year: string) {
+    try {
+      const batch = await this.databaseService.BatchTransactionModel.aggregate([
+        {
+          $match: {
+            school_id: { $in: school_ids },
+            year: year,
+          },
+        },
+        {
+          $project: {
+            order_amount: 1,
+            transaction_amount: {
+              $ifNull: ["$transaction_amount", "$order_amount"], // example projection
+            },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total_order_amount: { $sum: "$order_amount" },
+            total_transaction_amount: { $sum: "$transaction_amount" },
+            total_transactions: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            total_order_amount: 1,
+            total_transaction_amount: 1,
+            total_transactions: 1,
+          },
+        },
+      ]);
+
+
+      if (!batch || batch.length === 0) {
+        throw new Error("Batch not found");
+      }
+
+      return batch[0];
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
 
   async getSingleTransaction(collect_id: string) {
     const objId = new Types.ObjectId(collect_id);
