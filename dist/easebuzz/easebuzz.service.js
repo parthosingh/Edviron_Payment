@@ -798,6 +798,39 @@ let EasebuzzService = class EasebuzzService {
             data: data,
         };
         const { data: statusRes } = await axios.request(config);
+        if (statusRes.msg === 'Hash mismatch') {
+            const oldhashData = easebuzz_key +
+                '|' +
+                collect_request_id +
+                '|' +
+                amount.toString() +
+                '|' +
+                'noreply@edviron.com' +
+                '|' +
+                '9898989898' +
+                '|' +
+                easebuzz_salt;
+            let oldhash = await (0, sign_1.calculateSHA512Hash)(oldhashData);
+            const olddata = qs.stringify({
+                txnid: collect_request_id,
+                key: easebuzz_key,
+                amount: amount,
+                email: 'noreply@edviron.com',
+                phone: '9898989898',
+                hash: oldhash,
+            });
+            const oldConfig = {
+                method: 'POST',
+                url: `https://dashboard.easebuzz.in/transaction/v1/retrieve`,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    Accept: 'application/json',
+                },
+                data: olddata,
+            };
+            const { data: statusRes } = await axios.request(oldConfig);
+            return statusRes;
+        }
         return statusRes;
     }
     async createOrderNonseamless(request, platform_charges, school_name) {

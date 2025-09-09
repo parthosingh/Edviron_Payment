@@ -132,6 +132,8 @@ export class CheckStatusService {
       console.log('Checking status for easebuzz non-partner collect request');
 
       if (collectRequest.gateway === Gateway.EDVIRON_EASEBUZZ) {
+        console.log('testing easebuzz status response v2');
+        
         const easebuzzStatus = await this.easebuzzService.statusResponsev2(
           collect_request_id.toString(),
           collectRequest,
