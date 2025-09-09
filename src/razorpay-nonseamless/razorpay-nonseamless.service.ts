@@ -583,7 +583,7 @@ export class RazorpayNonseamlessService {
           .map((order: any) => order.order_receipt);
 
         const objectIdOrderIds = orderIds
-          .map((id: any) => {
+          .map((id: string) => {
             try {
               return new mongoose.Types.ObjectId(id);
             } catch (e) {
@@ -600,9 +600,11 @@ export class RazorpayNonseamlessService {
             ],
           });
 
+          // console.log(customOrders)
         const customOrderMap = new Map(
           customOrders.map((doc) => [
-            doc.custom_order_id,
+            // doc.custom_order_id,
+            doc._id.toString(),
             {
               _id: doc._id.toString(),
               custom_order_id: doc.custom_order_id,
@@ -627,7 +629,9 @@ export class RazorpayNonseamlessService {
               let studentDetails: any = {};
 
               if (order.order_receipt) {
+                console.log(order.order_receipt, "order.order_receipt")
                 customData = customOrderMap.get(order.order_receipt) || {};
+                console.log(customData, "customData" )
 
                 try {
                   custom_order_id = order.order_receipt;

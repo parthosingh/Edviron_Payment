@@ -480,7 +480,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     ],
                 });
                 const customOrderMap = new Map(customOrders.map((doc) => [
-                    doc.custom_order_id,
+                    doc._id.toString(),
                     {
                         _id: doc._id.toString(),
                         custom_order_id: doc.custom_order_id,
@@ -502,7 +502,9 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     let school_id = null;
                     let studentDetails = {};
                     if (order.order_receipt) {
+                        console.log(order.order_receipt, "order.order_receipt");
                         customData = customOrderMap.get(order.order_receipt) || {};
+                        console.log(customData, "customData");
                         try {
                             custom_order_id = order.order_receipt;
                             school_id = customData.school_id || null;
