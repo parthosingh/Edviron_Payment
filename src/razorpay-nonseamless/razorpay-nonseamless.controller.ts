@@ -60,11 +60,13 @@ export class RazorpayNonseamlessController {
         `);
       }
       const additional_data = JSON.parse(request.additional_data);
-      const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+      // const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
       let student_email = additional_data?.student_details?.student_email;
-      if (!student_email || !emailRegex.test(student_email)) {
+    if (!student_email) {
         student_email = 'testemail@email.com';
       }
+      console.log(student_email, 'student_email');
+      
       const student_phone_no =
         additional_data?.student_details?.student_phone_no || '9876543210';
 
