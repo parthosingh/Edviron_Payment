@@ -124,6 +124,7 @@ let CheckStatusService = class CheckStatusService {
             console.log('Checking status for easebuzz non-partner collect request');
             if (collectRequest.gateway === collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ) {
                 const easebuzzStatus = await this.easebuzzService.statusResponsev2(collect_request_id.toString(), collectRequest);
+                console.log(easebuzzStatus, 'easebuzzStatus');
                 let status_code;
                 if (easebuzzStatus.msg.status.toUpperCase() === 'SUCCESS') {
                     status_code = 200;
@@ -186,7 +187,7 @@ let CheckStatusService = class CheckStatusService {
                 return razorpayData;
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
                 console.log('testing easebuzz status response');
-                const easebuzzStatus = await this.easebuzzService.statusResponse(collect_request_id.toString(), collectRequest);
+                const easebuzzStatus = await this.easebuzzService.statusResponseV2(collect_request_id.toString(), collectRequest);
                 let status_code;
                 if (easebuzzStatus.msg.status.toUpperCase() === 'SUCCESS') {
                     status_code = 200;

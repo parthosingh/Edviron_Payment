@@ -751,6 +751,7 @@ let EasebuzzService = class EasebuzzService {
             return statusResponse;
         }
         catch (e) {
+            console.log(e);
             throw new common_1.BadRequestException(e.message);
         }
     }
@@ -760,15 +761,21 @@ let EasebuzzService = class EasebuzzService {
         const easebuzz_salt = collect_request.easebuzz_non_partner_cred.easebuzz_salt;
         const easebuzz_sub_merchant_id = collect_request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
         const axios = require('axios');
+        const { additional_data } = collect_request;
+        const studentDetail = JSON.parse(additional_data);
+        let firstname = studentDetail.student_details?.student_name || 'customer';
+        let email = studentDetail.student_details?.student_email || 'noreply@edviron.com';
+        let student_id = studentDetail?.student_details?.student_id || 'N/A';
+        let student_phone_no = studentDetail?.student_details?.student_phone_no || '9898989898';
         let hashData = easebuzz_key +
             '|' +
             collect_request_id +
             '|' +
             amount.toString() +
             '|' +
-            'noreply@edviron.com' +
+            email +
             '|' +
-            '9898989898' +
+            student_phone_no +
             '|' +
             easebuzz_salt;
         let hash = await (0, sign_1.calculateSHA512Hash)(hashData);

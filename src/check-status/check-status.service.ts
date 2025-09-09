@@ -136,6 +136,8 @@ export class CheckStatusService {
           collect_request_id.toString(),
           collectRequest,
         );
+        console.log(easebuzzStatus, 'easebuzzStatus');
+        
 
         let status_code;
         if (easebuzzStatus.msg.status.toUpperCase() === 'SUCCESS') {
@@ -219,7 +221,7 @@ export class CheckStatusService {
       case Gateway.EDVIRON_EASEBUZZ:
         console.log('testing easebuzz status response');
 
-        const easebuzzStatus = await this.easebuzzService.statusResponse(
+        const easebuzzStatus = await this.easebuzzService.statusResponseV2(
           collect_request_id.toString(),
           collectRequest,
         );
