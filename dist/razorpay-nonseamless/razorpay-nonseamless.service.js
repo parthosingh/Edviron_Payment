@@ -35,9 +35,9 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 currency: 'INR',
                 receipt: _id.toString(),
                 notes: {
-                    student_id: studentDetail?.student_details?.student_id || 'N/A',
                     student_name: studentDetail?.student_details?.student_name || 'N/A',
                     student_email: studentDetail?.student_details?.student_email || 'N/A',
+                    student_id: studentDetail?.student_details?.student_id || 'N/A',
                     student_phone_no: studentDetail?.student_details?.student_phone_no || 'N/A',
                 },
             };
