@@ -582,7 +582,7 @@ export class EasebuzzService {
       // Easebuzz pg data
 
       let productinfo = 'payment gateway customer';
-      let firstname = studentDetail.student_details?.student_name || 'customer';
+      let firstname = (studentDetail.student_details?.student_name || 'customer').trim();
       let email =
         studentDetail.student_details?.student_email || 'noreply@edviron.com';
       let student_id = studentDetail?.student_details?.student_id || 'NA';
@@ -827,7 +827,8 @@ export class EasebuzzService {
       const { additional_data } = collectReq;
       const studentDetail = JSON.parse(additional_data);
 
-      let firstname = studentDetail.student_details?.student_name || 'customer';
+      let firstname = (studentDetail.student_details?.student_name || 'customer').trim();
+
       let email =
         studentDetail.student_details?.student_email || 'noreply@edviron.com';
       let student_id = studentDetail?.student_details?.student_id || 'NA';
