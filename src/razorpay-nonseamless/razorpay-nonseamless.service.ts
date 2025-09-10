@@ -617,6 +617,8 @@ export class RazorpayNonseamlessService {
           response.data.items
             .filter((order: any) => order.order_receipt)
             .map(async (order: any) => {
+              console.log(order, "order");
+              
               let customData: any = {};
               let additionalData: any = {};
               let custom_order_id: string | null = null;
@@ -627,7 +629,7 @@ export class RazorpayNonseamlessService {
               let payment_group: string | null = null;
               let school_id: string | null = null;
               let studentDetails: any = {};
-
+              let razorpay_order_id: string | null = null;
               if (order.order_receipt) {
                 console.log(order.order_receipt, "order.order_receipt")
                 customData = customOrderMap.get(order.order_receipt) || {};
@@ -649,6 +651,7 @@ export class RazorpayNonseamlessService {
                     : null;
                   payment_group = order.method;
                   studentDetails = additionalData?.student_details || {};
+                   razorpay_order_id = order.order_id || null;
                   order.order_id = customData._id || null;
                 } catch {
                   additionalData = null;
@@ -658,6 +661,7 @@ export class RazorpayNonseamlessService {
                   event_amount = null;
                   event_time = null;
                   payment_group = null;
+                   razorpay_order_id = order.order_id || null;
                 }
               }
 
@@ -734,6 +738,7 @@ export class RazorpayNonseamlessService {
               }
               return {
                 ...order,
+                razorpay_order_id,
                 custom_order_id: custom_order_id || null,
                 school_id: school_id || null,
                 student_id: studentDetails?.student_id || null,
