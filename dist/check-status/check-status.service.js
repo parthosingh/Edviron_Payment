@@ -398,6 +398,7 @@ let CheckStatusService = class CheckStatusService {
                 }
                 return {
                     ...edvironPgResponse,
+                    edviron_order_id: collectRequest._id,
                     custom_order_id: collectRequest.custom_order_id || null,
                     capture_status: collect_req_status.capture_status || 'PENDING',
                 };

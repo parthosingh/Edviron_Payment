@@ -574,6 +574,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 const enrichedOrders = await Promise.all(response.data.items
                     .filter((order) => order.order_receipt)
                     .map(async (order) => {
+                    console.log(order, "order");
                     let customData = {};
                     let additionalData = {};
                     let custom_order_id = null;
@@ -584,6 +585,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     let payment_group = null;
                     let school_id = null;
                     let studentDetails = {};
+                    let razorpay_order_id = null;
                     if (order.order_receipt) {
                         console.log(order.order_receipt, "order.order_receipt");
                         customData = customOrderMap.get(order.order_receipt) || {};
@@ -605,6 +607,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                                 : null;
                             payment_group = order.method;
                             studentDetails = additionalData?.student_details || {};
+                            razorpay_order_id = order.order_id || null;
                             order.order_id = customData._id || null;
                         }
                         catch {
@@ -615,6 +618,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                             event_amount = null;
                             event_time = null;
                             payment_group = null;
+                            razorpay_order_id = order.order_id || null;
                         }
                     }
                     if (order.payment_group &&
@@ -686,6 +690,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     }
                     return {
                         ...order,
+                        razorpay_order_id,
                         custom_order_id: custom_order_id || null,
                         school_id: school_id || null,
                         student_id: studentDetails?.student_id || null,
