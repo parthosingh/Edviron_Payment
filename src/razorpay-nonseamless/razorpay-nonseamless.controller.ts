@@ -62,11 +62,11 @@ export class RazorpayNonseamlessController {
       const additional_data = JSON.parse(request.additional_data);
       // const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
       let student_email = additional_data?.student_details?.student_email;
-    if (!student_email) {
+      if (!student_email) {
         student_email = 'testemail@email.com';
       }
       console.log(student_email, 'student_email');
-      
+
       const student_phone_no =
         additional_data?.student_details?.student_phone_no || '9876543210';
 
@@ -83,8 +83,7 @@ export class RazorpayNonseamlessController {
           // You can perform an AJAX call here to your server to verify the payment
           // and update the payment status in your database
           // alert('Payment successful! Payment ID: ' + response.razorpay_payment_id);
-          window.location.href =
-            `${process.env.URL}/razorpay-nonseamless/cancel?collect_id=${collect_id}`;
+          window.location.href = `${process.env.URL}/razorpay-nonseamless/cancel?collect_id=${collect_id}`;
         },
         prefill: {
           name: additional_data.student_details.student_name || '',
@@ -99,8 +98,106 @@ export class RazorpayNonseamlessController {
         },
         modal: {
           ondismiss: function () {
-             window.location.href =
-            `${process.env.URL}/razorpay-nonseamless/cancel?collect_id=${collect_id}`;
+            window.location.href = `${process.env.URL}/razorpay-nonseamless/cancel?collect_id=${collect_id}`;
+          },
+        },
+      };
+      return res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <title>Razorpay Payment</title>
+          <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+        </head>
+        <body>
+          <script>
+            window.onload = function () {
+              const options = ${JSON.stringify(options)};
+              const rzp = new Razorpay(options);
+              rzp.open();
+            };
+          </script>
+        </body>
+        </html>
+      `);
+    } catch (error) {
+      console.error('Error in razorpayRedirect:', error);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Get('/redirect/v2')
+  async razorpayRedirectV2(@Req() req: any, @Res() res: any) {
+    try {
+      const { collect_id, orderId } = req.query;
+      const [request, req_status] = await Promise.all([
+        this.databaseService.CollectRequestModel.findById(collect_id),
+        this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: new Types.ObjectId(collect_id),
+        }),
+      ]);
+
+      if (!request || !req_status) {
+        throw new NotFoundException('Order not found');
+      }
+      if (
+        !request.razorpay.razorpay_id ||
+        !request.razorpay.razorpay_mid ||
+        !request.razorpay.razorpay_secret
+      ) {
+        throw new NotFoundException('Order not found');
+      }
+      const created_at = new Date(req_status.createdAt!).getTime();
+      const now = Date.now();
+      const expiry_duration = 15 * 60 * 1000;
+      if (now - created_at > expiry_duration) {
+        return res.send(`
+          <script>
+            alert('The payment session has expired. Please initiate the payment again.');
+            window.location.href = '${process.env.URL}/razorpay-nonseamless/callback?collect_id=${collect_id}';
+          </script>
+        `);
+      }
+      const additional_data = JSON.parse(request.additional_data);
+      // const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+      let student_email = additional_data?.student_details?.student_email;
+      if (!student_email) {
+        student_email = 'testemail@email.com';
+      }
+      console.log(student_email, 'student_email');
+
+      const student_phone_no =
+        additional_data?.student_details?.student_phone_no || '9876543210';
+
+      const options = {
+        key: request.razorpay.razorpay_id,
+        amount: request.amount * 100,
+        currency: 'INR',
+        name: additional_data?.student_details?.student_name || 'Fees Payment',
+        description: 'Fees Payment',
+        order_id: request.razorpay.order_id,
+        callback_url: `${process.env.URL}/razorpay-nonseamless/callback?collect_id=${collect_id}`,
+        handler: function (response: any) {
+          console.log('Payment successful:', response);
+          // You can perform an AJAX call here to your server to verify the payment
+          // and update the payment status in your database
+          // alert('Payment successful! Payment ID: ' + response.razorpay_payment_id);
+          window.location.href = `${process.env.URL}/razorpay-nonseamless/cancel?collect_id=${collect_id}`;
+        },
+        prefill: {
+          name: additional_data.student_details.student_name || '',
+          email: student_email,
+          contact: student_phone_no,
+        },
+        notes: {
+          bookingId: request._id.toString(),
+        },
+        theme: {
+          color: '#F37254',
+        },
+        modal: {
+          ondismiss: function () {
+            window.location.href = `${process.env.URL}/razorpay-nonseamless/cancel?collect_id=${collect_id}`;
           },
         },
       };
@@ -133,7 +230,6 @@ export class RazorpayNonseamlessController {
     try {
       const { collect_id } = req.query;
       try {
-
         const details = JSON.stringify(req.body || {});
         await new this.databaseService.WebhooksModel({
           body: details,
@@ -160,10 +256,10 @@ export class RazorpayNonseamlessController {
 
       let payment_method = status.details.payment_mode || null;
       let payload = status?.details?.payment_methods || {};
-      
+
       let detail;
-      let pg_mode=payment_method
-      console.log(payment_method, "payment_method")
+      let pg_mode = payment_method;
+      console.log(payment_method, 'payment_method');
       switch (payment_method) {
         case 'upi':
           detail = {
@@ -174,9 +270,8 @@ export class RazorpayNonseamlessController {
           };
           break;
 
-         case 'credit':
-          pg_mode='credit_card',
-          console.log(payload, 'payloadin here')
+        case 'credit':
+          (pg_mode = 'credit_card'), console.log(payload, 'payloadin here');
           detail = {
             card: {
               card_bank_name: payload?.card?.card_type || null,
@@ -189,20 +284,20 @@ export class RazorpayNonseamlessController {
             },
           };
           break;
-          
+
         case 'debit':
-          pg_mode='debit_card',
-          detail = {
-            card: {
-              card_bank_name:  payload?.card?.card_type || null,
-              card_country:  payload?.card?.card_country || null,
-              card_network:  payload?.card?.card_network || null,
-              card_number:  payload?.card?.card_number || null,
-              card_sub_type:  payload?.card?.card_sub_type || null,
-              card_type:  payload?.card?.card_type || null,
-              channel: null,
-            },
-          };
+          (pg_mode = 'debit_card'),
+            (detail = {
+              card: {
+                card_bank_name: payload?.card?.card_type || null,
+                card_country: payload?.card?.card_country || null,
+                card_network: payload?.card?.card_network || null,
+                card_number: payload?.card?.card_number || null,
+                card_sub_type: payload?.card?.card_sub_type || null,
+                card_type: payload?.card?.card_type || null,
+                channel: null,
+              },
+            });
           break;
 
         case 'net_banking':
@@ -293,8 +388,8 @@ export class RazorpayNonseamlessController {
             new: true,
           },
         );
-      
-console.log(updateReq, "updateReq")
+
+      console.log(updateReq, 'updateReq');
       const webhookUrl = collect_request?.req_webhook_urls;
       const transaction_time_str = transaction_time
         ? transaction_time.toISOString()
@@ -321,7 +416,7 @@ console.log(updateReq, "updateReq")
         formattedDate: (() => {
           const rawDate = transaction_time || collect_req_status?.updatedAt;
           const dateObj = new Date(rawDate || new Date());
-          if (isNaN(dateObj.getTime())) return null; 
+          if (isNaN(dateObj.getTime())) return null;
 
           return `${dateObj.getFullYear()}-${String(
             dateObj.getMonth() + 1,
@@ -390,7 +485,6 @@ console.log(updateReq, "updateReq")
       throw new BadRequestException(error.message || 'Something went wrong');
     }
   }
-
 
   @Post('/webhook')
   async webhook(@Body() body: any, @Res() res: any) {

@@ -89,7 +89,7 @@ export declare class CollectService {
         razorpay_id?: string | null;
         razorpay_secret?: string | null;
         razorpay_mid?: string | null;
-    }, isSelectGateway?: boolean): Promise<{
+    }, isSelectGateway?: boolean, razorpay_partner?: boolean): Promise<{
         url: string;
         request: CollectRequest;
     }>;

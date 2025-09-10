@@ -38,7 +38,7 @@ export class CollectService {
     private readonly worldLineService: WorldlineService,
     private readonly razorpayNonseamlessService: RazorpayNonseamlessService,
     private readonly gatepayService: GatepayService,
-  ) { }
+  ) {}
 
   async collect(
     amount: Number,
@@ -151,7 +151,8 @@ export class CollectService {
       razorpay_secret?: string | null;
       razorpay_mid?: string | null;
     },
-    isSelectGateway?: boolean
+    isSelectGateway?: boolean,
+    razorpay_partner?: boolean,
   ): Promise<{ url: string; request: CollectRequest }> {
     if (custom_order_id) {
       const count =
@@ -270,10 +271,20 @@ export class CollectService {
           }).save();
         });
       }
+      let collect_id = request._id.toString();
+      if (razorpay_partner) {
+        const { url, collect_req } =
+          await this.razorpayNonseamlessService.createOrderV2(request);
+
+        this.scheduleUpdate(15 * 60 * 1000, collect_id);
+        this.scheduleUpdate(20 * 60 * 1000, collect_id);
+        this.scheduleUpdate(60 * 60 * 1000, collect_id);
+
+        return { url, request: collect_req };
+      }
 
       const { url, collect_req } =
         await this.razorpayNonseamlessService.createOrder(request);
-      let collect_id = request._id.toString()
       this.scheduleUpdate(15 * 60 * 1000, collect_id);
       this.scheduleUpdate(20 * 60 * 1000, collect_id);
       this.scheduleUpdate(60 * 60 * 1000, collect_id);
@@ -292,8 +303,9 @@ export class CollectService {
         15 * 60 * 1000,
       );
       return {
-        url: `${process.env.URL}/pay-u/redirect?collect_id=${request._id
-          }&school_name=${school_name?.split(' ').join('_')}`,
+        url: `${process.env.URL}/pay-u/redirect?collect_id=${
+          request._id
+        }&school_name=${school_name?.split(' ').join('_')}`,
         request,
       };
     }
@@ -361,10 +373,11 @@ export class CollectService {
         await request.save();
       }
       return {
-        url: `${process.env.URL}/hdfc-razorpay/redirect?order_id=${orderData.id
-          }&collect_id=${request._id}&school_name=${school_name
-            ?.split(' ')
-            .join('_')}`,
+        url: `${process.env.URL}/hdfc-razorpay/redirect?order_id=${
+          orderData.id
+        }&collect_id=${request._id}&school_name=${school_name
+          ?.split(' ')
+          .join('_')}`,
         request,
       };
     }
@@ -456,16 +469,16 @@ export class CollectService {
     const transaction = (
       gateway === Gateway.PENDING
         ? await this.edvironPgService.collect(
-          request,
-          platform_charges,
-          school_name,
-          splitPayments || false,
-          vendor,
-          vendorgateway,
-          easebuzzVendors,
-          cashfreeVedors,
-          easebuzz_school_label,
-        )
+            request,
+            platform_charges,
+            school_name,
+            splitPayments || false,
+            vendor,
+            vendorgateway,
+            easebuzzVendors,
+            cashfreeVedors,
+            easebuzz_school_label,
+          )
         : await this.hdfcService.collect(request)
     )!;
     await this.databaseService.CollectRequestModel.updateOne(
@@ -480,8 +493,8 @@ export class CollectService {
     if (isSelectGateway) {
       return {
         url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`,
-        request
-      }
+        request,
+      };
     }
     return { url: transaction.url, request };
   }
@@ -612,7 +625,7 @@ export class CollectService {
   }
 
   async scheduleUpdate(delay: number, collect_id: string) {
-    console.log(delay)
+    console.log(delay);
     setTimeout(async () => {
       try {
         await this.razorpayNonseamlessService.updateOrder(collect_id);

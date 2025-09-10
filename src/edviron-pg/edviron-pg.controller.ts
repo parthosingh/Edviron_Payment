@@ -40,6 +40,7 @@ import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
 import { stat } from 'fs';
 import { start } from 'repl';
+import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -51,7 +52,8 @@ export class EdvironPgController {
     private readonly nttDataService: NttdataService,
     private readonly posPaytmService: PosPaytmService,
     private readonly worldlineService: WorldlineService,
-  ) { }
+    private readonly razorpayNonseamless: RazorpayNonseamlessService,
+  ) {}
   @Get('/redirect')
   async handleRedirect(@Req() req: any, @Res() res: any) {
     const wallet = req.query.wallet;
@@ -83,12 +85,15 @@ export class EdvironPgController {
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id
-      }&collect_request_id=${req.query.collect_request_id
-      }&amount=${req.query.amount
-      }${disable_modes}&platform_charges=${encodeURIComponent(
-        req.query.platform_charges,
-      )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}";
+                    location.href = "https://pg.edviron.com?session_id=${
+                      req.query.session_id
+                    }&collect_request_id=${
+                      req.query.collect_request_id
+                    }&amount=${
+                      req.query.amount
+                    }${disable_modes}&platform_charges=${encodeURIComponent(
+                      req.query.platform_charges,
+                    )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}";
                 }
             </script>`,
     );
@@ -236,12 +241,15 @@ export class EdvironPgController {
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "${process.env.PG_FRONTEND
-      }?session_id=${sessionId}&collect_request_id=${req.query.collect_id
-      }&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(
-        platform_charges,
-      )}&is_blank=${isBlank}&amount=${amount}&school_name=${info.school_name
-      }&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}";
+                    location.href = "${
+                      process.env.PG_FRONTEND
+                    }?session_id=${sessionId}&collect_request_id=${
+                      req.query.collect_id
+                    }&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(
+                      platform_charges,
+                    )}&is_blank=${isBlank}&amount=${amount}&school_name=${
+                      info.school_name
+                    }&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}";
                 }
             </script>`,
     );
@@ -767,8 +775,9 @@ export class EdvironPgController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+          url: `${
+            process.env.VANILLA_SERVICE_ENDPOINT
+          }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
@@ -1929,7 +1938,11 @@ export class EdvironPgController {
       //   }).select('_id');
 
       console.time('aggregating transaction');
-      if (seachFilter === 'order_id' || seachFilter === 'custom_order_id' || seachFilter === 'student_info') {
+      if (
+        seachFilter === 'order_id' ||
+        seachFilter === 'custom_order_id' ||
+        seachFilter === 'student_info'
+      ) {
         console.log('Serching custom');
         let searchIfo: any = {};
         let findQuery: any = {
@@ -1971,8 +1984,7 @@ export class EdvironPgController {
           searchIfo = {
             collect_id: requestInfo._id,
           };
-        }
-        else if (seachFilter === 'student_info') {
+        } else if (seachFilter === 'student_info') {
           console.log('Serching student_info');
           const studentRegex = {
             $regex: searchParams,
@@ -2008,7 +2020,7 @@ export class EdvironPgController {
         //   searchIfo = {
         //     collect_id:  requestInfo.collect_id,
         //   };
-        // } 
+        // }
         // else if (seachFilter === 'upi_id') {
 
         //   const requestInfo =
@@ -2587,7 +2599,7 @@ export class EdvironPgController {
 
   // https://payements.edviron.com/edviron-pg/easebuzz/settlement
   @Post('easebuzz/settlement')
-  async easebuzzSettlement(@Body() body: any) { }
+  async easebuzzSettlement(@Body() body: any) {}
 
   // @Get('/payments-info')
   // async getpaymentsInfo(@Query('collect_id') collect_id: string) {
@@ -2641,8 +2653,6 @@ export class EdvironPgController {
   ) {
     const { school_id, mode, start_date } = body;
     try {
-
-
       const payments = await this.edvironPgService.getPaymentDetails(
         school_id,
         start_date,
@@ -2768,6 +2778,15 @@ export class EdvironPgController {
 
       if (gateway === Gateway.EDVIRON_NTTDATA) {
         const refund = await this.nttDataService.initiateRefund(
+          collect_id,
+          amount,
+          refund_id,
+        );
+        return refund;
+      }
+
+      if (gateway === Gateway.EDVIRON_RAZORPAY) {
+        const refund = await this.razorpayNonseamless.refund(
           collect_id,
           amount,
           refund_id,
@@ -3048,11 +3067,11 @@ export class EdvironPgController {
         ...(gateway && { gateway: { $in: gateway } }),
         ...(start_date &&
           end_date && {
-          updatedAt: {
-            $gte: new Date(start_date),
-            $lte: new Date(new Date(end_date).setHours(23, 59, 59, 999)),
-          },
-        }),
+            updatedAt: {
+              $gte: new Date(start_date),
+              $lte: new Date(new Date(end_date).setHours(23, 59, 59, 999)),
+            },
+          }),
       };
 
       return await this.edvironPgService.getVendorTransactions(
@@ -3368,25 +3387,17 @@ export class EdvironPgController {
 
   @Post('fetch-subtrustee-batch-transactions')
   async getSubtrusteeBatchTransactions(
-    @Body() body: {
-      school_ids: string[],
-      year: string,
-      token: string
-    }
+    @Body() body: { school_ids: string[]; year: string; token: string },
   ) {
-
     try {
-      const {
-        school_ids,
-        year
-      } = body
-      const response = await this.edvironPgService.getSubTrusteeBatchTransactions(
-        school_ids, year
-      )
-      return response
-    } catch (e) {
-
-    }
+      const { school_ids, year } = body;
+      const response =
+        await this.edvironPgService.getSubTrusteeBatchTransactions(
+          school_ids,
+          year,
+        );
+      return response;
+    } catch (e) {}
   }
 
   @Get('/get-merchant-batch-transactions')
@@ -3660,7 +3671,7 @@ export class EdvironPgController {
       //     note,
       //   )
       // }
-    } catch (e) { }
+    } catch (e) {}
   }
 
   @Get('get-order-payment-link')
@@ -3865,9 +3876,9 @@ export class EdvironPgController {
       let selectedCharge = schoolMdr.platform_charges.find(
         (charge) =>
           charge.payment_mode.toLocaleLowerCase() ===
-          payment_mode.toLocaleLowerCase() &&
+            payment_mode.toLocaleLowerCase() &&
           charge.platform_type.toLocaleLowerCase() ===
-          platform_type.toLocaleLowerCase(),
+            platform_type.toLocaleLowerCase(),
       );
 
       if (!selectedCharge) {
@@ -3929,7 +3940,7 @@ export class EdvironPgController {
     platformCharges.platform_charges.forEach((platformCharge) => {
       if (
         platformCharge.platform_type.toLowerCase() ===
-        platform_type.toLowerCase() &&
+          platform_type.toLowerCase() &&
         platformCharge.payment_mode.toLowerCase() === payment_mode.toLowerCase()
       ) {
         throw new BadRequestException('MDR already present');
@@ -4127,8 +4138,9 @@ export class EdvironPgController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${'65d43e124174f07e3e3f8966'}`,
+          url: `${
+            process.env.VANILLA_SERVICE_ENDPOINT
+          }/main-backend/get-webhook-key?token=${token}&trustee_id=${'65d43e124174f07e3e3f8966'}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
@@ -4207,7 +4219,6 @@ export class EdvironPgController {
         throw new BadRequestException(e.response.data.message);
       }
       console.log(e);
-
 
       throw new BadRequestException(e.message);
     }
@@ -4362,7 +4373,7 @@ export class EdvironPgController {
       payment_modes?: string[];
       isQRCode?: boolean;
       gateway?: string[];
-      school_ids: Types.ObjectId[],
+      school_ids: Types.ObjectId[];
     },
     @Res() res: any,
     @Req() req: any,
@@ -4378,13 +4389,11 @@ export class EdvironPgController {
       isQRCode,
       gateway,
     } = body;
-    let {
-      payment_modes,
-    } = body;
+    let { payment_modes } = body;
     if (!token) throw new Error('Token not provided');
 
     if (payment_modes?.includes('upi')) {
-      payment_modes = [...payment_modes, 'upi_credit_card']  //debit_card
+      payment_modes = [...payment_modes, 'upi_credit_card']; //debit_card
     }
 
     try {
@@ -4781,7 +4790,7 @@ export class EdvironPgController {
               $skip: (page - 1) * limit,
             },
             {
-              $limit: Number(limit)
+              $limit: Number(limit),
             },
             {
               $lookup: {
@@ -5043,7 +5052,8 @@ export class EdvironPgController {
       if (axios.isAxiosError(error)) {
         console.error('Axios Error:', error.response?.data || error.message);
         throw new BadRequestException(
-          `External API error: ${error.response?.data?.message || error.message
+          `External API error: ${
+            error.response?.data?.message || error.message
           }`,
         );
       }
@@ -5272,39 +5282,38 @@ export class EdvironPgController {
       const { data } = await axios.request(config);
       console.log(data);
       return data;
-    } catch (error) { }
+    } catch (error) {}
   }
 
   @Post('set-mdr-zero')
-  async setMdrZero(@Body() body: {
-    school_ids: string[];
-  }) {
+  async setMdrZero(@Body() body: { school_ids: string[] }) {
     try {
       // const reset1=await this.databaseService.PlatformChargeModel.find(
       //   { school_id: { $in: body.school_ids } },
       // )
       const reset = await this.databaseService.PlatformChargeModel.updateMany(
         { school_id: { $in: body.school_ids } },
-        { $set: { "platform_charges.$[].range_charge.$[].charge": 0 } },
-      )
+        { $set: { 'platform_charges.$[].range_charge.$[].charge': 0 } },
+      );
 
-      return reset
-    } catch (e) {
-
-    }
+      return reset;
+    } catch (e) {}
   }
 
   @Post('sub-trustee-transactions-sum')
-  async subTrusteeTransactionsSum(@Body() body: {
-    trustee_id: string;
-    school_id: string[];
-    gateway?: string[] | null;
-    start_date: string;
-    end_date: string;
-    status: string;
-    mode: string[] | null;
-    isQRPayment: boolean;
-  }) {
+  async subTrusteeTransactionsSum(
+    @Body()
+    body: {
+      trustee_id: string;
+      school_id: string[];
+      gateway?: string[] | null;
+      start_date: string;
+      end_date: string;
+      status: string;
+      mode: string[] | null;
+      isQRPayment: boolean;
+    },
+  ) {
     try {
       const {
         trustee_id,
@@ -5314,26 +5323,79 @@ export class EdvironPgController {
         end_date,
         status,
         mode,
-        isQRPayment
-      } = body
+        isQRPayment,
+      } = body;
       // console.log({start_date,end_date});
 
-      const response = await this.edvironPgService.subtrusteeTransactionAggregation(
-        trustee_id,
-        start_date,
-        end_date,
-        school_id,
-        status,
-        mode,
-        isQRPayment,
-        gateway
-      )
-      return response
+      const response =
+        await this.edvironPgService.subtrusteeTransactionAggregation(
+          trustee_id,
+          start_date,
+          end_date,
+          school_id,
+          status,
+          mode,
+          isQRPayment,
+          gateway,
+        );
+      return response;
     } catch (e) {
       throw new BadRequestException(e.message);
     }
-
   }
-
 }
-const y = { "customer_details": { "customer_email": null, "customer_id": "7112AAA812234", "customer_name": null, "customer_phone": "9898989898" }, "error_details": { "error_code": "TRANSACTION_DECLINED", "error_code_raw": null, "error_description": "Transaction declined due to risk-Amount Less than Minimum Amount configured", "error_description_raw": null, "error_reason": "minimum_amount_limit", "error_source": "customer" }, "order": { "order_amount": 4, "order_currency": "INR", "order_id": "68beaff82b235974f1668f4c", "order_tags": null }, "payment": { "auth_id": null, "bank_reference": null, "cf_payment_id": 4327371039, "payment_amount": 4.03, "payment_currency": "INR", "payment_group": "credit_card", "payment_message": "Transaction declined due to risk-Amount Less than Minimum Amount configured", "payment_method": { "card": { "card_bank_name": "AXIS BANK", "card_country": "IN", "card_network": "mastercard", "card_number": "XXXXXXXXXXXX1978", "card_sub_type": "R", "card_type": "credit_card", "channel": null } }, "payment_status": "FAILED", "payment_time": "2025-09-08T15:59:36+05:30" }, "payment_gateway_details": { "gateway_name": "CASHFREE", "gateway_order_id": null, "gateway_order_reference_id": null, "gateway_payment_id": null, "gateway_settlement": null, "gateway_status_code": null }, "payment_offers": null }
+const y = {
+  customer_details: {
+    customer_email: null,
+    customer_id: '7112AAA812234',
+    customer_name: null,
+    customer_phone: '9898989898',
+  },
+  error_details: {
+    error_code: 'TRANSACTION_DECLINED',
+    error_code_raw: null,
+    error_description:
+      'Transaction declined due to risk-Amount Less than Minimum Amount configured',
+    error_description_raw: null,
+    error_reason: 'minimum_amount_limit',
+    error_source: 'customer',
+  },
+  order: {
+    order_amount: 4,
+    order_currency: 'INR',
+    order_id: '68beaff82b235974f1668f4c',
+    order_tags: null,
+  },
+  payment: {
+    auth_id: null,
+    bank_reference: null,
+    cf_payment_id: 4327371039,
+    payment_amount: 4.03,
+    payment_currency: 'INR',
+    payment_group: 'credit_card',
+    payment_message:
+      'Transaction declined due to risk-Amount Less than Minimum Amount configured',
+    payment_method: {
+      card: {
+        card_bank_name: 'AXIS BANK',
+        card_country: 'IN',
+        card_network: 'mastercard',
+        card_number: 'XXXXXXXXXXXX1978',
+        card_sub_type: 'R',
+        card_type: 'credit_card',
+        channel: null,
+      },
+    },
+    payment_status: 'FAILED',
+    payment_time: '2025-09-08T15:59:36+05:30',
+  },
+  payment_gateway_details: {
+    gateway_name: 'CASHFREE',
+    gateway_order_id: null,
+    gateway_order_reference_id: null,
+    gateway_payment_id: null,
+    gateway_settlement: null,
+    gateway_status_code: null,
+  },
+  payment_offers: null,
+};

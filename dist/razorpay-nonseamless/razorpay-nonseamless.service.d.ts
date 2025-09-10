@@ -9,6 +9,10 @@ export declare class RazorpayNonseamlessService {
         url: string;
         collect_req: CollectRequest;
     }>;
+    createOrderV2(collectRequest: CollectRequest): Promise<{
+        url: string;
+        collect_req: CollectRequest;
+    }>;
     getPaymentStatus(order_id: string, collectRequest: CollectRequest): Promise<any>;
     formatRazorpayPaymentStatusResponse(response: any, collectRequest: CollectRequest): Promise<any>;
     fetchCardDetailsOfaPaymentFromRazorpay(payment_id: string, collectRequest: CollectRequest): Promise<any>;
