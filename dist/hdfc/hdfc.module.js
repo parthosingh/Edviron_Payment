@@ -6,18 +6,20 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GatewayModule = void 0;
+exports.HdfcModule = void 0;
 const common_1 = require("@nestjs/common");
-const gateway_service_1 = require("./gateway.service");
-const database_service_1 = require("../database/database.service");
+const hdfc_service_1 = require("./hdfc.service");
 const database_module_1 = require("../database/database.module");
-let GatewayModule = class GatewayModule {
+const hdfc_controller_1 = require("./hdfc.controller");
+let HdfcModule = class HdfcModule {
 };
-exports.GatewayModule = GatewayModule;
-exports.GatewayModule = GatewayModule = __decorate([
+exports.HdfcModule = HdfcModule;
+exports.HdfcModule = HdfcModule = __decorate([
     (0, common_1.Module)({
-        providers: [gateway_service_1.GatewayService, database_service_1.DatabaseService],
-        imports: [database_module_1.DatabaseModule]
+        imports: [database_module_1.DatabaseModule],
+        exports: [hdfc_service_1.HdfcService],
+        providers: [hdfc_service_1.HdfcService],
+        controllers: [hdfc_controller_1.HdfcController],
     })
-], GatewayModule);
-//# sourceMappingURL=gateway.module.js.map
+], HdfcModule);
+//# sourceMappingURL=hdfc.module.js.map

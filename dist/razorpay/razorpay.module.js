@@ -6,18 +6,20 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GatewayModule = void 0;
+exports.RazorpayModule = void 0;
 const common_1 = require("@nestjs/common");
-const gateway_service_1 = require("./gateway.service");
-const database_service_1 = require("../database/database.service");
+const razorpay_controller_1 = require("./razorpay.controller");
+const razorpay_service_1 = require("./razorpay.service");
 const database_module_1 = require("../database/database.module");
-let GatewayModule = class GatewayModule {
+const cashfree_module_1 = require("../cashfree/cashfree.module");
+let RazorpayModule = class RazorpayModule {
 };
-exports.GatewayModule = GatewayModule;
-exports.GatewayModule = GatewayModule = __decorate([
+exports.RazorpayModule = RazorpayModule;
+exports.RazorpayModule = RazorpayModule = __decorate([
     (0, common_1.Module)({
-        providers: [gateway_service_1.GatewayService, database_service_1.DatabaseService],
-        imports: [database_module_1.DatabaseModule]
+        imports: [database_module_1.DatabaseModule, (0, common_1.forwardRef)(() => cashfree_module_1.CashfreeModule)],
+        controllers: [razorpay_controller_1.RazorpayController],
+        providers: [razorpay_service_1.RazorpayService],
     })
-], GatewayModule);
-//# sourceMappingURL=gateway.module.js.map
+], RazorpayModule);
+//# sourceMappingURL=razorpay.module.js.map

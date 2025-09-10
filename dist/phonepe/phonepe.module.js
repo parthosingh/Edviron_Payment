@@ -6,18 +6,20 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GatewayModule = void 0;
+exports.PhonepeModule = void 0;
 const common_1 = require("@nestjs/common");
-const gateway_service_1 = require("./gateway.service");
-const database_service_1 = require("../database/database.service");
+const phonepe_service_1 = require("./phonepe.service");
 const database_module_1 = require("../database/database.module");
-let GatewayModule = class GatewayModule {
+const phonepe_controller_1 = require("./phonepe.controller");
+let PhonepeModule = class PhonepeModule {
 };
-exports.GatewayModule = GatewayModule;
-exports.GatewayModule = GatewayModule = __decorate([
+exports.PhonepeModule = PhonepeModule;
+exports.PhonepeModule = PhonepeModule = __decorate([
     (0, common_1.Module)({
-        providers: [gateway_service_1.GatewayService, database_service_1.DatabaseService],
-        imports: [database_module_1.DatabaseModule]
+        imports: [database_module_1.DatabaseModule],
+        exports: [phonepe_service_1.PhonepeService],
+        providers: [phonepe_service_1.PhonepeService],
+        controllers: [phonepe_controller_1.PhonepeController],
     })
-], GatewayModule);
-//# sourceMappingURL=gateway.module.js.map
+], PhonepeModule);
+//# sourceMappingURL=phonepe.module.js.map

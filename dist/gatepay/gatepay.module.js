@@ -6,18 +6,20 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GatewayModule = void 0;
+exports.GatepayModule = void 0;
 const common_1 = require("@nestjs/common");
-const gateway_service_1 = require("./gateway.service");
+const gatepay_controller_1 = require("./gatepay.controller");
+const gatepay_service_1 = require("./gatepay.service");
 const database_service_1 = require("../database/database.service");
 const database_module_1 = require("../database/database.module");
-let GatewayModule = class GatewayModule {
+let GatepayModule = class GatepayModule {
 };
-exports.GatewayModule = GatewayModule;
-exports.GatewayModule = GatewayModule = __decorate([
+exports.GatepayModule = GatepayModule;
+exports.GatepayModule = GatepayModule = __decorate([
     (0, common_1.Module)({
-        providers: [gateway_service_1.GatewayService, database_service_1.DatabaseService],
-        imports: [database_module_1.DatabaseModule]
+        controllers: [gatepay_controller_1.GatepayController],
+        providers: [gatepay_service_1.GatepayService, database_service_1.DatabaseService],
+        imports: [database_module_1.DatabaseModule],
     })
-], GatewayModule);
-//# sourceMappingURL=gateway.module.js.map
+], GatepayModule);
+//# sourceMappingURL=gatepay.module.js.map

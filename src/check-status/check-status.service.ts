@@ -492,7 +492,7 @@ export class CheckStatusService {
           custom_order_id: collectRequest.custom_order_id || null,
           capture_status: collect_req_status.capture_status || 'PENDING',
         };
-
+  
       case Gateway.EDVIRON_RAZORPAY:
         const razorpayData = await this.razorpayServiceModel.getPaymentStatus(
           collectRequest.razorpay.order_id.toString(),
