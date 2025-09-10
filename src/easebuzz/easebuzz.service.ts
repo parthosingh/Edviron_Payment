@@ -1017,9 +1017,9 @@ export class EasebuzzService {
     let firstname = studentDetail.student_details?.student_name || 'customer';
     let email =
       studentDetail.student_details?.student_email || 'noreply@edviron.com';
-    let student_id = studentDetail?.student_details?.student_id || 'N/A';
+    let student_id = studentDetail?.student_details?.student_id || 'NA';
     let student_phone_no =
-      studentDetail?.student_details?.student_phone_no || '9898989898';
+      studentDetail?.student_details?.student_phone_no || '0000000000';
 
     let hashData =
       easebuzz_key +
