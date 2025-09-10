@@ -220,6 +220,19 @@ export class CollectService {
       payment_method: null,
     }).save();
 
+    let non_seamless_payment_links: any = {
+      cashfree: null,
+      easebuzz: null,
+      razorpay: null,
+      ccavenue: null,
+      pay_u: null,
+      worldline: null,
+      gatepay: null,
+      nttdata: null,
+      hdfc_razorpay: null,
+      hdfc_smartgateway: null,
+      edviron_pg: null,
+    }
     // ATOM NTTDATA-NON SEAMLESS
     if (nttdata_id && nttdata_secret) {
       console.log('enter atom');
@@ -231,7 +244,17 @@ export class CollectService {
         },
         15 * 60 * 1000,
       );
-      return { url, request: collect_req };
+      if (isSelectGateway) {
+        const ntt_data_url = url;
+
+        non_seamless_payment_links.nttdata = ntt_data_url;
+        // return {
+        //   url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`,
+        //   request
+        // };
+      } else {
+        return { url, request: collect_req };
+      }
     }
     if (
       razorpay_credentials?.razorpay_id &&
@@ -277,8 +300,15 @@ export class CollectService {
       this.scheduleUpdate(15 * 60 * 1000, collect_id);
       this.scheduleUpdate(20 * 60 * 1000, collect_id);
       this.scheduleUpdate(60 * 60 * 1000, collect_id);
-
-      return { url, request: collect_req };
+      if (isSelectGateway) {
+        non_seamless_payment_links.razorpay = url;
+        return {
+          url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`,
+          request
+        };
+      } else {
+        return { url, request: collect_req };
+      }
     }
     if (pay_u_key && pay_u_salt) {
       setTimeout(
@@ -291,11 +321,22 @@ export class CollectService {
         },
         15 * 60 * 1000,
       );
-      return {
-        url: `${process.env.URL}/pay-u/redirect?collect_id=${request._id
-          }&school_name=${school_name?.split(' ').join('_')}`,
-        request,
-      };
+      if (isSelectGateway) {
+        const payu_url = `${process.env.URL}/pay-u/redirect?collect_id=${request._id
+          }&school_name=${school_name?.split(' ').join('_')}`;
+
+        non_seamless_payment_links.pay_u = payu_url;
+        return {
+          url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`,
+          request
+        };
+      } else {
+        return {
+          url: `${process.env.URL}/pay-u/redirect?collect_id=${request._id
+            }&school_name=${school_name?.split(' ').join('_')}`,
+          request,
+        };
+      }
     }
 
     if (
@@ -327,16 +368,23 @@ export class CollectService {
       }
 
       await request.save();
-
       const { url, collect_req } =
         await this.gatepayService.createOrder(request);
-      return { url, request: collect_req };
+      if (isSelectGateway) {
+        non_seamless_payment_links.gatepay = url;
+      } else {
+        return { url, request: collect_req };
+      }
     }
 
     // CCAVENUE NONSEAMMLESS
     if (ccavenue_merchant_id) {
       const transaction = await this.ccavenueService.createOrder(request);
-      return { url: transaction.url, request };
+      if (isSelectGateway) {
+        non_seamless_payment_links.ccavenue = transaction.url;
+      } else {
+        return { url: transaction.url, request };
+      }
     }
 
     // HDFC NON SEAMLESS
@@ -360,13 +408,21 @@ export class CollectService {
         request.hdfc_razorpay_order_id = orderData.id;
         await request.save();
       }
-      return {
-        url: `${process.env.URL}/hdfc-razorpay/redirect?order_id=${orderData.id
+      if (isSelectGateway) {
+        const hdfc_razorpay_url = `${process.env.URL}/hdfc-razorpay/redirect?order_id=${orderData.id
           }&collect_id=${request._id}&school_name=${school_name
             ?.split(' ')
-            .join('_')}`,
-        request,
-      };
+            .join('_')}`;
+        non_seamless_payment_links.hdfc_razorpay = hdfc_razorpay_url;
+      } else {
+        return {
+          url: `${process.env.URL}/hdfc-razorpay/redirect?order_id=${orderData.id
+            }&collect_id=${request._id}&school_name=${school_name
+              ?.split(' ')
+              .join('_')}`,
+          request,
+        };
+      }
     }
 
     if (
@@ -430,8 +486,14 @@ export class CollectService {
       } catch (e) {
         console.log(e);
       }
-
-      return { url, request: collect_req };
+      if (isSelectGateway) {
+        console.log(isSelectGateway, 'isSelectGateway');
+        
+        non_seamless_payment_links.worldline = url;
+      } else {
+        console.log('false')
+        return { url, request: collect_req };
+      }
     }
 
     // HDFC SMART GATEWAY NON SEAMLESS
@@ -450,7 +512,11 @@ export class CollectService {
         smartgateway_merchant_id,
         smart_gateway_api_key,
       );
-      return { url: data?.url, request: data?.request };
+      if (isSelectGateway) {
+        non_seamless_payment_links.hdfc_smartgateway = data?.url;
+      } else {
+        return { url: data?.url, request: data?.request };
+      }
     }
 
     const transaction = (
@@ -477,11 +543,12 @@ export class CollectService {
       },
       { new: true },
     );
+
     if (isSelectGateway) {
-      return {
-        url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`,
-        request
-      }
+      non_seamless_payment_links.edviron_pg = transaction.url;
+      request.non_seamless_payment_links=non_seamless_payment_links;
+      await request.save();
+      return { url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`, request };
     }
     return { url: transaction.url, request };
   }

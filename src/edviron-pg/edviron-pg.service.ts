@@ -88,7 +88,6 @@ export class EdvironPgService implements GatewayService {
       const schoolName = school_name.replace(/ /g, '-'); //replace spaces because url dosent support spaces
       const axios = require('axios');
       const currentTime = new Date();
-
       // Add 20 minutes to the current time test
       const expiryTime = new Date(currentTime.getTime() + 20 * 60000);
 

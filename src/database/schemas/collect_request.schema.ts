@@ -52,6 +52,7 @@ interface Non_Seamless_Payment_Links {
   nttdata: string;
   hdfc_razorpay: string;
   hdfc_smartgateway: string;
+  edviron_pg: string;
 
 }
 
@@ -380,6 +381,7 @@ export class CollectRequest {
       nttdata:{ type: String, required: false, default: null },
       hdfc_razorpay:{ type: String, required: false, default: null },
       hdfc_smartgateway:{ type: String, required: false, default: null },
+      edviron_pg:{ type: String, required: false, default: null },
     },
     _id: false
   })
