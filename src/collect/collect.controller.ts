@@ -148,6 +148,7 @@ export class CollectController {
         },
       ];
       isSelectGateway?:boolean
+      razorpay_partner?:boolean
     },
   ) {
     const {
@@ -201,7 +202,8 @@ export class CollectController {
       gatepay_credentials,
       isCFNonSeamless,
       razorpay_seamless_credentials,
-      isSelectGateway
+      isSelectGateway,
+      razorpay_partner
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -267,7 +269,8 @@ export class CollectController {
           gatepay_credentials,
           isCFNonSeamless,
           razorpay_seamless_credentials,
-          isSelectGateway
+          isSelectGateway,
+          razorpay_partner
         ),
       );
     } catch (e) {
