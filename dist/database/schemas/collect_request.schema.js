@@ -363,6 +363,7 @@ __decorate([
         type: {
             cashfree: { type: String, required: false, default: null },
             easebuzz: { type: String, required: false, default: null },
+            edv_easebuzz: { type: String, required: false, default: null },
             razorpay: { type: String, required: false, default: null },
             ccavenue: { type: String, required: false, default: null },
             pay_u: { type: String, required: false, default: null },

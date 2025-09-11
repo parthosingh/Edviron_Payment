@@ -11,12 +11,13 @@ const common_1 = require("@nestjs/common");
 const gateway_service_1 = require("./gateway.service");
 const database_service_1 = require("../database/database.service");
 const database_module_1 = require("../database/database.module");
+const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 let GatewayModule = class GatewayModule {
 };
 exports.GatewayModule = GatewayModule;
 exports.GatewayModule = GatewayModule = __decorate([
     (0, common_1.Module)({
-        providers: [gateway_service_1.GatewayService, database_service_1.DatabaseService],
+        providers: [gateway_service_1.GatewayService, database_service_1.DatabaseService, easebuzz_service_1.EasebuzzService],
         imports: [database_module_1.DatabaseModule]
     })
 ], GatewayModule);

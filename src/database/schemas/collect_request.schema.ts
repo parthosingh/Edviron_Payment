@@ -42,17 +42,18 @@ interface I_Razorpay {
 }
 
 export interface Non_Seamless_Payment_Links {
-  cashfree: string;
-  easebuzz: string;
-  razorpay: string;
-  ccavenue: string;
-  pay_u: string;
-  worldline: string;
-  gatepay: string;
-  nttdata: string;
-  hdfc_razorpay: string;
-  hdfc_smartgateway: string;
-  edviron_pg: string;
+  cashfree: string | null;
+  easebuzz: string | null;
+  edv_easebuzz: string | null;
+  razorpay: string | null;
+  ccavenue: string | null;
+  pay_u: string | null;
+  worldline: string | null;
+  gatepay: string | null;
+  nttdata: string | null;
+  hdfc_razorpay: string | null;
+  hdfc_smartgateway: string | null;
+  edviron_pg: string | null;
 
 }
 
@@ -373,6 +374,7 @@ export class CollectRequest {
     type: {
       cashfree:{ type: String, required: false, default: null },
       easebuzz:{ type: String, required: false, default: null },
+      edv_easebuzz:{ type: String, required: false, default: null },
       razorpay:{ type: String, required: false, default: null },
       ccavenue:{ type: String, required: false, default: null },
       pay_u:{ type: String, required: false, default: null },
@@ -382,6 +384,7 @@ export class CollectRequest {
       hdfc_razorpay:{ type: String, required: false, default: null },
       hdfc_smartgateway:{ type: String, required: false, default: null },
       edviron_pg:{ type: String, required: false, default: null },
+
     },
     _id: false
   })

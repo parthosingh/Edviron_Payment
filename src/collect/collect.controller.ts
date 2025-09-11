@@ -147,7 +147,14 @@ export class CollectController {
           on_hold_until?: Date;
         },
       ];
-      isSelectGateway?:boolean
+      isSelectGateway?:boolean,
+      isEasebuzzNonpartner?:boolean,
+    easebuzz_non_partner_cred?: {
+        easebuzz_salt: string;
+        easebuzz_key: string;
+        easebuzz_merchant_email: string;
+        easebuzz_submerchant_id: string;
+      }
     },
   ) {
     const {
@@ -201,7 +208,9 @@ export class CollectController {
       gatepay_credentials,
       isCFNonSeamless,
       razorpay_seamless_credentials,
-      isSelectGateway
+      isSelectGateway,
+      isEasebuzzNonpartner,
+      easebuzz_non_partner_cred
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -267,7 +276,9 @@ export class CollectController {
           gatepay_credentials,
           isCFNonSeamless,
           razorpay_seamless_credentials,
-          isSelectGateway
+          isSelectGateway,
+          isEasebuzzNonpartner,
+          easebuzz_non_partner_cred
         ),
       );
     } catch (e) {

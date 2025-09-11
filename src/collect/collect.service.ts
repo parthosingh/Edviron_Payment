@@ -21,6 +21,8 @@ import { WorldlineService } from 'src/worldline/worldline.service';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 import { GatepayService } from 'src/gatepay/gatepay.service';
+import { CashfreeService } from 'src/cashfree/cashfree.service';
+import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 
 @Injectable()
 export class CollectService {
@@ -38,6 +40,8 @@ export class CollectService {
     private readonly worldLineService: WorldlineService,
     private readonly razorpayNonseamlessService: RazorpayNonseamlessService,
     private readonly gatepayService: GatepayService,
+    private readonly cashfreeService: CashfreeService,
+    private readonly easebuzzService: EasebuzzService
   ) { }
 
   async collect(
@@ -152,7 +156,13 @@ export class CollectService {
       razorpay_mid?: string | null;
     },
     isSelectGateway?: boolean,
-    nonSeamless?: boolean,
+    isEasebuzzNonpartner?: boolean,
+    easebuzz_non_partner_cred?: {
+        easebuzz_salt: string;
+        easebuzz_key: string;
+        easebuzz_merchant_email: string;
+        easebuzz_submerchant_id: string;
+      }
   ): Promise<{ url: string; request: CollectRequest }> {
     if (custom_order_id) {
       const count =
@@ -202,6 +212,7 @@ export class CollectService {
       worldline_vendors_info: worldLine_vendors,
       razorpay_vendors_info: razorpay_vendors,
       isSplitPayments: splitPayments || false,
+      easebuzz_split_label:easebuzz_school_label,
       razorpay: {
         razorpay_id: razorpay_credentials?.razorpay_id || null,
         razorpay_secret: razorpay_credentials?.razorpay_secret || null,
@@ -227,6 +238,7 @@ export class CollectService {
     let non_seamless_payment_links: any = {
       cashfree: null,
       easebuzz: null,
+      edv_easebuzz:null,
       razorpay: null,
       ccavenue: null,
       pay_u: null,
@@ -528,9 +540,78 @@ export class CollectService {
         return { url: data?.url, request: data?.request };
       }
     }
-    // EASEBUZZ NONSEAMLESS
+
+    // CASHFREE NON PARTNER Mastergateway
+    // if (isSelectGateway) {
+    //   console.log('check cf master');
+    //   console.log({ isCashfreeNonpartner, cashfree_credentials });
+
+    //   if (isCashfreeNonpartner && cashfree_credentials) {
+
+    //     const info = await this.cashfreeService.createOrderV2(
+    //       amount,
+    //       callbackUrl,
+    //       school_id,
+    //       trustee_id,
+    //       disabled_modes,
+    //       platform_charges,
+    //       cashfree_credentials,
+    //       request.clientId,
+    //       request.clientSecret,
+    //       webHook,
+    //       additional_data,
+    //       custom_order_id,
+    //       req_webhook_urls,
+    //       school_name,
+    //       splitPayments,
+    //       cashfreeVedors,
+    //       vendorgateway,
+    //       cashfreeVedors,
+    //       isVBAPayment,
+    //       vba_account_number,
+    //     )
+    //     console.log(info);
+
+    //     non_seamless_payment_links.edv_vendor_id = info.url
+    //     request.non_seamless_payment_links=non_seamless_payment_links
+    //     await request.save()
+    //     return {
+    //       url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`, request
+    //     };
+    //   }
+    // }
+
+    // EASEBUZZ NON PARTNER MASTERGATEWAY
+    if(isSelectGateway){
+      console.log({isEasebuzzNonpartner},easebuzz_non_partner_cred);
+      
+      if(
+        isEasebuzzNonpartner &&
+        easebuzz_non_partner_cred &&
+        easebuzz_non_partner_cred.easebuzz_key &&
+        easebuzz_non_partner_cred.easebuzz_merchant_email &&
+        easebuzz_non_partner_cred.easebuzz_submerchant_id
+      ){
+        console.log('easebuzz non partner');
+        
+        request.easebuzz_sub_merchant_id=easebuzz_non_partner_cred.easebuzz_submerchant_id,
+        request.easebuzz_non_partner=true
+        request.easebuzz_non_partner_cred=easebuzz_non_partner_cred
+        await request.save()
+        const schoolName=school_name || ' '
+        const info=await this.easebuzzService.createOrderV2NonSplit(
+          request,
+          platform_charges,
+          schoolName
+        )       
+        non_seamless_payment_links.edv_easebuzz=info.collect_request_url
+
+      }
+    }
+
+    // EASEBUZZ NONSEAMLESS and cashfree
     if (isSelectGateway) {
-      if (request.easebuzz_sub_merchant_id || request.clientId) {
+      if (request.clientId) {
         const transaction = (
           gateway === Gateway.PENDING
             ? await this.edvironPgService.collect(
@@ -543,9 +624,12 @@ export class CollectService {
               easebuzzVendors,
               cashfreeVedors,
               easebuzz_school_label,
+              isSelectGateway
             )
             : await this.hdfcService.collect(request)
         )!;
+        console.log(transaction,'p');
+        
         await this.databaseService.CollectRequestModel.updateOne(
           {
             _id: request._id,
@@ -558,8 +642,11 @@ export class CollectService {
         non_seamless_payment_links.edviron_pg = transaction.url;
         request.non_seamless_payment_links = non_seamless_payment_links;
       }
+      request.non_seamless_payment_links = non_seamless_payment_links
       await request.save()
-      return { url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`, request };
+      return {
+        url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`, request
+      };
     }
 
     const transaction = (
@@ -577,7 +664,7 @@ export class CollectService {
         )
         : await this.hdfcService.collect(request)
     )!;
-    
+
     await this.databaseService.CollectRequestModel.updateOne(
       {
         _id: request._id,
@@ -587,6 +674,7 @@ export class CollectService {
       },
       { new: true },
     );
+
 
 
 
