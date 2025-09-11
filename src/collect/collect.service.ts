@@ -166,6 +166,8 @@ export class CollectService {
       }
     }
     const gateway = clientId === 'edviron' ? Gateway.HDFC : Gateway.PENDING;
+    console.log({ isSelectGateway });
+
     const request = await new this.databaseService.CollectRequestModel({
       amount,
       callbackUrl,
@@ -211,6 +213,7 @@ export class CollectService {
         razorpay_secret: razorpay_seamless_credentials?.razorpay_secret || null,
         razorpay_mid: razorpay_seamless_credentials?.razorpay_mid || null,
       },
+      isMasterGateway: isSelectGateway || false
     }).save();
 
     await new this.databaseService.CollectRequestStatusModel({
@@ -351,7 +354,7 @@ export class CollectService {
       gatepay_credentials?.gatepay_iv &&
       gatepay_credentials.gatepay_terminal_id
     ) {
-      console.log('gatepay enter');
+      console.log('gatepay enter9');
       if (!request.gatepay) {
         (request.gateway = Gateway.EDVIRON_GATEPAY),
           (request.gatepay = {
@@ -494,8 +497,8 @@ export class CollectService {
         console.log(e);
       }
       if (isSelectGateway) {
-        console.log(isSelectGateway, 'isSelectGateway');
-        
+        // console.log(isSelectGateway, 'isSelectGateway'); 
+
         non_seamless_payment_links.worldline = url;
       } else {
         console.log('false')
@@ -525,9 +528,40 @@ export class CollectService {
         return { url: data?.url, request: data?.request };
       }
     }
-
     // EASEBUZZ NONSEAMLESS
-  
+    if (isSelectGateway) {
+      if (request.easebuzz_sub_merchant_id || request.clientId) {
+        const transaction = (
+          gateway === Gateway.PENDING
+            ? await this.edvironPgService.collect(
+              request,
+              platform_charges,
+              school_name,
+              splitPayments || false,
+              vendor,
+              vendorgateway,
+              easebuzzVendors,
+              cashfreeVedors,
+              easebuzz_school_label,
+            )
+            : await this.hdfcService.collect(request)
+        )!;
+        await this.databaseService.CollectRequestModel.updateOne(
+          {
+            _id: request._id,
+          },
+          {
+            payment_data: JSON.stringify(transaction.url),
+          },
+          { new: true },
+        );
+        non_seamless_payment_links.edviron_pg = transaction.url;
+        request.non_seamless_payment_links = non_seamless_payment_links;
+      }
+      await request.save()
+      return { url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`, request };
+    }
+
     const transaction = (
       gateway === Gateway.PENDING
         ? await this.edvironPgService.collect(
@@ -543,6 +577,7 @@ export class CollectService {
         )
         : await this.hdfcService.collect(request)
     )!;
+    
     await this.databaseService.CollectRequestModel.updateOne(
       {
         _id: request._id,
@@ -553,14 +588,16 @@ export class CollectService {
       { new: true },
     );
 
-    if (isSelectGateway) {
-      non_seamless_payment_links.edviron_pg = transaction.url;
-      request.non_seamless_payment_links=non_seamless_payment_links;
-      console.log({non_seamless_payment_links});
-      
-      await request.save();
-      return { url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`, request };
-    }
+
+
+    // if (isSelectGateway) {
+    //   non_seamless_payment_links.edviron_pg = transaction.url;
+    //   request.non_seamless_payment_links = non_seamless_payment_links;
+    //   console.log({ non_seamless_payment_links });
+
+    //   await request.save();
+    //   return { url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`, request };
+    // }
     return { url: transaction.url, request };
   }
 

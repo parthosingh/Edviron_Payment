@@ -60,7 +60,7 @@ interface I_Razorpay {
     payment_id: string;
     razorpay_signature: string;
 }
-interface Non_Seamless_Payment_Links {
+export interface Non_Seamless_Payment_Links {
     cashfree: string;
     easebuzz: string;
     razorpay: string;
@@ -218,6 +218,7 @@ export declare class CollectRequest {
     easebuzz_non_partner_cred: EASEBUZZ_NON_PARTNER_CRED;
     easebuzz_non_partner: boolean;
     cashfree_non_partner: boolean;
+    isMasterGateway: boolean;
     worldline_token: string;
     vba_account_number: string;
     razorpay: I_Razorpay;
