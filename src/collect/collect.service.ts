@@ -151,7 +151,8 @@ export class CollectService {
       razorpay_secret?: string | null;
       razorpay_mid?: string | null;
     },
-    isSelectGateway?: boolean
+    isSelectGateway?: boolean,
+    nonSeamless?: boolean,
   ): Promise<{ url: string; request: CollectRequest }> {
     if (custom_order_id) {
       const count =
@@ -256,6 +257,8 @@ export class CollectService {
         return { url, request: collect_req };
       }
     }
+
+    // RAZORPAY NON SEAMLESS
     if (
       razorpay_credentials?.razorpay_id &&
       razorpay_credentials?.razorpay_secret &&
@@ -302,14 +305,16 @@ export class CollectService {
       this.scheduleUpdate(60 * 60 * 1000, collect_id);
       if (isSelectGateway) {
         non_seamless_payment_links.razorpay = url;
-        return {
-          url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`,
-          request
-        };
+        // return {
+        //   url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`,
+        //   request
+        // };
       } else {
         return { url, request: collect_req };
       }
     }
+
+    // PAYU NON SEAMLESS
     if (pay_u_key && pay_u_salt) {
       setTimeout(
         async () => {
@@ -326,10 +331,10 @@ export class CollectService {
           }&school_name=${school_name?.split(' ').join('_')}`;
 
         non_seamless_payment_links.pay_u = payu_url;
-        return {
-          url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`,
-          request
-        };
+        // return {
+        //   url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`,
+        //   request
+        // };
       } else {
         return {
           url: `${process.env.URL}/pay-u/redirect?collect_id=${request._id
@@ -339,6 +344,7 @@ export class CollectService {
       }
     }
 
+    // GATEPAY NON SEAMLESS
     if (
       gatepay_credentials?.gatepay_mid &&
       gatepay_credentials?.gatepay_key &&
@@ -425,6 +431,7 @@ export class CollectService {
       }
     }
 
+    // WORLDLINE NON SEAMLESS
     if (
       worldline_merchant_id &&
       worldline_encryption_key &&
@@ -519,6 +526,8 @@ export class CollectService {
       }
     }
 
+    // EASEBUZZ NONSEAMLESS
+  
     const transaction = (
       gateway === Gateway.PENDING
         ? await this.edvironPgService.collect(
@@ -547,6 +556,8 @@ export class CollectService {
     if (isSelectGateway) {
       non_seamless_payment_links.edviron_pg = transaction.url;
       request.non_seamless_payment_links=non_seamless_payment_links;
+      console.log({non_seamless_payment_links});
+      
       await request.save();
       return { url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`, request };
     }
