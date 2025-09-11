@@ -170,6 +170,9 @@ export class CollectRequest {
   @Prop({ required: false, default: false })
   isVBAPaymentComplete: boolean;
 
+  @Prop({ required: false, default: false })
+  isCollectNow: boolean;
+
   @Prop({ required: false, unique: true })
   custom_order_id: string;
   @Prop({ default: [] })
@@ -369,7 +372,7 @@ export class CollectRequest {
   @Prop({ required: false, default: false })
   easebuzz_non_partner: boolean;
 
-   @Prop({ required: false, default: false })
+  @Prop({ required: false, default: false })
   cashfree_non_partner: boolean;
 
   // @Prop({ required: false })

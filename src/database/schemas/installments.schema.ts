@@ -9,7 +9,6 @@ export class Installments {
 
 
   @Prop({
-    required: true,
     ref: 'CollectRequest',
     type: mongoose.Schema.Types.ObjectId,
   })
@@ -58,8 +57,8 @@ export class Installments {
         label: { type: String, required: true },
         amount: { type: Number, required: true },
         net_amount: { type: Number, required: true },
-        discount: { type: Number, required: true },
-        gst: { type: Number, required: true },
+        discount: { type: Number, required: false },
+        gst: { type: Number, required: false },
       },
     ],
   })

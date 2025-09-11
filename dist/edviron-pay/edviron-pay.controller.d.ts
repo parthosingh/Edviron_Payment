@@ -5,7 +5,7 @@ export declare class EdvironPayController {
     upsertInstallments(body: any): Promise<{
         status: string;
     }>;
-    testEndpoint(body: {
+    collect(body: {
         isInatallment: boolean;
         InstallmentsIds: string[];
         school_id: string;
@@ -27,8 +27,8 @@ export declare class EdvironPayController {
         additional_data?: {};
         cashfree: {
             client_id: string;
-            api_key: string;
             client_secret: string;
+            api_key: string;
             isSeamless: boolean;
             isPartner: boolean;
             isVba: boolean;

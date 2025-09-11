@@ -29,7 +29,7 @@ export class EdvironPayController {
             isInstallement,
             installments,
         } = body;
-        console.log({ isInstallement, installments });
+   
 
         if (isInstallement && installments && installments.length > 0) {
             await Promise.all(
@@ -95,12 +95,14 @@ export class EdvironPayController {
         } else {
             throw new Error('No installments found or isInstallement is false');
         }
+        console.log('Installments upserted successfully');
+        
 
         return { status: 'installment updated successfully for student_id: ' + student_id };
     }
 
-    @Post('test')
-    async testEndpoint(@Body() body: {
+    @Post('collect-request')
+    async collect(@Body() body: {
         isInatallment: boolean;
         InstallmentsIds: string[];
         school_id: string;
@@ -122,8 +124,8 @@ export class EdvironPayController {
         additional_data?: {};
         cashfree: {
             client_id: string;
-            api_key: string;
             client_secret: string;
+            api_key: string;
             isSeamless: boolean;
             isPartner: boolean;
             isVba: boolean;
@@ -218,19 +220,25 @@ export class EdvironPayController {
                 const request = await this.databaseService.CollectRequestModel.create({
                     amount,
                     callbackUrl: callback_url,
+                    gateway: Gateway.PENDING,
+                    isCollectNow: true,
+                    clientId: cashfree?.client_id || null,
+                    clientSecret: cashfree?.client_secret || null,
+                    disabled_modes: disable_mode,
                     school_id,
                     trustee_id,
-                    disabled_modes: disable_mode,
-                    req_webhook_urls: [webhook_url],
-                    additional_data,
+                    additional_data: JSON.stringify(additional_data || {}),
                     custom_order_id,
-                    school_name,
-                    isSplitPayments: isSplit || false,
-                    isVBAPayment: isVBAPayment || false,
-                    gateway: Gateway.PENDING,
+                    req_webhook_urls: [webhook_url],
+                    easebuzz_sub_merchant_id: easebuzz?.mid||null,
                     easebuzzVendors: easebuzz?.easebuzzVendors || [],
                     cashfreeVedors: cashfree?.cashfreeVedors || [],
+                    isVBAPayment: isVBAPayment || false,
+                    vba_account_number: isVBAPayment ? cashfree?.vba?.vba_account_number : null,
+                    school_name,
+                    isSplitPayments: isSplit || false,
                     isCFNonSeamless: !cashfree?.isSeamless || false,
+                    
                 })
 
                 const requestStatus = await new this.databaseService.CollectRequestStatusModel({

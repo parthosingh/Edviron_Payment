@@ -22,7 +22,6 @@ __decorate([
 ], Installments.prototype, "school_id", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
-        required: true,
         ref: 'CollectRequest',
         type: mongoose_2.default.Schema.Types.ObjectId,
     }),
@@ -84,8 +83,8 @@ __decorate([
                 label: { type: String, required: true },
                 amount: { type: Number, required: true },
                 net_amount: { type: Number, required: true },
-                discount: { type: Number, required: true },
-                gst: { type: Number, required: true },
+                discount: { type: Number, required: false },
+                gst: { type: Number, required: false },
             },
         ],
     }),

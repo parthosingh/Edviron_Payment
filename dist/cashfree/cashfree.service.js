@@ -234,7 +234,9 @@ let CashfreeService = class CashfreeService {
                 },
                 data,
             };
+            console.log(config);
             const { data: response } = await axios_1.default.request(config);
+            console.log({ response });
             const orderIds = response.data
                 .filter((order) => order.order_id !== null)
                 .map((order) => order.order_id);
@@ -1252,6 +1254,101 @@ let CashfreeService = class CashfreeService {
                     order_status: cashfreeRes.order_status,
                 },
             };
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async createOrderCashfree(request, splitPayments, cashfreeVedors) {
+        try {
+            const currentTime = new Date();
+            const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
+            if (!collectReq) {
+                throw new common_1.BadRequestException('Collect Request not found');
+            }
+            const expiryTime = new Date(currentTime.getTime() + 20 * 60000);
+            const isoExpiryTime = expiryTime.toISOString();
+            let data = JSON.stringify({
+                customer_details: {
+                    customer_id: '7112AAA812234',
+                    customer_phone: '9898989898',
+                },
+                order_currency: 'INR',
+                order_amount: request.amount.toFixed(2),
+                order_id: request._id,
+                order_meta: {
+                    return_url: process.env.URL +
+                        '/edviron-pg/callback?collect_request_id=' +
+                        request._id,
+                },
+                order_expiry_time: isoExpiryTime,
+            });
+            if (splitPayments && cashfreeVedors && cashfreeVedors.length > 0) {
+                const vendor_data = cashfreeVedors
+                    .filter(({ amount, percentage }) => {
+                    return (amount && amount > 0) || (percentage && percentage > 0);
+                })
+                    .map(({ vendor_id, percentage, amount }) => ({
+                    vendor_id,
+                    percentage,
+                    amount,
+                }));
+                data = JSON.stringify({
+                    customer_details: {
+                        customer_id: '7112AAA812234',
+                        customer_phone: '9898989898',
+                    },
+                    order_currency: 'INR',
+                    order_amount: request.amount.toFixed(2),
+                    order_id: request._id,
+                    order_meta: {
+                        return_url: process.env.URL +
+                            '/edviron-pg/callback?collect_request_id=' +
+                            request._id,
+                    },
+                    order_splits: vendor_data,
+                });
+                collectReq.isSplitPayments = true;
+                collectReq.vendors_info = cashfreeVedors;
+                await collectReq.save();
+                cashfreeVedors.map(async (info) => {
+                    const { vendor_id, percentage, amount, name } = info;
+                    let split_amount = 0;
+                    if (amount) {
+                        split_amount = amount;
+                    }
+                    if (percentage && percentage !== 0) {
+                        split_amount = (request.amount * percentage) / 100;
+                    }
+                    await new this.databaseService.VendorTransactionModel({
+                        vendor_id: vendor_id,
+                        amount: split_amount,
+                        collect_id: request._id,
+                        gateway: collect_request_schema_1.Gateway.EDVIRON_PG,
+                        status: transactionStatus_1.TransactionStatus.PENDING,
+                        trustee_id: request.trustee_id,
+                        school_id: request.school_id,
+                        custom_order_id: request.custom_order_id || '',
+                        name,
+                    }).save();
+                });
+            }
+            let config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/orders`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                    'x-partner-merchantid': request.clientId || null,
+                    'x-partner-apikey': request.cashfree_credentials.cf_api_key,
+                },
+                data: data,
+            };
+            const { data: cashfreeRes } = await axios_1.default.request(config);
+            const cf_payment_id = cashfreeRes.payment_session_id;
+            return cf_payment_id;
         }
         catch (e) {
             throw new common_1.BadRequestException(e.message);

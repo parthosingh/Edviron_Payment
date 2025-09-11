@@ -23,7 +23,6 @@ let EdvironPayController = class EdvironPayController {
     }
     async upsertInstallments(body) {
         const { school_id, trustee_id, student_id, student_number, student_name, student_email, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, } = body;
-        console.log({ isInstallement, installments });
         if (isInstallement && installments && installments.length > 0) {
             await Promise.all(installments.map(async (installment) => {
                 const filter = {
@@ -80,9 +79,10 @@ let EdvironPayController = class EdvironPayController {
         else {
             throw new Error('No installments found or isInstallement is false');
         }
+        console.log('Installments upserted successfully');
         return { status: 'installment updated successfully for student_id: ' + student_id };
     }
-    async testEndpoint(body) {
+    async collect(body) {
         const { isInatallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, easebuzz, } = body;
         try {
             if (!token) {
@@ -113,18 +113,23 @@ let EdvironPayController = class EdvironPayController {
                 const request = await this.databaseService.CollectRequestModel.create({
                     amount,
                     callbackUrl: callback_url,
+                    gateway: collect_request_schema_1.Gateway.PENDING,
+                    isCollectNow: true,
+                    clientId: cashfree?.client_id || null,
+                    clientSecret: cashfree?.client_secret || null,
+                    disabled_modes: disable_mode,
                     school_id,
                     trustee_id,
-                    disabled_modes: disable_mode,
-                    req_webhook_urls: [webhook_url],
-                    additional_data,
+                    additional_data: JSON.stringify(additional_data || {}),
                     custom_order_id,
-                    school_name,
-                    isSplitPayments: isSplit || false,
-                    isVBAPayment: isVBAPayment || false,
-                    gateway: collect_request_schema_1.Gateway.PENDING,
+                    req_webhook_urls: [webhook_url],
+                    easebuzz_sub_merchant_id: easebuzz?.mid || null,
                     easebuzzVendors: easebuzz?.easebuzzVendors || [],
                     cashfreeVedors: cashfree?.cashfreeVedors || [],
+                    isVBAPayment: isVBAPayment || false,
+                    vba_account_number: isVBAPayment ? cashfree?.vba?.vba_account_number : null,
+                    school_name,
+                    isSplitPayments: isSplit || false,
                     isCFNonSeamless: !cashfree?.isSeamless || false,
                 });
                 const requestStatus = await new this.databaseService.CollectRequestStatusModel({
@@ -151,12 +156,12 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPayController.prototype, "upsertInstallments", null);
 __decorate([
-    (0, common_1.Post)('test'),
+    (0, common_1.Post)('collect-request'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
-], EdvironPayController.prototype, "testEndpoint", null);
+], EdvironPayController.prototype, "collect", null);
 exports.EdvironPayController = EdvironPayController = __decorate([
     (0, common_1.Controller)('edviron-pay'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService])

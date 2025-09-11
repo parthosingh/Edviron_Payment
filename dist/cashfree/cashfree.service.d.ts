@@ -202,4 +202,12 @@ export declare class CashfreeService {
             order_status: any;
         };
     }>;
+    createOrderCashfree(request: CollectRequest, splitPayments?: boolean, cashfreeVedors?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+        }
+    ]): Promise<any>;
 }

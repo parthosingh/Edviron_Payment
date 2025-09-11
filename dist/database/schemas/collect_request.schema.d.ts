@@ -122,6 +122,7 @@ export declare class CollectRequest {
     isCFNonSeamless: boolean;
     isVBAPayment: boolean;
     isVBAPaymentComplete: boolean;
+    isCollectNow: boolean;
     custom_order_id: string;
     req_webhook_urls: string[];
     ccavenue_merchant_id: string;

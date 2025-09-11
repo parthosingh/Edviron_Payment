@@ -12,15 +12,75 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EdvironPayService = void 0;
 const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
+const cashfree_service_1 = require("../cashfree/cashfree.service");
+const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 let EdvironPayService = class EdvironPayService {
-    constructor(databaseService) {
+    constructor(databaseService, cashfreeService, easebuzzService) {
         this.databaseService = databaseService;
+        this.cashfreeService = cashfreeService;
+        this.easebuzzService = easebuzzService;
     }
-    async createOrder(request) { }
+    async createOrder(request, school_name, gatewat, platform_charges) {
+        try {
+            let paymentInfo = {
+                cashfree_id: null,
+                easebuzz_id: null,
+                easebuzz_cc_id: null,
+                easebuzz_dc_id: null,
+                ccavenue_id: null,
+                easebuzz_upi_id: null,
+            };
+            const schoolName = school_name.replace(/ /g, '-');
+            const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
+            if (!collectReq) {
+                throw new common_1.BadRequestException('Collect Request not found');
+            }
+            if (gatewat.cashfree) {
+                const cashfreeSessionId = await this.cashfreeService.createOrderCashfree(request, request.isSplitPayments, request.cashfreeVedors);
+                paymentInfo.cashfree_id = cashfreeSessionId;
+                await collectReq.save();
+            }
+            let easebuzz_pg = false;
+            if (gatewat.easebuzz) {
+                easebuzz_pg = true;
+                const easebuzzSessionId = await this.easebuzzService.createOrderSeamlessNonSplit(request);
+                paymentInfo.easebuzz_id = easebuzzSessionId;
+                await collectReq.save();
+            }
+            const disabled_modes_string = request.disabled_modes
+                .map((mode) => `${mode}=false`)
+                .join('&');
+            const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
+            return {
+                url: process.env.URL +
+                    '/edviron-pg/redirect?session_id=' +
+                    paymentInfo.cashfree_id +
+                    '&collect_request_id=' +
+                    request._id +
+                    '&amount=' +
+                    request.amount.toFixed(2) +
+                    '&' +
+                    disabled_modes_string +
+                    '&platform_charges=' +
+                    encodedPlatformCharges +
+                    '&school_name=' +
+                    schoolName +
+                    '&easebuzz_pg=' +
+                    easebuzz_pg +
+                    '&payment_id=' +
+                    paymentInfo.easebuzz_id,
+            };
+        }
+        catch (err) {
+            throw new common_1.BadRequestException(err.message);
+        }
+    }
 };
 exports.EdvironPayService = EdvironPayService;
 exports.EdvironPayService = EdvironPayService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [database_service_1.DatabaseService])
+    __metadata("design:paramtypes", [database_service_1.DatabaseService,
+        cashfree_service_1.CashfreeService,
+        easebuzz_service_1.EasebuzzService])
 ], EdvironPayService);
 //# sourceMappingURL=edviron-pay.service.js.map
