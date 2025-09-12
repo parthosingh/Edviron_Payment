@@ -433,8 +433,7 @@ let EasebuzzService = class EasebuzzService {
             let productinfo = 'payment gateway customer';
             let firstname = (studentDetail.student_details?.student_name || 'customer').trim();
             let email = studentDetail.student_details?.student_email || 'noreply@edviron.com';
-            let student_id = studentDetail?.student_details?.student_id || '0000000000';
-
+            let student_id = studentDetail?.student_details?.student_id || 'NA';
             let student_phone_no = studentDetail?.student_details?.student_phone_no || '0000000000';
             let hashData = easebuzz_key +
                 '|' +

@@ -583,7 +583,7 @@ export class EasebuzzService {
       let productinfo = 'payment gateway customer';
       let firstname = (studentDetail.student_details?.student_name || 'customer').trim();
       let email =
-        studentDetail.student_details?.student_email || 'noreply@edviron.com';<<<<<<< user-select-gateway
+        studentDetail.student_details?.student_email || 'noreply@edviron.com';
       let student_id = studentDetail?.student_details?.student_id || 'NA';
       let student_phone_no =
         studentDetail?.student_details?.student_phone_no || '0000000000';
@@ -685,6 +685,7 @@ export class EasebuzzService {
       //   collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
       // };
       const schoolName = school_name.replace(/ /g, '_');
+  
       return {
         collect_request_id: request._id,
         collect_request_url:

@@ -93,14 +93,12 @@ export declare class CollectService {
         razorpay_id?: string | null;
         razorpay_secret?: string | null;
         razorpay_mid?: string | null;
-
     }, isSelectGateway?: boolean, isEasebuzzNonpartner?: boolean, easebuzz_non_partner_cred?: {
         easebuzz_salt: string;
         easebuzz_key: string;
         easebuzz_merchant_email: string;
         easebuzz_submerchant_id: string;
-    }): Promise<{
-
+    }, razorpay_partner?: boolean): Promise<{
         url: string;
         request: CollectRequest;
     }>;
