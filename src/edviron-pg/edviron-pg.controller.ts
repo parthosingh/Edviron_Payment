@@ -133,7 +133,7 @@ export class EdvironPgController {
     const masterGateway=collectRequest?.isMasterGateway || false;
     if(masterGateway){
       // change later to prod url
-      const url=`https://qa.pg.edviron.com/payments/select-gateway?collect_id=${collectRequest._id}`
+      const url=`https://qa.pg.edviron.com/select-gateway?collect_id=${collectRequest._id}`
       return res.redirect(url)
     }
     

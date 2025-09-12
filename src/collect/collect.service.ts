@@ -664,7 +664,7 @@ export class CollectService {
       request.non_seamless_payment_links = non_seamless_payment_links
       await request.save()
       return {
-        url: `${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${request._id}`, request
+        url: `${process.env.PG_FRONTEND}/select-gateway?collect_id=${request._id}`, request
       };
     }
 
