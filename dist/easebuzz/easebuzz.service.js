@@ -418,9 +418,8 @@ let EasebuzzService = class EasebuzzService {
             throw new common_1.BadRequestException(e.message);
         }
     }
-    async createOrderV2NonSplit(request, platform_charges, school_name, easebuzz_school_label) {
+    async createOrderV2NonSplit(request, platform_charges, school_name, easebuzz_school_label, isMasterGateway) {
         try {
-            console.log('11');
             const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
             if (!collectReq) {
                 throw new common_1.BadRequestException('Collect request not found');
@@ -486,7 +485,6 @@ let EasebuzzService = class EasebuzzService {
                 .map((mode) => `${mode}=false`)
                 .join('&');
             const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
-            console.log({ encodedParams });
             const Ezboptions = {
                 method: 'POST',
                 url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
@@ -497,9 +495,15 @@ let EasebuzzService = class EasebuzzService {
                 data: encodedParams,
             };
             const { data: easebuzzRes } = await axios_1.default.request(Ezboptions);
-            console.log({ easebuzzRes });
             const easebuzzPaymentId = easebuzzRes.data;
-            collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
+            if (collectReq.paymentIds) {
+                console.log('payment id ');
+                collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
+            }
+            else {
+                collectReq.paymentIds = { easebuzz_id: easebuzzPaymentId };
+                console.log(collectReq.paymentIds);
+            }
             await collectReq.save();
             await this.getQrNonSplit(request._id.toString(), request);
             const schoolName = school_name.replace(/ /g, '_');
@@ -692,7 +696,6 @@ let EasebuzzService = class EasebuzzService {
                 data: formData,
             };
             const response = await axios_1.default.request(config);
-            console.log(response.data);
             await this.databaseService.CollectRequestModel.findByIdAndUpdate(collect_id, {
                 deepLink: response.data.qr_link,
             });

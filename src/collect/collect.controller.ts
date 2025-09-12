@@ -146,7 +146,14 @@ export class CollectController {
           on_hold?: boolean;
           on_hold_until?: Date;
         },
-      ];
+      ],
+      isEasebuzzNonpartner?:boolean,
+    easebuzz_non_partner_cred?: {
+        easebuzz_salt: string;
+        easebuzz_key: string;
+        easebuzz_merchant_email: string;
+        easebuzz_submerchant_id: string;
+      },
       isSelectGateway?:boolean
       razorpay_partner?:boolean
     },
@@ -203,6 +210,8 @@ export class CollectController {
       isCFNonSeamless,
       razorpay_seamless_credentials,
       isSelectGateway,
+      isEasebuzzNonpartner,
+      easebuzz_non_partner_cred,
       razorpay_partner
     } = body;
 
@@ -270,6 +279,8 @@ export class CollectController {
           isCFNonSeamless,
           razorpay_seamless_credentials,
           isSelectGateway,
+          isEasebuzzNonpartner,
+          easebuzz_non_partner_cred,
           razorpay_partner
         ),
       );

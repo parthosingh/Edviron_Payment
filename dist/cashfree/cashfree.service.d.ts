@@ -186,7 +186,7 @@ export declare class CashfreeService {
             amount?: number;
             name?: string;
         }
-    ], isVBAPayment?: boolean, vba_account_number?: string): Promise<{
+    ], isVBAPayment?: boolean, vba_account_number?: string, isSelectGateway?: boolean): Promise<{
         _id: import("mongoose").Schema.Types.ObjectId;
         url: string;
     }>;
@@ -202,4 +202,16 @@ export declare class CashfreeService {
             order_status: any;
         };
     }>;
+    generateMasterGatewaypayment(collectRequest: CollectRequest, school_name: string, platform_charges: platformChange[], vendor?: [
+        {
+            vendor_id: string;
+            percentage?: number;
+            amount?: number;
+            name?: string;
+            scheme_code?: string;
+        }
+    ]): Promise<{
+        _id: import("mongoose").Schema.Types.ObjectId;
+        url: string;
+    } | undefined>;
 }

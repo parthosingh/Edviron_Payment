@@ -562,10 +562,9 @@ export class EasebuzzService {
     platform_charges: platformChange[],
     school_name: string,
     easebuzz_school_label?: string | null,
+    isMasterGateway?: boolean
   ) {
     try {
-      console.log('11');
-
       const collectReq =
         await this.databaseService.CollectRequestModel.findById(request._id);
       if (!collectReq) {
@@ -654,7 +653,7 @@ export class EasebuzzService {
         JSON.stringify(platform_charges),
       );
 
-      console.log({ encodedParams });
+      
 
       const Ezboptions = {
         method: 'POST',
@@ -667,10 +666,18 @@ export class EasebuzzService {
       };
 
       const { data: easebuzzRes } = await axios.request(Ezboptions);
-      console.log({ easebuzzRes });
-
+     
       const easebuzzPaymentId = easebuzzRes.data;
-      collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
+      if(collectReq.paymentIds){
+        console.log('payment id ');
+        
+        collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
+      }else{
+
+        collectReq.paymentIds={easebuzz_id:easebuzzPaymentId as string}
+        console.log(collectReq.paymentIds);
+        
+      }
       await collectReq.save();
       await this.getQrNonSplit(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
       // return {
@@ -678,6 +685,7 @@ export class EasebuzzService {
       //   collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
       // };
       const schoolName = school_name.replace(/ /g, '_');
+  
       return {
         collect_request_id: request._id,
         collect_request_url:
@@ -914,7 +922,7 @@ export class EasebuzzService {
         data: formData,
       };
       const response = await axios.request(config);
-      console.log(response.data);
+   
 
       await this.databaseService.CollectRequestModel.findByIdAndUpdate(
         collect_id,
@@ -1018,10 +1026,10 @@ export class EasebuzzService {
     let firstname = studentDetail.student_details?.student_name || 'customer';
     let email =
       studentDetail.student_details?.student_email || 'noreply@edviron.com';
+
     let student_id = studentDetail?.student_details?.student_id || 'NA';
     let student_phone_no =
       studentDetail?.student_details?.student_phone_no || '0000000000';
-
     let hashData =
       easebuzz_key +
       '|' +

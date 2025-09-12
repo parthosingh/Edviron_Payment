@@ -33,21 +33,21 @@ let EdvironPgService = class EdvironPgService {
         this.cashfreeService = cashfreeService;
         this.razorpayService = razorpayService;
     }
-    async collect(request, platform_charges, school_name, splitPayments, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, easebuzz_school_label) {
+    async collect(request, platform_charges, school_name, splitPayments, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, easebuzz_school_label, isSelectGateway) {
         try {
+            const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
+            if (!collectReq) {
+                throw new common_1.BadRequestException('Collect request not found');
+            }
             let paymentInfo = {
                 cashfree_id: null,
-                easebuzz_id: null,
+                easebuzz_id: collectReq.paymentIds?.easebuzz_id || null,
                 easebuzz_cc_id: null,
                 easebuzz_dc_id: null,
                 ccavenue_id: null,
                 easebuzz_upi_id: null,
                 razorpay_order_id: null,
             };
-            const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
-            if (!collectReq) {
-                throw new common_1.BadRequestException('Collect request not found');
-            }
             const schoolName = school_name.replace(/ /g, '-');
             const axios = require('axios');
             const currentTime = new Date();
@@ -133,7 +133,7 @@ let EdvironPgService = class EdvironPgService {
             };
             let id = '';
             let easebuzz_pg = false;
-            if (request.easebuzz_sub_merchant_id) {
+            if (!isSelectGateway && request.easebuzz_sub_merchant_id) {
                 if (!easebuzz_school_label) {
                     throw new common_1.BadRequestException(`Split Information Not Configure Please contact tarun.k@edviron.com`);
                 }

@@ -41,6 +41,22 @@ interface I_Razorpay {
   razorpay_signature: string;
 }
 
+export interface Non_Seamless_Payment_Links {
+  cashfree: string | null;
+  easebuzz: string | null;
+  edv_easebuzz: string | null;
+  razorpay: string | null;
+  ccavenue: string | null;
+  pay_u: string | null;
+  worldline: string | null;
+  gatepay: string | null;
+  nttdata: string | null;
+  hdfc_razorpay: string | null;
+  hdfc_smartgateway: string | null;
+  edviron_pg: string | null;
+
+}
+
 @Schema()
 export class PaymentIds {
   @Prop({ type: String, required: false })
@@ -353,6 +369,27 @@ export class CollectRequest {
   })
   gatepay: I_Gatepay;
 
+  @Prop({ 
+    required: false,
+    type: {
+      cashfree:{ type: String, required: false, default: null },
+      easebuzz:{ type: String, required: false, default: null },
+      edv_easebuzz:{ type: String, required: false, default: null },
+      razorpay:{ type: String, required: false, default: null },
+      ccavenue:{ type: String, required: false, default: null },
+      pay_u:{ type: String, required: false, default: null },
+      worldline:{ type: String, required: false, default: null },
+      gatepay:{ type: String, required: false, default: null },
+      nttdata:{ type: String, required: false, default: null },
+      hdfc_razorpay:{ type: String, required: false, default: null },
+      hdfc_smartgateway:{ type: String, required: false, default: null },
+      edviron_pg:{ type: String, required: false, default: null },
+
+    },
+    _id: false
+  })
+  non_seamless_payment_links: Non_Seamless_Payment_Links;
+
   @Prop({
     required: false,
     type: {
@@ -372,11 +409,16 @@ export class CollectRequest {
   @Prop({ required: false, default: false })
   easebuzz_non_partner: boolean;
 
-   @Prop({ required: false, default: false })
+  @Prop({ required: false, default: false })
   cashfree_non_partner: boolean;
+
+
+   @Prop({ required: false, default: false })
+  isMasterGateway: boolean;
 
   @Prop({ required: false, default: false })
   razorpay_partner: boolean;
+
 
   // @Prop({ required: false })
   // worldline_merchant_id: string;
@@ -410,7 +452,7 @@ export class CollectRequest {
   })
   razorpay: I_Razorpay;
 
-   @Prop({
+  @Prop({
     required: false,
     type: {
       razorpay_id: { type: String, required: false, default: null },

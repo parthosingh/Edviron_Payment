@@ -69,26 +69,27 @@ export class EdvironPgService implements GatewayService {
       },
     ],
     easebuzz_school_label?: string | null,
+    isSelectGateway?:boolean | null
   ): Promise<Transaction | undefined> {
     try {
-      let paymentInfo: PaymentIds = {
-        cashfree_id: null,
-        easebuzz_id: null,
-        easebuzz_cc_id: null,
-        easebuzz_dc_id: null,
-        ccavenue_id: null,
-        easebuzz_upi_id: null,
-        razorpay_order_id: null,
-      };
+      
       const collectReq =
         await this.databaseService.CollectRequestModel.findById(request._id);
       if (!collectReq) {
         throw new BadRequestException('Collect request not found');
       }
+      let paymentInfo: PaymentIds = {
+        cashfree_id: null,
+        easebuzz_id: collectReq.paymentIds?.easebuzz_id || null,
+        easebuzz_cc_id: null,
+        easebuzz_dc_id: null,
+        ccavenue_id: null,
+        easebuzz_upi_id:null,
+        razorpay_order_id: null,
+      };
       const schoolName = school_name.replace(/ /g, '-'); //replace spaces because url dosent support spaces
       const axios = require('axios');
       const currentTime = new Date();
-
       // Add 20 minutes to the current time test
       const expiryTime = new Date(currentTime.getTime() + 20 * 60000);
 
@@ -183,7 +184,7 @@ export class EdvironPgService implements GatewayService {
       };
       let id = '';
       let easebuzz_pg = false;
-      if (request.easebuzz_sub_merchant_id) {
+      if (!isSelectGateway && request.easebuzz_sub_merchant_id) {
         if (!easebuzz_school_label) {
           throw new BadRequestException(
             `Split Information Not Configure Please contact tarun.k@edviron.com`,
