@@ -431,9 +431,10 @@ let EasebuzzService = class EasebuzzService {
             const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
             const easebuzz_sub_merchant_id = request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
             let productinfo = 'payment gateway customer';
-            let firstname = studentDetail.student_details?.student_name || 'customer';
+            let firstname = (studentDetail.student_details?.student_name || 'customer').trim();
             let email = studentDetail.student_details?.student_email || 'noreply@edviron.com';
             let student_id = studentDetail?.student_details?.student_id || '0000000000';
+
             let student_phone_no = studentDetail?.student_details?.student_phone_no || '0000000000';
             let hashData = easebuzz_key +
                 '|' +
@@ -626,7 +627,7 @@ let EasebuzzService = class EasebuzzService {
             let productinfo = 'payment gateway customer';
             const { additional_data } = collectReq;
             const studentDetail = JSON.parse(additional_data);
-            let firstname = studentDetail.student_details?.student_name || 'customer';
+            let firstname = (studentDetail.student_details?.student_name || 'customer').trim();
             let email = studentDetail.student_details?.student_email || 'noreply@edviron.com';
             let student_id = studentDetail?.student_details?.student_id || 'NA';
             let student_phone_no = studentDetail?.student_details?.student_phone_no || '0000000000';
@@ -768,8 +769,8 @@ let EasebuzzService = class EasebuzzService {
         const studentDetail = JSON.parse(additional_data);
         let firstname = studentDetail.student_details?.student_name || 'customer';
         let email = studentDetail.student_details?.student_email || 'noreply@edviron.com';
-        let student_id = studentDetail?.student_details?.student_id || 'N/A';
-        let student_phone_no = studentDetail?.student_details?.student_phone_no || '9898989898';
+        let student_id = studentDetail?.student_details?.student_id || 'NA';
+        let student_phone_no = studentDetail?.student_details?.student_phone_no || '0000000000';
         let hashData = easebuzz_key +
             '|' +
             collect_request_id +
@@ -801,6 +802,39 @@ let EasebuzzService = class EasebuzzService {
             data: data,
         };
         const { data: statusRes } = await axios.request(config);
+        if (statusRes.msg === 'Hash mismatch') {
+            const oldhashData = easebuzz_key +
+                '|' +
+                collect_request_id +
+                '|' +
+                amount.toString() +
+                '|' +
+                'noreply@edviron.com' +
+                '|' +
+                '9898989898' +
+                '|' +
+                easebuzz_salt;
+            let oldhash = await (0, sign_1.calculateSHA512Hash)(oldhashData);
+            const olddata = qs.stringify({
+                txnid: collect_request_id,
+                key: easebuzz_key,
+                amount: amount,
+                email: 'noreply@edviron.com',
+                phone: '9898989898',
+                hash: oldhash,
+            });
+            const oldConfig = {
+                method: 'POST',
+                url: `https://dashboard.easebuzz.in/transaction/v1/retrieve`,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    Accept: 'application/json',
+                },
+                data: olddata,
+            };
+            const { data: statusRes } = await axios.request(oldConfig);
+            return statusRes;
+        }
         return statusRes;
     }
     async createOrderNonseamless(request, platform_charges, school_name) {

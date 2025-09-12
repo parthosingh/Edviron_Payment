@@ -581,10 +581,10 @@ export class EasebuzzService {
       // Easebuzz pg data
 
       let productinfo = 'payment gateway customer';
-      let firstname = studentDetail.student_details?.student_name || 'customer';
+      let firstname = (studentDetail.student_details?.student_name || 'customer').trim();
       let email =
-        studentDetail.student_details?.student_email || 'noreply@edviron.com';
-      let student_id = studentDetail?.student_details?.student_id || '0000000000';
+        studentDetail.student_details?.student_email || 'noreply@edviron.com';<<<<<<< user-select-gateway
+      let student_id = studentDetail?.student_details?.student_id || 'NA';
       let student_phone_no =
         studentDetail?.student_details?.student_phone_no || '0000000000';
       let hashData =
@@ -834,7 +834,8 @@ export class EasebuzzService {
       const { additional_data } = collectReq;
       const studentDetail = JSON.parse(additional_data);
 
-      let firstname = studentDetail.student_details?.student_name || 'customer';
+      let firstname = (studentDetail.student_details?.student_name || 'customer').trim();
+
       let email =
         studentDetail.student_details?.student_email || 'noreply@edviron.com';
       let student_id = studentDetail?.student_details?.student_id || 'NA';
@@ -1024,9 +1025,10 @@ export class EasebuzzService {
     let firstname = studentDetail.student_details?.student_name || 'customer';
     let email =
       studentDetail.student_details?.student_email || 'noreply@edviron.com';
-    let student_id = studentDetail?.student_details?.student_id || 'N/A';
+
+    let student_id = studentDetail?.student_details?.student_id || 'NA';
     let student_phone_no =
-      studentDetail?.student_details?.student_phone_no || '9898989898';
+      studentDetail?.student_details?.student_phone_no || '0000000000';
     let hashData =
       easebuzz_key +
       '|' +
@@ -1063,6 +1065,45 @@ export class EasebuzzService {
     };
 
     const { data: statusRes } = await axios.request(config);
+
+    if (statusRes.msg === 'Hash mismatch') {
+      const oldhashData =
+        easebuzz_key +
+        '|' +
+        collect_request_id +
+        '|' +
+        amount.toString() +
+        '|' +
+        'noreply@edviron.com' +
+        '|' +
+        '9898989898' +
+        '|' +
+        easebuzz_salt;
+
+      let oldhash = await calculateSHA512Hash(oldhashData);
+
+      const olddata = qs.stringify({
+        txnid: collect_request_id,
+        key: easebuzz_key,
+        amount: amount,
+        email: 'noreply@edviron.com',
+        phone: '9898989898',
+        hash: oldhash,
+      });
+
+      const oldConfig = {
+        method: 'POST',
+        url: `https://dashboard.easebuzz.in/transaction/v1/retrieve`,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+        },
+        data: olddata,
+      };
+
+      const { data: statusRes } = await axios.request(oldConfig);
+      return statusRes;
+    }
 
     return statusRes;
   }

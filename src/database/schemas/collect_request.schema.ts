@@ -412,8 +412,13 @@ export class CollectRequest {
   @Prop({ required: false, default: false })
   cashfree_non_partner: boolean;
 
+
    @Prop({ required: false, default: false })
   isMasterGateway: boolean;
+
+  @Prop({ required: false, default: false })
+  razorpay_partner: boolean;
+
 
   // @Prop({ required: false })
   // worldline_merchant_id: string;

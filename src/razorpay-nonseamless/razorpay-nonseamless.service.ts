@@ -121,6 +121,106 @@ export class RazorpayNonseamlessService {
     }
   }
 
+    async createOrderV2(collectRequest: CollectRequest) {
+    try {
+      const {
+        _id,
+        amount: totalRupees,
+        razorpay,
+        razorpay_vendors_info,
+        additional_data,
+      } = collectRequest;
+
+      const studentDetail = JSON.parse(additional_data);
+
+      const totalPaise = Math.round(totalRupees * 100);
+      const data: any = {
+        amount: totalPaise,
+        currency: 'INR',
+        receipt: _id.toString(),
+        notes: {
+          student_name: studentDetail?.student_details?.student_name || 'N/A',
+          student_email: studentDetail?.student_details?.student_email || 'N/A',
+          student_id: studentDetail?.student_details?.student_id || 'N/A',
+          student_phone_no:
+            studentDetail?.student_details?.student_phone_no || 'N/A',
+        },
+      };
+      if (razorpay_vendors_info?.length) {
+        let computed = 0;
+        const transfers = razorpay_vendors_info.map((v, idx) => {
+          let amtPaise: number;
+
+          if (v.amount !== undefined) {
+            amtPaise = Math.round(v.amount * 100);
+          } else if (v.percentage !== undefined) {
+            amtPaise = Math.floor((totalPaise * v.percentage) / 100);
+          } else {
+            throw new Error(
+              `Vendor at index ${idx} must have amount or percentage`,
+            );
+          }
+
+          computed += amtPaise;
+
+          return {
+            account: v.account,
+            amount: amtPaise,
+            currency: 'INR',
+            notes: v.notes || {},
+            linked_account_notes: v.linked_account_notes,
+            on_hold: v.on_hold,
+            on_hold_until: v.on_hold_until
+              ? Math.floor(v.on_hold_until.getTime() / 1000)
+              : undefined,
+          };
+        });
+
+        const remainder = totalPaise - computed;
+        if (remainder !== 0 && transfers.length > 0) {
+          transfers[0].amount += remainder;
+        }
+        data.transfers = transfers;
+      }
+      const config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: `${process.env.RAZORPAY_URL}/v1/orders`,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Razorpay-Account': razorpay.razorpay_mid,
+        },
+        auth: {
+          username: razorpay.razorpay_id,
+          password: razorpay.razorpay_secret,
+        },
+        data,
+      };
+      const { data: rpRes } = await axios.request(config);
+      if (rpRes.status !== 'created') {
+        throw new BadRequestException('Failed to create Razorpay order');
+      }
+      await (collectRequest as any).constructor.updateOne(
+        { _id },
+        {
+          $set: {
+            gateway: Gateway.EDVIRON_RAZORPAY,
+            razorpay_partner : true,
+            'razorpay.order_id': rpRes.id,
+          },
+        },
+      );
+
+      return {
+        url: `${process.env.URL}/razorpay-nonseamless/redirect/v2?collect_id=${_id}`,
+        collect_req: collectRequest,
+      };
+    } catch (error) {
+      console.error('Error creating Razorpay order:', error);
+      throw new BadRequestException(error.response?.data || error.message);
+    }
+  }
+
   async getPaymentStatus(order_id: string, collectRequest: CollectRequest) {
     try {
       console.log('razorpay hit');
@@ -617,6 +717,8 @@ export class RazorpayNonseamlessService {
           response.data.items
             .filter((order: any) => order.order_receipt)
             .map(async (order: any) => {
+              console.log(order, "order");
+              
               let customData: any = {};
               let additionalData: any = {};
               let custom_order_id: string | null = null;
@@ -627,7 +729,7 @@ export class RazorpayNonseamlessService {
               let payment_group: string | null = null;
               let school_id: string | null = null;
               let studentDetails: any = {};
-
+              let razorpay_order_id: string | null = null;
               if (order.order_receipt) {
                 console.log(order.order_receipt, "order.order_receipt")
                 customData = customOrderMap.get(order.order_receipt) || {};
@@ -649,6 +751,7 @@ export class RazorpayNonseamlessService {
                     : null;
                   payment_group = order.method;
                   studentDetails = additionalData?.student_details || {};
+                   razorpay_order_id = order.order_id || null;
                   order.order_id = customData._id || null;
                 } catch {
                   additionalData = null;
@@ -658,6 +761,7 @@ export class RazorpayNonseamlessService {
                   event_amount = null;
                   event_time = null;
                   payment_group = null;
+                   razorpay_order_id = order.order_id || null;
                 }
               }
 
@@ -734,6 +838,7 @@ export class RazorpayNonseamlessService {
               }
               return {
                 ...order,
+                razorpay_order_id,
                 custom_order_id: custom_order_id || null,
                 school_id: school_id || null,
                 student_id: studentDetails?.student_id || null,

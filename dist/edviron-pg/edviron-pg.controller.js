@@ -30,8 +30,9 @@ const _jwt = require("jsonwebtoken");
 const nttdata_service_1 = require("../nttdata/nttdata.service");
 const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 const worldline_service_1 = require("../worldline/worldline.service");
+const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
 let EdvironPgController = class EdvironPgController {
-    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService, posPaytmService, worldlineService) {
+    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService, posPaytmService, worldlineService, razorpayNonseamless) {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
         this.easebuzzService = easebuzzService;
@@ -39,6 +40,7 @@ let EdvironPgController = class EdvironPgController {
         this.nttDataService = nttDataService;
         this.posPaytmService = posPaytmService;
         this.worldlineService = worldlineService;
+        this.razorpayNonseamless = razorpayNonseamless;
     }
     async handleRedirect(req, res) {
         const wallet = req.query.wallet;
@@ -1423,7 +1425,9 @@ let EdvironPgController = class EdvironPgController {
                 };
             }
             console.time('aggregating transaction');
-            if (seachFilter === 'order_id' || seachFilter === 'custom_order_id' || seachFilter === 'student_info') {
+            if (seachFilter === 'order_id' ||
+                seachFilter === 'custom_order_id' ||
+                seachFilter === 'student_info') {
                 console.log('Serching custom');
                 let searchIfo = {};
                 let findQuery = {
@@ -2060,6 +2064,10 @@ let EdvironPgController = class EdvironPgController {
                 const refund = await this.nttDataService.initiateRefund(collect_id, amount, refund_id);
                 return refund;
             }
+            if (gateway === collect_request_schema_1.Gateway.EDVIRON_RAZORPAY) {
+                const refund = await this.razorpayNonseamless.refund(collect_id, amount, refund_id);
+                return refund;
+            }
             if (gateway === collect_request_schema_1.Gateway.EDVIRON_WORLDLINE) {
                 const refund = await this.worldlineService.initiateRefund(collect_id, amount);
                 return refund;
@@ -2358,8 +2366,7 @@ let EdvironPgController = class EdvironPgController {
             const response = await this.edvironPgService.getSubTrusteeBatchTransactions(school_ids, year);
             return response;
         }
-        catch (e) {
-        }
+        catch (e) { }
     }
     async getMerchantBatchTransactions(query) {
         try {
@@ -3045,7 +3052,7 @@ let EdvironPgController = class EdvironPgController {
     async bulkSubTrusteeTransactions(body, res, req) {
         console.time('bulk-transactions-report');
         const { trustee_id, token, searchParams, isCustomSearch, seachFilter, school_ids, isQRCode, gateway, } = body;
-        let { payment_modes, } = body;
+        let { payment_modes } = body;
         if (!token)
             throw new Error('Token not provided');
         if (payment_modes?.includes('upi')) {
@@ -3342,7 +3349,7 @@ let EdvironPgController = class EdvironPgController {
                             $skip: (page - 1) * limit,
                         },
                         {
-                            $limit: Number(limit)
+                            $limit: Number(limit),
                         },
                         {
                             $lookup: {
@@ -3787,15 +3794,14 @@ let EdvironPgController = class EdvironPgController {
     }
     async setMdrZero(body) {
         try {
-            const reset = await this.databaseService.PlatformChargeModel.updateMany({ school_id: { $in: body.school_ids } }, { $set: { "platform_charges.$[].range_charge.$[].charge": 0 } });
+            const reset = await this.databaseService.PlatformChargeModel.updateMany({ school_id: { $in: body.school_ids } }, { $set: { 'platform_charges.$[].range_charge.$[].charge': 0 } });
             return reset;
         }
-        catch (e) {
-        }
+        catch (e) { }
     }
     async subTrusteeTransactionsSum(body) {
         try {
-            const { trustee_id, school_id, gateway, start_date, end_date, status, mode, isQRPayment } = body;
+            const { trustee_id, school_id, gateway, start_date, end_date, status, mode, isQRPayment, } = body;
             const response = await this.edvironPgService.subtrusteeTransactionAggregation(trustee_id, start_date, end_date, school_id, status, mode, isQRPayment, gateway);
             return response;
         }
@@ -4296,7 +4302,60 @@ exports.EdvironPgController = EdvironPgController = __decorate([
         cashfree_service_1.CashfreeService,
         nttdata_service_1.NttdataService,
         pos_paytm_service_1.PosPaytmService,
-        worldline_service_1.WorldlineService])
+        worldline_service_1.WorldlineService,
+        razorpay_nonseamless_service_1.RazorpayNonseamlessService])
 ], EdvironPgController);
-const y = { "customer_details": { "customer_email": null, "customer_id": "7112AAA812234", "customer_name": null, "customer_phone": "9898989898" }, "error_details": { "error_code": "TRANSACTION_DECLINED", "error_code_raw": null, "error_description": "Transaction declined due to risk-Amount Less than Minimum Amount configured", "error_description_raw": null, "error_reason": "minimum_amount_limit", "error_source": "customer" }, "order": { "order_amount": 4, "order_currency": "INR", "order_id": "68beaff82b235974f1668f4c", "order_tags": null }, "payment": { "auth_id": null, "bank_reference": null, "cf_payment_id": 4327371039, "payment_amount": 4.03, "payment_currency": "INR", "payment_group": "credit_card", "payment_message": "Transaction declined due to risk-Amount Less than Minimum Amount configured", "payment_method": { "card": { "card_bank_name": "AXIS BANK", "card_country": "IN", "card_network": "mastercard", "card_number": "XXXXXXXXXXXX1978", "card_sub_type": "R", "card_type": "credit_card", "channel": null } }, "payment_status": "FAILED", "payment_time": "2025-09-08T15:59:36+05:30" }, "payment_gateway_details": { "gateway_name": "CASHFREE", "gateway_order_id": null, "gateway_order_reference_id": null, "gateway_payment_id": null, "gateway_settlement": null, "gateway_status_code": null }, "payment_offers": null };
+const y = {
+    customer_details: {
+        customer_email: null,
+        customer_id: '7112AAA812234',
+        customer_name: null,
+        customer_phone: '9898989898',
+    },
+    error_details: {
+        error_code: 'TRANSACTION_DECLINED',
+        error_code_raw: null,
+        error_description: 'Transaction declined due to risk-Amount Less than Minimum Amount configured',
+        error_description_raw: null,
+        error_reason: 'minimum_amount_limit',
+        error_source: 'customer',
+    },
+    order: {
+        order_amount: 4,
+        order_currency: 'INR',
+        order_id: '68beaff82b235974f1668f4c',
+        order_tags: null,
+    },
+    payment: {
+        auth_id: null,
+        bank_reference: null,
+        cf_payment_id: 4327371039,
+        payment_amount: 4.03,
+        payment_currency: 'INR',
+        payment_group: 'credit_card',
+        payment_message: 'Transaction declined due to risk-Amount Less than Minimum Amount configured',
+        payment_method: {
+            card: {
+                card_bank_name: 'AXIS BANK',
+                card_country: 'IN',
+                card_network: 'mastercard',
+                card_number: 'XXXXXXXXXXXX1978',
+                card_sub_type: 'R',
+                card_type: 'credit_card',
+                channel: null,
+            },
+        },
+        payment_status: 'FAILED',
+        payment_time: '2025-09-08T15:59:36+05:30',
+    },
+    payment_gateway_details: {
+        gateway_name: 'CASHFREE',
+        gateway_order_id: null,
+        gateway_order_reference_id: null,
+        gateway_payment_id: null,
+        gateway_settlement: null,
+        gateway_status_code: null,
+    },
+    payment_offers: null,
+};
 //# sourceMappingURL=edviron-pg.controller.js.map

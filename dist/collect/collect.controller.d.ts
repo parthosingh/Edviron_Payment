@@ -133,6 +133,7 @@ export declare class CollectController {
             easebuzz_merchant_email: string;
             easebuzz_submerchant_id: string;
         };
+        razorpay_partner?: boolean;
     }): Promise<any>;
     posCollect(body: {
         amount: Number;

@@ -155,6 +155,8 @@ export class CollectController {
         easebuzz_merchant_email: string;
         easebuzz_submerchant_id: string;
       }
+      isSelectGateway?:boolean
+      razorpay_partner?:boolean
     },
   ) {
     const {
@@ -211,6 +213,7 @@ export class CollectController {
       isSelectGateway,
       isEasebuzzNonpartner,
       easebuzz_non_partner_cred
+      razorpay_partner
     } = body;
 
     if (!jwt) throw new BadRequestException('JWT not provided');
@@ -279,6 +282,7 @@ export class CollectController {
           isSelectGateway,
           isEasebuzzNonpartner,
           easebuzz_non_partner_cred
+          razorpay_partner
         ),
       );
     } catch (e) {

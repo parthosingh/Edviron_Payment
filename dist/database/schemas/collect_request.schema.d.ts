@@ -220,6 +220,7 @@ export declare class CollectRequest {
     easebuzz_non_partner: boolean;
     cashfree_non_partner: boolean;
     isMasterGateway: boolean;
+    razorpay_partner: boolean;
     worldline_token: string;
     vba_account_number: string;
     razorpay: I_Razorpay;
