@@ -129,6 +129,12 @@ export class EdvironPgController {
         `${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`,
       );
     }
+
+    const masterGateway=collectRequest?.isMasterGateway || false;
+    if(masterGateway){
+      const url=`${process.env.PG_FRONTEND}/payments/select-gateway?collect_id=${collectRequest._id}`
+      return res.redirect(url)
+    }
     
     if (collectRequest?.easebuzz_non_partner) {
       res.redirect(
