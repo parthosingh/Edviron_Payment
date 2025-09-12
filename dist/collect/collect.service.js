@@ -351,6 +351,7 @@ let CollectService = class CollectService {
             await request.save();
             const data = await this.hdfcSmartgatewayService.createOrder(request, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key);
             if (isSelectGateway) {
+                console.log('smart gateway');
                 non_seamless_payment_links.hdfc_smartgateway = data?.url;
             }
             else {

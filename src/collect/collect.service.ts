@@ -535,6 +535,8 @@ export class CollectService {
         smart_gateway_api_key,
       );
       if (isSelectGateway) {
+        console.log('smart gateway');
+
         non_seamless_payment_links.hdfc_smartgateway = data?.url;
       } else {
         return { url: data?.url, request: data?.request };

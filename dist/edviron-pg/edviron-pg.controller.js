@@ -52,6 +52,7 @@ let EdvironPgController = class EdvironPgController {
         const payment_id = req.query.payment_id;
         const razorpay_pg = req.query.razorpay_pg;
         const razorpay_id = req.query.razorpay_id;
+        const gateway = req.query.gateway;
         let disable_modes = '';
         if (wallet)
             disable_modes += `&wallet=${wallet}`;
@@ -72,7 +73,7 @@ let EdvironPgController = class EdvironPgController {
         const school_id = collectReq.school_id;
         res.send(`<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}${disable_modes}&platform_charges=${encodeURIComponent(req.query.platform_charges)}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}";
+                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}${disable_modes}&platform_charges=${encodeURIComponent(req.query.platform_charges)}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&gateway=${gateway}";
                 }
             </script>`);
     }

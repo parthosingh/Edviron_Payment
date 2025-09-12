@@ -37,10 +37,10 @@ let GatewayController = class GatewayController {
                 razorpay: null
             };
             if (request.paymentIds?.cashfree_id) {
-                edviron_gateways.cashfree = request.non_seamless_payment_links.edviron_pg;
+                edviron_gateways.cashfree = `${request.non_seamless_payment_links.edviron_pg}&gateway=cashfree`;
             }
             if (request.paymentIds?.easebuzz_id) {
-                edviron_gateways.easebuzz = request.non_seamless_payment_links.edv_easebuzz || null;
+                edviron_gateways.easebuzz = `${request.non_seamless_payment_links.edv_easebuzz}&gateway=easebuzz`;
             }
             return {
                 edviron_gateways,
