@@ -507,6 +507,27 @@ __decorate([
     (0, mongoose_1.Prop)({
         required: false,
         type: {
+            cashfree: { type: String, required: false, default: null },
+            easebuzz: { type: String, required: false, default: null },
+            edv_easebuzz: { type: String, required: false, default: null },
+            razorpay: { type: String, required: false, default: null },
+            ccavenue: { type: String, required: false, default: null },
+            pay_u: { type: String, required: false, default: null },
+            worldline: { type: String, required: false, default: null },
+            gatepay: { type: String, required: false, default: null },
+            nttdata: { type: String, required: false, default: null },
+            hdfc_razorpay: { type: String, required: false, default: null },
+            hdfc_smartgateway: { type: String, required: false, default: null },
+            edviron_pg: { type: String, required: false, default: null },
+        },
+        _id: false
+    }),
+    __metadata("design:type", Object)
+], CollectRequest.prototype, "non_seamless_payment_links", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        required: false,
+        type: {
             easebuzz_salt: { type: String, required: false, default: null },
             easebuzz_key: {
                 type: String,
@@ -528,6 +549,14 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false, default: false }),
     __metadata("design:type", Boolean)
 ], CollectRequest.prototype, "cashfree_non_partner", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], CollectRequest.prototype, "isMasterGateway", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], CollectRequest.prototype, "razorpay_partner", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)

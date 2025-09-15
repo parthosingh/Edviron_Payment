@@ -13,6 +13,8 @@ import { NttdataService } from 'src/nttdata/nttdata.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 import { GatepayService } from 'src/gatepay/gatepay.service';
+import { CashfreeService } from 'src/cashfree/cashfree.service';
+import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 export declare class CollectService {
     private readonly phonepeService;
     private readonly hdfcService;
@@ -68,6 +70,7 @@ export declare class CollectService {
             account?: string;
             percentage?: number;
             amount?: number;
+            name?: string;
             notes?: {
                 branch?: string;
                 name?: string;
@@ -89,7 +92,12 @@ export declare class CollectService {
         razorpay_id?: string | null;
         razorpay_secret?: string | null;
         razorpay_mid?: string | null;
-    }): Promise<{
+    }, isSelectGateway?: boolean, isEasebuzzNonpartner?: boolean, easebuzz_non_partner_cred?: {
+        easebuzz_salt: string;
+        easebuzz_key: string;
+        easebuzz_merchant_email: string;
+        easebuzz_submerchant_id: string;
+    }, razorpay_partner?: boolean): Promise<{
         url: string;
         request: CollectRequest;
     }>;
@@ -119,4 +127,5 @@ export declare class CollectService {
         paytmResponse: any;
     } | undefined>;
     sendCallbackEmail(collect_id: string): Promise<"mail sent successfully" | undefined>;
+    scheduleUpdate(delay: number, collect_id: string): Promise<void>;
 }

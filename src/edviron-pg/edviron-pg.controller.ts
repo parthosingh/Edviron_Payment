@@ -29,6 +29,7 @@ import {
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { skip } from 'node:test';
+import * as moment from 'moment-timezone';
 import * as qs from 'qs';
 import {
   PlatformCharge,
@@ -38,6 +39,9 @@ import * as _jwt from 'jsonwebtoken';
 import { NttdataService } from 'src/nttdata/nttdata.service';
 import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
+import { stat } from 'fs';
+import { start } from 'repl';
+import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -49,6 +53,7 @@ export class EdvironPgController {
     private readonly nttDataService: NttdataService,
     private readonly posPaytmService: PosPaytmService,
     private readonly worldlineService: WorldlineService,
+    private readonly razorpayNonseamless: RazorpayNonseamlessService,
   ) { }
   @Get('/redirect')
   async handleRedirect(@Req() req: any, @Res() res: any) {
@@ -64,6 +69,7 @@ export class EdvironPgController {
     const razorpay_pg = req.query.razorpay_pg;
     const razorpay_id = req.query.razorpay_id;
     const currency = req.query.currency;
+    const gateway = req.query.gateway;
     let disable_modes = '';
     if (wallet) disable_modes += `&wallet=${wallet}`;
     if (cardless) disable_modes += `&cardless=${cardless}`;
@@ -79,6 +85,21 @@ export class EdvironPgController {
       throw new NotFoundException('Collect request not found');
     }
     const school_id = collectReq.school_id;
+    if (collectReq.isMasterGateway) {
+      res.send(
+        `<script type="text/javascript">
+                window.onload = function(){
+                    location.href = "https://pg.edviron.com/payments?session_id=${req.query.session_id
+        }&collect_request_id=${req.query.collect_request_id
+        }&amount=${req.query.amount
+        }${disable_modes}&platform_charges=${encodeURIComponent(
+          req.query.platform_charges,
+        )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&gateway=${gateway}";
+
+                }
+            </script>`,
+      );
+    }
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
@@ -88,6 +109,7 @@ export class EdvironPgController {
       }${disable_modes}&platform_charges=${encodeURIComponent(
         req.query.platform_charges,
       )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&currency=${currency}";
+
                 }
             </script>`,
     );
@@ -96,7 +118,10 @@ export class EdvironPgController {
   @Get('/sdk-redirect')
   async handleSdkRedirect(@Req() req: any, @Res() res: any) {
     const collect_id = req.query.collect_id;
-    const isBlank = req.query.isBlank || false;
+    let isBlank = req.query.isBlank || false;
+    if(isBlank !=='true' || true){
+      isBlank='false'
+    }
     if (!Types.ObjectId.isValid(collect_id)) {
       return res.redirect(
         `${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`,
@@ -110,6 +135,13 @@ export class EdvironPgController {
       );
     }
 
+    const masterGateway=collectRequest?.isMasterGateway || false;
+    if(masterGateway){
+      // change later to prod url
+      const url=`${process.env.PG_FRONTEND}/select-gateway?collect_id=${collectRequest._id}`
+      return res.redirect(url)
+    }
+    
     if (collectRequest?.easebuzz_non_partner) {
       res.redirect(
         `${process.env.EASEBUZZ_ENDPOINT_PROD}/pay/${collectRequest.paymentIds.easebuzz_id}`,
@@ -1928,7 +1960,11 @@ export class EdvironPgController {
       //   }).select('_id');
 
       console.time('aggregating transaction');
-      if (seachFilter === 'order_id' || seachFilter === 'custom_order_id' || seachFilter === 'student_info') {
+      if (
+        seachFilter === 'order_id' ||
+        seachFilter === 'custom_order_id' ||
+        seachFilter === 'student_info'
+      ) {
         console.log('Serching custom');
         let searchIfo: any = {};
         let findQuery: any = {
@@ -1970,8 +2006,7 @@ export class EdvironPgController {
           searchIfo = {
             collect_id: requestInfo._id,
           };
-        }
-        else if (seachFilter === 'student_info') {
+        } else if (seachFilter === 'student_info') {
           console.log('Serching student_info');
           const studentRegex = {
             $regex: searchParams,
@@ -2007,7 +2042,7 @@ export class EdvironPgController {
         //   searchIfo = {
         //     collect_id:  requestInfo.collect_id,
         //   };
-        // } 
+        // }
         // else if (seachFilter === 'upi_id') {
 
         //   const requestInfo =
@@ -2640,8 +2675,6 @@ export class EdvironPgController {
   ) {
     const { school_id, mode, start_date } = body;
     try {
-
-
       const payments = await this.edvironPgService.getPaymentDetails(
         school_id,
         start_date,
@@ -2767,6 +2800,15 @@ export class EdvironPgController {
 
       if (gateway === Gateway.EDVIRON_NTTDATA) {
         const refund = await this.nttDataService.initiateRefund(
+          collect_id,
+          amount,
+          refund_id,
+        );
+        return refund;
+      }
+
+      if (gateway === Gateway.EDVIRON_RAZORPAY) {
+        const refund = await this.razorpayNonseamless.refund(
           collect_id,
           amount,
           refund_id,
@@ -3363,6 +3405,21 @@ export class EdvironPgController {
     } catch (e) {
       throw new BadRequestException(e.message);
     }
+  }
+
+  @Post('fetch-subtrustee-batch-transactions')
+  async getSubtrusteeBatchTransactions(
+    @Body() body: { school_ids: string[]; year: string; token: string },
+  ) {
+    try {
+      const { school_ids, year } = body;
+      const response =
+        await this.edvironPgService.getSubTrusteeBatchTransactions(
+          school_ids,
+          year,
+        );
+      return response;
+    } catch (e) { }
   }
 
   @Get('/get-merchant-batch-transactions')
@@ -4178,12 +4235,11 @@ export class EdvironPgController {
         signatory_details,
       );
     } catch (e) {
-      if(e.response?.data){
+      if (e.response?.data) {
         console.log(e.response.data);
         throw new BadRequestException(e.response.data.message);
       }
       console.log(e);
-
 
       throw new BadRequestException(e.message);
     }
@@ -4338,7 +4394,7 @@ export class EdvironPgController {
       payment_modes?: string[];
       isQRCode?: boolean;
       gateway?: string[];
-      school_ids: Types.ObjectId[],
+      school_ids: Types.ObjectId[];
     },
     @Res() res: any,
     @Req() req: any,
@@ -4354,15 +4410,13 @@ export class EdvironPgController {
       isQRCode,
       gateway,
     } = body;
-    let {
-      payment_modes,
-    } = body;
+    let { payment_modes } = body;
     if (!token) throw new Error('Token not provided');
 
-    if(payment_modes?.includes('upi')){
-      payment_modes = [...payment_modes, 'upi_credit_card']  //debit_card
+    if (payment_modes?.includes('upi')) {
+      payment_modes = [...payment_modes, 'upi_credit_card']; //debit_card
     }
-    
+
     try {
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 10;
@@ -4756,8 +4810,8 @@ export class EdvironPgController {
             {
               $skip: (page - 1) * limit,
             },
-            { 
-              $limit: Number(limit) 
+            {
+              $limit: Number(limit),
             },
             {
               $lookup: {
@@ -4878,7 +4932,7 @@ export class EdvironPgController {
       throw new BadRequestException(error.message);
     }
   }
-   
+
   @Get('/vba-details')
   async getVba(@Query('collect_id') collect_id: string) {
     try {
@@ -5251,4 +5305,190 @@ export class EdvironPgController {
     } catch (error) { }
   }
 
+  @Post('set-mdr-zero')
+  async setMdrZero(@Body() body: { school_ids: string[] }) {
+    try {
+      // const reset1=await this.databaseService.PlatformChargeModel.find(
+      //   { school_id: { $in: body.school_ids } },
+      // )
+      const reset = await this.databaseService.PlatformChargeModel.updateMany(
+        { school_id: { $in: body.school_ids } },
+        { $set: { 'platform_charges.$[].range_charge.$[].charge': 0 } },
+      );
+
+      return reset;
+    } catch (e) { }
+  }
+
+  @Post('sub-trustee-transactions-sum')
+  async subTrusteeTransactionsSum(
+    @Body()
+    body: {
+      trustee_id: string;
+      school_id: string[];
+      gateway?: string[] | null;
+      start_date: string;
+      end_date: string;
+      status: string;
+      mode: string[] | null;
+      isQRPayment: boolean;
+    },
+  ) {
+    try {
+      const {
+        trustee_id,
+        school_id,
+        gateway,
+        start_date,
+        end_date,
+        status,
+        mode,
+        isQRPayment,
+      } = body;
+      // console.log({start_date,end_date});
+
+      const response =
+        await this.edvironPgService.subtrusteeTransactionAggregation(
+          trustee_id,
+          start_date,
+          end_date,
+          school_id,
+          status,
+          mode,
+          isQRPayment,
+          gateway,
+        );
+      return response;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Post('webhook-trigger')
+  async webhookTrigger(@Body() body: { 
+    collect_id: string, 
+    school_ids:string[],
+    start_date:string,
+    end_date:string
+  }) {
+    try{
+      const { school_ids,start_date,end_date,collect_id } = body;
+      // const StartDate=await this.edvironPgService.convertISTStartToUTC(start_date);
+      // const EndDate=await this.edvironPgService.convertISTEndToUTC(end_date);
+      // console.log({StartDate,EndDate});
+      // if(!school_ids || school_ids.length === 0){
+      //   throw new BadRequestException('school_ids is required');
+      // }
+      const collectRequest=await this.databaseService.CollectRequestModel.find({
+        // school_id: { $in: school_ids },
+        // createdAt:{
+        //   $gte: StartDate,
+        //   $lte: EndDate
+        // }
+        _id:new Types.ObjectId(collect_id)
+      }).select('_id');
+      console.log(collectRequest.length);
+      
+      const aggregateData = await this.databaseService.CollectRequestStatusModel.aggregate([
+        {
+          $match:{
+           collect_id: { $in: collectRequest.map((item) => item._id) },
+           status:{$in:['success','SUCCESS']}
+          },
+        },
+        {
+          $lookup:{
+            from:'collectrequests',
+            localField:'collect_id',
+            foreignField:'_id',
+            as:'collect_request',
+          }
+        },
+        {
+          $unwind:'$collect_request'
+        },
+        {
+          $project:{
+            collect_id:1,
+            amount:1,
+            status:1,
+            school_id:'$collect_request.school_id',
+            trustee_id:'$collect_request.trustee_id', 
+            req_webhook_urls:'$collect_request.req_webhook_urls',
+            custom_order_id:'$collect_request.custom_order_id',
+            createdAt:1,
+            transaction_time:'$payment_time',
+            additional_data:'$collect_request.additional_data',
+            details:1,
+            transaction_amount:1,
+            bank_reference:1,
+            payment_method:1,
+          }
+        }
+      ])
+      let successCount=0;
+      let failCount=0;
+      let noUrlCount=0;
+      await Promise.all(aggregateData.map(async(item:any)=>{
+        if(item?.req_webhook_urls && item?.req_webhook_urls?.length>0){
+          for(const url of item.req_webhook_urls){
+            try{
+               const uptDate = moment(item.transaction_time);
+                    const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
+              
+              const payload={
+                collect_id:item.collect_id,
+                amount:item.amount,
+                status:item.status,
+                trustee_id:item.trustee_id,
+                school_id:item.school_id,
+                req_webhook_urls:item.req_webhook_urls,
+                custom_order_id:item.custom_order_id,
+                createdAt:item.createdAt,
+                transaction_time:item.transaction_time,
+                additional_data:item.additional_data,
+                formattedTransactionDate:istDate,
+                transaction_amount:item.transaction_amount,
+                bank_reference:item.bank_reference,
+                payment_method:item.payment_method,
+                payment_details:item.details,
+                details: item.details ? JSON.parse(item.details):{},
+              }
+
+              const config = {
+                method: 'post',
+                url: url,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${process.env.WEBHOOK_SECRET}`
+                },
+                data: payload
+              }
+              try{
+                const response = await axios.request(config);
+                successCount++;
+                console.log(response.data,'response from webhook for collect_id:',item.collect_id,'url:',url);
+                
+              }catch(e){
+                failCount++;
+                console.log('Error in webhook for collect_id:',item.collect_id,'url:',url,e.message);
+              }
+            }catch(e){
+              console.log('Error in webhook for collect_id:',item.collect_id,'url:',url,e.message);
+            }
+          }
+        }else{
+          console.log('No webhook url found for collect_id:',item.collect_id);
+          noUrlCount++;
+        }
+      }));
+
+      return {length:aggregateData.length, successCount, failCount, noUrlCount};
+    }catch(e){
+      console.log(e);
+      
+      throw new BadRequestException(e.message);
+    }
+  }
 }
+

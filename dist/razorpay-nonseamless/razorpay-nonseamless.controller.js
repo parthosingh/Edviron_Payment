@@ -57,11 +57,11 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
         `);
             }
             const additional_data = JSON.parse(request.additional_data);
-            const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
             let student_email = additional_data?.student_details?.student_email;
-            if (!student_email || !emailRegex.test(student_email)) {
+            if (!student_email) {
                 student_email = 'testemail@email.com';
             }
+            console.log(student_email, 'student_email');
             const student_phone_no = additional_data?.student_details?.student_phone_no || '9876543210';
             const options = {
                 key: request.razorpay.razorpay_id,
@@ -73,6 +73,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                 callback_url: `${process.env.URL}/razorpay-nonseamless/callback?collect_id=${collect_id}`,
                 handler: function (response) {
                     console.log('Payment successful:', response);
+                    window.location.href = `${process.env.URL}/razorpay-nonseamless/cancel?collect_id=${collect_id}`;
                 },
                 prefill: {
                     name: additional_data.student_details.student_name || '',
@@ -87,7 +88,95 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                 },
                 modal: {
                     ondismiss: function () {
-                        console.log('Checkout form closed');
+                        window.location.href = `${process.env.URL}/razorpay-nonseamless/cancel?collect_id=${collect_id}`;
+                    },
+                },
+            };
+            return res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <title>Razorpay Payment</title>
+          <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+        </head>
+        <body>
+          <script>
+            window.onload = function () {
+              const options = ${JSON.stringify(options)};
+              const rzp = new Razorpay(options);
+              rzp.open();
+            };
+          </script>
+        </body>
+        </html>
+      `);
+        }
+        catch (error) {
+            console.error('Error in razorpayRedirect:', error);
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
+    async razorpayRedirectV2(req, res) {
+        try {
+            const { collect_id, orderId } = req.query;
+            const [request, req_status] = await Promise.all([
+                this.databaseService.CollectRequestModel.findById(collect_id),
+                this.databaseService.CollectRequestStatusModel.findOne({
+                    collect_id: new mongoose_1.Types.ObjectId(collect_id),
+                }),
+            ]);
+            if (!request || !req_status) {
+                throw new common_1.NotFoundException('Order not found');
+            }
+            if (!request.razorpay.razorpay_id ||
+                !request.razorpay.razorpay_mid ||
+                !request.razorpay.razorpay_secret) {
+                throw new common_1.NotFoundException('Order not found');
+            }
+            const created_at = new Date(req_status.createdAt).getTime();
+            const now = Date.now();
+            const expiry_duration = 15 * 60 * 1000;
+            if (now - created_at > expiry_duration) {
+                return res.send(`
+          <script>
+            alert('The payment session has expired. Please initiate the payment again.');
+            window.location.href = '${process.env.URL}/razorpay-nonseamless/callback?collect_id=${collect_id}';
+          </script>
+        `);
+            }
+            const additional_data = JSON.parse(request.additional_data);
+            let student_email = additional_data?.student_details?.student_email;
+            if (!student_email) {
+                student_email = 'testemail@email.com';
+            }
+            console.log(student_email, 'student_email');
+            const student_phone_no = additional_data?.student_details?.student_phone_no || '9876543210';
+            const options = {
+                key: request.razorpay.razorpay_id,
+                amount: request.amount * 100,
+                currency: 'INR',
+                name: additional_data?.student_details?.student_name || 'Fees Payment',
+                description: 'Fees Payment',
+                order_id: request.razorpay.order_id,
+                callback_url: `${process.env.URL}/razorpay-nonseamless/callback?collect_id=${collect_id}`,
+                handler: function (response) {
+                    console.log('Payment successful:', response);
+                    window.location.href = `${process.env.URL}/razorpay-nonseamless/cancel?collect_id=${collect_id}`;
+                },
+                prefill: {
+                    name: additional_data.student_details.student_name || '',
+                    email: student_email,
+                    contact: student_phone_no,
+                },
+                notes: {
+                    bookingId: request._id.toString(),
+                },
+                theme: {
+                    color: '#F37254',
+                },
+                modal: {
+                    ondismiss: function () {
+                        window.location.href = `${process.env.URL}/razorpay-nonseamless/cancel?collect_id=${collect_id}`;
                     },
                 },
             };
@@ -141,6 +230,8 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             let payment_method = status.details.payment_mode || null;
             let payload = status?.details?.payment_methods || {};
             let detail;
+            let pg_mode = payment_method;
+            console.log(payment_method, 'payment_method');
             switch (payment_method) {
                 case 'upi':
                     detail = {
@@ -150,20 +241,35 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                         },
                     };
                     break;
-                case 'card':
+                case 'credit':
+                    (pg_mode = 'credit_card'), console.log(payload, 'payloadin here');
                     detail = {
                         card: {
-                            card_bank_name: payload?.card_type || null,
-                            card_country: payload.card_country || null,
-                            card_network: payload.card_network || null,
-                            card_number: payload.card_number || null,
-                            card_sub_type: payload.card_sub_type || null,
-                            card_type: payload.card_type || null,
+                            card_bank_name: payload?.card?.card_type || null,
+                            card_country: payload?.card?.card_country || null,
+                            card_network: payload?.card?.card_network || null,
+                            card_number: payload?.card?.card_number || null,
+                            card_sub_type: payload?.card?.card_sub_type || null,
+                            card_type: payload?.card?.card_type || null,
                             channel: null,
                         },
                     };
                     break;
-                case 'netbanking':
+                case 'debit':
+                    (pg_mode = 'debit_card'),
+                        (detail = {
+                            card: {
+                                card_bank_name: payload?.card?.card_type || null,
+                                card_country: payload?.card?.card_country || null,
+                                card_network: payload?.card?.card_network || null,
+                                card_number: payload?.card?.card_number || null,
+                                card_sub_type: payload?.card?.card_sub_type || null,
+                                card_type: payload?.card?.card_type || null,
+                                channel: null,
+                            },
+                        });
+                    break;
+                case 'net_banking':
                     detail = {
                         netbanking: {
                             channel: null,
@@ -194,7 +300,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             if (payment_status === collect_req_status_schema_1.PaymentStatus.SUCCESS) {
                 collect_req_status.status = collect_req_status_schema_1.PaymentStatus.SUCCESS;
                 collect_req_status.bank_reference = status.details?.bank_ref || '';
-                collect_req_status.payment_method = status.details?.payment_mode || '';
+                collect_req_status.payment_method = pg_mode || '';
                 collect_req_status.details =
                     JSON.stringify(status.details?.payment_methods) || '';
                 collect_req_status.payment_time =
@@ -211,8 +317,8 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             const callbackUrl = new URL(collect_request.callbackUrl);
             callbackUrl.searchParams.set('EdvironCollectRequestId', collect_id);
             const collectIdObject = new mongoose_1.Types.ObjectId(collect_id);
-            const transaction_time = status.transaction_time
-                ? new Date(status.transaction_time)
+            const transaction_time = status?.details?.transaction_time
+                ? new Date(status?.details?.transaction_time)
                 : null;
             const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
                 collect_id: collectIdObject,
@@ -223,7 +329,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                         ? transaction_time.toISOString()
                         : null,
                     transaction_amount: status?.transaction_amount || status?.amount,
-                    payment_method: status?.details?.payment_mode || '',
+                    payment_method: pg_mode || '',
                     details: JSON.stringify(detail),
                     bank_reference: status?.details?.bank_ref || '',
                     reason: status.details?.order_status || '',
@@ -233,6 +339,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                 upsert: true,
                 new: true,
             });
+            console.log(updateReq, 'updateReq');
             const webhookUrl = collect_request?.req_webhook_urls;
             const transaction_time_str = transaction_time
                 ? transaction_time.toISOString()
@@ -744,6 +851,15 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             throw new common_1.BadRequestException(error.message);
         }
     }
+    async initRefund(body) {
+        try {
+            return await this.razorpayServiceModel.refund(body.collect_id, body.refundAmount, body.refund_id);
+        }
+        catch (e) {
+            console.log();
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.RazorpayNonseamlessController = RazorpayNonseamlessController;
 __decorate([
@@ -754,6 +870,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], RazorpayNonseamlessController.prototype, "razorpayRedirect", null);
+__decorate([
+    (0, common_1.Get)('/redirect/v2'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], RazorpayNonseamlessController.prototype, "razorpayRedirectV2", null);
 __decorate([
     (0, common_1.Post)('/callback'),
     __param(0, (0, common_1.Req)()),
@@ -808,6 +932,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], RazorpayNonseamlessController.prototype, "getSettlementsTransactions", null);
+__decorate([
+    (0, common_1.Post)('/init-refund'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], RazorpayNonseamlessController.prototype, "initRefund", null);
 exports.RazorpayNonseamlessController = RazorpayNonseamlessController = __decorate([
     (0, common_1.Controller)('razorpay-nonseamless'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

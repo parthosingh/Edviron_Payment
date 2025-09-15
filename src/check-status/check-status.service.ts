@@ -132,6 +132,8 @@ export class CheckStatusService {
       console.log('Checking status for easebuzz non-partner collect request');
 
       if (collectRequest.gateway === Gateway.EDVIRON_EASEBUZZ) {
+        console.log('testing easebuzz status response v2');
+        
         const easebuzzStatus = await this.easebuzzService.statusResponsev2(
           collect_request_id.toString(),
           collectRequest,
@@ -489,10 +491,11 @@ export class CheckStatusService {
         }
         return {
           ...edvironPgResponse,
+          edviron_order_id: collectRequest._id,
           custom_order_id: collectRequest.custom_order_id || null,
           capture_status: collect_req_status.capture_status || 'PENDING',
         };
-
+  
       case Gateway.EDVIRON_RAZORPAY:
         const razorpayData = await this.razorpayServiceModel.getPaymentStatus(
           collectRequest.razorpay.order_id.toString(),

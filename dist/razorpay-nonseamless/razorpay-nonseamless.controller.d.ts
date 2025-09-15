@@ -7,6 +7,7 @@ export declare class RazorpayNonseamlessController {
     private readonly edvironPgService;
     constructor(databaseService: DatabaseService, razorpayServiceModel: RazorpayNonseamlessService, edvironPgService: EdvironPgService);
     razorpayRedirect(req: any, res: any): Promise<any>;
+    razorpayRedirectV2(req: any, res: any): Promise<any>;
     handleCallback(req: any, res: any): Promise<any>;
     webhook(body: any, res: any): Promise<any>;
     webhookV2(body: any, res: any): Promise<any>;
@@ -24,4 +25,9 @@ export declare class RazorpayNonseamlessController {
         limit: number;
         settlements_transactions: any[];
     }>;
+    initRefund(body: {
+        collect_id: string;
+        refundAmount: number;
+        refund_id: string;
+    }): Promise<any>;
 }

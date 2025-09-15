@@ -60,6 +60,20 @@ interface I_Razorpay {
     payment_id: string;
     razorpay_signature: string;
 }
+export interface Non_Seamless_Payment_Links {
+    cashfree: string | null;
+    easebuzz: string | null;
+    edv_easebuzz: string | null;
+    razorpay: string | null;
+    ccavenue: string | null;
+    pay_u: string | null;
+    worldline: string | null;
+    gatepay: string | null;
+    nttdata: string | null;
+    hdfc_razorpay: string | null;
+    hdfc_smartgateway: string | null;
+    edviron_pg: string | null;
+}
 export declare class PaymentIds {
     cashfree_id?: string | null;
     easebuzz_id?: string | null;
@@ -312,9 +326,11 @@ export declare class CollectRequest {
     razorpay_vendors_info?: [
         {
             vendor_id: string;
+            edv_vendor_id: string;
             account?: string;
             percentage?: number;
             amount?: number;
+            name?: string;
             notes?: {
                 branch?: string;
                 name?: string;
@@ -343,9 +359,12 @@ export declare class CollectRequest {
     cashfree_credentials: CASHFREE_CREDENTIALS;
     worldline: I_WORLDLINE;
     gatepay: I_Gatepay;
+    non_seamless_payment_links: Non_Seamless_Payment_Links;
     easebuzz_non_partner_cred: EASEBUZZ_NON_PARTNER_CRED;
     easebuzz_non_partner: boolean;
     cashfree_non_partner: boolean;
+    isMasterGateway: boolean;
+    razorpay_partner: boolean;
     worldline_token: string;
     vba_account_number: string;
     razorpay: I_Razorpay;

@@ -25,13 +25,15 @@ const transactionStatus_1 = require("../types/transactionStatus");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
+const moment = require("moment-timezone");
 const qs = require("qs");
 const _jwt = require("jsonwebtoken");
 const nttdata_service_1 = require("../nttdata/nttdata.service");
 const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 const worldline_service_1 = require("../worldline/worldline.service");
+const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
 let EdvironPgController = class EdvironPgController {
-    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService, posPaytmService, worldlineService) {
+    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService, posPaytmService, worldlineService, razorpayNonseamless) {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
         this.easebuzzService = easebuzzService;
@@ -39,6 +41,7 @@ let EdvironPgController = class EdvironPgController {
         this.nttDataService = nttDataService;
         this.posPaytmService = posPaytmService;
         this.worldlineService = worldlineService;
+        this.razorpayNonseamless = razorpayNonseamless;
     }
     async handleRedirect(req, res) {
         const wallet = req.query.wallet;
@@ -52,7 +55,9 @@ let EdvironPgController = class EdvironPgController {
         const payment_id = req.query.payment_id;
         const razorpay_pg = req.query.razorpay_pg;
         const razorpay_id = req.query.razorpay_id;
-        const currency = req.query.currency;
+
+        const gateway = req.query.gateway;
+
         let disable_modes = '';
         if (wallet)
             disable_modes += `&wallet=${wallet}`;
@@ -71,21 +76,38 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.NotFoundException('Collect request not found');
         }
         const school_id = collectReq.school_id;
+        if (collectReq.isMasterGateway) {
+            res.send(`<script type="text/javascript">
+                window.onload = function(){
+                    location.href = "https://pg.edviron.com/payments?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}${disable_modes}&platform_charges=${encodeURIComponent(req.query.platform_charges)}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&gateway=${gateway}";
+
+                }
+            </script>`);
+        }
         res.send(`<script type="text/javascript">
                 window.onload = function(){
+
                     location.href = "https://pg.edviron.com?session_id=${req.query.session_id}&collect_request_id=${req.query.collect_request_id}&amount=${req.query.amount}${disable_modes}&platform_charges=${encodeURIComponent(req.query.platform_charges)}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&currency=${currency}";
                 }
             </script>`);
     }
     async handleSdkRedirect(req, res) {
         const collect_id = req.query.collect_id;
-        const isBlank = req.query.isBlank || false;
+        let isBlank = req.query.isBlank || false;
+        if (isBlank !== 'true' || true) {
+            isBlank = 'false';
+        }
         if (!mongoose_1.Types.ObjectId.isValid(collect_id)) {
             return res.redirect(`${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`);
         }
         const collectRequest = (await this.databaseService.CollectRequestModel.findById(collect_id));
         if (!collectRequest) {
             res.redirect(`${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`);
+        }
+        const masterGateway = collectRequest?.isMasterGateway || false;
+        if (masterGateway) {
+            const url = `${process.env.PG_FRONTEND}/select-gateway?collect_id=${collectRequest._id}`;
+            return res.redirect(url);
         }
         if (collectRequest?.easebuzz_non_partner) {
             res.redirect(`${process.env.EASEBUZZ_ENDPOINT_PROD}/pay/${collectRequest.paymentIds.easebuzz_id}`);
@@ -1423,7 +1445,9 @@ let EdvironPgController = class EdvironPgController {
                 };
             }
             console.time('aggregating transaction');
-            if (seachFilter === 'order_id' || seachFilter === 'custom_order_id' || seachFilter === 'student_info') {
+            if (seachFilter === 'order_id' ||
+                seachFilter === 'custom_order_id' ||
+                seachFilter === 'student_info') {
                 console.log('Serching custom');
                 let searchIfo = {};
                 let findQuery = {
@@ -2060,6 +2084,10 @@ let EdvironPgController = class EdvironPgController {
                 const refund = await this.nttDataService.initiateRefund(collect_id, amount, refund_id);
                 return refund;
             }
+            if (gateway === collect_request_schema_1.Gateway.EDVIRON_RAZORPAY) {
+                const refund = await this.razorpayNonseamless.refund(collect_id, amount, refund_id);
+                return refund;
+            }
             if (gateway === collect_request_schema_1.Gateway.EDVIRON_WORLDLINE) {
                 const refund = await this.worldlineService.initiateRefund(collect_id, amount);
                 return refund;
@@ -2351,6 +2379,14 @@ let EdvironPgController = class EdvironPgController {
         catch (e) {
             throw new common_1.BadRequestException(e.message);
         }
+    }
+    async getSubtrusteeBatchTransactions(body) {
+        try {
+            const { school_ids, year } = body;
+            const response = await this.edvironPgService.getSubTrusteeBatchTransactions(school_ids, year);
+            return response;
+        }
+        catch (e) { }
     }
     async getMerchantBatchTransactions(query) {
         try {
@@ -3036,7 +3072,7 @@ let EdvironPgController = class EdvironPgController {
     async bulkSubTrusteeTransactions(body, res, req) {
         console.time('bulk-transactions-report');
         const { trustee_id, token, searchParams, isCustomSearch, seachFilter, school_ids, isQRCode, gateway, } = body;
-        let { payment_modes, } = body;
+        let { payment_modes } = body;
         if (!token)
             throw new Error('Token not provided');
         if (payment_modes?.includes('upi')) {
@@ -3333,7 +3369,7 @@ let EdvironPgController = class EdvironPgController {
                             $skip: (page - 1) * limit,
                         },
                         {
-                            $limit: Number(limit)
+                            $limit: Number(limit),
                         },
                         {
                             $lookup: {
@@ -3776,6 +3812,130 @@ let EdvironPgController = class EdvironPgController {
         }
         catch (error) { }
     }
+    async setMdrZero(body) {
+        try {
+            const reset = await this.databaseService.PlatformChargeModel.updateMany({ school_id: { $in: body.school_ids } }, { $set: { 'platform_charges.$[].range_charge.$[].charge': 0 } });
+            return reset;
+        }
+        catch (e) { }
+    }
+    async subTrusteeTransactionsSum(body) {
+        try {
+            const { trustee_id, school_id, gateway, start_date, end_date, status, mode, isQRPayment, } = body;
+            const response = await this.edvironPgService.subtrusteeTransactionAggregation(trustee_id, start_date, end_date, school_id, status, mode, isQRPayment, gateway);
+            return response;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async webhookTrigger(body) {
+        try {
+            const { school_ids, start_date, end_date, collect_id } = body;
+            const collectRequest = await this.databaseService.CollectRequestModel.find({
+                _id: new mongoose_1.Types.ObjectId(collect_id)
+            }).select('_id');
+            console.log(collectRequest.length);
+            const aggregateData = await this.databaseService.CollectRequestStatusModel.aggregate([
+                {
+                    $match: {
+                        collect_id: { $in: collectRequest.map((item) => item._id) },
+                        status: { $in: ['success', 'SUCCESS'] }
+                    },
+                },
+                {
+                    $lookup: {
+                        from: 'collectrequests',
+                        localField: 'collect_id',
+                        foreignField: '_id',
+                        as: 'collect_request',
+                    }
+                },
+                {
+                    $unwind: '$collect_request'
+                },
+                {
+                    $project: {
+                        collect_id: 1,
+                        amount: 1,
+                        status: 1,
+                        school_id: '$collect_request.school_id',
+                        trustee_id: '$collect_request.trustee_id',
+                        req_webhook_urls: '$collect_request.req_webhook_urls',
+                        custom_order_id: '$collect_request.custom_order_id',
+                        createdAt: 1,
+                        transaction_time: '$payment_time',
+                        additional_data: '$collect_request.additional_data',
+                        details: 1,
+                        transaction_amount: 1,
+                        bank_reference: 1,
+                        payment_method: 1,
+                    }
+                }
+            ]);
+            let successCount = 0;
+            let failCount = 0;
+            let noUrlCount = 0;
+            await Promise.all(aggregateData.map(async (item) => {
+                if (item?.req_webhook_urls && item?.req_webhook_urls?.length > 0) {
+                    for (const url of item.req_webhook_urls) {
+                        try {
+                            const uptDate = moment(item.transaction_time);
+                            const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
+                            const payload = {
+                                collect_id: item.collect_id,
+                                amount: item.amount,
+                                status: item.status,
+                                trustee_id: item.trustee_id,
+                                school_id: item.school_id,
+                                req_webhook_urls: item.req_webhook_urls,
+                                custom_order_id: item.custom_order_id,
+                                createdAt: item.createdAt,
+                                transaction_time: item.transaction_time,
+                                additional_data: item.additional_data,
+                                formattedTransactionDate: istDate,
+                                transaction_amount: item.transaction_amount,
+                                bank_reference: item.bank_reference,
+                                payment_method: item.payment_method,
+                                payment_details: item.details,
+                                details: item.details ? JSON.parse(item.details) : {},
+                            };
+                            const config = {
+                                method: 'post',
+                                url: url,
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${process.env.WEBHOOK_SECRET}`
+                                },
+                                data: payload
+                            };
+                            try {
+                                const response = await axios_1.default.request(config);
+                                successCount++;
+                                console.log(response.data, 'response from webhook for collect_id:', item.collect_id, 'url:', url);
+                            }
+                            catch (e) {
+                                failCount++;
+                                console.log('Error in webhook for collect_id:', item.collect_id, 'url:', url, e.message);
+                            }
+                        }
+                        catch (e) {
+                            console.log('Error in webhook for collect_id:', item.collect_id, 'url:', url, e.message);
+                        }
+                    }
+                }
+                else {
+                    console.log('No webhook url found for collect_id:', item.collect_id);
+                    noUrlCount++;
+                }
+            }));
+            return { length: aggregateData.length, successCount, failCount, noUrlCount };
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -4055,6 +4215,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getBatchTransactions", null);
 __decorate([
+    (0, common_1.Post)('fetch-subtrustee-batch-transactions'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getSubtrusteeBatchTransactions", null);
+__decorate([
     (0, common_1.Get)('/get-merchant-batch-transactions'),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
@@ -4240,6 +4407,27 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "retriveEasebuzz", null);
+__decorate([
+    (0, common_1.Post)('set-mdr-zero'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "setMdrZero", null);
+__decorate([
+    (0, common_1.Post)('sub-trustee-transactions-sum'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "subTrusteeTransactionsSum", null);
+__decorate([
+    (0, common_1.Post)('webhook-trigger'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "webhookTrigger", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
@@ -4248,6 +4436,7 @@ exports.EdvironPgController = EdvironPgController = __decorate([
         cashfree_service_1.CashfreeService,
         nttdata_service_1.NttdataService,
         pos_paytm_service_1.PosPaytmService,
-        worldline_service_1.WorldlineService])
+        worldline_service_1.WorldlineService,
+        razorpay_nonseamless_service_1.RazorpayNonseamlessService])
 ], EdvironPgController);
 //# sourceMappingURL=edviron-pg.controller.js.map

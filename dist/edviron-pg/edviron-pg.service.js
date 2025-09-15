@@ -33,21 +33,21 @@ let EdvironPgService = class EdvironPgService {
         this.cashfreeService = cashfreeService;
         this.razorpayService = razorpayService;
     }
-    async collect(request, platform_charges, school_name, splitPayments, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, easebuzz_school_label) {
+    async collect(request, platform_charges, school_name, splitPayments, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, easebuzz_school_label, isSelectGateway) {
         try {
+            const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
+            if (!collectReq) {
+                throw new common_1.BadRequestException('Collect request not found');
+            }
             let paymentInfo = {
                 cashfree_id: null,
-                easebuzz_id: null,
+                easebuzz_id: collectReq.paymentIds?.easebuzz_id || null,
                 easebuzz_cc_id: null,
                 easebuzz_dc_id: null,
                 ccavenue_id: null,
                 easebuzz_upi_id: null,
                 razorpay_order_id: null,
             };
-            const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
-            if (!collectReq) {
-                throw new common_1.BadRequestException('Collect request not found');
-            }
             const schoolName = school_name.replace(/ /g, '-');
             const axios = require('axios');
             const currentTime = new Date();
@@ -133,7 +133,7 @@ let EdvironPgService = class EdvironPgService {
             };
             let id = '';
             let easebuzz_pg = false;
-            if (request.easebuzz_sub_merchant_id) {
+            if (!isSelectGateway && request.easebuzz_sub_merchant_id) {
                 if (!easebuzz_school_label) {
                     throw new common_1.BadRequestException(`Split Information Not Configure Please contact tarun.k@edviron.com`);
                 }
@@ -1226,6 +1226,133 @@ let EdvironPgService = class EdvironPgService {
             throw new Error(error.message);
         }
     }
+    async subtrusteeTransactionAggregation(trustee_id, start_date, end_date, school_id, status, mode, isQRPayment, gateway) {
+        try {
+            const endOfDay = new Date(end_date);
+            const startDates = new Date(start_date);
+            const startOfDayUTC = new Date(await this.convertISTStartToUTC(start_date));
+            const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
+            endOfDay.setHours(23, 59, 59, 999);
+            let collectQuery = {
+                trustee_id: trustee_id,
+                school_id: { $in: school_id },
+                createdAt: {
+                    $gte: new Date(startDates.getTime() - 24 * 60 * 60 * 1000),
+                    $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
+                },
+            };
+            console.log({ collectQuery });
+            if (isQRPayment) {
+                collectQuery = {
+                    ...collectQuery,
+                    isQRPayment: true,
+                };
+            }
+            if (gateway) {
+                collectQuery = {
+                    ...collectQuery,
+                    gateway: { $in: gateway },
+                };
+            }
+            const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
+            let transactions = [];
+            const orderIds = orders.map((order) => order._id);
+            let query = {
+                collect_id: { $in: orderIds },
+            };
+            const startDate = new Date(start_date);
+            const endDate = end_date;
+            if (startDate && endDate) {
+                query = {
+                    ...query,
+                    $or: [
+                        {
+                            payment_time: {
+                                $ne: null,
+                                $gte: startOfDayUTC,
+                                $lt: endOfDayUTC,
+                            },
+                        },
+                        {
+                            $and: [
+                                { payment_time: { $eq: null } },
+                                {
+                                    updatedAt: {
+                                        $gte: startOfDayUTC,
+                                        $lt: endOfDayUTC,
+                                    },
+                                },
+                            ],
+                        },
+                    ],
+                };
+            }
+            if ((status && status === 'SUCCESS') || status === 'PENDING') {
+                query = {
+                    ...query,
+                    status: { $in: [status.toUpperCase(), status.toLowerCase()] },
+                };
+            }
+            if (school_id) {
+            }
+            if (mode) {
+                query = {
+                    ...query,
+                    payment_method: { $in: mode },
+                };
+            }
+            transactions =
+                await this.databaseService.CollectRequestStatusModel.aggregate([
+                    {
+                        $match: query,
+                    },
+                    {
+                        $project: {
+                            collect_id: 1,
+                            transaction_amount: 1,
+                            order_amount: 1,
+                            status: 1,
+                            createdAt: 1,
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: 'collectrequests',
+                            localField: 'collect_id',
+                            foreignField: '_id',
+                            as: 'collect_request',
+                        },
+                    },
+                    {
+                        $unwind: '$collect_request',
+                    },
+                    {
+                        $group: {
+                            _id: '$collect_request.trustee_id',
+                            totalTransactionAmount: { $sum: '$transaction_amount' },
+                            totalOrderAmount: { $sum: '$order_amount' },
+                            totalTransactions: { $sum: 1 },
+                        },
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            totalTransactionAmount: 1,
+                            totalOrderAmount: 1,
+                            totalTransactions: 1,
+                        },
+                    },
+                ]);
+            console.timeEnd('transactionsCount');
+            return {
+                transactions: transactions[0],
+            };
+        }
+        catch (e) {
+            console.log(e);
+            throw new Error(e.message);
+        }
+    }
     async getTransactionReportBatchedFilterd(trustee_id, start_date, end_date, status, school_id, mode, isQRPayment, gateway) {
         try {
             const endOfDay = new Date(end_date);
@@ -1662,6 +1789,49 @@ let EdvironPgService = class EdvironPgService {
                 throw new Error('Batch not found');
             }
             return batch;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async getSubTrusteeBatchTransactions(school_ids, year) {
+        try {
+            const batch = await this.databaseService.BatchTransactionModel.aggregate([
+                {
+                    $match: {
+                        school_id: { $in: school_ids },
+                        year: year,
+                    },
+                },
+                {
+                    $project: {
+                        order_amount: 1,
+                        transaction_amount: {
+                            $ifNull: ["$transaction_amount", "$order_amount"],
+                        },
+                    },
+                },
+                {
+                    $group: {
+                        _id: null,
+                        total_order_amount: { $sum: "$order_amount" },
+                        total_transaction_amount: { $sum: "$transaction_amount" },
+                        total_transactions: { $sum: 1 },
+                    },
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        total_order_amount: 1,
+                        total_transaction_amount: 1,
+                        total_transactions: 1,
+                    },
+                },
+            ]);
+            if (!batch || batch.length === 0) {
+                throw new Error("Batch not found");
+            }
+            return batch[0];
         }
         catch (e) {
             throw new common_1.BadRequestException(e.message);

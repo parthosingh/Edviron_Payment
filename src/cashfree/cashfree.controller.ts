@@ -1251,8 +1251,4 @@ export class CashfreeController {
   }
 }
 
-const u = {
-  data: { test_object: { test_key: 'test_value' } },
-  type: 'WEBHOOK',
-  event_time: '2025-05-20T10:24:38.589Z',
-};
+

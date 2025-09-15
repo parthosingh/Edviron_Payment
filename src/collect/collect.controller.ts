@@ -147,7 +147,16 @@ export class CollectController {
           on_hold?: boolean;
           on_hold_until?: Date;
         },
-      ];
+      ],
+      isEasebuzzNonpartner?:boolean,
+    easebuzz_non_partner_cred?: {
+        easebuzz_salt: string;
+        easebuzz_key: string;
+        easebuzz_merchant_email: string;
+        easebuzz_submerchant_id: string;
+      },
+      isSelectGateway?:boolean
+      razorpay_partner?:boolean
     },
   ) {
     const {
@@ -202,10 +211,14 @@ export class CollectController {
       gatepay_credentials,
       isCFNonSeamless,
       razorpay_seamless_credentials,
+      isSelectGateway,
+      isEasebuzzNonpartner,
+      easebuzz_non_partner_cred,
+      razorpay_partner
     } = body;
-    console.log(razorpay_credentials);
+    // console.log(razorpay_vendors,'razorpay_vendors');
+     
 
-    console.log('hit');
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
     if (!callbackUrl)
@@ -269,7 +282,11 @@ export class CollectController {
           razorpay_credentials,
           gatepay_credentials,
           isCFNonSeamless,
-          razorpay_seamless_credentials
+          razorpay_seamless_credentials,
+          isSelectGateway,
+          isEasebuzzNonpartner,
+          easebuzz_non_partner_cred,
+          razorpay_partner
         ),
       );
     } catch (e) {

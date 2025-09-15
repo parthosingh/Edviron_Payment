@@ -126,6 +126,15 @@ export declare class CollectController {
                 on_hold_until?: Date;
             }
         ];
+        isEasebuzzNonpartner?: boolean;
+        easebuzz_non_partner_cred?: {
+            easebuzz_salt: string;
+            easebuzz_key: string;
+            easebuzz_merchant_email: string;
+            easebuzz_submerchant_id: string;
+        };
+        isSelectGateway?: boolean;
+        razorpay_partner?: boolean;
     }): Promise<any>;
     posCollect(body: {
         amount: Number;
