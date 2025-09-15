@@ -130,6 +130,7 @@ export class CollectService {
         account?: string;
         percentage?: number;
         amount?: number;
+        name?:string;
         notes?: {
           branch?: string;
           name?: string;
@@ -167,6 +168,8 @@ export class CollectService {
     razorpay_partner?: boolean,
 
   ): Promise<{ url: string; request: CollectRequest }> {
+    console.log(vendor,'vendor to save in db');
+    
     if (custom_order_id) {
       const count =
         await this.databaseService.CollectRequestModel.countDocuments({
@@ -180,7 +183,8 @@ export class CollectService {
     }
     const gateway = clientId === 'edviron' ? Gateway.HDFC : Gateway.PENDING;
     console.log({ isSelectGateway });
-
+    console.log(razorpay_vendors,'vendors'); 
+    
     const request = await new this.databaseService.CollectRequestModel({
       amount,
       callbackUrl,
@@ -282,13 +286,19 @@ export class CollectService {
       razorpay_credentials?.razorpay_secret &&
       razorpay_credentials?.razorpay_mid
     ) {
+      console.log(razorpay_vendors,'checking vendors');
+      
+      
       if (splitPayments && razorpay_vendors && razorpay_vendors.length > 0) {
+        request.vendors_info=vendor
+        await request.save()
         razorpay_vendors.map(async (info) => {
           const {
             vendor_id,
             percentage,
             amount,
             notes,
+            name,
             linked_account_notes,
             on_hold,
             on_hold_until,

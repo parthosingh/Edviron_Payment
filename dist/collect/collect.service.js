@@ -49,6 +49,7 @@ let CollectService = class CollectService {
         this.easebuzzService = easebuzzService;
     }
     async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, nttdata_hash_req_key, nttdata_hash_res_key, nttdata_res_salt, nttdata_req_salt, worldline_merchant_id, worldline_encryption_key, worldline_encryption_iV, worldline_scheme_code, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, isVBAPayment, vba_account_number, worldLine_vendors, easebuzz_school_label, razorpay_vendors, razorpay_credentials, gatepay_credentials, isCFNonSeamless, razorpay_seamless_credentials, isSelectGateway, isEasebuzzNonpartner, easebuzz_non_partner_cred, razorpay_partner) {
+        console.log(vendor, 'vendor to save in db');
         if (custom_order_id) {
             const count = await this.databaseService.CollectRequestModel.countDocuments({
                 school_id,
@@ -60,6 +61,7 @@ let CollectService = class CollectService {
         }
         const gateway = clientId === 'edviron' ? collect_request_schema_1.Gateway.HDFC : collect_request_schema_1.Gateway.PENDING;
         console.log({ isSelectGateway });
+        console.log(razorpay_vendors, 'vendors');
         const request = await new this.databaseService.CollectRequestModel({
             amount,
             callbackUrl,
@@ -146,9 +148,12 @@ let CollectService = class CollectService {
         if (razorpay_credentials?.razorpay_id &&
             razorpay_credentials?.razorpay_secret &&
             razorpay_credentials?.razorpay_mid) {
+            console.log(razorpay_vendors, 'checking vendors');
             if (splitPayments && razorpay_vendors && razorpay_vendors.length > 0) {
+                request.vendors_info = vendor;
+                await request.save();
                 razorpay_vendors.map(async (info) => {
-                    const { vendor_id, percentage, amount, notes, linked_account_notes, on_hold, on_hold_until, } = info;
+                    const { vendor_id, percentage, amount, notes, name, linked_account_notes, on_hold, on_hold_until, } = info;
                     let split_amount = 0;
                     if (amount) {
                         split_amount = amount;

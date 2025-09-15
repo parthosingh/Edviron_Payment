@@ -25,4 +25,9 @@ export declare class RazorpayNonseamlessController {
         limit: number;
         settlements_transactions: any[];
     }>;
+    initRefund(body: {
+        collect_id: string;
+        refundAmount: number;
+        refund_id: string;
+    }): Promise<any>;
 }

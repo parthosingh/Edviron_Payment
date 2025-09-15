@@ -1057,4 +1057,25 @@ export class RazorpayNonseamlessController {
       throw new BadRequestException(error.message);
     }
   }
+
+  @Post('/init-refun')
+  async initRefund(
+    @Body() body:{
+      collect_id:string,
+      refundAmount:number,
+      refund_id:string
+    }
+  ){
+    try{
+    return await this.razorpayServiceModel.refund(
+      body.collect_id,
+      body.refundAmount,
+      body.refund_id
+    )
+    }catch(e){
+      console.log();
+      
+      throw new BadRequestException(e.message)
+    }
+  }
 }

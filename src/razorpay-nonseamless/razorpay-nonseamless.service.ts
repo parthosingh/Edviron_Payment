@@ -23,7 +23,7 @@ export class RazorpayNonseamlessService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly edvironPgService: EdvironPgService,
-  ) {}
+  ) { }
 
   async createOrder(collectRequest: CollectRequest) {
     try {
@@ -121,7 +121,7 @@ export class RazorpayNonseamlessService {
     }
   }
 
-    async createOrderV2(collectRequest: CollectRequest) {
+  async createOrderV2(collectRequest: CollectRequest) {
     try {
       const {
         _id,
@@ -149,6 +149,8 @@ export class RazorpayNonseamlessService {
       if (razorpay_vendors_info?.length) {
         let computed = 0;
         const transfers = razorpay_vendors_info.map((v, idx) => {
+          console.log(v, 'vendor');
+
           let amtPaise: number;
 
           if (v.amount !== undefined) {
@@ -176,6 +178,7 @@ export class RazorpayNonseamlessService {
           };
         });
 
+
         const remainder = totalPaise - computed;
         if (remainder !== 0 && transfers.length > 0) {
           transfers[0].amount += remainder;
@@ -196,6 +199,8 @@ export class RazorpayNonseamlessService {
         },
         data,
       };
+
+
       const { data: rpRes } = await axios.request(config);
       if (rpRes.status !== 'created') {
         throw new BadRequestException('Failed to create Razorpay order');
@@ -205,7 +210,7 @@ export class RazorpayNonseamlessService {
         {
           $set: {
             gateway: Gateway.EDVIRON_RAZORPAY,
-            razorpay_partner : true,
+            razorpay_partner: true,
             'razorpay.order_id': rpRes.id,
           },
         },
@@ -216,7 +221,7 @@ export class RazorpayNonseamlessService {
         collect_req: collectRequest,
       };
     } catch (error) {
-      console.error('Error creating Razorpay order:', error);
+      // console.error('Error creating Razorpay order:', error);
       throw new BadRequestException(error.response?.data || error.message);
     }
   }
@@ -277,8 +282,8 @@ export class RazorpayNonseamlessService {
         status === TransactionStatus.SUCCESS
           ? 200
           : status === TransactionStatus.FAILURE
-          ? 400
-          : 202;
+            ? 400
+            : 202;
 
       const formattedResponse: any = {
         status: status,
@@ -397,6 +402,25 @@ export class RazorpayNonseamlessService {
       if (status.status !== 'SUCCESS') {
         throw new BadRequestException('Payment not captured yet.');
       }
+      const payload = {
+        refund_id
+      }
+      const token = _jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET!)
+      const refundConfig = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: `${process.env.VANILLA_SERVICE_ENDPOINT
+          }/main-backend/get-single-refund?refund_id=${refund_id}&token=${token}`,
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+        },
+      }
+      const {data:refundInfo}=await axios.request(refundConfig)
+      let isSplit=false
+      if(refundInfo.isSplitRedund){
+        isSplit=true
+      }
 
       const totalPaise = Math.round(refundAmount * 100);
       const config = {
@@ -411,6 +435,7 @@ export class RazorpayNonseamlessService {
         },
         data: {
           amount: totalPaise,
+          reverse_all: isSplit || false
         },
       };
       const response = await axios.request(config);
@@ -700,7 +725,7 @@ export class RazorpayNonseamlessService {
             ],
           });
 
-          // console.log(customOrders)
+        // console.log(customOrders)
         const customOrderMap = new Map(
           customOrders.map((doc) => [
             // doc.custom_order_id,
@@ -718,7 +743,7 @@ export class RazorpayNonseamlessService {
             .filter((order: any) => order.order_receipt)
             .map(async (order: any) => {
               console.log(order, "order");
-              
+
               let customData: any = {};
               let additionalData: any = {};
               let custom_order_id: string | null = null;
@@ -733,7 +758,7 @@ export class RazorpayNonseamlessService {
               if (order.order_receipt) {
                 console.log(order.order_receipt, "order.order_receipt")
                 customData = customOrderMap.get(order.order_receipt) || {};
-                console.log(customData, "customData" )
+                console.log(customData, "customData")
 
                 try {
                   custom_order_id = order.order_receipt;
@@ -751,7 +776,7 @@ export class RazorpayNonseamlessService {
                     : null;
                   payment_group = order.method;
                   studentDetails = additionalData?.student_details || {};
-                   razorpay_order_id = order.order_id || null;
+                  razorpay_order_id = order.order_id || null;
                   order.order_id = customData._id || null;
                 } catch {
                   additionalData = null;
@@ -761,7 +786,7 @@ export class RazorpayNonseamlessService {
                   event_amount = null;
                   event_time = null;
                   payment_group = null;
-                   razorpay_order_id = order.order_id || null;
+                  razorpay_order_id = order.order_id || null;
                 }
               }
 
@@ -988,7 +1013,7 @@ export class RazorpayNonseamlessService {
         );
 
 
-        const webhookUrl = collect_request?.req_webhook_urls;
+      const webhookUrl = collect_request?.req_webhook_urls;
       const transaction_time_str = transaction_time
         ? transaction_time.toISOString()
         : null;
@@ -1014,7 +1039,7 @@ export class RazorpayNonseamlessService {
         formattedDate: (() => {
           const rawDate = transaction_time || collect_req_status?.updatedAt;
           const dateObj = new Date(rawDate || new Date());
-          if (isNaN(dateObj.getTime())) return null; 
+          if (isNaN(dateObj.getTime())) return null;
 
           return `${dateObj.getFullYear()}-${String(
             dateObj.getMonth() + 1,
@@ -1032,9 +1057,8 @@ export class RazorpayNonseamlessService {
           const config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: `${
-              process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collect_request.trustee_id.toString()}`,
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT
+              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collect_request.trustee_id.toString()}`,
             headers: {
               accept: 'application/json',
               'content-type': 'application/json',

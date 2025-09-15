@@ -248,9 +248,11 @@ export class CollectRequest {
   razorpay_vendors_info?: [
     {
       vendor_id: string;
+      edv_vendor_id:string;
       account?: string;
       percentage?: number;
       amount?: number;
+      name?:string;
       notes?: {
         branch?: string;
         name?: string;

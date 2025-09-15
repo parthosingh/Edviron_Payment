@@ -123,6 +123,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
             if (razorpay_vendors_info?.length) {
                 let computed = 0;
                 const transfers = razorpay_vendors_info.map((v, idx) => {
+                    console.log(v, 'vendor');
                     let amtPaise;
                     if (v.amount !== undefined) {
                         amtPaise = Math.round(v.amount * 100);
@@ -183,7 +184,6 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
             };
         }
         catch (error) {
-            console.error('Error creating Razorpay order:', error);
             throw new common_1.BadRequestException(error.response?.data || error.message);
         }
     }
@@ -326,6 +326,24 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
             if (status.status !== 'SUCCESS') {
                 throw new common_1.BadRequestException('Payment not captured yet.');
             }
+            const payload = {
+                refund_id
+            };
+            const token = _jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET);
+            const refundConfig = {
+                method: 'get',
+                maxBodyLength: Infinity,
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-single-refund?refund_id=${refund_id}&token=${token}`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                },
+            };
+            const { data: refundInfo } = await axios_1.default.request(refundConfig);
+            let isSplit = false;
+            if (refundInfo.isSplitRedund) {
+                isSplit = true;
+            }
             const totalPaise = Math.round(refundAmount * 100);
             const config = {
                 method: 'post',
@@ -339,6 +357,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 },
                 data: {
                     amount: totalPaise,
+                    reverse_all: isSplit || false
                 },
             };
             const response = await axios_1.default.request(config);

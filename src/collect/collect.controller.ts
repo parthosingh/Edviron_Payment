@@ -214,6 +214,8 @@ export class CollectController {
       easebuzz_non_partner_cred,
       razorpay_partner
     } = body;
+    // console.log(razorpay_vendors,'razorpay_vendors');
+     
 
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');

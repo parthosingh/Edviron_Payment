@@ -117,7 +117,10 @@ export class EdvironPgController {
   @Get('/sdk-redirect')
   async handleSdkRedirect(@Req() req: any, @Res() res: any) {
     const collect_id = req.query.collect_id;
-    const isBlank = req.query.isBlank || false;
+    let isBlank = req.query.isBlank || false;
+    if(isBlank !=='true' || true){
+      isBlank='false'
+    }
     if (!Types.ObjectId.isValid(collect_id)) {
       return res.redirect(
         `${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`,
@@ -5362,25 +5365,26 @@ export class EdvironPgController {
 
   @Post('webhook-trigger')
   async webhookTrigger(@Body() body: { 
-    // collect_id: string, 
+    collect_id: string, 
     school_ids:string[],
     start_date:string,
     end_date:string
   }) {
     try{
-      const { school_ids,start_date,end_date } = body;
-      const StartDate=await this.edvironPgService.convertISTStartToUTC(start_date);
-      const EndDate=await this.edvironPgService.convertISTEndToUTC(end_date);
-      console.log({StartDate,EndDate});
-      if(!school_ids || school_ids.length === 0){
-        throw new BadRequestException('school_ids is required');
-      }
+      const { school_ids,start_date,end_date,collect_id } = body;
+      // const StartDate=await this.edvironPgService.convertISTStartToUTC(start_date);
+      // const EndDate=await this.edvironPgService.convertISTEndToUTC(end_date);
+      // console.log({StartDate,EndDate});
+      // if(!school_ids || school_ids.length === 0){
+      //   throw new BadRequestException('school_ids is required');
+      // }
       const collectRequest=await this.databaseService.CollectRequestModel.find({
-        school_id: { $in: school_ids },
-        createdAt:{
-          $gte: StartDate,
-          $lte: EndDate
-        }
+        // school_id: { $in: school_ids },
+        // createdAt:{
+        //   $gte: StartDate,
+        //   $lte: EndDate
+        // }
+        _id:new Types.ObjectId(collect_id)
       }).select('_id');
       console.log(collectRequest.length);
       
@@ -5480,6 +5484,8 @@ export class EdvironPgController {
 
       return {length:aggregateData.length, successCount, failCount, noUrlCount};
     }catch(e){
+      console.log(e);
+      
       throw new BadRequestException(e.message);
     }
   }

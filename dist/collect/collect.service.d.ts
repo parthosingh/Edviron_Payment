@@ -72,6 +72,7 @@ export declare class CollectService {
             account?: string;
             percentage?: number;
             amount?: number;
+            name?: string;
             notes?: {
                 branch?: string;
                 name?: string;

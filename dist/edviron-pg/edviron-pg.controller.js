@@ -91,7 +91,10 @@ let EdvironPgController = class EdvironPgController {
     }
     async handleSdkRedirect(req, res) {
         const collect_id = req.query.collect_id;
-        const isBlank = req.query.isBlank || false;
+        let isBlank = req.query.isBlank || false;
+        if (isBlank !== 'true' || true) {
+            isBlank = 'false';
+        }
         if (!mongoose_1.Types.ObjectId.isValid(collect_id)) {
             return res.redirect(`${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`);
         }
@@ -3826,19 +3829,9 @@ let EdvironPgController = class EdvironPgController {
     }
     async webhookTrigger(body) {
         try {
-            const { school_ids, start_date, end_date } = body;
-            const StartDate = await this.edvironPgService.convertISTStartToUTC(start_date);
-            const EndDate = await this.edvironPgService.convertISTEndToUTC(end_date);
-            console.log({ StartDate, EndDate });
-            if (!school_ids || school_ids.length === 0) {
-                throw new common_1.BadRequestException('school_ids is required');
-            }
+            const { school_ids, start_date, end_date, collect_id } = body;
             const collectRequest = await this.databaseService.CollectRequestModel.find({
-                school_id: { $in: school_ids },
-                createdAt: {
-                    $gte: StartDate,
-                    $lte: EndDate
-                }
+                _id: new mongoose_1.Types.ObjectId(collect_id)
             }).select('_id');
             console.log(collectRequest.length);
             const aggregateData = await this.databaseService.CollectRequestStatusModel.aggregate([
@@ -3937,6 +3930,7 @@ let EdvironPgController = class EdvironPgController {
             return { length: aggregateData.length, successCount, failCount, noUrlCount };
         }
         catch (e) {
+            console.log(e);
             throw new common_1.BadRequestException(e.message);
         }
     }
