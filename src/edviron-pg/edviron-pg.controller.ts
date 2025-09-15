@@ -29,6 +29,7 @@ import {
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { skip } from 'node:test';
+import * as moment from 'moment-timezone';
 import * as qs from 'qs';
 import {
   PlatformCharge,
@@ -5358,59 +5359,129 @@ export class EdvironPgController {
       throw new BadRequestException(e.message);
     }
   }
+
+  @Post('webhook-trigger')
+  async webhookTrigger(@Body() body: { 
+    // collect_id: string, 
+    school_ids:string[],
+    start_date:string,
+    end_date:string
+  }) {
+    try{
+      const { school_ids,start_date,end_date } = body;
+      const StartDate=await this.edvironPgService.convertISTStartToUTC(start_date);
+      const EndDate=await this.edvironPgService.convertISTEndToUTC(end_date);
+      console.log({StartDate,EndDate});
+      if(!school_ids || school_ids.length === 0){
+        throw new BadRequestException('school_ids is required');
+      }
+      const collectRequest=await this.databaseService.CollectRequestModel.find({
+        school_id: { $in: school_ids },
+        createdAt:{
+          $gte: StartDate,
+          $lte: EndDate
+        }
+      }).select('_id');
+      console.log(collectRequest.length);
+      
+      const aggregateData = await this.databaseService.CollectRequestStatusModel.aggregate([
+        {
+          $match:{
+           collect_id: { $in: collectRequest.map((item) => item._id) },
+           status:{$in:['success','SUCCESS']}
+          },
+        },
+        {
+          $lookup:{
+            from:'collectrequests',
+            localField:'collect_id',
+            foreignField:'_id',
+            as:'collect_request',
+          }
+        },
+        {
+          $unwind:'$collect_request'
+        },
+        {
+          $project:{
+            collect_id:1,
+            amount:1,
+            status:1,
+            school_id:'$collect_request.school_id',
+            trustee_id:'$collect_request.trustee_id', 
+            req_webhook_urls:'$collect_request.req_webhook_urls',
+            custom_order_id:'$collect_request.custom_order_id',
+            createdAt:1,
+            transaction_time:'$payment_time',
+            additional_data:'$collect_request.additional_data',
+            details:1,
+            transaction_amount:1,
+            bank_reference:1,
+            payment_method:1,
+          }
+        }
+      ])
+      let successCount=0;
+      let failCount=0;
+      let noUrlCount=0;
+      await Promise.all(aggregateData.map(async(item:any)=>{
+        if(item?.req_webhook_urls && item?.req_webhook_urls?.length>0){
+          for(const url of item.req_webhook_urls){
+            try{
+               const uptDate = moment(item.transaction_time);
+                    const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
+              
+              const payload={
+                collect_id:item.collect_id,
+                amount:item.amount,
+                status:item.status,
+                trustee_id:item.trustee_id,
+                school_id:item.school_id,
+                req_webhook_urls:item.req_webhook_urls,
+                custom_order_id:item.custom_order_id,
+                createdAt:item.createdAt,
+                transaction_time:item.transaction_time,
+                additional_data:item.additional_data,
+                formattedTransactionDate:istDate,
+                transaction_amount:item.transaction_amount,
+                bank_reference:item.bank_reference,
+                payment_method:item.payment_method,
+                payment_details:item.details,
+                details: item.details ? JSON.parse(item.details):{},
+              }
+
+              const config = {
+                method: 'post',
+                url: url,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${process.env.WEBHOOK_SECRET}`
+                },
+                data: payload
+              }
+              try{
+                const response = await axios.request(config);
+                successCount++;
+                console.log(response.data,'response from webhook for collect_id:',item.collect_id,'url:',url);
+                
+              }catch(e){
+                failCount++;
+                console.log('Error in webhook for collect_id:',item.collect_id,'url:',url,e.message);
+              }
+            }catch(e){
+              console.log('Error in webhook for collect_id:',item.collect_id,'url:',url,e.message);
+            }
+          }
+        }else{
+          console.log('No webhook url found for collect_id:',item.collect_id);
+          noUrlCount++;
+        }
+      }));
+
+      return {length:aggregateData.length, successCount, failCount, noUrlCount};
+    }catch(e){
+      throw new BadRequestException(e.message);
+    }
+  }
 }
-const y = {
-  customer_details: {
-    customer_email: null,
-    customer_id: '7112AAA812234',
-    customer_name: null,
-    customer_phone: '9898989898',
-  },
-  error_details: {
-    error_code: 'TRANSACTION_DECLINED',
-    error_code_raw: null,
-    error_description:
-      'Transaction declined due to risk-Amount Less than Minimum Amount configured',
-    error_description_raw: null,
-    error_reason: 'minimum_amount_limit',
-    error_source: 'customer',
-  },
-  order: {
-    order_amount: 4,
-    order_currency: 'INR',
-    order_id: '68beaff82b235974f1668f4c',
-    order_tags: null,
-  },
-  payment: {
-    auth_id: null,
-    bank_reference: null,
-    cf_payment_id: 4327371039,
-    payment_amount: 4.03,
-    payment_currency: 'INR',
-    payment_group: 'credit_card',
-    payment_message:
-      'Transaction declined due to risk-Amount Less than Minimum Amount configured',
-    payment_method: {
-      card: {
-        card_bank_name: 'AXIS BANK',
-        card_country: 'IN',
-        card_network: 'mastercard',
-        card_number: 'XXXXXXXXXXXX1978',
-        card_sub_type: 'R',
-        card_type: 'credit_card',
-        channel: null,
-      },
-    },
-    payment_status: 'FAILED',
-    payment_time: '2025-09-08T15:59:36+05:30',
-  },
-  payment_gateway_details: {
-    gateway_name: 'CASHFREE',
-    gateway_order_id: null,
-    gateway_order_reference_id: null,
-    gateway_payment_id: null,
-    gateway_settlement: null,
-    gateway_status_code: null,
-  },
-  payment_offers: null,
-};
+

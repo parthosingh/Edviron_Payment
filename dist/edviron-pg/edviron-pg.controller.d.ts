@@ -445,4 +445,14 @@ export declare class EdvironPgController {
     }): Promise<{
         transactions: any;
     }>;
+    webhookTrigger(body: {
+        school_ids: string[];
+        start_date: string;
+        end_date: string;
+    }): Promise<{
+        length: number;
+        successCount: number;
+        failCount: number;
+        noUrlCount: number;
+    }>;
 }
