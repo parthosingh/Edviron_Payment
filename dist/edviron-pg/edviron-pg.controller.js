@@ -104,7 +104,7 @@ let EdvironPgController = class EdvironPgController {
         }
         const masterGateway = collectRequest?.isMasterGateway || false;
         if (masterGateway) {
-            const url = `https://qa.pg.edviron.com/select-gateway?collect_id=${collectRequest._id}`;
+            const url = `${process.env.PG_FRONTEND}/select-gateway?collect_id=${collectRequest._id}`;
             return res.redirect(url);
         }
         if (collectRequest?.easebuzz_non_partner) {
