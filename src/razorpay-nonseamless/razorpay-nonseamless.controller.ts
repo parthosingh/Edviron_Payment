@@ -1058,7 +1058,7 @@ export class RazorpayNonseamlessController {
     }
   }
 
-  @Post('/init-refun')
+  @Post('/init-refund')
   async initRefund(
     @Body() body:{
       collect_id:string,

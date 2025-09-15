@@ -322,14 +322,13 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 throw new common_1.BadRequestException('Refund amount cannot be greater than the original amount.');
             }
             const status = await this.getPaymentStatus(collectRequest.razorpay.order_id, collectRequest);
-            console.log(status, 'status');
             if (status.status !== 'SUCCESS') {
                 throw new common_1.BadRequestException('Payment not captured yet.');
             }
             const payload = {
                 refund_id
             };
-            const token = _jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET);
+            const token = _jwt.sign(payload, process.env.JWT_SECRET_FOR_INTRANET);
             const refundConfig = {
                 method: 'get',
                 maxBodyLength: Infinity,
@@ -360,6 +359,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     reverse_all: isSplit || false
                 },
             };
+            console.log(config, 'razorpay refind config');
             const response = await axios_1.default.request(config);
             console.log(response.data, 'refund response');
             return response.data;

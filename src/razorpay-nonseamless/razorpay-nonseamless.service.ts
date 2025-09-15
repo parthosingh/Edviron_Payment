@@ -398,14 +398,13 @@ export class RazorpayNonseamlessService {
         collectRequest.razorpay.order_id,
         collectRequest,
       );
-      console.log(status, 'status');
       if (status.status !== 'SUCCESS') {
         throw new BadRequestException('Payment not captured yet.');
       }
       const payload = {
         refund_id
       }
-      const token = _jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET!)
+      const token = _jwt.sign(payload, process.env.JWT_SECRET_FOR_INTRANET!)
       const refundConfig = {
         method: 'get',
         maxBodyLength: Infinity,
@@ -417,6 +416,7 @@ export class RazorpayNonseamlessService {
         },
       }
       const {data:refundInfo}=await axios.request(refundConfig)
+     
       let isSplit=false
       if(refundInfo.isSplitRedund){
         isSplit=true
@@ -438,6 +438,8 @@ export class RazorpayNonseamlessService {
           reverse_all: isSplit || false
         },
       };
+      console.log(config,'razorpay refind config');
+      
       const response = await axios.request(config);
       console.log(response.data, 'refund response');
       return response.data;
