@@ -261,6 +261,7 @@ let EdvironPgService = class EdvironPgService {
                     url: `${process.env.URL}/cashfree/redirect?session_id=${cf_payment_id}`,
                 };
             }
+            let newcurrency = request.currency ? request.currency : 'INR';
             return {
                 url: process.env.URL +
                     '/edviron-pg/redirect?session_id=' +
@@ -282,7 +283,9 @@ let EdvironPgService = class EdvironPgService {
                     '&razorpay_pg=' +
                     razorpay_pg +
                     '&razorpay_id=' +
-                    razorpay_id,
+                    razorpay_id +
+                    '&currency=' +
+                    newcurrency
             };
         }
         catch (err) {

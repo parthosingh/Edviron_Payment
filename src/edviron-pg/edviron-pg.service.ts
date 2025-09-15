@@ -350,6 +350,8 @@ export class EdvironPgService implements GatewayService {
           url: `${process.env.URL}/cashfree/redirect?session_id=${cf_payment_id}`,
         };
       }
+
+      let newcurrency = request.currency ? request.currency : 'INR' 
       return {
         url:
           process.env.URL +
@@ -372,7 +374,9 @@ export class EdvironPgService implements GatewayService {
           '&razorpay_pg=' +
           razorpay_pg +
           '&razorpay_id=' +
-          razorpay_id,
+          razorpay_id + 
+          '&currency=' + 
+          newcurrency
       };
     } catch (err) {
       if (err.name === 'AxiosError')
