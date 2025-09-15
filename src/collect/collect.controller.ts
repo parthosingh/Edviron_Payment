@@ -77,6 +77,7 @@ export class CollectController {
       worldline_encryption_key?: string | null;
       worldline_encryption_iV?: string | null;
       worldline_scheme_code?: string | null;
+      currency?: string | null;
       isCFNonSeamless?: boolean;
       razorpay_credentials?: {
         razorpay_id?: string | null;
@@ -202,6 +203,7 @@ export class CollectController {
       worldline_encryption_key,
       worldline_encryption_iV,
       worldline_scheme_code,
+      currency,
       vba_account_number,
       worldLine_vendors,
       razorpay_vendors,
@@ -267,6 +269,7 @@ export class CollectController {
           worldline_encryption_key,
           worldline_encryption_iV,
           worldline_scheme_code,
+          currency,
           vendors_info,
           vendorgateway,
           easebuzzVendors,

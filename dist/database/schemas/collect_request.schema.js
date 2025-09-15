@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CollectRequestSchema = exports.CollectRequest = exports.paytmPos = exports.PaymentIds = exports.Gateway = void 0;
+exports.CollectRequestSchema = exports.CollectRequest = exports.paytmPos = exports.CurrencyCode = exports.PaymentIds = exports.Gateway = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 var Gateway;
 (function (Gateway) {
@@ -65,6 +65,148 @@ __decorate([
 exports.PaymentIds = PaymentIds = __decorate([
     (0, mongoose_1.Schema)()
 ], PaymentIds);
+var CurrencyCode;
+(function (CurrencyCode) {
+    CurrencyCode["AFN"] = "AFN";
+    CurrencyCode["ALL"] = "ALL";
+    CurrencyCode["DZD"] = "DZD";
+    CurrencyCode["AOA"] = "AOA";
+    CurrencyCode["ARS"] = "ARS";
+    CurrencyCode["AMD"] = "AMD";
+    CurrencyCode["AWG"] = "AWG";
+    CurrencyCode["AUD"] = "AUD";
+    CurrencyCode["AZN"] = "AZN";
+    CurrencyCode["BSD"] = "BSD";
+    CurrencyCode["BHD"] = "BHD";
+    CurrencyCode["BDT"] = "BDT";
+    CurrencyCode["BBD"] = "BBD";
+    CurrencyCode["BZD"] = "BZD";
+    CurrencyCode["BMD"] = "BMD";
+    CurrencyCode["BTN"] = "BTN";
+    CurrencyCode["BOB"] = "BOB";
+    CurrencyCode["BAM"] = "BAM";
+    CurrencyCode["BWP"] = "BWP";
+    CurrencyCode["BRL"] = "BRL";
+    CurrencyCode["BND"] = "BND";
+    CurrencyCode["BGN"] = "BGN";
+    CurrencyCode["BIF"] = "BIF";
+    CurrencyCode["KHR"] = "KHR";
+    CurrencyCode["CAD"] = "CAD";
+    CurrencyCode["CVE"] = "CVE";
+    CurrencyCode["KYD"] = "KYD";
+    CurrencyCode["XAF"] = "XAF";
+    CurrencyCode["XPF"] = "XPF";
+    CurrencyCode["CLP"] = "CLP";
+    CurrencyCode["COP"] = "COP";
+    CurrencyCode["KMF"] = "KMF";
+    CurrencyCode["CDF"] = "CDF";
+    CurrencyCode["CRC"] = "CRC";
+    CurrencyCode["CZK"] = "CZK";
+    CurrencyCode["DKK"] = "DKK";
+    CurrencyCode["DJF"] = "DJF";
+    CurrencyCode["DOP"] = "DOP";
+    CurrencyCode["XCD"] = "XCD";
+    CurrencyCode["EGP"] = "EGP";
+    CurrencyCode["ERN"] = "ERN";
+    CurrencyCode["SZL"] = "SZL";
+    CurrencyCode["ETB"] = "ETB";
+    CurrencyCode["EUR"] = "EUR";
+    CurrencyCode["FKP"] = "FKP";
+    CurrencyCode["FJD"] = "FJD";
+    CurrencyCode["GMD"] = "GMD";
+    CurrencyCode["GEL"] = "GEL";
+    CurrencyCode["GHS"] = "GHS";
+    CurrencyCode["GIP"] = "GIP";
+    CurrencyCode["GTQ"] = "GTQ";
+    CurrencyCode["GNF"] = "GNF";
+    CurrencyCode["GYD"] = "GYD";
+    CurrencyCode["HTG"] = "HTG";
+    CurrencyCode["HNL"] = "HNL";
+    CurrencyCode["HKD"] = "HKD";
+    CurrencyCode["HUF"] = "HUF";
+    CurrencyCode["ISK"] = "ISK";
+    CurrencyCode["INR"] = "INR";
+    CurrencyCode["IDR"] = "IDR";
+    CurrencyCode["IQD"] = "IQD";
+    CurrencyCode["JMD"] = "JMD";
+    CurrencyCode["JPY"] = "JPY";
+    CurrencyCode["JOD"] = "JOD";
+    CurrencyCode["KZT"] = "KZT";
+    CurrencyCode["KES"] = "KES";
+    CurrencyCode["KWD"] = "KWD";
+    CurrencyCode["KGS"] = "KGS";
+    CurrencyCode["LAK"] = "LAK";
+    CurrencyCode["LBP"] = "LBP";
+    CurrencyCode["LRD"] = "LRD";
+    CurrencyCode["LYD"] = "LYD";
+    CurrencyCode["MOP"] = "MOP";
+    CurrencyCode["MKD"] = "MKD";
+    CurrencyCode["MGA"] = "MGA";
+    CurrencyCode["MWK"] = "MWK";
+    CurrencyCode["MYR"] = "MYR";
+    CurrencyCode["MVR"] = "MVR";
+    CurrencyCode["MRU"] = "MRU";
+    CurrencyCode["MUR"] = "MUR";
+    CurrencyCode["MXN"] = "MXN";
+    CurrencyCode["MDL"] = "MDL";
+    CurrencyCode["MNT"] = "MNT";
+    CurrencyCode["MAD"] = "MAD";
+    CurrencyCode["MZN"] = "MZN";
+    CurrencyCode["NAD"] = "NAD";
+    CurrencyCode["NPR"] = "NPR";
+    CurrencyCode["ILS"] = "ILS";
+    CurrencyCode["TWD"] = "TWD";
+    CurrencyCode["NZD"] = "NZD";
+    CurrencyCode["NIO"] = "NIO";
+    CurrencyCode["NGN"] = "NGN";
+    CurrencyCode["NOK"] = "NOK";
+    CurrencyCode["PGK"] = "PGK";
+    CurrencyCode["PYG"] = "PYG";
+    CurrencyCode["PEN"] = "PEN";
+    CurrencyCode["PHP"] = "PHP";
+    CurrencyCode["PLN"] = "PLN";
+    CurrencyCode["GBP"] = "GBP";
+    CurrencyCode["QAR"] = "QAR";
+    CurrencyCode["CNY"] = "CNY";
+    CurrencyCode["OMR"] = "OMR";
+    CurrencyCode["RON"] = "RON";
+    CurrencyCode["RUB"] = "RUB";
+    CurrencyCode["RWF"] = "RWF";
+    CurrencyCode["SHP"] = "SHP";
+    CurrencyCode["WST"] = "WST";
+    CurrencyCode["SAR"] = "SAR";
+    CurrencyCode["RSD"] = "RSD";
+    CurrencyCode["SCR"] = "SCR";
+    CurrencyCode["SLL"] = "SLL";
+    CurrencyCode["SGD"] = "SGD";
+    CurrencyCode["SBD"] = "SBD";
+    CurrencyCode["SOS"] = "SOS";
+    CurrencyCode["ZAR"] = "ZAR";
+    CurrencyCode["KRW"] = "KRW";
+    CurrencyCode["LKR"] = "LKR";
+    CurrencyCode["SRD"] = "SRD";
+    CurrencyCode["SEK"] = "SEK";
+    CurrencyCode["CHF"] = "CHF";
+    CurrencyCode["TJS"] = "TJS";
+    CurrencyCode["TZS"] = "TZS";
+    CurrencyCode["THB"] = "THB";
+    CurrencyCode["TOP"] = "TOP";
+    CurrencyCode["TTD"] = "TTD";
+    CurrencyCode["TND"] = "TND";
+    CurrencyCode["TRY"] = "TRY";
+    CurrencyCode["TMT"] = "TMT";
+    CurrencyCode["AED"] = "AED";
+    CurrencyCode["UGX"] = "UGX";
+    CurrencyCode["UAH"] = "UAH";
+    CurrencyCode["UYU"] = "UYU";
+    CurrencyCode["USD"] = "USD";
+    CurrencyCode["UZS"] = "UZS";
+    CurrencyCode["VUV"] = "VUV";
+    CurrencyCode["VND"] = "VND";
+    CurrencyCode["XOF"] = "XOF";
+    CurrencyCode["YER"] = "YER";
+    CurrencyCode["ZMW"] = "ZMW";
+})(CurrencyCode || (exports.CurrencyCode = CurrencyCode = {}));
 let paytmPos = class paytmPos {
 };
 exports.paytmPos = paytmPos;
@@ -114,6 +256,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: true, default: Gateway.PHONEPE }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "gateway", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: CurrencyCode.INR }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "currency", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)

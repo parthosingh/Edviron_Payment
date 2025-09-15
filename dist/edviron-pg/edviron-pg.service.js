@@ -58,7 +58,7 @@ let EdvironPgService = class EdvironPgService {
                     customer_id: '7112AAA812234',
                     customer_phone: '9898989898',
                 },
-                order_currency: 'INR',
+                order_currency: request.currency,
                 order_amount: request.amount.toFixed(2),
                 order_id: request._id,
                 order_meta: {
@@ -261,6 +261,7 @@ let EdvironPgService = class EdvironPgService {
                     url: `${process.env.URL}/cashfree/redirect?session_id=${cf_payment_id}`,
                 };
             }
+            let newcurrency = request.currency ? request.currency : 'INR';
             return {
                 url: process.env.URL +
                     '/edviron-pg/redirect?session_id=' +
@@ -282,7 +283,9 @@ let EdvironPgService = class EdvironPgService {
                     '&razorpay_pg=' +
                     razorpay_pg +
                     '&razorpay_id=' +
-                    razorpay_id,
+                    razorpay_id +
+                    '&currency=' +
+                    newcurrency
             };
         }
         catch (err) {

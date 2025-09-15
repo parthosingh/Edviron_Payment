@@ -68,6 +68,7 @@ export class EdvironPgController {
     const payment_id = req.query.payment_id;
     const razorpay_pg = req.query.razorpay_pg;
     const razorpay_id = req.query.razorpay_id;
+    const currency = req.query.currency;
     const gateway = req.query.gateway;
     let disable_modes = '';
     if (wallet) disable_modes += `&wallet=${wallet}`;
@@ -107,7 +108,7 @@ export class EdvironPgController {
       }&amount=${req.query.amount
       }${disable_modes}&platform_charges=${encodeURIComponent(
         req.query.platform_charges,
-      )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}";
+      )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&currency=${currency}";
 
                 }
             </script>`,

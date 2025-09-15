@@ -82,6 +82,7 @@ export class CollectService {
     worldline_encryption_key?: string | null,
     worldline_encryption_iV?: string | null,
     worldline_scheme_code?: string | null,
+    currency?: string | null,
     vendor?: [
       {
         vendor_id: string;
@@ -190,6 +191,7 @@ export class CollectService {
       callbackUrl,
       gateway: gateway,
       clientId,
+      currency : currency || "INR",
       clientSecret,
       webHookUrl: webHook || null,
       disabled_modes,

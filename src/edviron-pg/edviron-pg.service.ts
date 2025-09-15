@@ -101,7 +101,7 @@ export class EdvironPgService implements GatewayService {
           customer_id: '7112AAA812234',
           customer_phone: '9898989898',
         },
-        order_currency: 'INR',
+        order_currency: request.currency,
         order_amount: request.amount.toFixed(2),
         order_id: request._id,
         order_meta: {
@@ -351,6 +351,8 @@ export class EdvironPgService implements GatewayService {
           url: `${process.env.URL}/cashfree/redirect?session_id=${cf_payment_id}`,
         };
       }
+
+      let newcurrency = request.currency ? request.currency : 'INR' 
       return {
         url:
           process.env.URL +
@@ -373,7 +375,9 @@ export class EdvironPgService implements GatewayService {
           '&razorpay_pg=' +
           razorpay_pg +
           '&razorpay_id=' +
-          razorpay_id,
+          razorpay_id + 
+          '&currency=' + 
+          newcurrency
       };
     } catch (err) {
       if (err.name === 'AxiosError')
