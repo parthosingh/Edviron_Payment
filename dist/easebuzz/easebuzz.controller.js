@@ -239,42 +239,54 @@ let EasebuzzController = class EasebuzzController {
             console.log(config);
             const { data: resData } = await axios_1.default.request(config);
             const record = resData.data.find((item) => item.bank_transaction_id === utr);
-            console.log(record, utr, 'test');
             const orderIds = record.peb_transactions.map((tx) => {
-                console.log(tx.txnid, 'txid');
                 if (tx?.txnid?.startsWith("upi_")) {
                     return tx.txnid.replace("upi_", "");
                 }
                 return tx?.txnid;
             });
-            console.log(orderIds, 'orderIds');
-            const customOrders = await this.databaseService.CollectRequestModel.find({
-                _id: { $in: orderIds },
+            const objectIds = [];
+            const customIds = [];
+            orderIds.forEach((id) => {
+                if (mongoose_1.Types.ObjectId.isValid(id)) {
+                    objectIds.push(new mongoose_1.Types.ObjectId(id));
+                }
+                else {
+                    customIds.push(id);
+                }
             });
-            const customOrderMap = new Map(customOrders.map((doc) => [
-                doc._id.toString(),
-                {
-                    custom_order_id: doc.custom_order_id,
-                    school_id: doc.school_id,
-                    additional_data: doc.additional_data,
-                },
-            ]));
+            const customOrders = await this.databaseService.CollectRequestModel.find({
+                $or: [
+                    { _id: { $in: objectIds } },
+                    { custom_order_id: { $in: customIds } }
+                ]
+            });
             const enrichedOrders = await Promise.all(record.peb_transactions.map(async (order) => {
-                let customData = {};
                 let additionalData = {};
                 let collect_id = order.txnid;
+                let query = { custom_order_id: order.txnid };
                 if (collect_id.startsWith("upi_")) {
                     collect_id = collect_id.replace("upi_", "");
                 }
-                if (collect_id) {
-                    customData = customOrderMap.get(collect_id) || {};
-                    additionalData = JSON.parse(customData?.additional_data);
+                if (mongoose_1.Types.ObjectId.isValid(collect_id)) {
+                    query = {
+                        $or: [
+                            { _id: new mongoose_1.Types.ObjectId(collect_id) },
+                            { custom_order_id: collect_id }
+                        ]
+                    };
                 }
-                const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
-                const collectStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: new mongoose_1.Types.ObjectId(collect_id) });
+                const collectReq = await this.databaseService.CollectRequestModel.findOne(query);
+                if (!collectReq) {
+                    throw new common_1.BadRequestException('transaction not found in edviron DB');
+                }
+                if (collect_id) {
+                    additionalData = JSON.parse(collectReq?.additional_data);
+                }
+                const collectStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: collectReq._id });
                 return {
                     ...order,
-                    custom_order_id: customData.custom_order_id || null,
+                    custom_order_id: collectReq.custom_order_id || null,
                     order_id: collectReq?._id || null,
                     event_status: order?.status || null,
                     event_settlement_amount: order.peb_settlement_amount || null,
@@ -283,14 +295,13 @@ let EasebuzzController = class EasebuzzController {
                     event_time: collectStatus?.payment_time || collectStatus?.updatedAt || null,
                     payment_group: collectStatus?.payment_method || order?.transaction_type || null,
                     settlement_utr: utr || null,
-                    school_id: customData.school_id || null,
+                    school_id: collectReq.school_id || null,
                     student_id: additionalData?.student_details?.student_id || null,
                     student_name: additionalData.student_details?.student_name || null,
                     student_email: additionalData.student_details?.student_email || null,
                     student_phone_no: additionalData.student_details?.student_phone_no || null,
                 };
             }));
-            console.log(enrichedOrders, 'enchrichedOrders');
             return {
                 transactions: enrichedOrders,
                 split_payouts: resData?.data[0]?.split_payouts,
@@ -299,6 +310,7 @@ let EasebuzzController = class EasebuzzController {
         }
         catch (error) {
             console.log(error.response?.data);
+            console.log(error);
             throw new common_1.BadRequestException(error.message || 'Something Went Wrong');
         }
     }
