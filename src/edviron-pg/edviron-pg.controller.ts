@@ -3888,53 +3888,9 @@ export class EdvironPgController {
       }
       const checkAmount = collectRequest.amount;
       const school_id = collectRequest.school_id;
-      if (collectRequest.currency && collectRequest.currency === 'USD') {
-        const schoolMdr = await this.databaseService.PlatformChargeModel.findOne({
-          school_id,
-          currency: 'USD'
-        }).lean();
-
-        if (!schoolMdr) {
-          throw new BadRequestException('School MDR details not found');
-        }
-
-        let selectedCharge = schoolMdr.platform_charges.find(
-          (charge) =>
-            charge.payment_mode.toLocaleLowerCase() ===
-            payment_mode.toLocaleLowerCase() &&
-            charge.platform_type.toLocaleLowerCase() ===
-            platform_type.toLocaleLowerCase(),
-        );
-
-        if (!selectedCharge) {
-          selectedCharge = schoolMdr.platform_charges.find(
-            (charge) =>
-              charge.payment_mode.toLowerCase() === 'others' &&
-              charge.platform_type.toLowerCase() === platform_type.toLowerCase(),
-          );
-        }
-
-        if (!selectedCharge) {
-          throw new BadRequestException(
-            'No MDR found for the given payment mode and platform type',
-          );
-        }
-
-        const applicableCharges = await this.getApplicableCharge(
-          checkAmount,
-          selectedCharge.range_charge,
-        );
-        return {
-          range_charge: applicableCharges,
-        };
-      }
       // Fetch MDR details for the given school_id
       const schoolMdr = await this.databaseService.PlatformChargeModel.findOne({
-        school_id,
-        $or: [
-          { currency: { $exists: false } },   // field not present
-          { currency: 'INR' }                 // or explicitly INR
-        ]
+        school_id
       }).lean();
 
       if (!schoolMdr) {
