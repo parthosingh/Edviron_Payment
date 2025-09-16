@@ -44,6 +44,10 @@ export class SchoolMdr {
 
   @Prop()
   comment: string;
+
+  @Prop({ required: false })
+  currency: string;
+
 }
 export type SchoolMdrDocument = SchoolMdr & Document;
 export const SchoolMdrSchema = SchemaFactory.createForClass(SchoolMdr);

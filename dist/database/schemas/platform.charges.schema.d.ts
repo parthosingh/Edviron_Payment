@@ -18,6 +18,7 @@ export declare class SchoolMdr {
     school_id: ObjectId;
     trustee_id: ObjectId;
     comment: string;
+    currency: string;
 }
 export type SchoolMdrDocument = SchoolMdr & Document;
 export declare const SchoolMdrSchema: mongoose.Schema<SchoolMdr, mongoose.Model<SchoolMdr, any, any, any, mongoose.Document<unknown, any, SchoolMdr> & SchoolMdr & {

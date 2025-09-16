@@ -334,7 +334,7 @@ export declare class EdvironPgController {
     }): Promise<{
         message: string;
     }>;
-    getPaymentMdr(collect_id: string, payment_mode: string, platform_type: string): Promise<{
+    getPaymentMdr(collect_id: string, payment_mode: string, platform_type: string, currency: string): Promise<{
         range_charge: {
             charge: number;
             charge_type: string;

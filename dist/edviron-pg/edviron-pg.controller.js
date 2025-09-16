@@ -2703,7 +2703,7 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.InternalServerErrorException(e.message);
         }
     }
-    async getPaymentMdr(collect_id, payment_mode, platform_type) {
+    async getPaymentMdr(collect_id, payment_mode, platform_type, currency) {
         try {
             const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
             if (!collectRequest) {
@@ -2711,8 +2711,36 @@ let EdvironPgController = class EdvironPgController {
             }
             const checkAmount = collectRequest.amount;
             const school_id = collectRequest.school_id;
+            if (collectRequest.currency && collectRequest.currency === 'USD') {
+                const schoolMdr = await this.databaseService.PlatformChargeModel.findOne({
+                    school_id,
+                    currency: 'USD'
+                }).lean();
+                if (!schoolMdr) {
+                    throw new common_1.BadRequestException('School MDR details not found');
+                }
+                let selectedCharge = schoolMdr.platform_charges.find((charge) => charge.payment_mode.toLocaleLowerCase() ===
+                    payment_mode.toLocaleLowerCase() &&
+                    charge.platform_type.toLocaleLowerCase() ===
+                        platform_type.toLocaleLowerCase());
+                if (!selectedCharge) {
+                    selectedCharge = schoolMdr.platform_charges.find((charge) => charge.payment_mode.toLowerCase() === 'others' &&
+                        charge.platform_type.toLowerCase() === platform_type.toLowerCase());
+                }
+                if (!selectedCharge) {
+                    throw new common_1.BadRequestException('No MDR found for the given payment mode and platform type');
+                }
+                const applicableCharges = await this.getApplicableCharge(checkAmount, selectedCharge.range_charge);
+                return {
+                    range_charge: applicableCharges,
+                };
+            }
             const schoolMdr = await this.databaseService.PlatformChargeModel.findOne({
                 school_id,
+                $or: [
+                    { currency: { $exists: false } },
+                    { currency: 'INR' }
+                ]
             }).lean();
             if (!schoolMdr) {
                 throw new common_1.BadRequestException('School MDR details not found');
@@ -4302,8 +4330,9 @@ __decorate([
     __param(0, (0, common_1.Query)('collect_id')),
     __param(1, (0, common_1.Query)('payment_mode')),
     __param(2, (0, common_1.Query)('platform_type')),
+    __param(3, (0, common_1.Query)('currency')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getPaymentMdr", null);
 __decorate([

@@ -119,8 +119,8 @@ export class EdvironPgController {
   async handleSdkRedirect(@Req() req: any, @Res() res: any) {
     const collect_id = req.query.collect_id;
     let isBlank = req.query.isBlank || false;
-    if(isBlank !=='true' || true){
-      isBlank='false'
+    if (isBlank !== 'true' || true) {
+      isBlank = 'false'
     }
     if (!Types.ObjectId.isValid(collect_id)) {
       return res.redirect(
@@ -135,13 +135,13 @@ export class EdvironPgController {
       );
     }
 
-    const masterGateway=collectRequest?.isMasterGateway || false;
-    if(masterGateway){
+    const masterGateway = collectRequest?.isMasterGateway || false;
+    if (masterGateway) {
       // change later to prod url
-      const url=`${process.env.PG_FRONTEND}/select-gateway?collect_id=${collectRequest._id}`
+      const url = `${process.env.PG_FRONTEND}/select-gateway?collect_id=${collectRequest._id}`
       return res.redirect(url)
     }
-    
+
     if (collectRequest?.easebuzz_non_partner) {
       res.redirect(
         `${process.env.EASEBUZZ_ENDPOINT_PROD}/pay/${collectRequest.paymentIds.easebuzz_id}`,
@@ -3878,6 +3878,7 @@ export class EdvironPgController {
     @Query('collect_id') collect_id: string,
     @Query('payment_mode') payment_mode: string,
     @Query('platform_type') platform_type: string,
+    @Query('currency') currency: string
   ) {
     try {
       const collectRequest =
@@ -3887,10 +3888,55 @@ export class EdvironPgController {
       }
       const checkAmount = collectRequest.amount;
       const school_id = collectRequest.school_id;
+      if (collectRequest.currency && collectRequest.currency === 'USD') {
+        const schoolMdr = await this.databaseService.PlatformChargeModel.findOne({
+          school_id,
+          currency: 'USD'
+        }).lean();
+
+        if (!schoolMdr) {
+          throw new BadRequestException('School MDR details not found');
+        }
+
+        let selectedCharge = schoolMdr.platform_charges.find(
+          (charge) =>
+            charge.payment_mode.toLocaleLowerCase() ===
+            payment_mode.toLocaleLowerCase() &&
+            charge.platform_type.toLocaleLowerCase() ===
+            platform_type.toLocaleLowerCase(),
+        );
+
+        if (!selectedCharge) {
+          selectedCharge = schoolMdr.platform_charges.find(
+            (charge) =>
+              charge.payment_mode.toLowerCase() === 'others' &&
+              charge.platform_type.toLowerCase() === platform_type.toLowerCase(),
+          );
+        }
+
+        if (!selectedCharge) {
+          throw new BadRequestException(
+            'No MDR found for the given payment mode and platform type',
+          );
+        }
+
+        const applicableCharges = await this.getApplicableCharge(
+          checkAmount,
+          selectedCharge.range_charge,
+        );
+        return {
+          range_charge: applicableCharges,
+        };
+      }
       // Fetch MDR details for the given school_id
       const schoolMdr = await this.databaseService.PlatformChargeModel.findOne({
         school_id,
+        $or: [
+          { currency: { $exists: false } },   // field not present
+          { currency: 'INR' }                 // or explicitly INR
+        ]
       }).lean();
+
       if (!schoolMdr) {
         throw new BadRequestException('School MDR details not found');
       }
@@ -5365,94 +5411,94 @@ export class EdvironPgController {
   }
 
   @Post('webhook-trigger')
-  async webhookTrigger(@Body() body: { 
-    collect_id: string, 
-    school_ids:string[],
-    start_date:string,
-    end_date:string
+  async webhookTrigger(@Body() body: {
+    collect_id: string,
+    school_ids: string[],
+    start_date: string,
+    end_date: string
   }) {
-    try{
-      const { school_ids,start_date,end_date,collect_id } = body;
+    try {
+      const { school_ids, start_date, end_date, collect_id } = body;
       // const StartDate=await this.edvironPgService.convertISTStartToUTC(start_date);
       // const EndDate=await this.edvironPgService.convertISTEndToUTC(end_date);
       // console.log({StartDate,EndDate});
       // if(!school_ids || school_ids.length === 0){
       //   throw new BadRequestException('school_ids is required');
       // }
-      const collectRequest=await this.databaseService.CollectRequestModel.find({
+      const collectRequest = await this.databaseService.CollectRequestModel.find({
         // school_id: { $in: school_ids },
         // createdAt:{
         //   $gte: StartDate,
         //   $lte: EndDate
         // }
-        _id:new Types.ObjectId(collect_id)
+        _id: new Types.ObjectId(collect_id)
       }).select('_id');
       console.log(collectRequest.length);
-      
+
       const aggregateData = await this.databaseService.CollectRequestStatusModel.aggregate([
         {
-          $match:{
-           collect_id: { $in: collectRequest.map((item) => item._id) },
-           status:{$in:['success','SUCCESS']}
+          $match: {
+            collect_id: { $in: collectRequest.map((item) => item._id) },
+            status: { $in: ['success', 'SUCCESS'] }
           },
         },
         {
-          $lookup:{
-            from:'collectrequests',
-            localField:'collect_id',
-            foreignField:'_id',
-            as:'collect_request',
+          $lookup: {
+            from: 'collectrequests',
+            localField: 'collect_id',
+            foreignField: '_id',
+            as: 'collect_request',
           }
         },
         {
-          $unwind:'$collect_request'
+          $unwind: '$collect_request'
         },
         {
-          $project:{
-            collect_id:1,
-            amount:1,
-            status:1,
-            school_id:'$collect_request.school_id',
-            trustee_id:'$collect_request.trustee_id', 
-            req_webhook_urls:'$collect_request.req_webhook_urls',
-            custom_order_id:'$collect_request.custom_order_id',
-            createdAt:1,
-            transaction_time:'$payment_time',
-            additional_data:'$collect_request.additional_data',
-            details:1,
-            transaction_amount:1,
-            bank_reference:1,
-            payment_method:1,
+          $project: {
+            collect_id: 1,
+            amount: 1,
+            status: 1,
+            school_id: '$collect_request.school_id',
+            trustee_id: '$collect_request.trustee_id',
+            req_webhook_urls: '$collect_request.req_webhook_urls',
+            custom_order_id: '$collect_request.custom_order_id',
+            createdAt: 1,
+            transaction_time: '$payment_time',
+            additional_data: '$collect_request.additional_data',
+            details: 1,
+            transaction_amount: 1,
+            bank_reference: 1,
+            payment_method: 1,
           }
         }
       ])
-      let successCount=0;
-      let failCount=0;
-      let noUrlCount=0;
-      await Promise.all(aggregateData.map(async(item:any)=>{
-        if(item?.req_webhook_urls && item?.req_webhook_urls?.length>0){
-          for(const url of item.req_webhook_urls){
-            try{
-               const uptDate = moment(item.transaction_time);
-                    const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
-              
-              const payload={
-                collect_id:item.collect_id,
-                amount:item.amount,
-                status:item.status,
-                trustee_id:item.trustee_id,
-                school_id:item.school_id,
-                req_webhook_urls:item.req_webhook_urls,
-                custom_order_id:item.custom_order_id,
-                createdAt:item.createdAt,
-                transaction_time:item.transaction_time,
-                additional_data:item.additional_data,
-                formattedTransactionDate:istDate,
-                transaction_amount:item.transaction_amount,
-                bank_reference:item.bank_reference,
-                payment_method:item.payment_method,
-                payment_details:item.details,
-                details: item.details ? JSON.parse(item.details):{},
+      let successCount = 0;
+      let failCount = 0;
+      let noUrlCount = 0;
+      await Promise.all(aggregateData.map(async (item: any) => {
+        if (item?.req_webhook_urls && item?.req_webhook_urls?.length > 0) {
+          for (const url of item.req_webhook_urls) {
+            try {
+              const uptDate = moment(item.transaction_time);
+              const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
+
+              const payload = {
+                collect_id: item.collect_id,
+                amount: item.amount,
+                status: item.status,
+                trustee_id: item.trustee_id,
+                school_id: item.school_id,
+                req_webhook_urls: item.req_webhook_urls,
+                custom_order_id: item.custom_order_id,
+                createdAt: item.createdAt,
+                transaction_time: item.transaction_time,
+                additional_data: item.additional_data,
+                formattedTransactionDate: istDate,
+                transaction_amount: item.transaction_amount,
+                bank_reference: item.bank_reference,
+                payment_method: item.payment_method,
+                payment_details: item.details,
+                details: item.details ? JSON.parse(item.details) : {},
               }
 
               const config = {
@@ -5464,29 +5510,29 @@ export class EdvironPgController {
                 },
                 data: payload
               }
-              try{
+              try {
                 const response = await axios.request(config);
                 successCount++;
-                console.log(response.data,'response from webhook for collect_id:',item.collect_id,'url:',url);
-                
-              }catch(e){
+                console.log(response.data, 'response from webhook for collect_id:', item.collect_id, 'url:', url);
+
+              } catch (e) {
                 failCount++;
-                console.log('Error in webhook for collect_id:',item.collect_id,'url:',url,e.message);
+                console.log('Error in webhook for collect_id:', item.collect_id, 'url:', url, e.message);
               }
-            }catch(e){
-              console.log('Error in webhook for collect_id:',item.collect_id,'url:',url,e.message);
+            } catch (e) {
+              console.log('Error in webhook for collect_id:', item.collect_id, 'url:', url, e.message);
             }
           }
-        }else{
-          console.log('No webhook url found for collect_id:',item.collect_id);
+        } else {
+          console.log('No webhook url found for collect_id:', item.collect_id);
           noUrlCount++;
         }
       }));
 
-      return {length:aggregateData.length, successCount, failCount, noUrlCount};
-    }catch(e){
+      return { length: aggregateData.length, successCount, failCount, noUrlCount };
+    } catch (e) {
       console.log(e);
-      
+
       throw new BadRequestException(e.message);
     }
   }
