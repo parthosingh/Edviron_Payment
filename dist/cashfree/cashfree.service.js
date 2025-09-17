@@ -1333,6 +1333,7 @@ let CashfreeService = class CashfreeService {
                     }).save();
                 });
             }
+            console.log(request.cashfree_credentials, 'cf cred');
             let config = {
                 method: 'post',
                 maxBodyLength: Infinity,
@@ -1341,11 +1342,12 @@ let CashfreeService = class CashfreeService {
                     accept: 'application/json',
                     'content-type': 'application/json',
                     'x-api-version': '2023-08-01',
-                    'x-partner-merchantid': request.clientId || null,
+                    'x-partner-merchantid': request.cashfree_credentials.cf_x_client_id || null,
                     'x-partner-apikey': request.cashfree_credentials.cf_api_key,
                 },
                 data: data,
             };
+            console.log(config, 'config');
             const { data: cashfreeRes } = await axios_1.default.request(config);
             const cf_payment_id = cashfreeRes.payment_session_id;
             return cf_payment_id;

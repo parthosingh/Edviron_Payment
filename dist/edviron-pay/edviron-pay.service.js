@@ -14,11 +14,13 @@ const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
 const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
+const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 let EdvironPayService = class EdvironPayService {
-    constructor(databaseService, cashfreeService, easebuzzService) {
+    constructor(databaseService, cashfreeService, easebuzzService, edvironPgService) {
         this.databaseService = databaseService;
         this.cashfreeService = cashfreeService;
         this.easebuzzService = easebuzzService;
+        this.edvironPgService = edvironPgService;
     }
     async createOrder(request, school_name, gatewat, platform_charges) {
         try {
@@ -37,6 +39,7 @@ let EdvironPayService = class EdvironPayService {
             }
             if (gatewat.cashfree) {
                 const cashfreeSessionId = await this.cashfreeService.createOrderCashfree(request, request.isSplitPayments, request.cashfreeVedors);
+                console.log(cashfreeSessionId);
                 paymentInfo.cashfree_id = cashfreeSessionId;
                 await collectReq.save();
             }
@@ -72,6 +75,7 @@ let EdvironPayService = class EdvironPayService {
             };
         }
         catch (err) {
+            console.log(err);
             throw new common_1.BadRequestException(err.message);
         }
     }
@@ -81,6 +85,7 @@ exports.EdvironPayService = EdvironPayService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
         cashfree_service_1.CashfreeService,
-        easebuzz_service_1.EasebuzzService])
+        easebuzz_service_1.EasebuzzService,
+        edviron_pg_service_1.EdvironPgService])
 ], EdvironPayService);
 //# sourceMappingURL=edviron-pay.service.js.map

@@ -17,9 +17,12 @@ const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
+const edviron_pay_service_1 = require("./edviron-pay.service");
+const platform_charges_schema_1 = require("../database/schemas/platform.charges.schema");
 let EdvironPayController = class EdvironPayController {
-    constructor(databaseService) {
+    constructor(databaseService, edvironPay) {
         this.databaseService = databaseService;
+        this.edvironPay = edvironPay;
     }
     async upsertInstallments(body) {
         const { school_id, trustee_id, student_id, student_number, student_name, student_email, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, } = body;
@@ -83,7 +86,7 @@ let EdvironPayController = class EdvironPayController {
         return { status: 'installment updated successfully for student_id: ' + student_id };
     }
     async collect(body) {
-        const { isInatallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, easebuzz, } = body;
+        const { isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, easebuzz, } = body;
         try {
             if (!token) {
                 throw new Error('Token is required');
@@ -97,19 +100,26 @@ let EdvironPayController = class EdvironPayController {
                     throw new common_1.ConflictException('OrderId must be unique');
                 }
             }
-            if (isInatallment) {
+            if (isInstallment) {
                 if (!InstallmentsIds || InstallmentsIds.length === 0) {
+                    console.log(InstallmentsIds);
                     throw new Error('InstallmentsIds are required for installment payments');
                 }
                 const installments = await this.databaseService.InstallmentsModel.find({
                     _id: { $in: InstallmentsIds },
                     school_id,
                     trustee_id,
-                    status: 'unpaid'
+                    status: { $ne: 'paid' }
                 });
                 if (installments.length !== InstallmentsIds.length) {
                     throw new Error('Some installments are invalid or already paid');
                 }
+                console.log(cashfree, 'api cashfree');
+                const cashfreeCred = {
+                    cf_x_client_id: cashfree.client_id,
+                    cf_x_client_secret: cashfree.client_secret,
+                    cf_api_key: cashfree.api_key
+                };
                 const request = await this.databaseService.CollectRequestModel.create({
                     amount,
                     callbackUrl: callback_url,
@@ -130,6 +140,7 @@ let EdvironPayController = class EdvironPayController {
                     vba_account_number: isVBAPayment ? cashfree?.vba?.vba_account_number : null,
                     school_name,
                     isSplitPayments: isSplit || false,
+                    cashfree_credentials: cashfreeCred,
                     isCFNonSeamless: !cashfree?.isSeamless || false,
                 });
                 const requestStatus = await new this.databaseService.CollectRequestStatusModel({
@@ -140,10 +151,31 @@ let EdvironPayController = class EdvironPayController {
                     payment_method: null,
                 }).save();
                 await this.databaseService.InstallmentsModel.updateMany({ _id: { $in: InstallmentsIds } }, { $set: { collect_id: request._id, status: 'pending' } });
+                return await this.edvironPay.createOrder(request, school_name, gateway, platform_charges_schema_1.PlatformCharge);
             }
         }
         catch (e) {
+            console.log(e);
             throw new Error('Error occurred while processing payment: ' + e.message);
+        }
+    }
+    async getStudentInstallments(student_id) {
+        try {
+            const installments = await this.databaseService.InstallmentsModel.find({ student_id }).sort({ month: -1 });
+            return installments;
+        }
+        catch (e) {
+        }
+    }
+    async getInstallCallbackCashfree(collect_id) {
+        try {
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request) {
+                throw new common_1.BadRequestException('Invalid Collect id in Callback');
+            }
+            request.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
+        }
+        catch (e) {
         }
     }
 };
@@ -162,8 +194,23 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPayController.prototype, "collect", null);
+__decorate([
+    (0, common_1.Get)('/student-installments'),
+    __param(0, (0, common_1.Query)('student_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPayController.prototype, "getStudentInstallments", null);
+__decorate([
+    (0, common_1.Post)('/callback/cashfree'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPayController.prototype, "getInstallCallbackCashfree", null);
 exports.EdvironPayController = EdvironPayController = __decorate([
     (0, common_1.Controller)('edviron-pay'),
-    __metadata("design:paramtypes", [database_service_1.DatabaseService])
+    __metadata("design:paramtypes", [database_service_1.DatabaseService,
+        edviron_pay_service_1.EdvironPayService])
 ], EdvironPayController);
 //# sourceMappingURL=edviron-pay.controller.js.map

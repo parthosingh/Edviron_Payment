@@ -1,13 +1,16 @@
-import { Body, ConflictException, Controller, Post } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, Get, Post, Query } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { Installments } from 'src/database/schemas/installments.schema';
+import { EdvironPayService } from './edviron-pay.service';
+import { PlatformCharge } from 'src/database/schemas/platform.charges.schema';
 
 @Controller('edviron-pay')
 export class EdvironPayController {
     constructor(
         private readonly databaseService: DatabaseService,
+        private readonly edvironPay: EdvironPayService
     ) { }
 
     @Post('installments')
@@ -96,14 +99,12 @@ export class EdvironPayController {
             throw new Error('No installments found or isInstallement is false');
         }
         console.log('Installments upserted successfully');
-        
-
         return { status: 'installment updated successfully for student_id: ' + student_id };
     }
 
     @Post('collect-request')
-    async collect(@Body() body: {
-        isInatallment: boolean;
+    async collect(@Body() body: {   
+        isInstallment: boolean;
         InstallmentsIds: string[];
         school_id: string;
         trustee_id: string;
@@ -118,7 +119,7 @@ export class EdvironPayController {
         amount: number;
         disable_mode: string[];
         custom_order_id?: string;
-        school_name?: string;
+        school_name: string;
         isSplit?: boolean;
         isVBAPayment?: boolean;
         additional_data?: {};
@@ -166,7 +167,7 @@ export class EdvironPayController {
 
     }) {
         const {
-            isInatallment, InstallmentsIds,
+            isInstallment, InstallmentsIds,
             school_id,
             trustee_id,
             callback_url,
@@ -201,20 +202,32 @@ export class EdvironPayController {
                 }
             }
 
-            if (isInatallment) {
+            if (isInstallment) {
                 if (!InstallmentsIds || InstallmentsIds.length === 0) {
+                    console.log(InstallmentsIds);
+                    
                     throw new Error('InstallmentsIds are required for installment payments');
                 }
+                
                 // Fetch and validate installments
                 const installments: Installments[] = await this.databaseService.InstallmentsModel.find({
                     _id: { $in: InstallmentsIds },
                     school_id,
                     trustee_id,
-                    status: 'unpaid'
+                    status: {$ne: 'paid'}
                 });
 
                 if (installments.length !== InstallmentsIds.length) {
                     throw new Error('Some installments are invalid or already paid');
+                }
+
+                console.log(cashfree,'api cashfree');
+                
+                const cashfreeCred={
+                    cf_x_client_id:cashfree.client_id,
+                    cf_x_client_secret:cashfree.client_secret,
+                    cf_api_key:cashfree.api_key
+
                 }
 
                 const request = await this.databaseService.CollectRequestModel.create({
@@ -237,6 +250,7 @@ export class EdvironPayController {
                     vba_account_number: isVBAPayment ? cashfree?.vba?.vba_account_number : null,
                     school_name,
                     isSplitPayments: isSplit || false,
+                    cashfree_credentials:cashfreeCred,
                     isCFNonSeamless: !cashfree?.isSeamless || false,
                     
                 })
@@ -254,10 +268,41 @@ export class EdvironPayController {
                     { _id: { $in: InstallmentsIds } },
                     { $set: { collect_id: request._id, status: 'pending' } }
                 );
+
+                return await this.edvironPay.createOrder(request,school_name,gateway,PlatformCharge)
             }
         } catch (e) {
+            console.log(e);
             throw new Error('Error occurred while processing payment: ' + e.message);
         }
 
+    }
+
+    @Get('/student-installments')
+    async getStudentInstallments(
+        @Query('student_id') student_id:string
+    ){
+        try{
+            const installments=await this.databaseService.InstallmentsModel.find({student_id}).sort({month:-1})
+            return installments
+        }catch(e){
+
+        }
+    }
+
+    @Post('/callback/cashfree')
+    async getInstallCallbackCashfree(
+        @Query('collect_id') collect_id:string
+    ){
+        try{
+            const request=await this.databaseService.CollectRequestModel.findById(collect_id)
+            if(!request){
+                throw new BadRequestException('Invalid Collect id in Callback')
+            }
+            request.gateway=Gateway.EDVIRON_PG
+           
+        }catch(e){
+
+        }
     }
 }
