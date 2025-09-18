@@ -5,6 +5,7 @@ import { Gateway } from 'src/database/schemas/collect_request.schema';
 import { Installments } from 'src/database/schemas/installments.schema';
 import { EdvironPayService } from './edviron-pay.service';
 import { PlatformCharge } from 'src/database/schemas/platform.charges.schema';
+import axios from 'axios';
 
 @Controller('edviron-pay')
 export class EdvironPayController {
@@ -32,7 +33,7 @@ export class EdvironPayController {
             isInstallement,
             installments,
         } = body;
-   
+
 
         if (isInstallement && installments && installments.length > 0) {
             await Promise.all(
@@ -103,7 +104,7 @@ export class EdvironPayController {
     }
 
     @Post('collect-request')
-    async collect(@Body() body: {   
+    async collect(@Body() body: {
         isInstallment: boolean;
         InstallmentsIds: string[];
         school_id: string;
@@ -205,28 +206,28 @@ export class EdvironPayController {
             if (isInstallment) {
                 if (!InstallmentsIds || InstallmentsIds.length === 0) {
                     console.log(InstallmentsIds);
-                    
+
                     throw new Error('InstallmentsIds are required for installment payments');
                 }
-                
+
                 // Fetch and validate installments
                 const installments: Installments[] = await this.databaseService.InstallmentsModel.find({
                     _id: { $in: InstallmentsIds },
                     school_id,
                     trustee_id,
-                    status: {$ne: 'paid'}
+                    status: { $ne: 'paid' }
                 });
 
                 if (installments.length !== InstallmentsIds.length) {
                     throw new Error('Some installments are invalid or already paid');
                 }
 
-                console.log(cashfree,'api cashfree');
-                
-                const cashfreeCred={
-                    cf_x_client_id:cashfree.client_id,
-                    cf_x_client_secret:cashfree.client_secret,
-                    cf_api_key:cashfree.api_key
+                console.log(cashfree, 'api cashfree');
+
+                const cashfreeCred = {
+                    cf_x_client_id: cashfree.client_id,
+                    cf_x_client_secret: cashfree.client_secret,
+                    cf_api_key: cashfree.api_key
 
                 }
 
@@ -243,16 +244,16 @@ export class EdvironPayController {
                     additional_data: JSON.stringify(additional_data || {}),
                     custom_order_id,
                     req_webhook_urls: [webhook_url],
-                    easebuzz_sub_merchant_id: easebuzz?.mid||null,
+                    easebuzz_sub_merchant_id: easebuzz?.mid || null,
                     easebuzzVendors: easebuzz?.easebuzzVendors || [],
                     cashfreeVedors: cashfree?.cashfreeVedors || [],
                     isVBAPayment: isVBAPayment || false,
                     vba_account_number: isVBAPayment ? cashfree?.vba?.vba_account_number : null,
                     school_name,
                     isSplitPayments: isSplit || false,
-                    cashfree_credentials:cashfreeCred,
+                    cashfree_credentials: cashfreeCred,
                     isCFNonSeamless: !cashfree?.isSeamless || false,
-                    
+
                 })
 
                 const requestStatus = await new this.databaseService.CollectRequestStatusModel({
@@ -269,7 +270,7 @@ export class EdvironPayController {
                     { $set: { collect_id: request._id, status: 'pending' } }
                 );
 
-                return await this.edvironPay.createOrder(request,school_name,gateway,PlatformCharge)
+                return await this.edvironPay.createOrder(request, school_name, gateway, PlatformCharge)
             }
         } catch (e) {
             console.log(e);
@@ -280,29 +281,53 @@ export class EdvironPayController {
 
     @Get('/student-installments')
     async getStudentInstallments(
-        @Query('student_id') student_id:string
-    ){
-        try{
-            const installments=await this.databaseService.InstallmentsModel.find({student_id}).sort({month:-1})
+        @Query('student_id') student_id: string
+    ) {
+        try {
+            const installments = await this.databaseService.InstallmentsModel.find({ student_id });
+
+            installments.sort((a, b) => Number(a.month) - Number(b.month));
+
             return installments
-        }catch(e){
+        } catch (e) {
 
         }
     }
 
     @Post('/callback/cashfree')
     async getInstallCallbackCashfree(
-        @Query('collect_id') collect_id:string
-    ){
-        try{
-            const request=await this.databaseService.CollectRequestModel.findById(collect_id)
-            if(!request){
+        @Query('collect_id') collect_id: string
+    ) {
+        try {
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id)
+            if (!request) {
                 throw new BadRequestException('Invalid Collect id in Callback')
             }
-            request.gateway=Gateway.EDVIRON_PG
-           
-        }catch(e){
+            request.gateway = Gateway.EDVIRON_PG
 
+        } catch (e) {
+
+        }
+    }
+
+    @Get('/get-vendors')
+    async getVendorsForSchool(@Query('school_id') school_id: string) {
+        try {
+            const config = {
+                method: 'get',
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-vendors-list?school_id=${school_id}`,
+                headers: {
+                    accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+            }
+
+            const { data: vendors } = await axios.request(config)
+            return vendors
+        } catch (e) {
+            console.log(e);
+            
+            throw new BadRequestException(e.message)
         }
     }
 }

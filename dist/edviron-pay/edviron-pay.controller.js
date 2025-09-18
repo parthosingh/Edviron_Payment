@@ -19,6 +19,7 @@ const collect_req_status_schema_1 = require("../database/schemas/collect_req_sta
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const edviron_pay_service_1 = require("./edviron-pay.service");
 const platform_charges_schema_1 = require("../database/schemas/platform.charges.schema");
+const axios_1 = require("axios");
 let EdvironPayController = class EdvironPayController {
     constructor(databaseService, edvironPay) {
         this.databaseService = databaseService;
@@ -161,7 +162,8 @@ let EdvironPayController = class EdvironPayController {
     }
     async getStudentInstallments(student_id) {
         try {
-            const installments = await this.databaseService.InstallmentsModel.find({ student_id }).sort({ month: -1 });
+            const installments = await this.databaseService.InstallmentsModel.find({ student_id });
+            installments.sort((a, b) => Number(a.month) - Number(b.month));
             return installments;
         }
         catch (e) {
@@ -176,6 +178,24 @@ let EdvironPayController = class EdvironPayController {
             request.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
         }
         catch (e) {
+        }
+    }
+    async getVendorsForSchool(school_id) {
+        try {
+            const config = {
+                method: 'get',
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-vendors-list?school_id=${school_id}`,
+                headers: {
+                    accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+            };
+            const { data: vendors } = await axios_1.default.request(config);
+            return vendors;
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
         }
     }
 };
@@ -208,6 +228,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EdvironPayController.prototype, "getInstallCallbackCashfree", null);
+__decorate([
+    (0, common_1.Get)('/get-vendors'),
+    __param(0, (0, common_1.Query)('school_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPayController.prototype, "getVendorsForSchool", null);
 exports.EdvironPayController = EdvironPayController = __decorate([
     (0, common_1.Controller)('edviron-pay'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

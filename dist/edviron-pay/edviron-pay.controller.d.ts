@@ -101,4 +101,5 @@ export declare class EdvironPayController {
         _id: import("mongoose").Types.ObjectId;
     })[] | undefined>;
     getInstallCallbackCashfree(collect_id: string): Promise<void>;
+    getVendorsForSchool(school_id: string): Promise<any>;
 }
