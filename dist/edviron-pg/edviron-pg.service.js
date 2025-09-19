@@ -35,19 +35,19 @@ let EdvironPgService = class EdvironPgService {
     }
     async collect(request, platform_charges, school_name, splitPayments, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, easebuzz_school_label, isSelectGateway) {
         try {
-            const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
-            if (!collectReq) {
-                throw new common_1.BadRequestException('Collect request not found');
-            }
             let paymentInfo = {
                 cashfree_id: null,
-                easebuzz_id: collectReq.paymentIds?.easebuzz_id || null,
+                easebuzz_id: null,
                 easebuzz_cc_id: null,
                 easebuzz_dc_id: null,
                 ccavenue_id: null,
                 easebuzz_upi_id: null,
                 razorpay_order_id: null,
             };
+            const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
+            if (!collectReq) {
+                throw new common_1.BadRequestException('Collect request not found');
+            }
             const schoolName = school_name.replace(/ /g, '-');
             const axios = require('axios');
             const currentTime = new Date();
@@ -236,6 +236,7 @@ let EdvironPgService = class EdvironPgService {
                     }, 25 * 60 * 1000);
                 }
             }
+            console.log(request.razorpay_seamless.razorpay_mid, "mid");
             console.log(request.razorpay_seamless.razorpay_mid, "mid");
             let razorpay_id = '';
             let razorpay_pg = false;

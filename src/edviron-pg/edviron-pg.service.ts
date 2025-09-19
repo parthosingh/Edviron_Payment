@@ -72,21 +72,21 @@ export class EdvironPgService implements GatewayService {
     isSelectGateway?:boolean | null
   ): Promise<Transaction | undefined> {
     try {
-      
+      let paymentInfo: PaymentIds = {
+        cashfree_id: null,
+        easebuzz_id: null,
+        easebuzz_cc_id: null,
+        easebuzz_dc_id: null,
+        ccavenue_id: null,
+        easebuzz_upi_id: null,
+        razorpay_order_id: null,
+      };
       const collectReq =
         await this.databaseService.CollectRequestModel.findById(request._id);
       if (!collectReq) {
         throw new BadRequestException('Collect request not found');
       }
-      let paymentInfo: PaymentIds = {
-        cashfree_id: null,
-        easebuzz_id: collectReq.paymentIds?.easebuzz_id || null,
-        easebuzz_cc_id: null,
-        easebuzz_dc_id: null,
-        ccavenue_id: null,
-        easebuzz_upi_id:null,
-        razorpay_order_id: null,
-      };
+
       const schoolName = school_name.replace(/ /g, '-'); //replace spaces because url dosent support spaces
       const axios = require('axios');
       const currentTime = new Date();
@@ -319,6 +319,7 @@ export class EdvironPgService implements GatewayService {
           ); // 25 minutes in milliseconds
         }
       }
+console.log(request.razorpay_seamless.razorpay_mid, "mid")
 
       console.log(request.razorpay_seamless.razorpay_mid, "mid")
       let razorpay_id = '';

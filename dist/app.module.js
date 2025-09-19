@@ -30,11 +30,11 @@ const pos_paytm_controller_1 = require("./pos-paytm/pos-paytm.controller");
 const pos_paytm_service_1 = require("./pos-paytm/pos-paytm.service");
 const nttdata_module_1 = require("./nttdata/nttdata.module");
 const worldline_module_1 = require("./worldline/worldline.module");
-const worldline_controller_1 = require("./worldline/worldline.controller");
-const worldline_service_1 = require("./worldline/worldline.service");
 const razorpay_nonseamless_module_1 = require("./razorpay-nonseamless/razorpay-nonseamless.module");
 const razorpay_nonseamless_controller_1 = require("./razorpay-nonseamless/razorpay-nonseamless.controller");
 const razorpay_nonseamless_service_1 = require("./razorpay-nonseamless/razorpay-nonseamless.service");
+const worldline_service_1 = require("./worldline/worldline.service");
+const worldline_controller_1 = require("./worldline/worldline.controller");
 const gatepay_module_1 = require("./gatepay/gatepay.module");
 const reports_module_1 = require("./reports/reports.module");
 const aws_s3_service_module_1 = require("./aws-s3-service/aws-s3-service.module");
@@ -62,6 +62,7 @@ exports.AppModule = AppModule = __decorate([
             razorpay_nonseamless_module_1.RazorpayNonseamlessModule,
             worldline_module_1.WorldlineModule,
             razorpay_module_1.RazorpayModule,
+            database_module_1.DatabaseModule,
             gatepay_module_1.GatepayModule,
             reports_module_1.ReportsModule,
             aws_s3_service_module_1.AwsS3ServiceModule,

@@ -25,7 +25,7 @@ exports.SmartgatewayModule = SmartgatewayModule = __decorate([
             smartgateway_service_1.SmartgatewayService,
             edviron_pg_service_1.EdvironPgService,
             cashfree_service_1.CashfreeService,
-            razorpay_service_1.RazorpayService
+            razorpay_service_1.RazorpayService,
         ],
     })
 ], SmartgatewayModule);

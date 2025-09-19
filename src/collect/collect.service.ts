@@ -1,16 +1,16 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { DatabaseService } from 'src/database/database.service';
+import { DatabaseService } from '../database/database.service';
 import {
   CollectRequest,
   Gateway,
-} from 'src/database/schemas/collect_request.schema';
-import { HdfcService } from 'src/hdfc/hdfc.service';
-import { PhonepeService } from 'src/phonepe/phonepe.service';
-import { Transaction } from 'src/types/transaction';
+} from '../database/schemas/collect_request.schema';
+import { HdfcService } from '../hdfc/hdfc.service';
+import { PhonepeService } from '../phonepe/phonepe.service';
+import { Transaction } from '../types/transaction';
 import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
-import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
+import { PaymentStatus } from '../database/schemas/collect_req_status.schema';
 import { platformChange } from './collect.controller';
-import { CcavenueService } from 'src/ccavenue/ccavenue.service';
+import { CcavenueService } from '../ccavenue/ccavenue.service';
 import * as nodemailer from 'nodemailer';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 import { PayUService } from 'src/pay-u/pay-u.service';
@@ -235,6 +235,8 @@ export class CollectService {
       },
       isMasterGateway: isSelectGateway || false
     }).save();
+
+    console.log(request, "request")
 
     await new this.databaseService.CollectRequestStatusModel({
       collect_id: request._id,

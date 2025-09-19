@@ -111,6 +111,7 @@ let CollectService = class CollectService {
             },
             isMasterGateway: isSelectGateway || false
         }).save();
+        console.log(request, "request");
         await new this.databaseService.CollectRequestStatusModel({
             collect_id: request._id,
             status: collect_req_status_schema_1.PaymentStatus.PENDING,

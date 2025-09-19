@@ -8,10 +8,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorldlineModule = void 0;
 const common_1 = require("@nestjs/common");
+const database_module_1 = require("../database/database.module");
+const worldline_service_1 = require("./worldline.service");
+const worldline_controller_1 = require("./worldline.controller");
 let WorldlineModule = class WorldlineModule {
 };
 exports.WorldlineModule = WorldlineModule;
 exports.WorldlineModule = WorldlineModule = __decorate([
-    (0, common_1.Module)({})
+    (0, common_1.Module)({
+        imports: [database_module_1.DatabaseModule],
+        controllers: [worldline_controller_1.WorldlineController],
+        providers: [worldline_service_1.WorldlineService],
+    })
 ], WorldlineModule);
 //# sourceMappingURL=worldline.module.js.map

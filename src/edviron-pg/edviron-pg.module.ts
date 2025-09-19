@@ -2,13 +2,16 @@ import { Module, forwardRef } from '@nestjs/common';
 import { EdvironPgController } from './edviron-pg.controller';
 import { EdvironPgService } from './edviron-pg.service';
 import { DatabaseModule } from '../database/database.module';
-import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
-import { CashfreeModule } from 'src/cashfree/cashfree.module';
-import { NttdataService } from 'src/nttdata/nttdata.service';
-import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
-import { WorldlineService } from 'src/worldline/worldline.service';
-import { RazorpayService } from 'src/razorpay/razorpay.service';
+
+import { EasebuzzService } from '../easebuzz/easebuzz.service';
+import { CashfreeModule } from '../cashfree/cashfree.module';
+import { NttdataService } from '../nttdata/nttdata.service';
+import { PosPaytmService } from '../pos-paytm/pos-paytm.service';
+import { WorldlineService } from '../worldline/worldline.service';
+import { RazorpayService } from '../razorpay/razorpay.service';
+
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
+
 
 @Module({
   controllers: [EdvironPgController],
