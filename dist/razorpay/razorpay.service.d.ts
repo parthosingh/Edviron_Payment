@@ -10,10 +10,16 @@ export declare class RazorpayService {
     constructor(databaseService: DatabaseService);
     verifySignature(orderId: string, paymentId: string, signature: string): Promise<boolean>;
     createOrder(collectRequest: CollectRequest): Promise<any>;
+    getPaymentStatus(order_id: string, collectRequest: CollectRequest): Promise<any>;
     checkOrderStatus(collectId: string, collectRequest: CollectRequest): Promise<any>;
     checkOrderStatusByRazorpayId(razorpayId: string, collectRequest: CollectRequest): Promise<any>;
     checkPaymentStatus(paymentId: string, collectRequest: CollectRequest): Promise<any>;
     formatRazorpayPaymentStatusResponse(response: any, collectRequest: CollectRequest): Promise<any>;
     fetchCardDetailsOfaPaymentFromRazorpay(payment_id: string, collectRequest: CollectRequest): Promise<any>;
     getDispute(dispute_id: string, razorpay_mid: string, collectRequest: any): Promise<any>;
+    getQr(collectRequest: CollectRequest): Promise<{
+        qr_id: any;
+        status: any;
+        image_url: any;
+    }>;
 }

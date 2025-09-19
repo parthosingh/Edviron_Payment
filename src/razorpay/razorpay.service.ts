@@ -38,6 +38,13 @@ export class RazorpayService {
 
   async createOrder(collectRequest: CollectRequest) {
     try {
+      const {
+        _id,
+        amount: totalRupees,
+        razorpay,
+        razorpay_vendors_info,
+        additional_data,
+      } = collectRequest;
       const createOrderConfig = {
         method: 'post',
         maxBodyLength: Infinity,
@@ -57,10 +64,56 @@ export class RazorpayService {
         },
       };
       const { data: razorpayRes } = await axios.request(createOrderConfig);
-      console.log(razorpayRes, 'razorpayRes');
+      await (collectRequest as any).constructor.updateOne(
+        { _id },
+        {
+          $set: {
+            'razorpay_seamless.order_id': razorpayRes.id,
+          },
+        },
+      );
       return razorpayRes;
     } catch (error) {
       throw new BadRequestException(error.response?.data || error.message);
+    }
+  }
+
+  async getPaymentStatus(order_id: string, collectRequest: CollectRequest) {
+    try {
+      console.log('razorpay hit');
+      const config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: `${process.env.RAZORPAY_URL}/v1/orders/${order_id}/payments`,
+        headers: {
+          'content-type': 'application/json',
+        },
+        auth: {
+          username: collectRequest.razorpay.razorpay_id,
+          password: collectRequest.razorpay.razorpay_secret,
+        },
+      };
+      const { data: orderStatus } = await axios.request(config);
+      const items = orderStatus.items || [];
+      const capturedItem = items.find(
+        (item: any) => item.status === 'captured',
+      );
+      if (capturedItem) {
+        // console.log('jeerer');
+        return await this.formatRazorpayPaymentStatusResponse(
+          capturedItem,
+          collectRequest,
+        );
+      }
+
+      // return items[items.length - 1] || [];
+      return await this.formatRazorpayPaymentStatusResponse(
+        items[items.length - 1] || [],
+        collectRequest,
+      );
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -255,7 +308,11 @@ export class RazorpayService {
     }
   }
 
-  async getDispute(dispute_id: string, razorpay_mid: string, collectRequest:any) {
+  async getDispute(
+    dispute_id: string,
+    razorpay_mid: string,
+    collectRequest: any,
+  ) {
     try {
       const config = {
         method: 'get',
@@ -277,4 +334,40 @@ export class RazorpayService {
     }
   }
 
+  async getQr(collectRequest: CollectRequest) {
+    try {
+      const createQrConfig = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: `https://api.razorpay.com/v1/payments/qr_codes`,
+        auth: {
+          username: collectRequest.razorpay_seamless.razorpay_id,
+          password: collectRequest.razorpay_seamless.razorpay_secret,
+        },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        data: {
+          type: 'upi_qr', // ✅ mandatory
+          name: 'qr_code',
+          usage: 'single_use', // or "multiple_use"
+          fixed_amount: true,
+          payment_amount: collectRequest.amount * 100, // paise me
+          description: `Payment for request ${collectRequest._id}`,
+        },
+      };
+
+      const { data: razorpayRes } = await axios.request(createQrConfig);
+      console.log(razorpayRes, 'razorpayRes');
+
+      return {
+        qr_id: razorpayRes.id,
+        status: razorpayRes.status,
+        image_url: razorpayRes.image_url,
+      };
+    } catch (error) {
+      console.log(error.response?.data || error.message, 'error');
+      throw new BadRequestException(error.response?.data || error.message);
+    }
+  }
 }

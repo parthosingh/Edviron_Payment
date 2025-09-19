@@ -5492,5 +5492,41 @@ export class EdvironPgController {
       throw new BadRequestException(e.message);
     }
   }
+
+  @Get('get-order-detail')
+  async orderDetail(
+    @Query('collect_id') collect_id:string
+  ){
+    try {
+      const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id)
+      if(!collect_request){
+        throw new BadRequestException('Order not found')
+      }
+
+      return collect_request
+
+    } catch (error) {
+      throw new BadRequestException(error)
+    }
+  }
+
+  @Get('get-rzporder-detail')
+  async rzpOrderDetail(
+    @Query('order_id') order_id:string
+  ){
+    try {
+      const collect_request = await this.databaseService.CollectRequestModel.findOne({
+        'razorpay_seamless.order_id': order_id
+      })
+      if(!collect_request){
+        throw new BadRequestException('Order not found')
+      }
+
+      return collect_request
+
+    } catch (error) {
+      throw new BadRequestException(error)
+    }
+  }
 }
 

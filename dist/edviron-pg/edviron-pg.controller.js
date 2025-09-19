@@ -3935,6 +3935,32 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async orderDetail(collect_id) {
+        try {
+            const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collect_request) {
+                throw new common_1.BadRequestException('Order not found');
+            }
+            return collect_request;
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error);
+        }
+    }
+    async rzpOrderDetail(order_id) {
+        try {
+            const collect_request = await this.databaseService.CollectRequestModel.findOne({
+                'razorpay_seamless.order_id': order_id
+            });
+            if (!collect_request) {
+                throw new common_1.BadRequestException('Order not found');
+            }
+            return collect_request;
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error);
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -4428,6 +4454,20 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "webhookTrigger", null);
+__decorate([
+    (0, common_1.Get)('get-order-detail'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "orderDetail", null);
+__decorate([
+    (0, common_1.Get)('get-rzporder-detail'),
+    __param(0, (0, common_1.Query)('order_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "rzpOrderDetail", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
