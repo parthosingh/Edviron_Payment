@@ -290,6 +290,8 @@ let RazorpayService = class RazorpayService {
     }
     async getQr(collectRequest) {
         try {
+            const { order_id } = collectRequest.razorpay_seamless;
+            const collect_id = collectRequest._id.toString();
             const createQrConfig = {
                 method: 'post',
                 maxBodyLength: Infinity,
@@ -307,7 +309,7 @@ let RazorpayService = class RazorpayService {
                     usage: 'single_use',
                     fixed_amount: true,
                     payment_amount: collectRequest.amount * 100,
-                    description: `Payment for request ${collectRequest._id}`,
+                    order_id: order_id,
                 },
             };
             const { data: razorpayRes } = await axios_1.default.request(createQrConfig);

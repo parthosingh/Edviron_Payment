@@ -336,6 +336,8 @@ export class RazorpayService {
 
   async getQr(collectRequest: CollectRequest) {
     try {
+      const {order_id} = collectRequest.razorpay_seamless
+      const collect_id = collectRequest._id.toString()
       const createQrConfig = {
         method: 'post',
         maxBodyLength: Infinity,
@@ -348,12 +350,13 @@ export class RazorpayService {
           'Content-Type': 'application/json',
         },
         data: {
-          type: 'upi_qr', // ✅ mandatory
+          type: 'upi_qr', 
           name: 'qr_code',
-          usage: 'single_use', // or "multiple_use"
+          usage: 'single_use', 
           fixed_amount: true,
-          payment_amount: collectRequest.amount * 100, // paise me
-          description: `Payment for request ${collectRequest._id}`,
+          payment_amount: collectRequest.amount * 100, 
+          order_id: order_id,
+          // redirect_url: `https://payments.edviron.com/razorpay/callback?collect_id=${collect_id}`,
         },
       };
 
