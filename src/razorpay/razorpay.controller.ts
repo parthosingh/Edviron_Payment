@@ -456,6 +456,10 @@ export class RazorpayController {
           collectIdObject,
         );
       if (!collectReq) throw new Error('Collect request not found');
+       const isSeamless = collectReq.razorpay.razorpay_id
+        if(isSeamless){
+          return 'this is non-seamless transaction'
+        }
       const collectRequestStatus =
         await this.databaseService.CollectRequestStatusModel.findOne({
           collect_id: collectIdObject,
@@ -553,12 +557,7 @@ export class RazorpayController {
               gateway : Gateway.EDVIRON_RAZORPAY_SEAMLESS
             },
           },
-          {
-            upsert: true,
-            new: true,
-          },
         );
-
 
       const updateReq =
         await this.databaseService.CollectRequestStatusModel.updateOne(
@@ -669,7 +668,6 @@ export class RazorpayController {
     if (!collect_request) {
       throw new BadRequestException('Order not found');
     }
-
     return this.razorpayService.getQr(collect_request);
   }
 }
