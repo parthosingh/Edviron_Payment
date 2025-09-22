@@ -25,7 +25,7 @@
 import { DatabaseService } from '../database/database.service';
 import { EdvironPgService } from './edviron-pg.service';
 import { Types } from 'mongoose';
-import { CollectRequest, Gateway } from 'src/database/schemas/collect_request.schema';
+import { Gateway, I_Razorpay } from 'src/database/schemas/collect_request.schema';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { PlatformCharge, rangeCharge } from 'src/database/schemas/platform.charges.schema';
@@ -456,10 +456,12 @@ export declare class EdvironPgController {
         failCount: number;
         noUrlCount: number;
     }>;
-    orderDetail(collect_id: string): Promise<import("mongoose").Document<unknown, {}, import("src/database/schemas/collect_request.schema").CollectRequestDocument> & CollectRequest & Document & Required<{
-        _id: import("mongoose").Schema.Types.ObjectId;
-    }>>;
-    rzpOrderDetail(order_id: string): Promise<import("mongoose").Document<unknown, {}, import("src/database/schemas/collect_request.schema").CollectRequestDocument> & CollectRequest & Document & Required<{
-        _id: import("mongoose").Schema.Types.ObjectId;
-    }>>;
+    orderDetail(collect_id: string): Promise<{
+        razorpay_seamless: I_Razorpay;
+        additional_data: string;
+        amount: number;
+    }>;
+    rzpOrderDetail(order_id: string): Promise<{
+        razorpay_seamless: I_Razorpay;
+    }>;
 }

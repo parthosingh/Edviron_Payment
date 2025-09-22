@@ -18,6 +18,7 @@ export enum Gateway {
   EDVIRON_NTTDATA = 'EDVIRON_NTTDATA',
   EDVIRON_WORLDLINE = 'EDVIRON_WORLDLINE',
   EDVIRON_RAZORPAY = 'EDVIRON_RAZORPAY',
+  EDVIRON_RAZORPAY_SEAMLESS = 'EDVIRON_RAZORPAY_SEAMLESS',
   EDVIRON_GATEPAY = 'EDVIRON_GATEPAY',
 }
 
@@ -32,7 +33,7 @@ interface I_NTT_DATA {
   nttdata_res_salt: string;
 }
 
-interface I_Razorpay {
+export interface I_Razorpay {
   razorpay_id: string;
   razorpay_secret: string;
   razorpay_mid: string;

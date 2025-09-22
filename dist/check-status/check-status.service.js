@@ -30,8 +30,9 @@ const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 const worldline_service_1 = require("../worldline/worldline.service");
 const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
 const gatepay_service_1 = require("../gatepay/gatepay.service");
+const razorpay_service_1 = require("../razorpay/razorpay.service");
 let CheckStatusService = class CheckStatusService {
-    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay, hdfcSmartgatewayService, nttdataService, posPaytmService, worldlineService, razorpayServiceModel, gatepayService) {
+    constructor(databaseService, hdfcService, phonePeService, edvironPgService, ccavenueService, easebuzzService, cashfreeService, payUService, hdfcRazorpay, hdfcSmartgatewayService, nttdataService, posPaytmService, worldlineService, razorpayServiceModel, razorpay_seamless, gatepayService) {
         this.databaseService = databaseService;
         this.hdfcService = hdfcService;
         this.phonePeService = phonePeService;
@@ -46,6 +47,7 @@ let CheckStatusService = class CheckStatusService {
         this.posPaytmService = posPaytmService;
         this.worldlineService = worldlineService;
         this.razorpayServiceModel = razorpayServiceModel;
+        this.razorpay_seamless = razorpay_seamless;
         this.gatepayService = gatepayService;
     }
     async checkStatus(collect_request_id) {
@@ -185,6 +187,9 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.EDVIRON_RAZORPAY:
                 const razorpayData = await this.razorpayServiceModel.getPaymentStatus(collectRequest.razorpay.order_id.toString(), collectRequest);
                 return razorpayData;
+            case collect_request_schema_1.Gateway.EDVIRON_RAZORPAY_SEAMLESS:
+                const razorpayDataseamless = await this.razorpay_seamless.getPaymentStatus(collectRequest.razorpay_seamless.order_id.toString(), collectRequest);
+                return razorpayDataseamless;
             case collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ:
                 console.log('testing easebuzz status response');
                 const easebuzzStatus = await this.easebuzzService.statusResponse(collect_request_id.toString(), collectRequest);
@@ -646,6 +651,7 @@ exports.CheckStatusService = CheckStatusService = __decorate([
         pos_paytm_service_1.PosPaytmService,
         worldline_service_1.WorldlineService,
         razorpay_nonseamless_service_1.RazorpayNonseamlessService,
+        razorpay_service_1.RazorpayService,
         gatepay_service_1.GatepayService])
 ], CheckStatusService);
 //# sourceMappingURL=check-status.service.js.map

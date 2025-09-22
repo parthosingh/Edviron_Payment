@@ -22,6 +22,7 @@ import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 import { GatepayService } from 'src/gatepay/gatepay.service';
+import { RazorpayService } from 'src/razorpay/razorpay.service';
 @Injectable()
 export class CheckStatusService {
   constructor(
@@ -39,6 +40,7 @@ export class CheckStatusService {
     private readonly posPaytmService: PosPaytmService,
     private readonly worldlineService: WorldlineService,
     private readonly razorpayServiceModel: RazorpayNonseamlessService,
+    private readonly razorpay_seamless: RazorpayService,
     private readonly gatepayService: GatepayService,
   ) {}
   async checkStatus(collect_request_id: String) {
@@ -217,6 +219,13 @@ export class CheckStatusService {
           collectRequest,
         );
         return razorpayData;
+
+        case Gateway.EDVIRON_RAZORPAY_SEAMLESS:
+        const razorpayDataseamless = await this.razorpay_seamless.getPaymentStatus(
+          collectRequest.razorpay_seamless.order_id.toString(),
+          collectRequest,
+        );
+        return razorpayDataseamless;
 
       case Gateway.EDVIRON_EASEBUZZ:
         console.log('testing easebuzz status response');

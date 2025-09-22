@@ -3941,7 +3941,11 @@ let EdvironPgController = class EdvironPgController {
             if (!collect_request) {
                 throw new common_1.BadRequestException('Order not found');
             }
-            return collect_request;
+            return {
+                razorpay_seamless: collect_request.razorpay_seamless,
+                additional_data: collect_request.additional_data,
+                amount: collect_request.amount
+            };
         }
         catch (error) {
             throw new common_1.BadRequestException(error);
@@ -3955,7 +3959,9 @@ let EdvironPgController = class EdvironPgController {
             if (!collect_request) {
                 throw new common_1.BadRequestException('Order not found');
             }
-            return collect_request;
+            return {
+                razorpay_seamless: collect_request.razorpay_seamless
+            };
         }
         catch (error) {
             throw new common_1.BadRequestException(error);

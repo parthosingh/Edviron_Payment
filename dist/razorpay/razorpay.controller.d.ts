@@ -7,6 +7,7 @@ export declare class RazorpayController {
     private readonly edvironPgService;
     constructor(razorpayService: RazorpayService, databaseService: DatabaseService, edvironPgService: EdvironPgService);
     handleCallback(req: any, res: any): Promise<any>;
+    handleCallbackV2(req: any, res: any): Promise<any>;
     getDispute(collect_id: string, dispute_id: string, token: string): Promise<any>;
     webhook(body: any, res: any): Promise<any>;
     getQr(collect_id: string): Promise<{

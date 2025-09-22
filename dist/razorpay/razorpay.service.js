@@ -84,8 +84,8 @@ let RazorpayService = class RazorpayService {
                     'content-type': 'application/json',
                 },
                 auth: {
-                    username: collectRequest.razorpay.razorpay_id,
-                    password: collectRequest.razorpay.razorpay_secret,
+                    username: collectRequest.razorpay_seamless.razorpay_id,
+                    password: collectRequest.razorpay_seamless.razorpay_secret,
                 },
             };
             const { data: orderStatus } = await axios_1.default.request(config);
