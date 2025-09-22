@@ -22,11 +22,11 @@ import { PosPaytmController } from './pos-paytm/pos-paytm.controller';
 import { PosPaytmService } from './pos-paytm/pos-paytm.service';
 import { NttdataModule } from './nttdata/nttdata.module';
 import { WorldlineModule } from './worldline/worldline.module';
-import { WorldlineController } from './worldline/worldline.controller';
-import { WorldlineService } from './worldline/worldline.service';
 import { RazorpayNonseamlessModule } from './razorpay-nonseamless/razorpay-nonseamless.module';
 import { RazorpayNonseamlessController } from './razorpay-nonseamless/razorpay-nonseamless.controller';
 import { RazorpayNonseamlessService } from './razorpay-nonseamless/razorpay-nonseamless.service';
+import { WorldlineService } from './worldline/worldline.service';
+import { WorldlineController } from './worldline/worldline.controller';
 import { GatepayModule } from './gatepay/gatepay.module';
 import { ReportsModule } from './reports/reports.module';
 import { AwsS3ServiceModule } from './aws-s3-service/aws-s3-service.module';
@@ -51,6 +51,7 @@ import { GatewayModule } from './gateway/gateway.module';
     RazorpayNonseamlessModule,
     WorldlineModule,
     RazorpayModule,
+    DatabaseModule,
     GatepayModule,
     ReportsModule,
     AwsS3ServiceModule,

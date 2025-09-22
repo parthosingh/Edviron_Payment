@@ -1,10 +1,10 @@
-import { DatabaseService } from 'src/database/database.service';
-import { CollectRequest } from 'src/database/schemas/collect_request.schema';
-import { HdfcService } from 'src/hdfc/hdfc.service';
-import { PhonepeService } from 'src/phonepe/phonepe.service';
+import { DatabaseService } from '../database/database.service';
+import { CollectRequest } from '../database/schemas/collect_request.schema';
+import { HdfcService } from '../hdfc/hdfc.service';
+import { PhonepeService } from '../phonepe/phonepe.service';
 import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
 import { platformChange } from './collect.controller';
-import { CcavenueService } from 'src/ccavenue/ccavenue.service';
+import { CcavenueService } from '../ccavenue/ccavenue.service';
 import { HdfcRazorpayService } from 'src/hdfc_razporpay/hdfc_razorpay.service';
 import { PayUService } from 'src/pay-u/pay-u.service';
 import { SmartgatewayService } from 'src/smartgateway/smartgateway.service';

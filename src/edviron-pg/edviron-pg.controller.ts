@@ -25,6 +25,7 @@ import { TransactionStatus } from 'src/types/transactionStatus';
 import {
   CollectRequest,
   Gateway,
+  I_Razorpay,
 } from 'src/database/schemas/collect_request.schema';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
@@ -5492,5 +5493,53 @@ export class EdvironPgController {
       throw new BadRequestException(e.message);
     }
   }
+
+  @Get('get-order-detail')
+  async orderDetail(
+    @Query('collect_id') collect_id:string
+  ): Promise<{
+    razorpay_seamless: I_Razorpay;
+    additional_data: string;
+    amount: number;
+}>{
+    try {
+      const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id)
+      if(!collect_request){
+        throw new BadRequestException('Order not found')
+      }
+
+      return {
+        razorpay_seamless : collect_request.razorpay_seamless,
+        additional_data : collect_request.additional_data,
+        amount : collect_request.amount
+      }
+
+    } catch (error) {
+      throw new BadRequestException(error)
+    }
+  }
+
+  @Get('get-rzporder-detail')
+  async rzpOrderDetail(
+    @Query('order_id') order_id:string
+  ): Promise<{
+    razorpay_seamless: I_Razorpay;
+}>{
+    try {
+      const collect_request = await this.databaseService.CollectRequestModel.findOne({
+        'razorpay_seamless.order_id': order_id
+      })
+      if(!collect_request){
+        throw new BadRequestException('Order not found')
+      }
+
+      return {
+        razorpay_seamless : collect_request.razorpay_seamless
+      }
+
+    } catch (error) {
+      throw new BadRequestException(error)
+    }
+  }
 }
 

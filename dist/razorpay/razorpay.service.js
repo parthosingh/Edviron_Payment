@@ -42,6 +42,7 @@ let RazorpayService = class RazorpayService {
     }
     async createOrder(collectRequest) {
         try {
+            const { _id, amount: totalRupees, razorpay, razorpay_vendors_info, additional_data, } = collectRequest;
             const createOrderConfig = {
                 method: 'post',
                 maxBodyLength: Infinity,
@@ -61,11 +62,43 @@ let RazorpayService = class RazorpayService {
                 },
             };
             const { data: razorpayRes } = await axios_1.default.request(createOrderConfig);
-            console.log(razorpayRes, 'razorpayRes');
+            await collectRequest.constructor.updateOne({ _id }, {
+                $set: {
+                    'razorpay_seamless.order_id': razorpayRes.id,
+                },
+            });
             return razorpayRes;
         }
         catch (error) {
             throw new common_1.BadRequestException(error.response?.data || error.message);
+        }
+    }
+    async getPaymentStatus(order_id, collectRequest) {
+        try {
+            console.log('razorpay hit');
+            const config = {
+                method: 'get',
+                maxBodyLength: Infinity,
+                url: `${process.env.RAZORPAY_URL}/v1/orders/${order_id}/payments`,
+                headers: {
+                    'content-type': 'application/json',
+                },
+                auth: {
+                    username: collectRequest.razorpay_seamless.razorpay_id,
+                    password: collectRequest.razorpay_seamless.razorpay_secret,
+                },
+            };
+            const { data: orderStatus } = await axios_1.default.request(config);
+            const items = orderStatus.items || [];
+            const capturedItem = items.find((item) => item.status === 'captured');
+            if (capturedItem) {
+                return await this.formatRazorpayPaymentStatusResponse(capturedItem, collectRequest);
+            }
+            return await this.formatRazorpayPaymentStatusResponse(items[items.length - 1] || [], collectRequest);
+        }
+        catch (error) {
+            console.log(error);
+            throw new common_1.BadRequestException(error.message);
         }
     }
     async checkOrderStatus(collectId, collectRequest) {
@@ -252,6 +285,43 @@ let RazorpayService = class RazorpayService {
             return data;
         }
         catch (error) {
+            throw new common_1.BadRequestException(error.response?.data || error.message);
+        }
+    }
+    async getQr(collectRequest) {
+        try {
+            const { order_id } = collectRequest.razorpay_seamless;
+            const collect_id = collectRequest._id.toString();
+            const createQrConfig = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `https://api.razorpay.com/v1/payments/qr_codes`,
+                auth: {
+                    username: collectRequest.razorpay_seamless.razorpay_id,
+                    password: collectRequest.razorpay_seamless.razorpay_secret,
+                },
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                data: {
+                    type: 'upi_qr',
+                    name: 'qr_code',
+                    usage: 'single_use',
+                    fixed_amount: true,
+                    payment_amount: collectRequest.amount * 100,
+                    order_id: order_id,
+                },
+            };
+            const { data: razorpayRes } = await axios_1.default.request(createQrConfig);
+            console.log(razorpayRes, 'razorpayRes');
+            return {
+                qr_id: razorpayRes.id,
+                status: razorpayRes.status,
+                image_url: razorpayRes.image_url,
+            };
+        }
+        catch (error) {
+            console.log(error.response?.data || error.message, 'error');
             throw new common_1.BadRequestException(error.response?.data || error.message);
         }
     }

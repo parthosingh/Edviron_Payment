@@ -29,6 +29,7 @@ var Gateway;
     Gateway["EDVIRON_NTTDATA"] = "EDVIRON_NTTDATA";
     Gateway["EDVIRON_WORLDLINE"] = "EDVIRON_WORLDLINE";
     Gateway["EDVIRON_RAZORPAY"] = "EDVIRON_RAZORPAY";
+    Gateway["EDVIRON_RAZORPAY_SEAMLESS"] = "EDVIRON_RAZORPAY_SEAMLESS";
     Gateway["EDVIRON_GATEPAY"] = "EDVIRON_GATEPAY";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let PaymentIds = class PaymentIds {

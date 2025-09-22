@@ -16,7 +16,7 @@ import { RazorpayService } from 'src/razorpay/razorpay.service';
     SmartgatewayService,
     EdvironPgService,
     CashfreeService,
-    RazorpayService
+    RazorpayService,
     // CheckStatusService,
   ],
 })
