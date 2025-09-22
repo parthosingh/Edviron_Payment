@@ -24,7 +24,7 @@ export class RazorpayController {
   constructor(
     private readonly razorpayService: RazorpayService,
     private readonly databaseService: DatabaseService,
-     private readonly edvironPgService: EdvironPgService,
+    private readonly edvironPgService: EdvironPgService,
   ) {}
 
   @Get('/callback')
@@ -32,12 +32,12 @@ export class RazorpayController {
     try {
       const { order_id } = req.query;
       const request = await this.databaseService.CollectRequestModel.findOne({
-        'razorpay_seamless.order_id':order_id
-      })
-      if(!request){
-        throw new BadRequestException('no order found')
+        'razorpay_seamless.order_id': order_id,
+      });
+      if (!request) {
+        throw new BadRequestException('no order found');
       }
-      const collect_id = request?._id.toString()
+      const collect_id = request?._id.toString();
       try {
         const details = JSON.stringify(req.body || {});
         await new this.databaseService.WebhooksModel({
@@ -138,7 +138,7 @@ export class RazorpayController {
             payment_id: req.body.razorpay_payment_id,
             'razorpay_seamless.payment_id': req.body.razorpay_payment_id,
             'razorpay_seamless.razorpay_signature': req.body.razorpay_signature,
-            gateway : Gateway.EDVIRON_RAZORPAY_SEAMLESS
+            gateway: Gateway.EDVIRON_RAZORPAY_SEAMLESS,
           },
         },
       );
@@ -197,8 +197,6 @@ export class RazorpayController {
             new: true,
           },
         );
-
-   
 
       if (payment_status !== PaymentStatus.SUCCESS) {
         callbackUrl.searchParams.set('status', 'FAILED');
@@ -212,11 +210,11 @@ export class RazorpayController {
     }
   }
 
-    @Get('/callback/v2')
+  @Get('/callback/v2')
   async handleCallbackV2(@Req() req: any, @Res() res: any) {
     try {
       const { collect_request_id } = req.query;
-    let collect_id = collect_request_id
+      let collect_id = collect_request_id;
       try {
         const details = JSON.stringify(req.body || {});
         await new this.databaseService.WebhooksModel({
@@ -317,7 +315,7 @@ export class RazorpayController {
             payment_id: req.body.razorpay_payment_id,
             'razorpay_seamless.payment_id': req.body.razorpay_payment_id,
             'razorpay_seamless.razorpay_signature': req.body.razorpay_signature,
-            gateway : Gateway.EDVIRON_RAZORPAY_SEAMLESS
+            gateway: Gateway.EDVIRON_RAZORPAY_SEAMLESS,
           },
         },
       );
@@ -376,8 +374,6 @@ export class RazorpayController {
             new: true,
           },
         );
-
-   
 
       if (payment_status !== PaymentStatus.SUCCESS) {
         callbackUrl.searchParams.set('status', 'FAILED');
@@ -417,7 +413,7 @@ export class RazorpayController {
     }
   }
 
-    @Post('/webhook')
+  @Post('/webhook')
   async webhook(@Body() body: any, @Res() res: any) {
     const details = JSON.stringify(body);
     const webhook = await new this.databaseService.WebhooksModel({
@@ -445,12 +441,12 @@ export class RazorpayController {
         const webhook = await new this.databaseService.WebhooksModel({
           collect_id: new Types.ObjectId(collect_id),
           body: details,
-          gateway: Gateway.EDVIRON_RAZORPAY,
+          gateway: Gateway.EDVIRON_RAZORPAY_SEAMLESS,
         }).save();
       } catch (e) {
         await new this.databaseService.WebhooksModel({
           body: details,
-          gateway: Gateway.EDVIRON_RAZORPAY,
+          gateway: Gateway.EDVIRON_RAZORPAY_SEAMLESS,
         }).save();
       }
 
@@ -546,6 +542,23 @@ export class RazorpayController {
         transaction_id: acquirer_data.bank_transaction_id,
         method: method,
       };
+
+      const updateReqcollectreq =
+        await this.databaseService.CollectRequestModel.updateOne(
+          {
+            _id: collectIdObject,
+          },
+          {
+            $set: {
+              gateway : Gateway.EDVIRON_RAZORPAY_SEAMLESS
+            },
+          },
+          {
+            upsert: true,
+            new: true,
+          },
+        );
+
 
       const updateReq =
         await this.databaseService.CollectRequestStatusModel.updateOne(
@@ -650,15 +663,13 @@ export class RazorpayController {
   }
 
   @Get('get-qr')
-  async getQr(
-    @Query('collect_id') collect_id:string
-  ){
-    const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id)
-    if(!collect_request){
-      throw new BadRequestException('Order not found')
+  async getQr(@Query('collect_id') collect_id: string) {
+    const collect_request =
+      await this.databaseService.CollectRequestModel.findById(collect_id);
+    if (!collect_request) {
+      throw new BadRequestException('Order not found');
     }
 
-    return this.razorpayService.getQr(collect_request)
+    return this.razorpayService.getQr(collect_request);
   }
-
 }
