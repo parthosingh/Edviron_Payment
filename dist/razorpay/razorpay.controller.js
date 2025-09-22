@@ -372,6 +372,10 @@ let RazorpayController = class RazorpayController {
             const collectReq = await this.databaseService.CollectRequestModel.findById(collectIdObject);
             if (!collectReq)
                 throw new Error('Collect request not found');
+            const isSeamless = collectReq.razorpay.razorpay_id;
+            if (isSeamless) {
+                return 'this is non-seamless transaction';
+            }
             const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
                 collect_id: collectIdObject,
             });
@@ -452,9 +456,6 @@ let RazorpayController = class RazorpayController {
                 $set: {
                     gateway: collect_request_schema_1.Gateway.EDVIRON_RAZORPAY_SEAMLESS
                 },
-            }, {
-                upsert: true,
-                new: true,
             });
             const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
                 collect_id: collectIdObject,

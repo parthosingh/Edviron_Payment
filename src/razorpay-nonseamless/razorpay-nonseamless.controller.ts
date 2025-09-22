@@ -528,11 +528,16 @@ export class RazorpayNonseamlessController {
         await this.databaseService.CollectRequestModel.findById(
           collectIdObject,
         );
-      if (!collectReq) throw new Error('Collect request not found');
+        if (!collectReq) throw new Error('Collect request not found');
+        const isSeamless = collectReq.razorpay_seamless.razorpay_id
+        if(isSeamless){
+          return 'this is seamless transaction'
+        }
       const collectRequestStatus =
         await this.databaseService.CollectRequestStatusModel.findOne({
           collect_id: collectIdObject,
         });
+     
       if (!collectRequestStatus) {
         throw new Error('Collect Request Not Found');
       }
@@ -761,6 +766,10 @@ export class RazorpayNonseamlessController {
           collectIdObject,
         );
       if (!collectReq) throw new Error('Collect request not found');
+       const isSeamless = collectReq.razorpay_seamless.razorpay_id
+        if(isSeamless){
+          return 'this is seamless transaction'
+        }
       const collectRequestStatus =
         await this.databaseService.CollectRequestStatusModel.findOne({
           collect_id: collectIdObject,
