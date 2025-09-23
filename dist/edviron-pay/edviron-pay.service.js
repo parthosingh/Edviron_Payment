@@ -54,7 +54,10 @@ let EdvironPayService = class EdvironPayService {
                 .map((mode) => `${mode}=false`)
                 .join('&');
             const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
+            collectReq.paymentIds = paymentInfo;
+            await collectReq.save();
             return {
+                collect_request_id: request._id,
                 url: process.env.URL +
                     '/edviron-pg/redirect?session_id=' +
                     paymentInfo.cashfree_id +

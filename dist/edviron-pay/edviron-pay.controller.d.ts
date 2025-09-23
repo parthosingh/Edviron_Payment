@@ -95,6 +95,7 @@ export declare class EdvironPayController {
             ];
         };
     }): Promise<{
+        collect_request_id: import("mongoose").Schema.Types.ObjectId;
         url: string;
     } | undefined>;
     getStudentInstallments(student_id: string): Promise<(import("mongoose").Document<unknown, {}, import("src/database/schemas/installments.schema").InstallmentsDocument> & Installments & Document & {
