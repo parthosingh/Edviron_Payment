@@ -11,8 +11,7 @@ export declare class RazorpayController {
     getDispute(collect_id: string, dispute_id: string, token: string): Promise<any>;
     webhook(body: any, res: any): Promise<any>;
     getQr(collect_id: string): Promise<{
-        qr_id: any;
-        status: any;
-        image_url: any;
+        base64Image: any;
+        intent: any;
     }>;
 }

@@ -15,6 +15,8 @@ const transactionStatus_1 = require("../types/transactionStatus");
 const crypto = require("crypto");
 const axios_1 = require("axios");
 const database_service_1 = require("../database/database.service");
+const canvas_1 = require("canvas");
+const jsqr_1 = require("jsqr");
 const formatRazorpayPaymentStatus = (status) => {
     const statusMap = {
         created: transactionStatus_1.TransactionStatus.PENDING,
@@ -314,15 +316,33 @@ let RazorpayService = class RazorpayService {
             };
             const { data: razorpayRes } = await axios_1.default.request(createQrConfig);
             console.log(razorpayRes, 'razorpayRes');
-            return {
-                qr_id: razorpayRes.id,
-                status: razorpayRes.status,
-                image_url: razorpayRes.image_url,
-            };
+            return await this.getbase64(razorpayRes.image_url);
         }
         catch (error) {
             console.log(error.response?.data || error.message, 'error');
             throw new common_1.BadRequestException(error.response?.data || error.message);
+        }
+    }
+    async getbase64(url) {
+        try {
+            const response = await axios_1.default.get(url, { responseType: 'arraybuffer' });
+            const img = await (0, canvas_1.loadImage)(Buffer.from(response.data));
+            const canvas = (0, canvas_1.createCanvas)(img.width, img.height);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, img.width, img.height);
+            const qrCode = (0, jsqr_1.default)(imageData.data, imageData.width, imageData.height);
+            const qrData = qrCode.data || 'p';
+            var QRCode = require('qrcode');
+            const base64Image = await QRCode.toDataURL(qrData, { type: "image/png" });
+            console.log(base64Image);
+            return {
+                base64Image,
+                intent: qrCode.data
+            };
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
         }
     }
 };
