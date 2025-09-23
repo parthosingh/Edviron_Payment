@@ -663,8 +663,6 @@ export class RazorpayController {
     }
   }
 
-  //comment
-
   @Get('get-qr')
   async getQr(@Query('collect_id') collect_id: string) {
     const collect_request =
@@ -674,8 +672,5 @@ export class RazorpayController {
     }
     return this.razorpayService.getQr(collect_request);
   }
-
-
-
 
 }
