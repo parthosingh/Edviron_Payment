@@ -1795,6 +1795,21 @@ let EdvironPgService = class EdvironPgService {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async getSUbTrusteeBatchTransactions(school_id, year) {
+        try {
+            const batch = await this.databaseService.BatchTransactionModel.find({
+                school_id: { $in: school_id },
+                year,
+            });
+            if (!batch) {
+                throw new Error('Batch not found');
+            }
+            return batch;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
     async getSubTrusteeBatchTransactions(school_ids, year) {
         try {
             const batch = await this.databaseService.BatchTransactionModel.aggregate([

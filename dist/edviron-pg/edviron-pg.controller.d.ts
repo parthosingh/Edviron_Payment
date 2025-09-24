@@ -271,6 +271,13 @@ export declare class EdvironPgController {
     }): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{
         _id: import("mongoose").Schema.Types.ObjectId;
     }>)[]>;
+    getSubTrusteeBatchTransactions(body: {
+        school_id: string[];
+        year: string;
+        token: string;
+    }): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{
+        _id: import("mongoose").Schema.Types.ObjectId;
+    }>)[]>;
     vendorTransactionsSettlement(body: {
         collect_id: string;
         token: string;

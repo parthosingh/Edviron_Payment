@@ -2266,6 +2266,22 @@ console.log(request.razorpay_seamless.razorpay_mid, "mid")
     }
   }
 
+  async getSUbTrusteeBatchTransactions(school_id: string[], year: string) {
+    try {
+      const batch = await this.databaseService.BatchTransactionModel.find({
+        school_id : {$in : school_id},
+        year,
+      });
+
+      if (!batch) {
+        throw new Error('Batch not found');
+      }
+      return batch;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
   async getSubTrusteeBatchTransactions(school_ids: string[], year: string) {
     try {
       const batch = await this.databaseService.BatchTransactionModel.aggregate([
