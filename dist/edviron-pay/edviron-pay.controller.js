@@ -87,7 +87,7 @@ let EdvironPayController = class EdvironPayController {
         return { status: 'installment updated successfully for student_id: ' + student_id };
     }
     async collect(body) {
-        const { isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, easebuzz, } = body;
+        const { isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, vba_account_number, easebuzz, } = body;
         try {
             if (!token) {
                 throw new Error('Token is required');
@@ -138,11 +138,11 @@ let EdvironPayController = class EdvironPayController {
                     easebuzzVendors: easebuzz?.easebuzzVendors || [],
                     cashfreeVedors: cashfree?.cashfreeVedors || [],
                     isVBAPayment: isVBAPayment || false,
-                    vba_account_number: isVBAPayment ? cashfree?.vba?.vba_account_number : null,
                     school_name,
                     isSplitPayments: isSplit || false,
                     cashfree_credentials: cashfreeCred,
                     isCFNonSeamless: !cashfree?.isSeamless || false,
+                    vba_account_number,
                 });
                 const requestStatus = await new this.databaseService.CollectRequestStatusModel({
                     collect_id: request._id,

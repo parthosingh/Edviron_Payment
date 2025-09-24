@@ -52,6 +52,7 @@ export declare class EdvironPayController {
         school_name: string;
         isSplit?: boolean;
         isVBAPayment?: boolean;
+        vba_account_number: string;
         additional_data?: {};
         cashfree: {
             client_id: string;

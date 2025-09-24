@@ -123,6 +123,7 @@ export class EdvironPayController {
         school_name: string;
         isSplit?: boolean;
         isVBAPayment?: boolean;
+        vba_account_number: string;
         additional_data?: {};
         cashfree: {
             client_id: string;
@@ -184,6 +185,7 @@ export class EdvironPayController {
             gateway,
             cashfree,
             razorpay,
+            vba_account_number,
             easebuzz,
         } = body
 
@@ -248,11 +250,12 @@ export class EdvironPayController {
                     easebuzzVendors: easebuzz?.easebuzzVendors || [],
                     cashfreeVedors: cashfree?.cashfreeVedors || [],
                     isVBAPayment: isVBAPayment || false,
-                    vba_account_number: isVBAPayment ? cashfree?.vba?.vba_account_number : null,
+                    // vba_account_number: isVBAPayment ? cashfree?.vba?.vba_account_number : null,
                     school_name,
                     isSplitPayments: isSplit || false,
                     cashfree_credentials: cashfreeCred,
                     isCFNonSeamless: !cashfree?.isSeamless || false,
+                    vba_account_number,
 
                 })
 
@@ -326,7 +329,7 @@ export class EdvironPayController {
             return vendors
         } catch (e) {
             console.log(e);
-            
+
             throw new BadRequestException(e.message)
         }
     }
