@@ -55,7 +55,7 @@ export class EdvironPgController {
     private readonly posPaytmService: PosPaytmService,
     private readonly worldlineService: WorldlineService,
     private readonly razorpayNonseamless: RazorpayNonseamlessService,
-  ) { }
+  ) {}
   @Get('/redirect')
   async handleRedirect(@Req() req: any, @Res() res: any) {
     const wallet = req.query.wallet;
@@ -90,12 +90,15 @@ export class EdvironPgController {
       res.send(
         `<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://pg.edviron.com/payments?session_id=${req.query.session_id
-        }&collect_request_id=${req.query.collect_request_id
-        }&amount=${req.query.amount
-        }${disable_modes}&platform_charges=${encodeURIComponent(
-          req.query.platform_charges,
-        )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&gateway=${gateway}";
+                    location.href = "https://pg.edviron.com/payments?session_id=${
+                      req.query.session_id
+                    }&collect_request_id=${
+                      req.query.collect_request_id
+                    }&amount=${
+                      req.query.amount
+                    }${disable_modes}&platform_charges=${encodeURIComponent(
+                      req.query.platform_charges,
+                    )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&gateway=${gateway}";
 
                 }
             </script>`,
@@ -104,12 +107,15 @@ export class EdvironPgController {
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id
-      }&collect_request_id=${req.query.collect_request_id
-      }&amount=${req.query.amount
-      }${disable_modes}&platform_charges=${encodeURIComponent(
-        req.query.platform_charges,
-      )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&currency=${currency}";
+                    location.href = "https://pg.edviron.com?session_id=${
+                      req.query.session_id
+                    }&collect_request_id=${
+                      req.query.collect_request_id
+                    }&amount=${
+                      req.query.amount
+                    }${disable_modes}&platform_charges=${encodeURIComponent(
+                      req.query.platform_charges,
+                    )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&currency=${currency}";
 
                 }
             </script>`,
@@ -121,7 +127,7 @@ export class EdvironPgController {
     const collect_id = req.query.collect_id;
     let isBlank = req.query.isBlank || false;
     if (isBlank !== 'true' || true) {
-      isBlank = 'false'
+      isBlank = 'false';
     }
     if (!Types.ObjectId.isValid(collect_id)) {
       return res.redirect(
@@ -139,8 +145,8 @@ export class EdvironPgController {
     const masterGateway = collectRequest?.isMasterGateway || false;
     if (masterGateway) {
       // change later to prod url
-      const url = `${process.env.PG_FRONTEND}/select-gateway?collect_id=${collectRequest._id}`
-      return res.redirect(url)
+      const url = `${process.env.PG_FRONTEND}/select-gateway?collect_id=${collectRequest._id}`;
+      return res.redirect(url);
     }
 
     if (collectRequest?.easebuzz_non_partner) {
@@ -268,12 +274,15 @@ export class EdvironPgController {
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "${process.env.PG_FRONTEND
-      }?session_id=${sessionId}&collect_request_id=${req.query.collect_id
-      }&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(
-        platform_charges,
-      )}&is_blank=${isBlank}&amount=${amount}&school_name=${info.school_name
-      }&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}";
+                    location.href = "${
+                      process.env.PG_FRONTEND
+                    }?session_id=${sessionId}&collect_request_id=${
+                      req.query.collect_id
+                    }&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(
+                      platform_charges,
+                    )}&is_blank=${isBlank}&amount=${amount}&school_name=${
+                      info.school_name
+                    }&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}";
                 }
             </script>`,
     );
@@ -799,8 +808,9 @@ export class EdvironPgController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+          url: `${
+            process.env.VANILLA_SERVICE_ENDPOINT
+          }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
@@ -2622,7 +2632,7 @@ export class EdvironPgController {
 
   // https://payements.edviron.com/edviron-pg/easebuzz/settlement
   @Post('easebuzz/settlement')
-  async easebuzzSettlement(@Body() body: any) { }
+  async easebuzzSettlement(@Body() body: any) {}
 
   // @Get('/payments-info')
   // async getpaymentsInfo(@Query('collect_id') collect_id: string) {
@@ -3090,11 +3100,11 @@ export class EdvironPgController {
         ...(gateway && { gateway: { $in: gateway } }),
         ...(start_date &&
           end_date && {
-          updatedAt: {
-            $gte: new Date(start_date),
-            $lte: new Date(new Date(end_date).setHours(23, 59, 59, 999)),
-          },
-        }),
+            updatedAt: {
+              $gte: new Date(start_date),
+              $lte: new Date(new Date(end_date).setHours(23, 59, 59, 999)),
+            },
+          }),
       };
 
       return await this.edvironPgService.getVendorTransactions(
@@ -3420,7 +3430,7 @@ export class EdvironPgController {
           year,
         );
       return response;
-    } catch (e) { }
+    } catch (e) {}
   }
 
   @Get('/get-merchant-batch-transactions')
@@ -3442,6 +3452,33 @@ export class EdvironPgController {
       return await this.edvironPgService.getMerchantBatchTransactions(
         query.school_id,
         query.year,
+      );
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Get('/get-sub-trustee-batch-transactions')
+  async getSubTrusteeBatchTransactions(
+    @Body()
+    body : {
+      school_id: string[];
+      year: string;
+      token: string;
+      subTrusteeId: string
+    },
+  ) {
+    try {
+      const { school_id, year, token, subTrusteeId } = body;
+
+      const decoded = jwt.verify(token, process.env.KEY!) as any;
+      if (decoded.subTrusteeId !== subTrusteeId) {
+        throw new UnauthorizedException('Invalid token');
+      }
+      
+      return await this.edvironPgService.getSUbTrusteeBatchTransactions(
+        school_id,
+        year,
       );
     } catch (e) {
       throw new BadRequestException(e.message);
@@ -3694,7 +3731,7 @@ export class EdvironPgController {
       //     note,
       //   )
       // }
-    } catch (e) { }
+    } catch (e) {}
   }
 
   @Get('get-order-payment-link')
@@ -3879,7 +3916,7 @@ export class EdvironPgController {
     @Query('collect_id') collect_id: string,
     @Query('payment_mode') payment_mode: string,
     @Query('platform_type') platform_type: string,
-    @Query('currency') currency: string
+    @Query('currency') currency: string,
   ) {
     try {
       const collectRequest =
@@ -3891,7 +3928,7 @@ export class EdvironPgController {
       const school_id = collectRequest.school_id;
       // Fetch MDR details for the given school_id
       const schoolMdr = await this.databaseService.PlatformChargeModel.findOne({
-        school_id
+        school_id,
       }).lean();
 
       if (!schoolMdr) {
@@ -3901,9 +3938,9 @@ export class EdvironPgController {
       let selectedCharge = schoolMdr.platform_charges.find(
         (charge) =>
           charge.payment_mode.toLocaleLowerCase() ===
-          payment_mode.toLocaleLowerCase() &&
+            payment_mode.toLocaleLowerCase() &&
           charge.platform_type.toLocaleLowerCase() ===
-          platform_type.toLocaleLowerCase(),
+            platform_type.toLocaleLowerCase(),
       );
 
       if (!selectedCharge) {
@@ -3965,7 +4002,7 @@ export class EdvironPgController {
     platformCharges.platform_charges.forEach((platformCharge) => {
       if (
         platformCharge.platform_type.toLowerCase() ===
-        platform_type.toLowerCase() &&
+          platform_type.toLowerCase() &&
         platformCharge.payment_mode.toLowerCase() === payment_mode.toLowerCase()
       ) {
         throw new BadRequestException('MDR already present');
@@ -4163,8 +4200,9 @@ export class EdvironPgController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${'65d43e124174f07e3e3f8966'}`,
+          url: `${
+            process.env.VANILLA_SERVICE_ENDPOINT
+          }/main-backend/get-webhook-key?token=${token}&trustee_id=${'65d43e124174f07e3e3f8966'}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
@@ -5076,7 +5114,8 @@ export class EdvironPgController {
       if (axios.isAxiosError(error)) {
         console.error('Axios Error:', error.response?.data || error.message);
         throw new BadRequestException(
-          `External API error: ${error.response?.data?.message || error.message
+          `External API error: ${
+            error.response?.data?.message || error.message
           }`,
         );
       }
@@ -5305,7 +5344,7 @@ export class EdvironPgController {
       const { data } = await axios.request(config);
       console.log(data);
       return data;
-    } catch (error) { }
+    } catch (error) {}
   }
 
   @Post('set-mdr-zero')
@@ -5320,7 +5359,7 @@ export class EdvironPgController {
       );
 
       return reset;
-    } catch (e) { }
+    } catch (e) {}
   }
 
   @Post('sub-trustee-transactions-sum')
@@ -5368,12 +5407,15 @@ export class EdvironPgController {
   }
 
   @Post('webhook-trigger')
-  async webhookTrigger(@Body() body: {
-    collect_id: string,
-    school_ids: string[],
-    start_date: string,
-    end_date: string
-  }) {
+  async webhookTrigger(
+    @Body()
+    body: {
+      collect_id: string;
+      school_ids: string[];
+      start_date: string;
+      end_date: string;
+    },
+  ) {
     try {
       const { school_ids, start_date, end_date, collect_id } = body;
       // const StartDate=await this.edvironPgService.convertISTStartToUTC(start_date);
@@ -5382,111 +5424,140 @@ export class EdvironPgController {
       // if(!school_ids || school_ids.length === 0){
       //   throw new BadRequestException('school_ids is required');
       // }
-      const collectRequest = await this.databaseService.CollectRequestModel.find({
-        // school_id: { $in: school_ids },
-        // createdAt:{
-        //   $gte: StartDate,
-        //   $lte: EndDate
-        // }
-        _id: new Types.ObjectId(collect_id)
-      }).select('_id');
+      const collectRequest =
+        await this.databaseService.CollectRequestModel.find({
+          // school_id: { $in: school_ids },
+          // createdAt:{
+          //   $gte: StartDate,
+          //   $lte: EndDate
+          // }
+          _id: new Types.ObjectId(collect_id),
+        }).select('_id');
       console.log(collectRequest.length);
 
-      const aggregateData = await this.databaseService.CollectRequestStatusModel.aggregate([
-        {
-          $match: {
-            collect_id: { $in: collectRequest.map((item) => item._id) },
-            status: { $in: ['success', 'SUCCESS'] }
+      const aggregateData =
+        await this.databaseService.CollectRequestStatusModel.aggregate([
+          {
+            $match: {
+              collect_id: { $in: collectRequest.map((item) => item._id) },
+              status: { $in: ['success', 'SUCCESS'] },
+            },
           },
-        },
-        {
-          $lookup: {
-            from: 'collectrequests',
-            localField: 'collect_id',
-            foreignField: '_id',
-            as: 'collect_request',
-          }
-        },
-        {
-          $unwind: '$collect_request'
-        },
-        {
-          $project: {
-            collect_id: 1,
-            amount: 1,
-            status: 1,
-            school_id: '$collect_request.school_id',
-            trustee_id: '$collect_request.trustee_id',
-            req_webhook_urls: '$collect_request.req_webhook_urls',
-            custom_order_id: '$collect_request.custom_order_id',
-            createdAt: 1,
-            transaction_time: '$payment_time',
-            additional_data: '$collect_request.additional_data',
-            details: 1,
-            transaction_amount: 1,
-            bank_reference: 1,
-            payment_method: 1,
-          }
-        }
-      ])
+          {
+            $lookup: {
+              from: 'collectrequests',
+              localField: 'collect_id',
+              foreignField: '_id',
+              as: 'collect_request',
+            },
+          },
+          {
+            $unwind: '$collect_request',
+          },
+          {
+            $project: {
+              collect_id: 1,
+              amount: 1,
+              status: 1,
+              school_id: '$collect_request.school_id',
+              trustee_id: '$collect_request.trustee_id',
+              req_webhook_urls: '$collect_request.req_webhook_urls',
+              custom_order_id: '$collect_request.custom_order_id',
+              createdAt: 1,
+              transaction_time: '$payment_time',
+              additional_data: '$collect_request.additional_data',
+              details: 1,
+              transaction_amount: 1,
+              bank_reference: 1,
+              payment_method: 1,
+            },
+          },
+        ]);
       let successCount = 0;
       let failCount = 0;
       let noUrlCount = 0;
-      await Promise.all(aggregateData.map(async (item: any) => {
-        if (item?.req_webhook_urls && item?.req_webhook_urls?.length > 0) {
-          for (const url of item.req_webhook_urls) {
-            try {
-              const uptDate = moment(item.transaction_time);
-              const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
-
-              const payload = {
-                collect_id: item.collect_id,
-                amount: item.amount,
-                status: item.status,
-                trustee_id: item.trustee_id,
-                school_id: item.school_id,
-                req_webhook_urls: item.req_webhook_urls,
-                custom_order_id: item.custom_order_id,
-                createdAt: item.createdAt,
-                transaction_time: item.transaction_time,
-                additional_data: item.additional_data,
-                formattedTransactionDate: istDate,
-                transaction_amount: item.transaction_amount,
-                bank_reference: item.bank_reference,
-                payment_method: item.payment_method,
-                payment_details: item.details,
-                details: item.details ? JSON.parse(item.details) : {},
-              }
-
-              const config = {
-                method: 'post',
-                url: url,
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${process.env.WEBHOOK_SECRET}`
-                },
-                data: payload
-              }
+      await Promise.all(
+        aggregateData.map(async (item: any) => {
+          if (item?.req_webhook_urls && item?.req_webhook_urls?.length > 0) {
+            for (const url of item.req_webhook_urls) {
               try {
-                const response = await axios.request(config);
-                successCount++;
-                console.log(response.data, 'response from webhook for collect_id:', item.collect_id, 'url:', url);
+                const uptDate = moment(item.transaction_time);
+                const istDate = uptDate.tz('Asia/Kolkata').format('YYYY-MM-DD');
 
+                const payload = {
+                  collect_id: item.collect_id,
+                  amount: item.amount,
+                  status: item.status,
+                  trustee_id: item.trustee_id,
+                  school_id: item.school_id,
+                  req_webhook_urls: item.req_webhook_urls,
+                  custom_order_id: item.custom_order_id,
+                  createdAt: item.createdAt,
+                  transaction_time: item.transaction_time,
+                  additional_data: item.additional_data,
+                  formattedTransactionDate: istDate,
+                  transaction_amount: item.transaction_amount,
+                  bank_reference: item.bank_reference,
+                  payment_method: item.payment_method,
+                  payment_details: item.details,
+                  details: item.details ? JSON.parse(item.details) : {},
+                };
+
+                const config = {
+                  method: 'post',
+                  url: url,
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${process.env.WEBHOOK_SECRET}`,
+                  },
+                  data: payload,
+                };
+                try {
+                  const response = await axios.request(config);
+                  successCount++;
+                  console.log(
+                    response.data,
+                    'response from webhook for collect_id:',
+                    item.collect_id,
+                    'url:',
+                    url,
+                  );
+                } catch (e) {
+                  failCount++;
+                  console.log(
+                    'Error in webhook for collect_id:',
+                    item.collect_id,
+                    'url:',
+                    url,
+                    e.message,
+                  );
+                }
               } catch (e) {
-                failCount++;
-                console.log('Error in webhook for collect_id:', item.collect_id, 'url:', url, e.message);
+                console.log(
+                  'Error in webhook for collect_id:',
+                  item.collect_id,
+                  'url:',
+                  url,
+                  e.message,
+                );
               }
-            } catch (e) {
-              console.log('Error in webhook for collect_id:', item.collect_id, 'url:', url, e.message);
             }
+          } else {
+            console.log(
+              'No webhook url found for collect_id:',
+              item.collect_id,
+            );
+            noUrlCount++;
           }
-        } else {
-          console.log('No webhook url found for collect_id:', item.collect_id);
-          noUrlCount++;
-        }
-      }));
+        }),
+      );
 
-      return { length: aggregateData.length, successCount, failCount, noUrlCount };
+      return {
+        length: aggregateData.length,
+        successCount,
+        failCount,
+        noUrlCount,
+      };
     } catch (e) {
       console.log(e);
 
@@ -5495,51 +5566,46 @@ export class EdvironPgController {
   }
 
   @Get('get-order-detail')
-  async orderDetail(
-    @Query('collect_id') collect_id:string
-  ): Promise<{
+  async orderDetail(@Query('collect_id') collect_id: string): Promise<{
     razorpay_seamless: I_Razorpay;
     additional_data: string;
     amount: number;
-}>{
+  }> {
     try {
-      const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id)
-      if(!collect_request){
-        throw new BadRequestException('Order not found')
+      const collect_request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collect_request) {
+        throw new BadRequestException('Order not found');
       }
 
       return {
-        razorpay_seamless : collect_request.razorpay_seamless,
-        additional_data : collect_request.additional_data,
-        amount : collect_request.amount
-      }
-
+        razorpay_seamless: collect_request.razorpay_seamless,
+        additional_data: collect_request.additional_data,
+        amount: collect_request.amount,
+      };
     } catch (error) {
-      throw new BadRequestException(error)
+      throw new BadRequestException(error);
     }
   }
 
   @Get('get-rzporder-detail')
-  async rzpOrderDetail(
-    @Query('order_id') order_id:string
-  ): Promise<{
+  async rzpOrderDetail(@Query('order_id') order_id: string): Promise<{
     razorpay_seamless: I_Razorpay;
-}>{
+  }> {
     try {
-      const collect_request = await this.databaseService.CollectRequestModel.findOne({
-        'razorpay_seamless.order_id': order_id
-      })
-      if(!collect_request){
-        throw new BadRequestException('Order not found')
+      const collect_request =
+        await this.databaseService.CollectRequestModel.findOne({
+          'razorpay_seamless.order_id': order_id,
+        });
+      if (!collect_request) {
+        throw new BadRequestException('Order not found');
       }
 
       return {
-        razorpay_seamless : collect_request.razorpay_seamless
-      }
-
+        razorpay_seamless: collect_request.razorpay_seamless,
+      };
     } catch (error) {
-      throw new BadRequestException(error)
-    }
-  }
+      throw new BadRequestException(error);
+    }
+  }
 }
-

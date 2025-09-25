@@ -2400,6 +2400,19 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async getSubTrusteeBatchTransactions(body) {
+        try {
+            const { school_id, year, token, subTrusteeId } = body;
+            const decoded = jwt.verify(token, process.env.KEY);
+            if (decoded.subTrusteeId !== subTrusteeId) {
+                throw new common_1.UnauthorizedException('Invalid token');
+            }
+            return await this.edvironPgService.getSUbTrusteeBatchTransactions(school_id, year);
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
     async vendorTransactionsSettlement(body) {
         try {
             const { collect_id, token } = body;
@@ -2712,7 +2725,7 @@ let EdvironPgController = class EdvironPgController {
             const checkAmount = collectRequest.amount;
             const school_id = collectRequest.school_id;
             const schoolMdr = await this.databaseService.PlatformChargeModel.findOne({
-                school_id
+                school_id,
             }).lean();
             if (!schoolMdr) {
                 throw new common_1.BadRequestException('School MDR details not found');
@@ -3832,14 +3845,14 @@ let EdvironPgController = class EdvironPgController {
         try {
             const { school_ids, start_date, end_date, collect_id } = body;
             const collectRequest = await this.databaseService.CollectRequestModel.find({
-                _id: new mongoose_1.Types.ObjectId(collect_id)
+                _id: new mongoose_1.Types.ObjectId(collect_id),
             }).select('_id');
             console.log(collectRequest.length);
             const aggregateData = await this.databaseService.CollectRequestStatusModel.aggregate([
                 {
                     $match: {
                         collect_id: { $in: collectRequest.map((item) => item._id) },
-                        status: { $in: ['success', 'SUCCESS'] }
+                        status: { $in: ['success', 'SUCCESS'] },
                     },
                 },
                 {
@@ -3848,10 +3861,10 @@ let EdvironPgController = class EdvironPgController {
                         localField: 'collect_id',
                         foreignField: '_id',
                         as: 'collect_request',
-                    }
+                    },
                 },
                 {
-                    $unwind: '$collect_request'
+                    $unwind: '$collect_request',
                 },
                 {
                     $project: {
@@ -3869,8 +3882,8 @@ let EdvironPgController = class EdvironPgController {
                         transaction_amount: 1,
                         bank_reference: 1,
                         payment_method: 1,
-                    }
-                }
+                    },
+                },
             ]);
             let successCount = 0;
             let failCount = 0;
@@ -3904,9 +3917,9 @@ let EdvironPgController = class EdvironPgController {
                                 url: url,
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${process.env.WEBHOOK_SECRET}`
+                                    Authorization: `Bearer ${process.env.WEBHOOK_SECRET}`,
                                 },
-                                data: payload
+                                data: payload,
                             };
                             try {
                                 const response = await axios_1.default.request(config);
@@ -3928,7 +3941,12 @@ let EdvironPgController = class EdvironPgController {
                     noUrlCount++;
                 }
             }));
-            return { length: aggregateData.length, successCount, failCount, noUrlCount };
+            return {
+                length: aggregateData.length,
+                successCount,
+                failCount,
+                noUrlCount,
+            };
         }
         catch (e) {
             console.log(e);
@@ -3944,7 +3962,7 @@ let EdvironPgController = class EdvironPgController {
             return {
                 razorpay_seamless: collect_request.razorpay_seamless,
                 additional_data: collect_request.additional_data,
-                amount: collect_request.amount
+                amount: collect_request.amount,
             };
         }
         catch (error) {
@@ -3954,13 +3972,13 @@ let EdvironPgController = class EdvironPgController {
     async rzpOrderDetail(order_id) {
         try {
             const collect_request = await this.databaseService.CollectRequestModel.findOne({
-                'razorpay_seamless.order_id': order_id
+                'razorpay_seamless.order_id': order_id,
             });
             if (!collect_request) {
                 throw new common_1.BadRequestException('Order not found');
             }
             return {
-                razorpay_seamless: collect_request.razorpay_seamless
+                razorpay_seamless: collect_request.razorpay_seamless,
             };
         }
         catch (error) {
@@ -4259,6 +4277,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getMerchantBatchTransactions", null);
+__decorate([
+    (0, common_1.Get)('/get-sub-trustee-batch-transactions'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getSubTrusteeBatchTransactions", null);
 __decorate([
     (0, common_1.Post)('/vendor-transactions-settlement'),
     __param(0, (0, common_1.Body)()),
