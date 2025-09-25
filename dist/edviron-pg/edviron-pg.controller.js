@@ -2402,8 +2402,11 @@ let EdvironPgController = class EdvironPgController {
     }
     async getSubTrusteeBatchTransactions(body) {
         try {
-            const { school_id, year, token } = body;
+            const { school_id, year, token, subTrusteeId } = body;
             const decoded = jwt.verify(token, process.env.KEY);
+            if (decoded.subTrusteeId !== subTrusteeId) {
+                throw new common_1.UnauthorizedException('Invalid token');
+            }
             return await this.edvironPgService.getSUbTrusteeBatchTransactions(school_id, year);
         }
         catch (e) {

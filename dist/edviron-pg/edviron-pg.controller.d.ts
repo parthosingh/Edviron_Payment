@@ -275,6 +275,7 @@ export declare class EdvironPgController {
         school_id: string[];
         year: string;
         token: string;
+        subTrusteeId: string;
     }): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{
         _id: import("mongoose").Schema.Types.ObjectId;
     }>)[]>;

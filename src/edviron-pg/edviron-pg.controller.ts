@@ -3465,16 +3465,17 @@ export class EdvironPgController {
       school_id: string[];
       year: string;
       token: string;
+      subTrusteeId: string
     },
   ) {
     try {
-      const { school_id, year, token } = body;
+      const { school_id, year, token, subTrusteeId } = body;
 
       const decoded = jwt.verify(token, process.env.KEY!) as any;
-      // if (decoded.school_id !== school_id) {
-      //   throw new UnauthorizedException('Invalid token');
-      // }
-      //
+      if (decoded.subTrusteeId !== subTrusteeId) {
+        throw new UnauthorizedException('Invalid token');
+      }
+      
       return await this.edvironPgService.getSUbTrusteeBatchTransactions(
         school_id,
         year,
