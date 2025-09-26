@@ -68,4 +68,5 @@ export declare class EasebuzzService {
         collect_request_url: string;
     }>;
     createOrderSeamlessNonSplit(request: CollectRequest): Promise<any>;
+    createOrderSeamlessSplit(request: CollectRequest): Promise<any>;
 }

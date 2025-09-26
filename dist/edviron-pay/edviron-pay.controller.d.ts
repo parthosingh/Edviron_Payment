@@ -95,6 +95,37 @@ export declare class EdvironPayController {
                 }
             ];
         };
+        easebuzzVendors?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+            }
+        ];
+        cashfreeVedors?: [
+            {
+                vendor_id: string;
+                percentage?: number;
+                amount?: number;
+                name?: string;
+            }
+        ];
+        razorpay_vendors?: [
+            {
+                vendor_id: string;
+                account?: string;
+                percentage?: number;
+                amount?: number;
+                notes?: {
+                    branch?: string;
+                    name?: string;
+                };
+                linked_account_notes?: string[];
+                on_hold?: boolean;
+                on_hold_until?: Date;
+            }
+        ];
     }): Promise<{
         collect_request_id: import("mongoose").Schema.Types.ObjectId;
         url: string;

@@ -84,10 +84,12 @@ let EdvironPayController = class EdvironPayController {
             throw new Error('No installments found or isInstallement is false');
         }
         console.log('Installments upserted successfully');
-        return { status: 'installment updated successfully for student_id: ' + student_id };
+        return {
+            status: 'installment updated successfully for student_id: ' + student_id,
+        };
     }
     async collect(body) {
-        const { isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, vba_account_number, easebuzz, } = body;
+        const { isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, vba_account_number, easebuzz, easebuzzVendors, cashfreeVedors, razorpay_vendors } = body;
         try {
             if (!token) {
                 throw new Error('Token is required');
@@ -110,7 +112,7 @@ let EdvironPayController = class EdvironPayController {
                     _id: { $in: InstallmentsIds },
                     school_id,
                     trustee_id,
-                    status: { $ne: 'paid' }
+                    status: { $ne: 'paid' },
                 });
                 if (installments.length !== InstallmentsIds.length) {
                     throw new Error('Some installments are invalid or already paid');
@@ -119,7 +121,7 @@ let EdvironPayController = class EdvironPayController {
                 const cashfreeCred = {
                     cf_x_client_id: cashfree.client_id,
                     cf_x_client_secret: cashfree.client_secret,
-                    cf_api_key: cashfree.api_key
+                    cf_api_key: cashfree.api_key,
                 };
                 const request = await this.databaseService.CollectRequestModel.create({
                     amount,
@@ -135,8 +137,9 @@ let EdvironPayController = class EdvironPayController {
                     custom_order_id,
                     req_webhook_urls: [webhook_url],
                     easebuzz_sub_merchant_id: easebuzz?.mid || null,
-                    easebuzzVendors: easebuzz?.easebuzzVendors || [],
-                    cashfreeVedors: cashfree?.cashfreeVedors || [],
+                    easebuzzVendors: easebuzzVendors || [],
+                    cashfreeVedors: cashfreeVedors || [],
+                    razorpay_vendors_info: razorpay_vendors,
                     isVBAPayment: isVBAPayment || false,
                     school_name,
                     isSplitPayments: isSplit || false,
@@ -162,12 +165,13 @@ let EdvironPayController = class EdvironPayController {
     }
     async getStudentInstallments(student_id) {
         try {
-            const installments = await this.databaseService.InstallmentsModel.find({ student_id });
+            const installments = await this.databaseService.InstallmentsModel.find({
+                student_id,
+            });
             installments.sort((a, b) => Number(a.month) - Number(b.month));
             return installments;
         }
-        catch (e) {
-        }
+        catch (e) { }
     }
     async getInstallCallbackCashfree(collect_id) {
         try {
@@ -177,8 +181,7 @@ let EdvironPayController = class EdvironPayController {
             }
             request.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
         }
-        catch (e) {
-        }
+        catch (e) { }
     }
     async getVendorsForSchool(school_id) {
         try {

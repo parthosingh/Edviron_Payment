@@ -46,7 +46,15 @@ let EdvironPayService = class EdvironPayService {
             let easebuzz_pg = false;
             if (gatewat.easebuzz) {
                 easebuzz_pg = true;
-                const easebuzzSessionId = await this.easebuzzService.createOrderSeamlessNonSplit(request);
+                let easebuzzSessionId;
+                if (request.isSplitPayments) {
+                    easebuzzSessionId =
+                        await this.easebuzzService.createOrderSeamlessSplit(request);
+                }
+                else {
+                    easebuzzSessionId =
+                        await this.easebuzzService.createOrderSeamlessNonSplit(request);
+                }
                 paymentInfo.easebuzz_id = easebuzzSessionId;
                 await collectReq.save();
             }
