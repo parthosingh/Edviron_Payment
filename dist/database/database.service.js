@@ -25,8 +25,9 @@ const batch_transactions_schema_1 = require("./schemas/batch.transactions.schema
 const error_logs_schema_1 = require("./schemas/error.logs.schema");
 const platform_charges_schema_1 = require("./schemas/platform.charges.schema");
 const installments_schema_1 = require("./schemas/installments.schema");
+const student_detail_schema_1 = require("./schemas/student_detail.schema");
 let DatabaseService = class DatabaseService {
-    constructor(CollectRequestModel, WebhooksModel, CollectRequestStatusModel, VendorTransactionModel, ErpWebhooksLogsModel, BatchTransactionModel, ErrorLogsModel, PlatformChargeModel, InstallmentsModel) {
+    constructor(CollectRequestModel, WebhooksModel, CollectRequestStatusModel, VendorTransactionModel, ErpWebhooksLogsModel, BatchTransactionModel, ErrorLogsModel, PlatformChargeModel, InstallmentsModel, StudentDetailModel) {
         this.CollectRequestModel = CollectRequestModel;
         this.WebhooksModel = WebhooksModel;
         this.CollectRequestStatusModel = CollectRequestStatusModel;
@@ -36,6 +37,7 @@ let DatabaseService = class DatabaseService {
         this.ErrorLogsModel = ErrorLogsModel;
         this.PlatformChargeModel = PlatformChargeModel;
         this.InstallmentsModel = InstallmentsModel;
+        this.StudentDetailModel = StudentDetailModel;
     }
 };
 exports.DatabaseService = DatabaseService;
@@ -50,7 +52,9 @@ exports.DatabaseService = DatabaseService = __decorate([
     __param(6, (0, mongoose_1.InjectModel)(error_logs_schema_1.ErrorLogs.name)),
     __param(7, (0, mongoose_1.InjectModel)(platform_charges_schema_1.SchoolMdr.name)),
     __param(8, (0, mongoose_1.InjectModel)(installments_schema_1.Installments.name)),
+    __param(9, (0, mongoose_1.InjectModel)(student_detail_schema_1.StudentDetail.name)),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,

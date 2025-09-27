@@ -32,7 +32,9 @@ __decorate([
     __metadata("design:type", String)
 ], Installments.prototype, "trustee_id", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({}),
+    (0, mongoose_1.Prop)({
+        ref: 'StudentDetails'
+    }),
     __metadata("design:type", String)
 ], Installments.prototype, "student_id", void 0);
 __decorate([

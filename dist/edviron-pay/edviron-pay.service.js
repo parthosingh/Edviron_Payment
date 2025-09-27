@@ -82,6 +82,44 @@ let EdvironPayService = class EdvironPayService {
             throw new common_1.BadRequestException(err.message);
         }
     }
+    async createStudent(student_detail, school_id, trustee_id) {
+        const { student_id, student_number, student_name, student_email } = student_detail;
+        try {
+            const studentDetail = await this.databaseService.StudentDetailModel.findOne({
+                student_id: student_id,
+                school_id: school_id,
+                trustee_id: trustee_id,
+            });
+            if (!studentDetail) {
+                await this.databaseService.StudentDetailModel.create({
+                    student_id,
+                    student_email,
+                    student_name,
+                    trustee_id,
+                    school_id,
+                });
+            }
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
+    async studentFind(student_id, school_id, trustee_id) {
+        try {
+            const studentDetail = await this.databaseService.StudentDetailModel.findOne({
+                student_id: student_id,
+                school_id: school_id,
+                trustee_id: trustee_id,
+            });
+            if (!studentDetail) {
+                throw new common_1.BadRequestException('student not found');
+            }
+            return studentDetail;
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
 };
 exports.EdvironPayService = EdvironPayService;
 exports.EdvironPayService = EdvironPayService = __decorate([
