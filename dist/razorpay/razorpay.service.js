@@ -15,6 +15,7 @@ const transactionStatus_1 = require("../types/transactionStatus");
 const crypto = require("crypto");
 const axios_1 = require("axios");
 const database_service_1 = require("../database/database.service");
+const _jwt = require("jsonwebtoken");
 const formatRazorpayPaymentStatus = (status) => {
     const statusMap = {
         created: transactionStatus_1.TransactionStatus.PENDING,
@@ -43,6 +44,51 @@ let RazorpayService = class RazorpayService {
     async createOrder(collectRequest) {
         try {
             const { _id, amount: totalRupees, razorpay, razorpay_vendors_info, additional_data, } = collectRequest;
+            const studentDetail = JSON.parse(additional_data);
+            const totalPaise = Math.round(totalRupees * 100);
+            const data = {
+                amount: totalPaise,
+                currency: 'INR',
+                receipt: _id.toString(),
+                notes: {
+                    student_name: studentDetail?.student_details?.student_name || 'N/A',
+                    student_email: studentDetail?.student_details?.student_email || 'N/A',
+                    student_id: studentDetail?.student_details?.student_id || 'N/A',
+                    student_phone_no: studentDetail?.student_details?.student_phone_no || 'N/A',
+                },
+            };
+            if (razorpay_vendors_info?.length) {
+                let computed = 0;
+                const transfers = razorpay_vendors_info.map((v, idx) => {
+                    let amtPaise;
+                    if (v.amount !== undefined) {
+                        amtPaise = Math.round(v.amount * 100);
+                    }
+                    else if (v.percentage !== undefined) {
+                        amtPaise = Math.round((totalPaise * v.percentage) / 100);
+                    }
+                    else {
+                        throw new Error(`Vendor at index ${idx} must have amount or percentage`);
+                    }
+                    computed += amtPaise;
+                    return {
+                        account: v.account,
+                        amount: amtPaise,
+                        currency: 'INR',
+                        notes: v.notes || {},
+                        linked_account_notes: v.linked_account_notes,
+                        on_hold: v.on_hold,
+                        on_hold_until: v.on_hold_until
+                            ? Math.floor(v.on_hold_until.getTime() / 1000)
+                            : undefined,
+                    };
+                });
+                const remainder = totalPaise - computed;
+                if (remainder !== 0 && transfers.length > 0) {
+                    transfers[0].amount += remainder;
+                }
+                data.transfers = transfers;
+            }
             const createOrderConfig = {
                 method: 'post',
                 maxBodyLength: Infinity,
@@ -55,11 +101,7 @@ let RazorpayService = class RazorpayService {
                     'Content-Type': 'application/json',
                     'X-Razorpay-Account': collectRequest.razorpay_seamless.razorpay_mid,
                 },
-                data: {
-                    amount: collectRequest.amount * 100,
-                    currency: 'INR',
-                    receipt: collectRequest._id.toString(),
-                },
+                data,
             };
             const { data: razorpayRes } = await axios_1.default.request(createOrderConfig);
             await collectRequest.constructor.updateOne({ _id }, {
@@ -322,7 +364,72 @@ let RazorpayService = class RazorpayService {
         }
         catch (error) {
             console.log(error.response?.data || error.message, 'error');
-            throw new common_1.BadRequestException(error.response?.data || error.message);
+            throw new common_1.BadRequestException(error.response?.data || error.message.description);
+        }
+    }
+    async refund(collect_id, refundAmount, refund_id) {
+        try {
+            const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectRequest) {
+                throw new common_1.BadRequestException('CollectRequest with ID ' + collect_id + ' not found.');
+            }
+            if (refundAmount > collectRequest.amount) {
+                throw new common_1.BadRequestException('Refund amount cannot be greater than the original amount.');
+            }
+            const status = await this.getPaymentStatus(collectRequest.razorpay_seamless.order_id, collectRequest);
+            if (status.status !== 'SUCCESS') {
+                throw new common_1.BadRequestException('Payment not captured yet.');
+            }
+            const payload = {
+                refund_id
+            };
+            const token = _jwt.sign(payload, process.env.JWT_SECRET_FOR_INTRANET);
+            const refundConfig = {
+                method: 'get',
+                maxBodyLength: Infinity,
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-single-refund?refund_id=${refund_id}&token=${token}`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                },
+            };
+            const { data: refundInfo } = await axios_1.default.request(refundConfig);
+            let isSplit = false;
+            if (refundInfo.isSplitRedund) {
+                isSplit = true;
+            }
+            const totalPaise = Math.round(refundAmount * 100);
+            const config = {
+                method: 'post',
+                url: `${process.env.RAZORPAY_URL}/v1/payments/${collectRequest.razorpay_seamless.payment_id}/refund`,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                auth: {
+                    username: collectRequest.razorpay_seamless.razorpay_id,
+                    password: collectRequest.razorpay_seamless.razorpay_secret,
+                },
+                data: {
+                    amount: totalPaise,
+                    reverse_all: isSplit || false
+                },
+            };
+            console.log(config, 'razorpay refind config');
+            const response = await axios_1.default.request(config);
+            console.log(response.data, 'refund response');
+            return response.data;
+        }
+        catch (error) {
+            if (axios_1.default.isAxiosError(error)) {
+                console.error('Razorpay Refund Error:', {
+                    message: error.message,
+                    status: error.response?.status,
+                    data: error.response?.data,
+                });
+                throw new common_1.BadGatewayException(error.response?.data || error.message);
+            }
+            console.error('Internal Error:', error);
+            throw new common_1.InternalServerErrorException(error.message);
         }
     }
 };

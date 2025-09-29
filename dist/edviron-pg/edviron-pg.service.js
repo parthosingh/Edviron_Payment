@@ -48,6 +48,7 @@ let EdvironPgService = class EdvironPgService {
             if (!collectReq) {
                 throw new common_1.BadRequestException('Collect request not found');
             }
+            const razorpay_vendors = collectReq.razorpay_vendors_info;
             const schoolName = school_name.replace(/ /g, '-');
             const axios = require('axios');
             const currentTime = new Date();
@@ -236,12 +237,38 @@ let EdvironPgService = class EdvironPgService {
                     }, 25 * 60 * 1000);
                 }
             }
-            console.log(request.razorpay_seamless.razorpay_mid, "mid");
-            console.log(request.razorpay_seamless.razorpay_mid, "mid");
+            console.log(request.razorpay_seamless.razorpay_mid, 'mid');
+            console.log(request.razorpay_seamless.razorpay_mid, 'mid');
             let razorpay_id = '';
             let razorpay_pg = false;
             if (request.razorpay_seamless.razorpay_mid &&
                 request.razorpay_seamless.razorpay_id) {
+                if (splitPayments && razorpay_vendors && razorpay_vendors.length > 0) {
+                    collectReq.vendors_info = vendor;
+                    await collectReq.save();
+                    razorpay_vendors.map(async (info) => {
+                        const { vendor_id, percentage, amount, notes, name, linked_account_notes, on_hold, on_hold_until, } = info;
+                        let split_amount = 0;
+                        if (amount) {
+                            split_amount = amount;
+                        }
+                        if (percentage && percentage !== 0) {
+                            split_amount = (request.amount * percentage) / 100;
+                        }
+                        await new this.databaseService.VendorTransactionModel({
+                            vendor_id: vendor_id,
+                            amount: split_amount,
+                            collect_id: request._id,
+                            gateway: collect_request_schema_1.Gateway.EDVIRON_RAZORPAY,
+                            status: transactionStatus_1.TransactionStatus.PENDING,
+                            trustee_id: request.trustee_id,
+                            school_id: request.school_id,
+                            custom_order_id: request.custom_order_id || '',
+                            name,
+                            razorpay_vendors: info,
+                        }).save();
+                    });
+                }
                 console.log('creating order with razorpay');
                 const data = await this.razorpayService.createOrder(request);
                 razorpay_id = data?.id;
@@ -286,7 +313,7 @@ let EdvironPgService = class EdvironPgService {
                     '&razorpay_id=' +
                     razorpay_id +
                     '&currency=' +
-                    newcurrency
+                    newcurrency,
             };
         }
         catch (err) {
@@ -1823,15 +1850,15 @@ let EdvironPgService = class EdvironPgService {
                     $project: {
                         order_amount: 1,
                         transaction_amount: {
-                            $ifNull: ["$transaction_amount", "$order_amount"],
+                            $ifNull: ['$transaction_amount', '$order_amount'],
                         },
                     },
                 },
                 {
                     $group: {
                         _id: null,
-                        total_order_amount: { $sum: "$order_amount" },
-                        total_transaction_amount: { $sum: "$transaction_amount" },
+                        total_order_amount: { $sum: '$order_amount' },
+                        total_transaction_amount: { $sum: '$transaction_amount' },
                         total_transactions: { $sum: 1 },
                     },
                 },
@@ -1845,7 +1872,7 @@ let EdvironPgService = class EdvironPgService {
                 },
             ]);
             if (!batch || batch.length === 0) {
-                throw new Error("Batch not found");
+                throw new Error('Batch not found');
             }
             return batch[0];
         }

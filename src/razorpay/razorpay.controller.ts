@@ -665,11 +665,16 @@ export class RazorpayController {
 
   @Get('get-qr')
   async getQr(@Query('collect_id') collect_id: string) {
-    const collect_request =
+    try {
+        const collect_request =
       await this.databaseService.CollectRequestModel.findById(collect_id);
     if (!collect_request) {
       throw new BadRequestException('Order not found');
     }
     return this.razorpayService.getQr(collect_request);
+    } catch (error) {
+      throw new BadRequestException(error.message)
+    }
+  
   }
 }

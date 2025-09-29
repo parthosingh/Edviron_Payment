@@ -35,7 +35,7 @@ export class EdvironPgService implements GatewayService {
     private readonly databaseService: DatabaseService,
     private readonly cashfreeService: CashfreeService,
     private readonly razorpayService: RazorpayService,
-  ) { }
+  ) {}
   async collect(
     request: CollectRequest,
     platform_charges: platformChange[],
@@ -69,7 +69,7 @@ export class EdvironPgService implements GatewayService {
       },
     ],
     easebuzz_school_label?: string | null,
-    isSelectGateway?:boolean | null
+    isSelectGateway?: boolean | null,
   ): Promise<Transaction | undefined> {
     try {
       let paymentInfo: PaymentIds = {
@@ -86,6 +86,8 @@ export class EdvironPgService implements GatewayService {
       if (!collectReq) {
         throw new BadRequestException('Collect request not found');
       }
+
+      const razorpay_vendors = collectReq.razorpay_vendors_info;
 
       const schoolName = school_name.replace(/ /g, '-'); //replace spaces because url dosent support spaces
       const axios = require('axios');
@@ -319,15 +321,50 @@ export class EdvironPgService implements GatewayService {
           ); // 25 minutes in milliseconds
         }
       }
-console.log(request.razorpay_seamless.razorpay_mid, "mid")
+      console.log(request.razorpay_seamless.razorpay_mid, 'mid');
 
-      console.log(request.razorpay_seamless.razorpay_mid, "mid")
+      console.log(request.razorpay_seamless.razorpay_mid, 'mid');
       let razorpay_id = '';
       let razorpay_pg = false;
       if (
         request.razorpay_seamless.razorpay_mid &&
         request.razorpay_seamless.razorpay_id
       ) {
+        if (splitPayments && razorpay_vendors && razorpay_vendors.length > 0) {
+          collectReq.vendors_info = vendor;
+          await collectReq.save();
+          razorpay_vendors.map(async (info) => {
+            const {
+              vendor_id,
+              percentage,
+              amount,
+              notes,
+              name,
+              linked_account_notes,
+              on_hold,
+              on_hold_until,
+            } = info;
+            let split_amount = 0;
+            if (amount) {
+              split_amount = amount;
+            }
+            if (percentage && percentage !== 0) {
+              split_amount = (request.amount * percentage) / 100;
+            }
+            await new this.databaseService.VendorTransactionModel({
+              vendor_id: vendor_id,
+              amount: split_amount,
+              collect_id: request._id,
+              gateway: Gateway.EDVIRON_RAZORPAY,
+              status: TransactionStatus.PENDING,
+              trustee_id: request.trustee_id,
+              school_id: request.school_id,
+              custom_order_id: request.custom_order_id || '',
+              name,
+              razorpay_vendors: info,
+            }).save();
+          });
+        }
         console.log('creating order with razorpay');
         const data = await this.razorpayService.createOrder(request);
         razorpay_id = data?.id;
@@ -353,7 +390,7 @@ console.log(request.razorpay_seamless.razorpay_mid, "mid")
         };
       }
 
-      let newcurrency = request.currency ? request.currency : 'INR' 
+      let newcurrency = request.currency ? request.currency : 'INR';
       return {
         url:
           process.env.URL +
@@ -376,15 +413,15 @@ console.log(request.razorpay_seamless.razorpay_mid, "mid")
           '&razorpay_pg=' +
           razorpay_pg +
           '&razorpay_id=' +
-          razorpay_id + 
-          '&currency=' + 
-          newcurrency
+          razorpay_id +
+          '&currency=' +
+          newcurrency,
       };
     } catch (err) {
       if (err.name === 'AxiosError')
         throw new BadRequestException(
           'Invalid client id or client secret ' +
-          JSON.stringify(err.response.data),
+            JSON.stringify(err.response.data),
         );
     }
   }
@@ -432,14 +469,14 @@ console.log(request.razorpay_seamless.razorpay_mid, "mid")
       let transaction_time = '';
       if (
         order_status_to_transaction_status_map[
-        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ] === TransactionStatus.SUCCESS
       ) {
         transaction_time = collect_status?.updatedAt?.toISOString() as string;
       }
       const checkStatus =
         order_status_to_transaction_status_map[
-        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ];
       let status_code;
       if (checkStatus === TransactionStatus.SUCCESS) {
@@ -458,7 +495,7 @@ console.log(request.razorpay_seamless.razorpay_mid, "mid")
 
       let formatedStatus =
         order_status_to_transaction_status_map[
-        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ];
       if (collect_status.status === PaymentStatus.USER_DROPPED) {
         formatedStatus = TransactionStatus.USER_DROPPED;
@@ -1521,7 +1558,7 @@ console.log(request.razorpay_seamless.razorpay_mid, "mid")
     trustee_id: string,
     start_date: string,
     end_date: string,
-    school_id : string[],
+    school_id: string[],
     status?: string | null,
     mode?: string[] | null,
     isQRPayment?: boolean | null,
@@ -1547,7 +1584,7 @@ console.log(request.razorpay_seamless.razorpay_mid, "mid")
         },
       };
       console.log({ collectQuery });
-      
+
       if (isQRPayment) {
         collectQuery = {
           ...collectQuery,
@@ -1675,9 +1712,8 @@ console.log(request.razorpay_seamless.razorpay_mid, "mid")
       console.timeEnd('transactionsCount');
 
       return {
-        transactions:transactions[0],
+        transactions: transactions[0],
       };
-
     } catch (e) {
       console.log(e);
       throw new Error(e.message);
@@ -1972,13 +2008,15 @@ console.log(request.razorpay_seamless.razorpay_mid, "mid")
       if (checkbatch) {
         await this.databaseService.ErrorLogsModel.create({
           type: 'BATCH TRANSACTION CORN',
-          des: `Batch transaction already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]
-            } month`,
+          des: `Batch transaction already exists for trustee_id ${trustee_id} of ${
+            monthsFull[new Date(endDate).getMonth()]
+          } month`,
           identifier: trustee_id,
           body: `${JSON.stringify({ startDate, endDate, status })}`,
         });
         throw new BadRequestException(
-          `Already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]
+          `Already exists for trustee_id ${trustee_id} of ${
+            monthsFull[new Date(endDate).getMonth()]
           } month`,
         );
       }
@@ -2161,13 +2199,15 @@ console.log(request.razorpay_seamless.razorpay_mid, "mid")
       if (checkbatch) {
         await this.databaseService.ErrorLogsModel.create({
           type: 'BATCH TRANSACTION CORN',
-          des: `Batch transaction already exists for school_id ${school_id} of ${monthsFull[new Date(endDate).getMonth()]
-            } month`,
+          des: `Batch transaction already exists for school_id ${school_id} of ${
+            monthsFull[new Date(endDate).getMonth()]
+          } month`,
           identifier: school_id,
           body: `${JSON.stringify({ startDate, endDate, status })}`,
         });
         throw new BadRequestException(
-          `Already exists for school_id ${school_id} of ${monthsFull[new Date(endDate).getMonth()]
+          `Already exists for school_id ${school_id} of ${
+            monthsFull[new Date(endDate).getMonth()]
           } month`,
         );
       }
@@ -2269,7 +2309,7 @@ console.log(request.razorpay_seamless.razorpay_mid, "mid")
   async getSUbTrusteeBatchTransactions(school_id: string[], year: string) {
     try {
       const batch = await this.databaseService.BatchTransactionModel.find({
-        school_id : {$in : school_id},
+        school_id: { $in: school_id },
         year,
       });
 
@@ -2295,15 +2335,15 @@ console.log(request.razorpay_seamless.razorpay_mid, "mid")
           $project: {
             order_amount: 1,
             transaction_amount: {
-              $ifNull: ["$transaction_amount", "$order_amount"], // example projection
+              $ifNull: ['$transaction_amount', '$order_amount'], // example projection
             },
           },
         },
         {
           $group: {
             _id: null,
-            total_order_amount: { $sum: "$order_amount" },
-            total_transaction_amount: { $sum: "$transaction_amount" },
+            total_order_amount: { $sum: '$order_amount' },
+            total_transaction_amount: { $sum: '$transaction_amount' },
             total_transactions: { $sum: 1 },
           },
         },
@@ -2317,9 +2357,8 @@ console.log(request.razorpay_seamless.razorpay_mid, "mid")
         },
       ]);
 
-
       if (!batch || batch.length === 0) {
-        throw new Error("Batch not found");
+        throw new Error('Batch not found');
       }
 
       return batch[0];
@@ -2327,7 +2366,6 @@ console.log(request.razorpay_seamless.razorpay_mid, "mid")
       throw new BadRequestException(e.message);
     }
   }
-
 
   async getSingleTransaction(collect_id: string) {
     const objId = new Types.ObjectId(collect_id);

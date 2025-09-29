@@ -22,4 +22,5 @@ export declare class RazorpayService {
         status: any;
         image_url: any;
     }>;
+    refund(collect_id: string, refundAmount: number, refund_id: string): Promise<any>;
 }

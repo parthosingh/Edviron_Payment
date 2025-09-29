@@ -255,6 +255,23 @@ interface CASHFREE_CREDENTIALS {
   cf_api_key: string;
 }
 
+export class RazorpayVendorInfo {
+  vendor_id: string;
+  edv_vendor_id: string;
+  account?: string;
+  percentage?: number;
+  amount?: number;
+  name?: string;
+  notes?: {
+    branch?: string;
+    name?: string;
+  };
+  linked_account_notes?: string[];
+  on_hold?: boolean;
+  on_hold_until?: Date;
+}
+
+
 @Schema()
 export class paytmPos {
   @Prop({ type: String, required: false })

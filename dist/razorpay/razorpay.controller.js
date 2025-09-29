@@ -542,11 +542,16 @@ let RazorpayController = class RazorpayController {
         }
     }
     async getQr(collect_id) {
-        const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id);
-        if (!collect_request) {
-            throw new common_1.BadRequestException('Order not found');
+        try {
+            const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collect_request) {
+                throw new common_1.BadRequestException('Order not found');
+            }
+            return this.razorpayService.getQr(collect_request);
         }
-        return this.razorpayService.getQr(collect_request);
+        catch (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
     }
 };
 exports.RazorpayController = RazorpayController;
