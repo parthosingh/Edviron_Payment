@@ -143,8 +143,21 @@ export class EdvironPayService {
   //     }
   // }
 
-  async createStudent(student_detail : any,  school_id: string, trustee_id: string,) {
-    const { student_id, student_number, student_name, student_email } =
+  async createStudent(
+    student_detail: {
+      student_id: string;
+      student_name: string;
+      student_email: string;
+      student_number: string;
+      student_class?: string;
+      section?: string;
+      gender?: string;
+      additional_info?: string;
+    },
+    school_id: string,
+    trustee_id: string,
+  ) {
+    const { student_id, student_number, student_name, student_email,  section,  gender, additional_info, student_class, } =
       student_detail;
     try {
       const studentDetail =
@@ -160,10 +173,15 @@ export class EdvironPayService {
           student_name,
           trustee_id,
           school_id,
+          student_class,
+          section,
+          gender,
+          additional_info
         });
       }
+      return studentDetail
     } catch (error) {
-        throw new BadRequestException(error.message)
+      throw new BadRequestException(error.message);
     }
   }
 

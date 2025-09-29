@@ -83,7 +83,7 @@ let EdvironPayService = class EdvironPayService {
         }
     }
     async createStudent(student_detail, school_id, trustee_id) {
-        const { student_id, student_number, student_name, student_email } = student_detail;
+        const { student_id, student_number, student_name, student_email, section, gender, additional_info, student_class, } = student_detail;
         try {
             const studentDetail = await this.databaseService.StudentDetailModel.findOne({
                 student_id: student_id,
@@ -97,8 +97,13 @@ let EdvironPayService = class EdvironPayService {
                     student_name,
                     trustee_id,
                     school_id,
+                    student_class,
+                    section,
+                    gender,
+                    additional_info
                 });
             }
+            return studentDetail;
         }
         catch (error) {
             throw new common_1.BadRequestException(error.message);

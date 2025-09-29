@@ -42,7 +42,18 @@ export declare class EdvironPayService {
         collect_request_id: import("mongoose").Schema.Types.ObjectId;
         url: string;
     }>;
-    createStudent(student_detail: any, school_id: string, trustee_id: string): Promise<void>;
+    createStudent(student_detail: {
+        student_id: string;
+        student_name: string;
+        student_email: string;
+        student_number: string;
+        student_class?: string;
+        section?: string;
+        gender?: string;
+        additional_info?: string;
+    }, school_id: string, trustee_id: string): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/student_detail.schema").StudentDetails> & import("../database/schemas/student_detail.schema").StudentDetail & Document & {
+        _id: import("mongoose").Types.ObjectId;
+    }) | null>;
     studentFind(student_id: string, school_id: string, trustee_id: string): Promise<import("mongoose").Document<unknown, {}, import("../database/schemas/student_detail.schema").StudentDetails> & import("../database/schemas/student_detail.schema").StudentDetail & Document & {
         _id: import("mongoose").Types.ObjectId;
     }>;

@@ -18,6 +18,21 @@ export class StudentDetail {
 
   @Prop({})
   student_email: string;
+  
+  @Prop({})
+  student_number: string;
+    
+  @Prop({required : false})
+  student_class: string;
+    
+  @Prop({required : false})
+  section: string;
+    
+  @Prop({required : false})
+  gender: string;
+    
+  @Prop({required : false})
+  additional_info: string;
 }
 
 export type StudentDetails = StudentDetail & Document;

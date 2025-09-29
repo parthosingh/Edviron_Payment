@@ -34,6 +34,26 @@ __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
 ], StudentDetail.prototype, "student_email", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({}),
+    __metadata("design:type", String)
+], StudentDetail.prototype, "student_number", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], StudentDetail.prototype, "student_class", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], StudentDetail.prototype, "section", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], StudentDetail.prototype, "gender", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], StudentDetail.prototype, "additional_info", void 0);
 exports.StudentDetail = StudentDetail = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], StudentDetail);

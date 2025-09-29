@@ -5,6 +5,11 @@ export declare class StudentDetail {
     trustee_id: string;
     school_id: string;
     student_email: string;
+    student_number: string;
+    student_class: string;
+    section: string;
+    gender: string;
+    additional_info: string;
 }
 export type StudentDetails = StudentDetail & Document;
 export declare const StudentDetailSchema: mongoose.Schema<StudentDetail, mongoose.Model<StudentDetail, any, any, any, mongoose.Document<unknown, any, StudentDetail> & StudentDetail & {
