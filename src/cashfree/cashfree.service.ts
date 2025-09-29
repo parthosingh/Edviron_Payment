@@ -1803,13 +1803,10 @@ export class CashfreeService {
         await collectReq.save();
 
         cashfreeVedors.map(async (info) => {
-          const { vendor_id, percentage, amount, name } = info;
+          const { vendor_id,  amount, name } = info;
           let split_amount = 0;
           if (amount) {
             split_amount = amount;
-          }
-          if (percentage && percentage !== 0) {
-            split_amount = (request.amount * percentage) / 100;
           }
           await new this.databaseService.VendorTransactionModel({
             vendor_id: vendor_id,
@@ -1820,7 +1817,7 @@ export class CashfreeService {
             trustee_id: request.trustee_id,
             school_id: request.school_id,
             custom_order_id: request.custom_order_id || '',
-            name,
+            name ,
           }).save();
         });
       }
@@ -1847,7 +1844,7 @@ export class CashfreeService {
       const cf_payment_id = cashfreeRes.payment_session_id;
       return cf_payment_id
     } catch (e) {
-      // console.log(e);
+      console.log(e, "emessage");
       
       throw new BadRequestException(e.message);
     }

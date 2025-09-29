@@ -40,6 +40,9 @@ export class EdvironPayController {
       gateway,
       isInstallement,
       installments,
+      allvendors,
+      cashfreeVedors,
+      easebuzzVendors,
     } = body;
 
     if (isInstallement && installments && installments.length > 0) {
@@ -53,8 +56,18 @@ export class EdvironPayController {
             year: installment.year || year,
           };
 
+          const { split_payments, vendors_info } = installment;
+
           const existing =
             await this.databaseService.InstallmentsModel.findOne(filter);
+
+          const vendorsBlock = split_payments
+            ? {
+                vendors_info: allvendors,
+                cashfreeVedors: cashfreeVedors,
+                easebuzzVendors: easebuzzVendors,
+              }
+            : {};
 
           if (!existing) {
             // ✅ Create new installment
@@ -76,6 +89,8 @@ export class EdvironPayController {
               status: 'unpaid', // default status
               label: installment.label,
               body: installment.body,
+              isSplitPayments: split_payments,
+              ...vendorsBlock,
             });
           }
 
@@ -83,7 +98,6 @@ export class EdvironPayController {
             // ✅ Already paid → don’t overwrite
             return existing;
           }
-          console.log({ existing });
 
           // ✅ Unpaid → update installment data
           return this.databaseService.InstallmentsModel.updateOne(filter, {
@@ -100,6 +114,8 @@ export class EdvironPayController {
               student_name,
               student_email,
               fee_heads: installment.fee_heads,
+              isSplitPayments: split_payments,
+              ...vendorsBlock,
             },
           });
         }),
@@ -110,6 +126,8 @@ export class EdvironPayController {
     console.log('Installments upserted successfully');
     return {
       status: 'installment updated successfully for student_id: ' + student_id,
+      student_id: student_id,
+      url: `${process.env.PG_FRONTEND}/collect-fee?student_id=${student_id}&school_id=${school_id}&trustee_id=${trustee_id}`,
     };
   }
 
@@ -233,7 +251,7 @@ export class EdvironPayController {
       easebuzz,
       easebuzzVendors,
       cashfreeVedors,
-      razorpay_vendors
+      razorpay_vendors,
     } = body;
 
     try {

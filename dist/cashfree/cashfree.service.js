@@ -1312,13 +1312,10 @@ let CashfreeService = class CashfreeService {
                 collectReq.vendors_info = cashfreeVedors;
                 await collectReq.save();
                 cashfreeVedors.map(async (info) => {
-                    const { vendor_id, percentage, amount, name } = info;
+                    const { vendor_id, amount, name } = info;
                     let split_amount = 0;
                     if (amount) {
                         split_amount = amount;
-                    }
-                    if (percentage && percentage !== 0) {
-                        split_amount = (request.amount * percentage) / 100;
                     }
                     await new this.databaseService.VendorTransactionModel({
                         vendor_id: vendor_id,
@@ -1353,6 +1350,7 @@ let CashfreeService = class CashfreeService {
             return cf_payment_id;
         }
         catch (e) {
+            console.log(e, "emessage");
             throw new common_1.BadRequestException(e.message);
         }
     }

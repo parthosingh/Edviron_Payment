@@ -32,6 +32,8 @@ export declare class EdvironPayController {
     constructor(databaseService: DatabaseService, edvironPay: EdvironPayService);
     upsertInstallments(body: any): Promise<{
         status: string;
+        student_id: any;
+        url: string;
     }>;
     collect(body: {
         isInstallment: boolean;
