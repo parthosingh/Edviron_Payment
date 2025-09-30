@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CollectRequestSchema = exports.CollectRequest = exports.paytmPos = exports.RazorpayVendorInfo = exports.CurrencyCode = exports.PaymentIds = exports.Gateway = void 0;
+exports.CollectRequestSchema = exports.CollectRequest = exports.paytmPos = exports.CurrencyCode = exports.PaymentIds = exports.Gateway = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 var Gateway;
 (function (Gateway) {
@@ -208,9 +208,6 @@ var CurrencyCode;
     CurrencyCode["YER"] = "YER";
     CurrencyCode["ZMW"] = "ZMW";
 })(CurrencyCode || (exports.CurrencyCode = CurrencyCode = {}));
-class RazorpayVendorInfo {
-}
-exports.RazorpayVendorInfo = RazorpayVendorInfo;
 let paytmPos = class paytmPos {
 };
 exports.paytmPos = paytmPos;
