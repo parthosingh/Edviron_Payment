@@ -18,9 +18,12 @@ export declare class RazorpayService {
     fetchCardDetailsOfaPaymentFromRazorpay(payment_id: string, collectRequest: CollectRequest): Promise<any>;
     getDispute(dispute_id: string, razorpay_mid: string, collectRequest: any): Promise<any>;
     getQr(collectRequest: CollectRequest): Promise<{
-        qr_id: any;
-        status: any;
-        image_url: any;
+        base64Image: any;
+        intent: any;
+    }>;
+    getbase64(url: string): Promise<{
+        base64Image: any;
+        intent: any;
     }>;
     refund(collect_id: string, refundAmount: number, refund_id: string): Promise<any>;
 }

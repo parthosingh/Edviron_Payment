@@ -18,6 +18,8 @@ import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import { Types } from 'mongoose';
 import axios from 'axios';
+import { createCanvas, loadImage } from 'canvas';
+import jsQR from "jsqr";
 
 @Controller('razorpay')
 export class RazorpayController {
@@ -661,8 +663,6 @@ export class RazorpayController {
     }
   }
 
-  //comment
-
   @Get('get-qr')
   async getQr(@Query('collect_id') collect_id: string) {
     try {
@@ -677,4 +677,5 @@ export class RazorpayController {
     }
   
   }
+
 }
