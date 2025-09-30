@@ -553,6 +553,15 @@ let RazorpayController = class RazorpayController {
             throw new common_1.BadRequestException(error.message);
         }
     }
+    async initiateRefund(collect_id, refundAmount, refund_id) {
+        try {
+            return this.razorpayService.refund(collect_id, refundAmount, refund_id);
+        }
+        catch (error) {
+            console.log(error, "error");
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
 };
 exports.RazorpayController = RazorpayController;
 __decorate([
@@ -595,6 +604,15 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], RazorpayController.prototype, "getQr", null);
+__decorate([
+    (0, common_1.Post)('test-refund'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __param(1, (0, common_1.Query)('refundAmount')),
+    __param(2, (0, common_1.Query)('refund_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Number, String]),
+    __metadata("design:returntype", Promise)
+], RazorpayController.prototype, "initiateRefund", null);
 exports.RazorpayController = RazorpayController = __decorate([
     (0, common_1.Controller)('razorpay'),
     __metadata("design:paramtypes", [razorpay_service_1.RazorpayService,

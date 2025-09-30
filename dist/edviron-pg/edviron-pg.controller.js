@@ -32,8 +32,9 @@ const nttdata_service_1 = require("../nttdata/nttdata.service");
 const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 const worldline_service_1 = require("../worldline/worldline.service");
 const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
+const razorpay_service_1 = require("../razorpay/razorpay.service");
 let EdvironPgController = class EdvironPgController {
-    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService, posPaytmService, worldlineService, razorpayNonseamless) {
+    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService, posPaytmService, worldlineService, razorpayNonseamless, razorpaySeamless) {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
         this.easebuzzService = easebuzzService;
@@ -42,6 +43,7 @@ let EdvironPgController = class EdvironPgController {
         this.posPaytmService = posPaytmService;
         this.worldlineService = worldlineService;
         this.razorpayNonseamless = razorpayNonseamless;
+        this.razorpaySeamless = razorpaySeamless;
     }
     async handleRedirect(req, res) {
         const wallet = req.query.wallet;
@@ -2085,6 +2087,10 @@ let EdvironPgController = class EdvironPgController {
             }
             if (gateway === collect_request_schema_1.Gateway.EDVIRON_RAZORPAY) {
                 const refund = await this.razorpayNonseamless.refund(collect_id, amount, refund_id);
+                return refund;
+            }
+            if (gateway === collect_request_schema_1.Gateway.EDVIRON_RAZORPAY_SEAMLESS) {
+                const refund = await this.razorpaySeamless.refund(collect_id, amount, refund_id);
                 return refund;
             }
             if (gateway === collect_request_schema_1.Gateway.EDVIRON_WORLDLINE) {
@@ -4508,6 +4514,7 @@ exports.EdvironPgController = EdvironPgController = __decorate([
         nttdata_service_1.NttdataService,
         pos_paytm_service_1.PosPaytmService,
         worldline_service_1.WorldlineService,
-        razorpay_nonseamless_service_1.RazorpayNonseamlessService])
+        razorpay_nonseamless_service_1.RazorpayNonseamlessService,
+        razorpay_service_1.RazorpayService])
 ], EdvironPgController);
 //# sourceMappingURL=edviron-pg.controller.js.map

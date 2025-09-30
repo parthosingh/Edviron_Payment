@@ -675,7 +675,20 @@ export class RazorpayController {
     } catch (error) {
       throw new BadRequestException(error.message)
     }
-  
+  }
+
+  @Post('test-refund')
+  async initiateRefund(
+    @Query('collect_id') collect_id:string,
+    @Query('refundAmount') refundAmount:number,
+    @Query('refund_id') refund_id:string,
+  ){
+    try {
+      return this.razorpayService.refund(collect_id, refundAmount, refund_id)
+    } catch (error) {
+      console.log(error, "error")
+      throw new BadRequestException(error.message)
+    }
   }
 
 }

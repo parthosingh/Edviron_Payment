@@ -43,6 +43,7 @@ import { WorldlineService } from 'src/worldline/worldline.service';
 import { stat } from 'fs';
 import { start } from 'repl';
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
+import { RazorpayService } from 'src/razorpay/razorpay.service';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -55,6 +56,7 @@ export class EdvironPgController {
     private readonly posPaytmService: PosPaytmService,
     private readonly worldlineService: WorldlineService,
     private readonly razorpayNonseamless: RazorpayNonseamlessService,
+    private readonly razorpaySeamless: RazorpayService,
   ) {}
   @Get('/redirect')
   async handleRedirect(@Req() req: any, @Res() res: any) {
@@ -2820,6 +2822,15 @@ export class EdvironPgController {
 
       if (gateway === Gateway.EDVIRON_RAZORPAY) {
         const refund = await this.razorpayNonseamless.refund(
+          collect_id,
+          amount,
+          refund_id,
+        );
+        return refund;
+      }
+      
+       if (gateway === Gateway.EDVIRON_RAZORPAY_SEAMLESS) {
+        const refund = await this.razorpaySeamless.refund(
           collect_id,
           amount,
           refund_id,

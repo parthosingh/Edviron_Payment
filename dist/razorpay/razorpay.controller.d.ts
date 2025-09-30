@@ -14,4 +14,5 @@ export declare class RazorpayController {
         base64Image: any;
         intent: any;
     }>;
+    initiateRefund(collect_id: string, refundAmount: number, refund_id: string): Promise<any>;
 }

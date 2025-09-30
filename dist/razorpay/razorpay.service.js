@@ -15,12 +15,9 @@ const transactionStatus_1 = require("../types/transactionStatus");
 const crypto = require("crypto");
 const axios_1 = require("axios");
 const database_service_1 = require("../database/database.service");
-
 const _jwt = require("jsonwebtoken");
-
 const canvas_1 = require("canvas");
 const jsqr_1 = require("jsqr");
-
 const formatRazorpayPaymentStatus = (status) => {
     const statusMap = {
         created: transactionStatus_1.TransactionStatus.PENDING,
@@ -357,10 +354,10 @@ let RazorpayService = class RazorpayService {
                     fixed_amount: true,
                     payment_amount: collectRequest.amount * 100,
                     order_id: order_id,
+                    callback_url: `https://payments.edviron.com/razorpay/callback?collect_id=${collect_id}`,
                 },
             };
             const { data: razorpayRes } = await axios_1.default.request(createQrConfig);
-            console.log(razorpayRes, 'razorpayRes');
             return await this.getbase64(razorpayRes.image_url);
         }
         catch (error) {
@@ -415,12 +412,11 @@ let RazorpayService = class RazorpayService {
                     reverse_all: isSplit || false
                 },
             };
-            console.log(config, 'razorpay refind config');
             const response = await axios_1.default.request(config);
-            console.log(response.data, 'refund response');
             return response.data;
         }
         catch (error) {
+            console.log(error, "error");
             if (axios_1.default.isAxiosError(error)) {
                 console.error('Razorpay Refund Error:', {
                     message: error.message,

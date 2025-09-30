@@ -33,6 +33,7 @@ import { NttdataService } from 'src/nttdata/nttdata.service';
 import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
+import { RazorpayService } from 'src/razorpay/razorpay.service';
 export declare class EdvironPgController {
     private readonly edvironPgService;
     private readonly databaseService;
@@ -42,7 +43,8 @@ export declare class EdvironPgController {
     private readonly posPaytmService;
     private readonly worldlineService;
     private readonly razorpayNonseamless;
-    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, nttDataService: NttdataService, posPaytmService: PosPaytmService, worldlineService: WorldlineService, razorpayNonseamless: RazorpayNonseamlessService);
+    private readonly razorpaySeamless;
+    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, nttDataService: NttdataService, posPaytmService: PosPaytmService, worldlineService: WorldlineService, razorpayNonseamless: RazorpayNonseamlessService, razorpaySeamless: RazorpayService);
     handleRedirect(req: any, res: any): Promise<void>;
     handleSdkRedirect(req: any, res: any): Promise<any>;
     handleCallback(req: any, res: any): Promise<any>;

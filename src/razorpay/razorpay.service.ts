@@ -409,20 +409,11 @@ export class RazorpayService {
           fixed_amount: true,
           payment_amount: collectRequest.amount * 100, 
           order_id: order_id,
-          // redirect_url: `https://payments.edviron.com/razorpay/callback?collect_id=${collect_id}`,
+          callback_url: `https://payments.edviron.com/razorpay/callback?collect_id=${collect_id}`,
         },
       };
 
       const { data: razorpayRes } = await axios.request(createQrConfig);
-      console.log(razorpayRes, 'razorpayRes');
-
-
-      // return {
-      //   qr_id: razorpayRes.id,
-      //   status: razorpayRes.status,
-      //   image_url: razorpayRes.image_url,
-      // };
-
       return await this.getbase64(razorpayRes.image_url)
 
     } catch (error) {
@@ -468,12 +459,10 @@ export class RazorpayService {
         },
       }
       const {data:refundInfo}=await axios.request(refundConfig)
-     
       let isSplit=false
       if(refundInfo.isSplitRedund){
         isSplit=true
       }
-
       const totalPaise = Math.round(refundAmount * 100);
       const config = {
         method: 'post',
@@ -490,12 +479,11 @@ export class RazorpayService {
           reverse_all: isSplit || false
         },
       };
-      console.log(config,'razorpay refind config');
-      
+
       const response = await axios.request(config);
-      console.log(response.data, 'refund response');
       return response.data;
     } catch (error) {
+      console.log(error, "error")
       if (axios.isAxiosError(error)) {
         console.error('Razorpay Refund Error:', {
           message: error.message,

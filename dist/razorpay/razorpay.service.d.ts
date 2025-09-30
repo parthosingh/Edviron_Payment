@@ -21,9 +21,9 @@ export declare class RazorpayService {
         base64Image: any;
         intent: any;
     }>;
+    refund(collect_id: string, refundAmount: number, refund_id: string): Promise<any>;
     getbase64(url: string): Promise<{
         base64Image: any;
         intent: any;
     }>;
-    refund(collect_id: string, refundAmount: number, refund_id: string): Promise<any>;
 }
