@@ -4,6 +4,8 @@ import * as crypto from 'crypto';
 import axios from 'axios';
 import { CollectRequest } from '../database/schemas/collect_request.schema';
 import { DatabaseService } from '../database/database.service';
+import { createCanvas, loadImage } from 'canvas';
+import jsQR from "jsqr";
 
 export const formatRazorpayPaymentStatus = (
   status: string,
@@ -363,14 +365,49 @@ export class RazorpayService {
       const { data: razorpayRes } = await axios.request(createQrConfig);
       console.log(razorpayRes, 'razorpayRes');
 
-      return {
-        qr_id: razorpayRes.id,
-        status: razorpayRes.status,
-        image_url: razorpayRes.image_url,
-      };
+      // return {
+      //   qr_id: razorpayRes.id,
+      //   status: razorpayRes.status,
+      //   image_url: razorpayRes.image_url,
+      // };
+
+      return await this.getbase64(razorpayRes.image_url)
     } catch (error) {
       console.log(error.response?.data || error.message, 'error');
       throw new BadRequestException(error.response?.data || error.message);
     }
   }
+
+  async getbase64(
+    url: string
+  ) {
+    try {
+      const response = await axios.get(url, { responseType: 'arraybuffer' });
+      const img = await loadImage(Buffer.from(response.data));
+
+      // 2. draw on canvas
+      const canvas = createCanvas(img.width, img.height);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      // 3. get image data
+      const imageData = ctx.getImageData(0, 0, img.width, img.height);
+
+      // 4. detect QR
+      const qrCode: any = jsQR(imageData.data, imageData.width, imageData.height);
+      const qrData = qrCode.data || 'p'
+
+      var QRCode = require('qrcode');
+      const base64Image = await QRCode.toDataURL(qrData, { type: "image/png" });
+
+      console.log(base64Image); // "data:image/png;base64,...."
+      return {
+        base64Image,
+        intent:qrCode.data
+      };
+    } catch (e) {
+      throw new BadRequestException(e.message)
+    }
+  }
+
 }
