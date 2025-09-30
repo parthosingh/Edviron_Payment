@@ -34,7 +34,6 @@ const merchantKeySHA256 = async (request) => {
             salt = process.env.EASEBUZZ_SALT;
         }
     }
-    console.log({ merchantKey, salt });
     const key = crypto
         .createHash('sha256')
         .update(merchantKey)
