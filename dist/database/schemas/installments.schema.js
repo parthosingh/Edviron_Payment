@@ -100,6 +100,22 @@ __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
 ], Installments.prototype, "gst", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], Installments.prototype, "isSplitPayments", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Array)
+], Installments.prototype, "vendors_info", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Array)
+], Installments.prototype, "easebuzzVendors", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Array)
+], Installments.prototype, "cashfreeVedors", void 0);
 exports.Installments = Installments = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], Installments);

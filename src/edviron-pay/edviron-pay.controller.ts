@@ -37,6 +37,10 @@ export class EdvironPayController {
       gateway,
       isInstallement,
       installments,
+      allvendors,
+      cashfreeVedors,
+      easebuzzVendors,
+
     } = body;
 
     const { student_id, student_number, student_name, student_email } =
@@ -52,9 +56,18 @@ export class EdvironPayController {
             month: installment.month || month,
             year: installment.year || year,
           };
+          const { split_payments, vendors_info } = installment;
 
           const existing =
             await this.databaseService.InstallmentsModel.findOne(filter);
+
+          const vendorsBlock = split_payments
+            ? {
+                vendors_info: allvendors,
+                cashfreeVedors: cashfreeVedors,
+                easebuzzVendors: easebuzzVendors,
+              }
+            : {};
 
           if (!existing) {
             // ✅ Create new installment
@@ -76,6 +89,8 @@ export class EdvironPayController {
               status: 'unpaid', // default status
               label: installment.label,
               body: installment.body,
+              isSplitPayments: split_payments,
+              ...vendorsBlock,
             });
           }
 
@@ -83,8 +98,6 @@ export class EdvironPayController {
             // ✅ Already paid → don’t overwrite
             return existing;
           }
-          console.log({ existing });
-
           // ✅ Unpaid → update installment data
           return this.databaseService.InstallmentsModel.updateOne(filter, {
             $set: {
@@ -100,6 +113,8 @@ export class EdvironPayController {
               student_name,
               student_email,
               fee_heads: installment.fee_heads,
+              isSplitPayments: split_payments,
+              ...vendorsBlock,
             },
           });
         }),
@@ -110,6 +125,8 @@ export class EdvironPayController {
     console.log('Installments upserted successfully');
     return {
       status: 'installment updated successfully for student_id: ' + student_id,
+      student_id: student_id,
+      url: `${process.env.PG_FRONTEND}/collect-fee?student_id=${student_id}&school_id=${school_id}&trustee_id=${trustee_id}`,
     };
   }
 
@@ -178,6 +195,37 @@ export class EdvironPayController {
           },
         ];
       };
+      easebuzzVendors?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+        },
+      ];
+      cashfreeVedors?: [
+        {
+          vendor_id: string;
+          percentage?: number;
+          amount?: number;
+          name?: string;
+        },
+      ];
+      razorpay_vendors?: [
+        {
+          vendor_id: string;
+          account?: string;
+          percentage?: number;
+          amount?: number;
+          notes?: {
+            branch?: string;
+            name?: string;
+          };
+          linked_account_notes?: string[];
+          on_hold?: boolean;
+          on_hold_until?: Date;
+        },
+      ];
     },
   ) {
     const {
@@ -200,6 +248,9 @@ export class EdvironPayController {
       razorpay,
       vba_account_number,
       easebuzz,
+      easebuzzVendors,
+      cashfreeVedors,
+      razorpay_vendors,
     } = body;
 
     try {
@@ -262,8 +313,9 @@ export class EdvironPayController {
           custom_order_id,
           req_webhook_urls: [webhook_url],
           easebuzz_sub_merchant_id: easebuzz?.mid || null,
-          easebuzzVendors: easebuzz?.easebuzzVendors || [],
-          cashfreeVedors: cashfree?.cashfreeVedors || [],
+          easebuzzVendors: easebuzzVendors || [],
+          cashfreeVedors: cashfreeVedors || [],
+          razorpay_vendors_info: razorpay_vendors,
           isVBAPayment: isVBAPayment || false,
           // vba_account_number: isVBAPayment ? cashfree?.vba?.vba_account_number : null,
           school_name,

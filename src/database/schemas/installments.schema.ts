@@ -7,7 +7,6 @@ export class Installments {
   @Prop({})
   school_id: string;
 
-
   @Prop({
     ref: 'CollectRequest',
     type: mongoose.Schema.Types.ObjectId,
@@ -71,12 +70,23 @@ export class Installments {
     discount: number;
   }[];
 
-
   @Prop({})
   label: string;
 
   @Prop({})
   gst: string;
+
+  @Prop({ required: false, default: false })
+  isSplitPayments: boolean;
+
+  @Prop({ required: false })
+  vendors_info?: [{ vendor_id: string; amount: number, name : string }];
+
+  @Prop({ required: false })
+  easebuzzVendors?: [{ vendor_id: string; amount: number, name : string }];
+
+  @Prop({ required: false })
+  cashfreeVedors?: [{ vendor_id: string; amount: number, name : string }];
 }
 
 export type InstallmentsDocument = Installments & Document;

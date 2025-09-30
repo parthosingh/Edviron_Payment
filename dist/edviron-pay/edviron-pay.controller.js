@@ -26,9 +26,10 @@ let EdvironPayController = class EdvironPayController {
         this.edvironPay = edvironPay;
     }
     async upsertInstallments(body) {
-        const { school_id, trustee_id, student_detail, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, } = body;
-        const { student_id, student_number, student_name, student_email } = student_detail;
-        await this.edvironPay.createStudent(student_detail, school_id, trustee_id);
+
+        const { school_id, trustee_id, student_detail, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, allvendors, cashfreeVedors, easebuzzVendors, } = body;
+        let { student_id, student_number, student_name, student_email, } = student_detail;
+
         if (isInstallement && installments && installments.length > 0) {
             await Promise.all(installments.map(async (installment) => {
                 const filter = {
@@ -38,7 +39,15 @@ let EdvironPayController = class EdvironPayController {
                     month: installment.month || month,
                     year: installment.year || year,
                 };
+                const { split_payments, vendors_info } = installment;
                 const existing = await this.databaseService.InstallmentsModel.findOne(filter);
+                const vendorsBlock = split_payments
+                    ? {
+                        vendors_info: allvendors,
+                        cashfreeVedors: cashfreeVedors,
+                        easebuzzVendors: easebuzzVendors,
+                    }
+                    : {};
                 if (!existing) {
                     return this.databaseService.InstallmentsModel.create({
                         school_id,
@@ -58,12 +67,13 @@ let EdvironPayController = class EdvironPayController {
                         status: 'unpaid',
                         label: installment.label,
                         body: installment.body,
+                        isSplitPayments: split_payments,
+                        ...vendorsBlock,
                     });
                 }
                 if (existing.status === 'paid') {
                     return existing;
                 }
-                console.log({ existing });
                 return this.databaseService.InstallmentsModel.updateOne(filter, {
                     $set: {
                         amount: installment.amount,
@@ -78,6 +88,8 @@ let EdvironPayController = class EdvironPayController {
                         student_name,
                         student_email,
                         fee_heads: installment.fee_heads,
+                        isSplitPayments: split_payments,
+                        ...vendorsBlock,
                     },
                 });
             }));
@@ -88,10 +100,14 @@ let EdvironPayController = class EdvironPayController {
         console.log('Installments upserted successfully');
         return {
             status: 'installment updated successfully for student_id: ' + student_id,
+
+            student_id: student_id,
+            url: `${process.env.PG_FRONTEND}/collect-fee?student_id=${student_id}&school_id=${school_id}&trustee_id=${trustee_id}`,
+
         };
     }
     async collect(body) {
-        const { isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, vba_account_number, easebuzz, } = body;
+        const { isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, vba_account_number, easebuzz, easebuzzVendors, cashfreeVedors, razorpay_vendors, } = body;
         try {
             if (!token) {
                 throw new Error('Token is required');
@@ -139,8 +155,9 @@ let EdvironPayController = class EdvironPayController {
                     custom_order_id,
                     req_webhook_urls: [webhook_url],
                     easebuzz_sub_merchant_id: easebuzz?.mid || null,
-                    easebuzzVendors: easebuzz?.easebuzzVendors || [],
-                    cashfreeVedors: cashfree?.cashfreeVedors || [],
+                    easebuzzVendors: easebuzzVendors || [],
+                    cashfreeVedors: cashfreeVedors || [],
+                    razorpay_vendors_info: razorpay_vendors,
                     isVBAPayment: isVBAPayment || false,
                     school_name,
                     isSplitPayments: isSplit || false,
@@ -166,6 +183,7 @@ let EdvironPayController = class EdvironPayController {
     }
     async getStudentInstallments(student_id, school_id, trustee_id) {
         try {
+
             const studentDetail = await this.edvironPay.studentFind(student_id, school_id, trustee_id);
             if (!studentDetail) {
                 throw new common_1.BadRequestException('student not found');
@@ -174,6 +192,7 @@ let EdvironPayController = class EdvironPayController {
                 student_id,
             });
             installments.sort((a, b) => Number(a.month) - Number(b.month));
+
             return {
                 installments,
                 studentDetail,

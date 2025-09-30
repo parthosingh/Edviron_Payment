@@ -23,6 +23,22 @@ export declare class Installments {
     }[];
     label: string;
     gst: string;
+    isSplitPayments: boolean;
+    vendors_info?: [{
+        vendor_id: string;
+        amount: number;
+        name: string;
+    }];
+    easebuzzVendors?: [{
+        vendor_id: string;
+        amount: number;
+        name: string;
+    }];
+    cashfreeVedors?: [{
+        vendor_id: string;
+        amount: number;
+        name: string;
+    }];
 }
 export type InstallmentsDocument = Installments & Document;
 export declare const InstallmentsSchema: mongoose.Schema<Installments, mongoose.Model<Installments, any, any, any, mongoose.Document<unknown, any, Installments> & Installments & {
