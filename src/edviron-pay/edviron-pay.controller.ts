@@ -40,12 +40,12 @@ export class EdvironPayController {
       allvendors,
       cashfreeVedors,
       easebuzzVendors,
+
     } = body;
 
-    let {student_id,
-      student_number,
-      student_name,
-      student_email,} = student_detail
+    const { student_id, student_number, student_name, student_email } =
+      student_detail;
+    await this.edvironPay.createStudent(student_detail, school_id, trustee_id);
     if (isInstallement && installments && installments.length > 0) {
       await Promise.all(
         installments.map(async (installment: any) => {
@@ -56,7 +56,6 @@ export class EdvironPayController {
             month: installment.month || month,
             year: installment.year || year,
           };
-
           const { split_payments, vendors_info } = installment;
 
           const existing =
@@ -99,7 +98,6 @@ export class EdvironPayController {
             // ✅ Already paid → don’t overwrite
             return existing;
           }
-
           // ✅ Unpaid → update installment data
           return this.databaseService.InstallmentsModel.updateOne(filter, {
             $set: {
@@ -356,15 +354,29 @@ export class EdvironPayController {
   }
 
   @Get('/student-installments')
-  async getStudentInstallments(@Query('student_id') student_id: string) {
+  async getStudentInstallments(
+    @Query('student_id') student_id: string,
+    @Query('school_id') school_id: string,
+    @Query('trustee_id') trustee_id: string,
+  ) {
     try {
+      const studentDetail = await this.edvironPay.studentFind(
+        student_id,
+        school_id,
+        trustee_id,
+      );
+      if (!studentDetail) {
+        throw new BadRequestException('student not found');
+      }
       const installments = await this.databaseService.InstallmentsModel.find({
         student_id,
       });
-
       installments.sort((a, b) => Number(a.month) - Number(b.month));
 
-      return installments;
+      return {
+        installments,
+        studentDetail,
+      };
     } catch (e) {}
   }
 

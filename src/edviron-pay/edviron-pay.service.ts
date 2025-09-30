@@ -148,4 +148,63 @@ export class EdvironPayService {
   //         throw new BadRequestException(e.message)
   //     }
   // }
+
+  async createStudent(
+    student_detail: {
+      student_id: string;
+      student_name: string;
+      student_email: string;
+      student_number: string;
+      student_class?: string;
+      section?: string;
+      gender?: string;
+      additional_info?: string;
+    },
+    school_id: string,
+    trustee_id: string,
+  ) {
+    const { student_id, student_number, student_name, student_email,  section,  gender, additional_info, student_class, } =
+      student_detail;
+    try {
+      const studentDetail =
+        await this.databaseService.StudentDetailModel.findOne({
+          student_id: student_id,
+          school_id: school_id,
+          trustee_id: trustee_id,
+        });
+      if (!studentDetail) {
+        await this.databaseService.StudentDetailModel.create({
+          student_id,
+          student_email,
+          student_name,
+          trustee_id,
+          school_id,
+          student_class,
+          section,
+          gender,
+          additional_info
+        });
+      }
+      return studentDetail
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async studentFind(student_id: string, school_id: string, trustee_id: string) {
+    try {
+      const studentDetail =
+        await this.databaseService.StudentDetailModel.findOne({
+          student_id: student_id,
+          school_id: school_id,
+          trustee_id: trustee_id,
+        });
+      if (!studentDetail) {
+        throw new BadRequestException('student not found');
+      }
+      return studentDetail;
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
 }

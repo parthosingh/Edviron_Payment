@@ -132,9 +132,14 @@ export declare class EdvironPayController {
         collect_request_id: import("mongoose").Schema.Types.ObjectId;
         url: string;
     } | undefined>;
-    getStudentInstallments(student_id: string): Promise<(import("mongoose").Document<unknown, {}, import("src/database/schemas/installments.schema").InstallmentsDocument> & Installments & Document & {
-        _id: import("mongoose").Types.ObjectId;
-    })[] | undefined>;
+    getStudentInstallments(student_id: string, school_id: string, trustee_id: string): Promise<{
+        installments: (import("mongoose").Document<unknown, {}, import("src/database/schemas/installments.schema").InstallmentsDocument> & Installments & Document & {
+            _id: import("mongoose").Types.ObjectId;
+        })[];
+        studentDetail: import("mongoose").Document<unknown, {}, import("../database/schemas/student_detail.schema").StudentDetails> & import("../database/schemas/student_detail.schema").StudentDetail & Document & {
+            _id: import("mongoose").Types.ObjectId;
+        };
+    } | undefined>;
     getInstallCallbackCashfree(collect_id: string): Promise<void>;
     getVendorsForSchool(school_id: string): Promise<any>;
 }

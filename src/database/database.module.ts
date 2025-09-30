@@ -26,6 +26,7 @@ import {
 import { ErrorLogs, ErrorLogsSchema } from './schemas/error.logs.schema';
 import { SchoolMdr, SchoolMdrSchema } from './schemas/platform.charges.schema';
 import { Installments, InstallmentsSchema } from './schemas/installments.schema';
+import { StudentDetail, StudentDetailSchema } from './schemas/student_detail.schema';
 dotenv.config();
 
 @Module({
@@ -59,6 +60,9 @@ dotenv.config();
     MongooseModule.forFeature([
       { name: Installments.name, schema: InstallmentsSchema },
     ]),
+    MongooseModule.forFeature([
+      { name: StudentDetail.name, schema: StudentDetailSchema },
+    ]),
   ],
   providers: [DatabaseService],
   exports: [
@@ -90,6 +94,9 @@ dotenv.config();
     ]),
      MongooseModule.forFeature([
       { name: Installments.name, schema: InstallmentsSchema },
+    ]),
+    MongooseModule.forFeature([
+      { name: StudentDetail.name, schema: StudentDetailSchema },
     ]),
   ],
 })
