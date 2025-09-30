@@ -27,10 +27,7 @@ export class EdvironPayController {
     const {
       school_id,
       trustee_id,
-      student_id,
-      student_number,
-      student_name,
-      student_email,
+      student_detail,
       additional_data,
       amount,
       net_amount,
@@ -45,6 +42,10 @@ export class EdvironPayController {
       easebuzzVendors,
     } = body;
 
+    let {student_id,
+      student_number,
+      student_name,
+      student_email,} = student_detail
     if (isInstallement && installments && installments.length > 0) {
       await Promise.all(
         installments.map(async (installment: any) => {

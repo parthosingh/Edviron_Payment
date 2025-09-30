@@ -26,7 +26,8 @@ let EdvironPayController = class EdvironPayController {
         this.edvironPay = edvironPay;
     }
     async upsertInstallments(body) {
-        const { school_id, trustee_id, student_id, student_number, student_name, student_email, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, allvendors, cashfreeVedors, easebuzzVendors, } = body;
+        const { school_id, trustee_id, student_detail, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, allvendors, cashfreeVedors, easebuzzVendors, } = body;
+        let { student_id, student_number, student_name, student_email, } = student_detail;
         if (isInstallement && installments && installments.length > 0) {
             await Promise.all(installments.map(async (installment) => {
                 const filter = {
