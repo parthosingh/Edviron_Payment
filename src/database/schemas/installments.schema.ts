@@ -17,7 +17,9 @@ export class Installments {
   @Prop({})
   trustee_id: string;
 
-  @Prop({})
+  @Prop({
+    ref : 'StudentDetails'
+  })
   student_id: string;
 
   @Prop({})

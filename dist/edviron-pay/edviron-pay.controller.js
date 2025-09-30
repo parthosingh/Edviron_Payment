@@ -26,7 +26,9 @@ let EdvironPayController = class EdvironPayController {
         this.edvironPay = edvironPay;
     }
     async upsertInstallments(body) {
-        const { school_id, trustee_id, student_id, student_number, student_name, student_email, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, } = body;
+        const { school_id, trustee_id, student_detail, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, } = body;
+        const { student_id, student_number, student_name, student_email } = student_detail;
+        await this.edvironPay.createStudent(student_detail, school_id, trustee_id);
         if (isInstallement && installments && installments.length > 0) {
             await Promise.all(installments.map(async (installment) => {
                 const filter = {
@@ -84,7 +86,9 @@ let EdvironPayController = class EdvironPayController {
             throw new Error('No installments found or isInstallement is false');
         }
         console.log('Installments upserted successfully');
-        return { status: 'installment updated successfully for student_id: ' + student_id };
+        return {
+            status: 'installment updated successfully for student_id: ' + student_id,
+        };
     }
     async collect(body) {
         const { isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, vba_account_number, easebuzz, } = body;
@@ -110,7 +114,7 @@ let EdvironPayController = class EdvironPayController {
                     _id: { $in: InstallmentsIds },
                     school_id,
                     trustee_id,
-                    status: { $ne: 'paid' }
+                    status: { $ne: 'paid' },
                 });
                 if (installments.length !== InstallmentsIds.length) {
                     throw new Error('Some installments are invalid or already paid');
@@ -119,7 +123,7 @@ let EdvironPayController = class EdvironPayController {
                 const cashfreeCred = {
                     cf_x_client_id: cashfree.client_id,
                     cf_x_client_secret: cashfree.client_secret,
-                    cf_api_key: cashfree.api_key
+                    cf_api_key: cashfree.api_key,
                 };
                 const request = await this.databaseService.CollectRequestModel.create({
                     amount,
@@ -160,14 +164,22 @@ let EdvironPayController = class EdvironPayController {
             throw new Error('Error occurred while processing payment: ' + e.message);
         }
     }
-    async getStudentInstallments(student_id) {
+    async getStudentInstallments(student_id, school_id, trustee_id) {
         try {
-            const installments = await this.databaseService.InstallmentsModel.find({ student_id });
+            const studentDetail = await this.edvironPay.studentFind(student_id, school_id, trustee_id);
+            if (!studentDetail) {
+                throw new common_1.BadRequestException('student not found');
+            }
+            const installments = await this.databaseService.InstallmentsModel.find({
+                student_id,
+            });
             installments.sort((a, b) => Number(a.month) - Number(b.month));
-            return installments;
+            return {
+                installments,
+                studentDetail,
+            };
         }
-        catch (e) {
-        }
+        catch (e) { }
     }
     async getInstallCallbackCashfree(collect_id) {
         try {
@@ -177,8 +189,7 @@ let EdvironPayController = class EdvironPayController {
             }
             request.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
         }
-        catch (e) {
-        }
+        catch (e) { }
     }
     async getVendorsForSchool(school_id) {
         try {
@@ -217,8 +228,10 @@ __decorate([
 __decorate([
     (0, common_1.Get)('/student-installments'),
     __param(0, (0, common_1.Query)('student_id')),
+    __param(1, (0, common_1.Query)('school_id')),
+    __param(2, (0, common_1.Query)('trustee_id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], EdvironPayController.prototype, "getStudentInstallments", null);
 __decorate([
