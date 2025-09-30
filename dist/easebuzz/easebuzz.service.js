@@ -299,8 +299,8 @@ let EasebuzzService = class EasebuzzService {
                 let productinfo = 'payment gateway customer';
                 let firstname = studentDetail.student_details?.student_name || 'customer';
                 let email = studentDetail.student_details?.student_email || 'noreply@edviron.com';
-                let student_id = studentDetail?.student_details?.student_id || 'N/A';
-                let student_phone_no = studentDetail?.student_details?.student_phone_no || 'N/A';
+                let student_id = studentDetail?.student_details?.student_id || 'NA';
+                let student_phone_no = studentDetail?.student_details?.student_phone_no || 'NA';
                 let hashData = easebuzz_key +
                     '|' +
                     request._id +
@@ -430,6 +430,7 @@ let EasebuzzService = class EasebuzzService {
             const easebuzz_key = request.easebuzz_non_partner_cred.easebuzz_key;
             const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
             const easebuzz_sub_merchant_id = request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
+            console.log(studentDetail, 'ss');
             let productinfo = 'payment gateway customer';
             let firstname = (studentDetail.student_details?.student_name || 'customer').trim();
             let email = studentDetail.student_details?.student_email || 'noreply@edviron.com';
@@ -970,11 +971,15 @@ let EasebuzzService = class EasebuzzService {
             const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
             const easebuzz_sub_merchant_id = request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
             let productinfo = 'payment gateway customer';
-            let firstname = 'customer';
-            let email = 'noreply@edviron.com';
+            const { additional_data } = collectReq;
+            const studentDetail = JSON.parse(additional_data);
+            let firstname = (studentDetail.student_details?.student_name || 'customer').trim();
+            let email = studentDetail.student_details?.student_email || 'noreply@edviron.com';
+            let student_id = studentDetail?.student_details?.student_id || 'NA';
+            let student_phone_no = studentDetail?.student_details?.student_phone_no || '0000000000';
             let hashData = easebuzz_key +
                 '|' +
-                request._id +
+                request._id.toString() +
                 '|' +
                 parseFloat(request.amount.toFixed(2)) +
                 '|' +
@@ -983,7 +988,12 @@ let EasebuzzService = class EasebuzzService {
                 firstname +
                 '|' +
                 email +
-                '|||||||||||' +
+                '|' +
+                student_id +
+                '|' +
+                student_phone_no +
+                '|' +
+                '||||||||' +
                 easebuzz_salt;
             const easebuzz_cb_surl = process.env.URL +
                 '/easebuzz/non-seamless/callback/?collect_request_id=' +
@@ -1000,13 +1010,14 @@ let EasebuzzService = class EasebuzzService {
             encodedParams.set('amount', parseFloat(request.amount.toFixed(2)).toString());
             encodedParams.set('productinfo', productinfo);
             encodedParams.set('firstname', firstname);
-            encodedParams.set('phone', '9898989898');
+            encodedParams.set('phone', student_phone_no);
             encodedParams.set('email', email);
             encodedParams.set('surl', easebuzz_cb_surl);
             encodedParams.set('furl', easebuzz_cb_furl);
             encodedParams.set('hash', hash);
             encodedParams.set('request_flow', 'SEAMLESS');
-            encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
+            encodedParams.set('udf1', student_id);
+            encodedParams.set('udf2', student_phone_no);
             const disabled_modes_string = request.disabled_modes
                 .map((mode) => `${mode}=false`)
                 .join('&');
@@ -1021,6 +1032,7 @@ let EasebuzzService = class EasebuzzService {
                 data: encodedParams,
             };
             const { data: easebuzzRes } = await axios_1.default.request(Ezboptions);
+            console.log(easebuzzRes, 'res');
             const easebuzzPaymentId = easebuzzRes.data;
             collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
             await collectReq.save();
