@@ -665,12 +665,30 @@ export class RazorpayController {
 
   @Get('get-qr')
   async getQr(@Query('collect_id') collect_id: string) {
-    const collect_request =
+    try {
+        const collect_request =
       await this.databaseService.CollectRequestModel.findById(collect_id);
     if (!collect_request) {
       throw new BadRequestException('Order not found');
     }
     return this.razorpayService.getQr(collect_request);
+    } catch (error) {
+      throw new BadRequestException(error.message)
+    }
+  }
+
+  @Post('test-refund')
+  async initiateRefund(
+    @Query('collect_id') collect_id:string,
+    @Query('refundAmount') refundAmount:number,
+    @Query('refund_id') refund_id:string,
+  ){
+    try {
+      return this.razorpayService.refund(collect_id, refundAmount, refund_id)
+    } catch (error) {
+      console.log(error, "error")
+      throw new BadRequestException(error.message)
+    }
   }
 
 }

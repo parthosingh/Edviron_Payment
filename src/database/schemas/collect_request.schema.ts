@@ -255,6 +255,7 @@ interface CASHFREE_CREDENTIALS {
   cf_api_key: string;
 }
 
+
 @Schema()
 export class paytmPos {
   @Prop({ type: String, required: false })

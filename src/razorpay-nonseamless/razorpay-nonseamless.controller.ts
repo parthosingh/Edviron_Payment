@@ -495,6 +495,7 @@ export class RazorpayNonseamlessController {
     }).save();
     const { payload } = body;
     const {
+      id,
       order_id,
       amount,
       method,
@@ -528,16 +529,233 @@ export class RazorpayNonseamlessController {
         await this.databaseService.CollectRequestModel.findById(
           collectIdObject,
         );
-        if (!collectReq) throw new Error('Collect request not found');
-        const isSeamless = collectReq.razorpay_seamless.razorpay_id
-        if(isSeamless){
-          return 'this is seamless transaction'
+      if (!collectReq) throw new Error('Collect request not found');
+      const isSeamless = collectReq.razorpay_seamless.razorpay_id;
+
+      if (isSeamless) {
+        // return 'this is seamless transaction'
+        await this.databaseService.WebhooksModel.findOneAndUpdate(
+          { collect_id: new Types.ObjectId(collect_id) },
+          {
+            $set: {
+              gateway: Gateway.EDVIRON_RAZORPAY_SEAMLESS,
+            },
+          },
+          {
+            upsert: true,
+            new: true,
+          },
+        );
+        const collect_request =
+          await this.databaseService.CollectRequestModel.findOneAndUpdate(
+            {
+              _id: collectIdObject,
+            },
+            {
+              $set: {
+                gateway: Gateway.EDVIRON_RAZORPAY_SEAMLESS,
+                payment_id: id,
+                'razorpay_seamless.payment_id': id,
+              },
+            },
+          );
+        const collectRequestStatus =
+          await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: collectIdObject,
+          });
+
+        if (!collectRequestStatus) {
+          throw new Error('Collect Request Not Found');
         }
+        const transaction_amount = amount / 100 || null;
+        let payment_method = method || null;
+        if (payment_method === 'netbanking') {
+          payment_method = 'net_banking';
+        }
+        let detail;
+        switch (payment_method) {
+          case 'upi':
+            detail = {
+              upi: {
+                channel: null,
+                upi_id: payload.payment.entity.vpa || null,
+              },
+            };
+            break;
+
+          case 'card':
+            detail = {
+              card: {
+                card_bank_name: card.type || null,
+                card_country:
+                  card.international === false
+                    ? 'IN'
+                    : card.international === true
+                    ? 'OI'
+                    : null,
+                card_network: card.network || null,
+                card_number: card_id || null,
+                card_sub_type: card.sub_type || null,
+                card_type: card.type || null,
+                channel: null,
+              },
+            };
+            break;
+
+          case 'netbanking':
+            detail = {
+              netbanking: {
+                channel: null,
+                netbanking_bank_code: acquirer_data.bank_transaction_id,
+                netbanking_bank_name: bank,
+              },
+            };
+            break;
+
+          case 'wallet':
+            detail = {
+              wallet: {
+                channel: wallet,
+                provider: wallet,
+              },
+            };
+            break;
+
+          default:
+            detail = {};
+        }
+
+        const pendingCollectReq =
+          await this.databaseService.CollectRequestStatusModel.findOne({
+            collect_id: collectIdObject,
+          });
+
+        if (
+          pendingCollectReq &&
+          pendingCollectReq.status !== PaymentStatus.PENDING
+        ) {
+          res.status(200).send('OK');
+          return;
+        }
+
+        if (status.toLowerCase() == 'captured') {
+          status = 'SUCCESS';
+        }
+        const orderPaymentDetail = {
+          bank: bank,
+          transaction_id: acquirer_data.bank_transaction_id,
+          method: method,
+        };
+
+        const updateReq =
+          await this.databaseService.CollectRequestStatusModel.updateOne(
+            {
+              collect_id: collectIdObject,
+            },
+            {
+              $set: {
+                status: status,
+                payment_time: new Date(created_at * 1000),
+                transaction_amount,
+                payment_method,
+                details: JSON.stringify(detail),
+                bank_reference: acquirer_data.bank_transaction_id,
+                reason: error_reason,
+                payment_message: error_reason,
+              },
+            },
+            {
+              upsert: true,
+              new: true,
+            },
+          );
+        const webhookUrl = collectReq?.req_webhook_urls;
+        const transaction_time = new Date(payment_time * 1000).toISOString();
+        const webHookDataInfo = {
+          collect_id,
+          amount,
+          status,
+          trustee_id: collectReq.trustee_id,
+          school_id: collectReq.school_id,
+          req_webhook_urls: collectReq?.req_webhook_urls,
+          custom_order_id: collectReq?.custom_order_id || null,
+          createdAt: collectRequestStatus?.createdAt,
+          transaction_time: transaction_time || collectRequestStatus?.updatedAt,
+          additional_data: collectReq?.additional_data || null,
+          details: collectRequestStatus.details,
+          transaction_amount: collectRequestStatus.transaction_amount,
+          bank_reference: collectRequestStatus.bank_reference,
+          payment_method: collectRequestStatus.payment_method,
+          payment_details: collectRequestStatus.details,
+          // formattedTransaction_time: transactionTime.toLocaleDateString('en-GB') || null,
+          formattedDate: (() => {
+            const dateObj = new Date(transaction_time);
+            return `${dateObj.getFullYear()}-${String(
+              dateObj.getMonth() + 1,
+            ).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+          })(),
+        };
+
+        if (webhookUrl !== null) {
+          let webhook_key: null | string = null;
+          try {
+            const token = _jwt.sign(
+              { trustee_id: collectReq.trustee_id.toString() },
+              process.env.KEY!,
+            );
+            const config = {
+              method: 'get',
+              maxBodyLength: Infinity,
+              url: `${
+                process.env.VANILLA_SERVICE_ENDPOINT
+              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+              headers: {
+                accept: 'application/json',
+                'content-type': 'application/json',
+              },
+            };
+            const { data } = await axios.request(config);
+            webhook_key = data?.webhook_key;
+          } catch (error) {
+            console.error('Error getting webhook key:', error.message);
+          }
+          if (
+            collectReq?.trustee_id.toString() === '66505181ca3e97e19f142075'
+          ) {
+            setTimeout(async () => {
+              try {
+                await this.edvironPgService.sendErpWebhook(
+                  webhookUrl,
+                  webHookDataInfo,
+                  webhook_key,
+                );
+              } catch (e) {
+                console.log(
+                  `Error sending webhook to ${webhookUrl}:`,
+                  e.message,
+                );
+              }
+            }, 60000);
+          } else {
+            try {
+              await this.edvironPgService.sendErpWebhook(
+                webhookUrl,
+                webHookDataInfo,
+                webhook_key,
+              );
+            } catch (e) {
+              console.log(`Error sending webhook to ${webhookUrl}:`, e.message);
+            }
+          }
+        }
+        return res.status(200).send('OK');
+      }
+
       const collectRequestStatus =
         await this.databaseService.CollectRequestStatusModel.findOne({
           collect_id: collectIdObject,
         });
-     
+
       if (!collectRequestStatus) {
         throw new Error('Collect Request Not Found');
       }
@@ -766,10 +984,10 @@ export class RazorpayNonseamlessController {
           collectIdObject,
         );
       if (!collectReq) throw new Error('Collect request not found');
-       const isSeamless = collectReq.razorpay_seamless.razorpay_id
-        if(isSeamless){
-          return 'this is seamless transaction'
-        }
+      const isSeamless = collectReq.razorpay_seamless.razorpay_id;
+      if (isSeamless) {
+        return 'this is seamless transaction';
+      }
       const collectRequestStatus =
         await this.databaseService.CollectRequestStatusModel.findOne({
           collect_id: collectIdObject,
@@ -1069,22 +1287,23 @@ export class RazorpayNonseamlessController {
 
   @Post('/init-refund')
   async initRefund(
-    @Body() body:{
-      collect_id:string,
-      refundAmount:number,
-      refund_id:string
-    }
-  ){
-    try{
-    return await this.razorpayServiceModel.refund(
-      body.collect_id,
-      body.refundAmount,
-      body.refund_id
-    )
-    }catch(e){
+    @Body()
+    body: {
+      collect_id: string;
+      refundAmount: number;
+      refund_id: string;
+    },
+  ) {
+    try {
+      return await this.razorpayServiceModel.refund(
+        body.collect_id,
+        body.refundAmount,
+        body.refund_id,
+      );
+    } catch (e) {
       console.log();
-      
-      throw new BadRequestException(e.message)
+
+      throw new BadRequestException(e.message);
     }
   }
 }
