@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const cashfree_module_1 = require("../cashfree/cashfree.module");
 const database_module_1 = require("../database/database.module");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
+const razorpay_service_1 = require("../razorpay/razorpay.service");
 let RazorpayNonseamlessModule = class RazorpayNonseamlessModule {
 };
 exports.RazorpayNonseamlessModule = RazorpayNonseamlessModule;
@@ -18,7 +19,7 @@ exports.RazorpayNonseamlessModule = RazorpayNonseamlessModule = __decorate([
     (0, common_1.Module)({
         imports: [database_module_1.DatabaseModule, (0, common_1.forwardRef)(() => cashfree_module_1.CashfreeModule)],
         controllers: [],
-        providers: [edviron_pg_service_1.EdvironPgService],
+        providers: [edviron_pg_service_1.EdvironPgService, razorpay_service_1.RazorpayService],
         exports: [],
     })
 ], RazorpayNonseamlessModule);

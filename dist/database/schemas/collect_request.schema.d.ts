@@ -40,6 +40,7 @@ export declare enum Gateway {
     EDVIRON_NTTDATA = "EDVIRON_NTTDATA",
     EDVIRON_WORLDLINE = "EDVIRON_WORLDLINE",
     EDVIRON_RAZORPAY = "EDVIRON_RAZORPAY",
+    EDVIRON_RAZORPAY_SEAMLESS = "EDVIRON_RAZORPAY_SEAMLESS",
     EDVIRON_GATEPAY = "EDVIRON_GATEPAY"
 }
 interface I_NTT_DATA {
@@ -52,13 +53,27 @@ interface I_NTT_DATA {
     nttdata_hash_res_key: string;
     nttdata_res_salt: string;
 }
-interface I_Razorpay {
+export interface I_Razorpay {
     razorpay_id: string;
     razorpay_secret: string;
     razorpay_mid: string;
     order_id: string;
     payment_id: string;
     razorpay_signature: string;
+}
+export interface Non_Seamless_Payment_Links {
+    cashfree: string | null;
+    easebuzz: string | null;
+    edv_easebuzz: string | null;
+    razorpay: string | null;
+    ccavenue: string | null;
+    pay_u: string | null;
+    worldline: string | null;
+    gatepay: string | null;
+    nttdata: string | null;
+    hdfc_razorpay: string | null;
+    hdfc_smartgateway: string | null;
+    edviron_pg: string | null;
 }
 export declare class PaymentIds {
     cashfree_id?: string | null;
@@ -67,6 +82,7 @@ export declare class PaymentIds {
     easebuzz_cc_id?: string | null;
     easebuzz_dc_id?: string | null;
     ccavenue_id?: string | null;
+    razorpay_order_id?: string | null;
 }
 interface I_WORLDLINE {
     worldline_merchant_id: string;
@@ -90,6 +106,147 @@ interface EASEBUZZ_NON_PARTNER_CRED {
     easebuzz_merchant_email: string;
     easebuzz_submerchant_id: string;
 }
+export declare enum CurrencyCode {
+    AFN = "AFN",
+    ALL = "ALL",
+    DZD = "DZD",
+    AOA = "AOA",
+    ARS = "ARS",
+    AMD = "AMD",
+    AWG = "AWG",
+    AUD = "AUD",
+    AZN = "AZN",
+    BSD = "BSD",
+    BHD = "BHD",
+    BDT = "BDT",
+    BBD = "BBD",
+    BZD = "BZD",
+    BMD = "BMD",
+    BTN = "BTN",
+    BOB = "BOB",
+    BAM = "BAM",
+    BWP = "BWP",
+    BRL = "BRL",
+    BND = "BND",
+    BGN = "BGN",
+    BIF = "BIF",
+    KHR = "KHR",
+    CAD = "CAD",
+    CVE = "CVE",
+    KYD = "KYD",
+    XAF = "XAF",
+    XPF = "XPF",
+    CLP = "CLP",
+    COP = "COP",
+    KMF = "KMF",
+    CDF = "CDF",
+    CRC = "CRC",
+    CZK = "CZK",
+    DKK = "DKK",
+    DJF = "DJF",
+    DOP = "DOP",
+    XCD = "XCD",
+    EGP = "EGP",
+    ERN = "ERN",
+    SZL = "SZL",
+    ETB = "ETB",
+    EUR = "EUR",
+    FKP = "FKP",
+    FJD = "FJD",
+    GMD = "GMD",
+    GEL = "GEL",
+    GHS = "GHS",
+    GIP = "GIP",
+    GTQ = "GTQ",
+    GNF = "GNF",
+    GYD = "GYD",
+    HTG = "HTG",
+    HNL = "HNL",
+    HKD = "HKD",
+    HUF = "HUF",
+    ISK = "ISK",
+    INR = "INR",
+    IDR = "IDR",
+    IQD = "IQD",
+    JMD = "JMD",
+    JPY = "JPY",
+    JOD = "JOD",
+    KZT = "KZT",
+    KES = "KES",
+    KWD = "KWD",
+    KGS = "KGS",
+    LAK = "LAK",
+    LBP = "LBP",
+    LRD = "LRD",
+    LYD = "LYD",
+    MOP = "MOP",
+    MKD = "MKD",
+    MGA = "MGA",
+    MWK = "MWK",
+    MYR = "MYR",
+    MVR = "MVR",
+    MRU = "MRU",
+    MUR = "MUR",
+    MXN = "MXN",
+    MDL = "MDL",
+    MNT = "MNT",
+    MAD = "MAD",
+    MZN = "MZN",
+    NAD = "NAD",
+    NPR = "NPR",
+    ILS = "ILS",
+    TWD = "TWD",
+    NZD = "NZD",
+    NIO = "NIO",
+    NGN = "NGN",
+    NOK = "NOK",
+    PGK = "PGK",
+    PYG = "PYG",
+    PEN = "PEN",
+    PHP = "PHP",
+    PLN = "PLN",
+    GBP = "GBP",
+    QAR = "QAR",
+    CNY = "CNY",
+    OMR = "OMR",
+    RON = "RON",
+    RUB = "RUB",
+    RWF = "RWF",
+    SHP = "SHP",
+    WST = "WST",
+    SAR = "SAR",
+    RSD = "RSD",
+    SCR = "SCR",
+    SLL = "SLL",
+    SGD = "SGD",
+    SBD = "SBD",
+    SOS = "SOS",
+    ZAR = "ZAR",
+    KRW = "KRW",
+    LKR = "LKR",
+    SRD = "SRD",
+    SEK = "SEK",
+    CHF = "CHF",
+    TJS = "TJS",
+    TZS = "TZS",
+    THB = "THB",
+    TOP = "TOP",
+    TTD = "TTD",
+    TND = "TND",
+    TRY = "TRY",
+    TMT = "TMT",
+    AED = "AED",
+    UGX = "UGX",
+    UAH = "UAH",
+    UYU = "UYU",
+    USD = "USD",
+    UZS = "UZS",
+    VUV = "VUV",
+    VND = "VND",
+    XOF = "XOF",
+    YER = "YER",
+    ZMW = "ZMW"
+}
 interface CASHFREE_CREDENTIALS {
     cf_x_client_id: string;
     cf_x_client_secret: string;
@@ -108,6 +265,7 @@ export declare class CollectRequest {
     updatedAt?: Date;
     callbackUrl: string;
     gateway: Gateway;
+    currency: CurrencyCode;
     clientId: string;
     easebuzz_sub_merchant_id: string;
     clientSecret: string;
@@ -136,6 +294,7 @@ export declare class CollectRequest {
     vendors_info?: [
         {
             vendor_id: string;
+            edv_vendor_id?: string;
             percentage?: number;
             amount?: number;
             name?: string;
@@ -169,9 +328,11 @@ export declare class CollectRequest {
     razorpay_vendors_info?: [
         {
             vendor_id: string;
+            edv_vendor_id: string;
             account?: string;
             percentage?: number;
             amount?: number;
+            name?: string;
             notes?: {
                 branch?: string;
                 name?: string;
@@ -200,12 +361,16 @@ export declare class CollectRequest {
     cashfree_credentials: CASHFREE_CREDENTIALS;
     worldline: I_WORLDLINE;
     gatepay: I_Gatepay;
+    non_seamless_payment_links: Non_Seamless_Payment_Links;
     easebuzz_non_partner_cred: EASEBUZZ_NON_PARTNER_CRED;
     easebuzz_non_partner: boolean;
     cashfree_non_partner: boolean;
+    isMasterGateway: boolean;
+    razorpay_partner: boolean;
     worldline_token: string;
     vba_account_number: string;
     razorpay: I_Razorpay;
+    razorpay_seamless: I_Razorpay;
     _id: ObjectId;
 }
 export type CollectRequestDocument = CollectRequest & Document;

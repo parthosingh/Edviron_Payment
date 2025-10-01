@@ -19,4 +19,10 @@ export declare class PayUService {
         bank_ref_num: any;
     }>;
     terminateOrder(collect_id: string): Promise<boolean>;
+    settlementRecon(utr_number: string, limit: number | undefined, page: number | undefined, school_id: string): Promise<{
+        transactions: any[];
+        count: number;
+        page: number;
+        limit: number;
+    }>;
 }

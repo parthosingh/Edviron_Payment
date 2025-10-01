@@ -68,7 +68,13 @@ export class CollectRequestStatus {
   bank_reference: string;
 
   @Prop({ required: false, default: '' })
+  utr_number: string;
+
+  @Prop({ required: false, default: '' })
   payment_time: Date;
+
+  @Prop({ required: false, default: '' })
+  settlement_date: Date;
 
   @Prop({ required: false, default: false })
   isAttempted: boolean;

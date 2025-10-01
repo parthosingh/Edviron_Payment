@@ -77,6 +77,7 @@ export class CollectController {
       worldline_encryption_key?: string | null;
       worldline_encryption_iV?: string | null;
       worldline_scheme_code?: string | null;
+      currency?: string | null;
       isCFNonSeamless?: boolean;
       razorpay_credentials?: {
         razorpay_id?: string | null;
@@ -88,6 +89,11 @@ export class CollectController {
         gatepay_terminal_id?: string | null;
         gatepay_key?: string | null;
         gatepay_iv?: string | null;
+      };
+      razorpay_seamless_credentials?: {
+        razorpay_id?: string | null;
+        razorpay_secret?: string | null;
+        razorpay_mid?: string | null;
       };
       vendors_info?: [
         {
@@ -141,7 +147,16 @@ export class CollectController {
           on_hold?: boolean;
           on_hold_until?: Date;
         },
-      ];
+      ],
+      isEasebuzzNonpartner?:boolean,
+    easebuzz_non_partner_cred?: {
+        easebuzz_salt: string;
+        easebuzz_key: string;
+        easebuzz_merchant_email: string;
+        easebuzz_submerchant_id: string;
+      },
+      isSelectGateway?:boolean
+      razorpay_partner?:boolean
     },
   ) {
     const {
@@ -188,16 +203,22 @@ export class CollectController {
       worldline_encryption_key,
       worldline_encryption_iV,
       worldline_scheme_code,
+      currency,
       vba_account_number,
       worldLine_vendors,
       razorpay_vendors,
       razorpay_credentials,
       gatepay_credentials,
       isCFNonSeamless,
+      razorpay_seamless_credentials,
+      isSelectGateway,
+      isEasebuzzNonpartner,
+      easebuzz_non_partner_cred,
+      razorpay_partner
     } = body;
-    console.log(razorpay_credentials);
+    // console.log(razorpay_vendors,'razorpay_vendors');
+     
 
-    console.log('hit');
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
     if (!callbackUrl)
@@ -248,6 +269,7 @@ export class CollectController {
           worldline_encryption_key,
           worldline_encryption_iV,
           worldline_scheme_code,
+          currency,
           vendors_info,
           vendorgateway,
           easebuzzVendors,
@@ -260,6 +282,11 @@ export class CollectController {
           razorpay_credentials,
           gatepay_credentials,
           isCFNonSeamless,
+          razorpay_seamless_credentials,
+          isSelectGateway,
+          isEasebuzzNonpartner,
+          easebuzz_non_partner_cred,
+          razorpay_partner
         ),
       );
     } catch (e) {

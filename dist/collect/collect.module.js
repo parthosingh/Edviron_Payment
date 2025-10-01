@@ -24,6 +24,7 @@ const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 const worldline_service_1 = require("../worldline/worldline.service");
 const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
 const gatepay_service_1 = require("../gatepay/gatepay.service");
+const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 let CollectModule = class CollectModule {
 };
 exports.CollectModule = CollectModule;
@@ -41,6 +42,7 @@ exports.CollectModule = CollectModule = __decorate([
             pos_paytm_service_1.PosPaytmService,
             worldline_service_1.WorldlineService,
             gatepay_service_1.GatepayService,
+            easebuzz_service_1.EasebuzzService
         ],
         imports: [
             phonepe_module_1.PhonepeModule,

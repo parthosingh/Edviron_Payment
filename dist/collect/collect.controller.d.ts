@@ -55,6 +55,7 @@ export declare class CollectController {
         worldline_encryption_key?: string | null;
         worldline_encryption_iV?: string | null;
         worldline_scheme_code?: string | null;
+        currency?: string | null;
         isCFNonSeamless?: boolean;
         razorpay_credentials?: {
             razorpay_id?: string | null;
@@ -66,6 +67,11 @@ export declare class CollectController {
             gatepay_terminal_id?: string | null;
             gatepay_key?: string | null;
             gatepay_iv?: string | null;
+        };
+        razorpay_seamless_credentials?: {
+            razorpay_id?: string | null;
+            razorpay_secret?: string | null;
+            razorpay_mid?: string | null;
         };
         vendors_info?: [
             {
@@ -120,6 +126,15 @@ export declare class CollectController {
                 on_hold_until?: Date;
             }
         ];
+        isEasebuzzNonpartner?: boolean;
+        easebuzz_non_partner_cred?: {
+            easebuzz_salt: string;
+            easebuzz_key: string;
+            easebuzz_merchant_email: string;
+            easebuzz_submerchant_id: string;
+        };
+        isSelectGateway?: boolean;
+        razorpay_partner?: boolean;
     }): Promise<any>;
     posCollect(body: {
         amount: Number;

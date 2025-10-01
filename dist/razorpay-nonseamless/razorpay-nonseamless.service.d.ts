@@ -1,9 +1,15 @@
 import { DatabaseService } from 'src/database/database.service';
 import { CollectRequest } from 'src/database/schemas/collect_request.schema';
+import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 export declare class RazorpayNonseamlessService {
     private readonly databaseService;
-    constructor(databaseService: DatabaseService);
+    private readonly edvironPgService;
+    constructor(databaseService: DatabaseService, edvironPgService: EdvironPgService);
     createOrder(collectRequest: CollectRequest): Promise<{
+        url: string;
+        collect_req: CollectRequest;
+    }>;
+    createOrderV2(collectRequest: CollectRequest): Promise<{
         url: string;
         collect_req: CollectRequest;
     }>;
@@ -19,4 +25,5 @@ export declare class RazorpayNonseamlessService {
         limit: number;
         settlements_transactions: any[];
     }>;
+    updateOrder(collect_id: string): Promise<true | undefined>;
 }

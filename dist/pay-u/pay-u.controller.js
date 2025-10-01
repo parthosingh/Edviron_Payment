@@ -432,6 +432,15 @@ let PayUController = class PayUController {
             return res.status(400).send(error.message || 'Error in saving webhook');
         }
     }
+    async getSettlementsRecon(body) {
+        const { utr, page, limit, school_id } = body;
+        try {
+            return await this.payUService.settlementRecon(utr, limit, page, school_id);
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.PayUController = PayUController;
 __decorate([
@@ -486,6 +495,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], PayUController.prototype, "handleWebhook", null);
+__decorate([
+    (0, common_1.Post)('get-settlements-recon'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PayUController.prototype, "getSettlementsRecon", null);
 exports.PayUController = PayUController = __decorate([
     (0, common_1.Controller)('pay-u'),
     __metadata("design:paramtypes", [pay_u_service_1.PayUService,

@@ -14,6 +14,7 @@ const database_module_1 = require("../database/database.module");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const database_service_1 = require("../database/database.service");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
+const razorpay_service_1 = require("../razorpay/razorpay.service");
 let HdfcRazorpayModule = class HdfcRazorpayModule {
 };
 exports.HdfcRazorpayModule = HdfcRazorpayModule;
@@ -25,6 +26,7 @@ exports.HdfcRazorpayModule = HdfcRazorpayModule = __decorate([
             edviron_pg_service_1.EdvironPgService,
             database_service_1.DatabaseService,
             cashfree_service_1.CashfreeService,
+            razorpay_service_1.RazorpayService
         ],
         imports: [database_module_1.DatabaseModule],
     })

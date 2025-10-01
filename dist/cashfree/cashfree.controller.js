@@ -999,9 +999,4 @@ exports.CashfreeController = CashfreeController = __decorate([
         edviron_pg_service_1.EdvironPgService,
         easebuzz_service_1.EasebuzzService])
 ], CashfreeController);
-const u = {
-    data: { test_object: { test_key: 'test_value' } },
-    type: 'WEBHOOK',
-    event_time: '2025-05-20T10:24:38.589Z',
-};
 //# sourceMappingURL=cashfree.controller.js.map

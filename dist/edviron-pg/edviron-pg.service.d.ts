@@ -30,10 +30,12 @@ import { DatabaseService } from '../database/database.service';
 import { TransactionStatus } from '../types/transactionStatus';
 import { platformChange } from 'src/collect/collect.controller';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
+import { RazorpayService } from '../razorpay/razorpay.service';
 export declare class EdvironPgService implements GatewayService {
     private readonly databaseService;
     private readonly cashfreeService;
-    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService);
+    private readonly razorpayService;
+    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService, razorpayService: RazorpayService);
     collect(request: CollectRequest, platform_charges: platformChange[], school_name: any, splitPayments: boolean, vendor?: [
         {
             vendor_id: string;
@@ -57,7 +59,7 @@ export declare class EdvironPgService implements GatewayService {
             amount?: number;
             name?: string;
         }
-    ], easebuzz_school_label?: string | null): Promise<Transaction | undefined>;
+    ], easebuzz_school_label?: string | null, isSelectGateway?: boolean | null): Promise<Transaction | undefined>;
     checkStatus(collect_request_id: String, collect_request: CollectRequest): Promise<{
         status: TransactionStatus;
         amount: number;
@@ -122,6 +124,9 @@ export declare class EdvironPgService implements GatewayService {
         length: number;
         transactions: any[];
     }>;
+    subtrusteeTransactionAggregation(trustee_id: string, start_date: string, end_date: string, school_id: string[], status?: string | null, mode?: string[] | null, isQRPayment?: boolean | null, gateway?: string[] | null): Promise<{
+        transactions: any;
+    }>;
     getTransactionReportBatchedFilterd(trustee_id: string, start_date: string, end_date: string, status?: string | null, school_id?: string | null, mode?: string[] | null, isQRPayment?: boolean | null, gateway?: string[] | null): Promise<{
         length: number;
         transactions: any[];
@@ -144,6 +149,10 @@ export declare class EdvironPgService implements GatewayService {
     getMerchantBatchTransactions(school_id: string, year: string): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{
         _id: import("mongoose").Schema.Types.ObjectId;
     }>)[]>;
+    getSUbTrusteeBatchTransactions(school_id: string[], year: string): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{
+        _id: import("mongoose").Schema.Types.ObjectId;
+    }>)[]>;
+    getSubTrusteeBatchTransactions(school_ids: string[], year: string): Promise<any>;
     getSingleTransaction(collect_id: string): Promise<any>;
     sendMailAfterTransaction(collect_id: string): Promise<boolean>;
     retriveEasebuzz(txnid: string, key: string, salt: string): Promise<any>;

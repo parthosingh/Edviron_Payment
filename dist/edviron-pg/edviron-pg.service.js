@@ -26,12 +26,14 @@ const sign_2 = require("../utils/sign");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
 const mongoose_1 = require("mongoose");
+const razorpay_service_1 = require("../razorpay/razorpay.service");
 let EdvironPgService = class EdvironPgService {
-    constructor(databaseService, cashfreeService) {
+    constructor(databaseService, cashfreeService, razorpayService) {
         this.databaseService = databaseService;
         this.cashfreeService = cashfreeService;
+        this.razorpayService = razorpayService;
     }
-    async collect(request, platform_charges, school_name, splitPayments, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, easebuzz_school_label) {
+    async collect(request, platform_charges, school_name, splitPayments, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, easebuzz_school_label, isSelectGateway) {
         try {
             let paymentInfo = {
                 cashfree_id: null,
@@ -40,11 +42,13 @@ let EdvironPgService = class EdvironPgService {
                 easebuzz_dc_id: null,
                 ccavenue_id: null,
                 easebuzz_upi_id: null,
+                razorpay_order_id: null,
             };
             const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
             if (!collectReq) {
                 throw new common_1.BadRequestException('Collect request not found');
             }
+            const razorpay_vendors = collectReq.razorpay_vendors_info;
             const schoolName = school_name.replace(/ /g, '-');
             const axios = require('axios');
             const currentTime = new Date();
@@ -55,7 +59,7 @@ let EdvironPgService = class EdvironPgService {
                     customer_id: '7112AAA812234',
                     customer_phone: '9898989898',
                 },
-                order_currency: 'INR',
+                order_currency: request.currency,
                 order_amount: request.amount.toFixed(2),
                 order_id: request._id,
                 order_meta: {
@@ -130,7 +134,7 @@ let EdvironPgService = class EdvironPgService {
             };
             let id = '';
             let easebuzz_pg = false;
-            if (request.easebuzz_sub_merchant_id) {
+            if (!isSelectGateway && request.easebuzz_sub_merchant_id) {
                 if (!easebuzz_school_label) {
                     throw new common_1.BadRequestException(`Split Information Not Configure Please contact tarun.k@edviron.com`);
                 }
@@ -233,6 +237,46 @@ let EdvironPgService = class EdvironPgService {
                     }, 25 * 60 * 1000);
                 }
             }
+            console.log(request.razorpay_seamless.razorpay_mid, 'mid');
+            console.log(request.razorpay_seamless.razorpay_mid, 'mid');
+            let razorpay_id = '';
+            let razorpay_pg = false;
+            if (request.razorpay_seamless.razorpay_mid &&
+                request.razorpay_seamless.razorpay_id) {
+                if (splitPayments && razorpay_vendors && razorpay_vendors.length > 0) {
+                    collectReq.vendors_info = vendor;
+                    await collectReq.save();
+                    razorpay_vendors.map(async (info) => {
+                        const { vendor_id, percentage, amount, notes, name, linked_account_notes, on_hold, on_hold_until, } = info;
+                        let split_amount = 0;
+                        if (amount) {
+                            split_amount = amount;
+                        }
+                        if (percentage && percentage !== 0) {
+                            split_amount = (request.amount * percentage) / 100;
+                        }
+                        await new this.databaseService.VendorTransactionModel({
+                            vendor_id: vendor_id,
+                            amount: split_amount,
+                            collect_id: request._id,
+                            gateway: collect_request_schema_1.Gateway.EDVIRON_RAZORPAY,
+                            status: transactionStatus_1.TransactionStatus.PENDING,
+                            trustee_id: request.trustee_id,
+                            school_id: request.school_id,
+                            custom_order_id: request.custom_order_id || '',
+                            name,
+                            razorpay_vendors: info,
+                        }).save();
+                    });
+                }
+                console.log('creating order with razorpay');
+                const data = await this.razorpayService.createOrder(request);
+                razorpay_id = data?.id;
+                paymentInfo.razorpay_order_id = razorpay_id || null;
+                if (razorpay_id) {
+                    razorpay_pg = true;
+                }
+            }
             const disabled_modes_string = request.disabled_modes
                 .map((mode) => `${mode}=false`)
                 .join('&');
@@ -245,6 +289,7 @@ let EdvironPgService = class EdvironPgService {
                     url: `${process.env.URL}/cashfree/redirect?session_id=${cf_payment_id}`,
                 };
             }
+            let newcurrency = request.currency ? request.currency : 'INR';
             return {
                 url: process.env.URL +
                     '/edviron-pg/redirect?session_id=' +
@@ -262,7 +307,13 @@ let EdvironPgService = class EdvironPgService {
                     '&easebuzz_pg=' +
                     easebuzz_pg +
                     '&payment_id=' +
-                    id,
+                    id +
+                    '&razorpay_pg=' +
+                    razorpay_pg +
+                    '&razorpay_id=' +
+                    razorpay_id +
+                    '&currency=' +
+                    newcurrency,
             };
         }
         catch (err) {
@@ -1203,6 +1254,133 @@ let EdvironPgService = class EdvironPgService {
             throw new Error(error.message);
         }
     }
+    async subtrusteeTransactionAggregation(trustee_id, start_date, end_date, school_id, status, mode, isQRPayment, gateway) {
+        try {
+            const endOfDay = new Date(end_date);
+            const startDates = new Date(start_date);
+            const startOfDayUTC = new Date(await this.convertISTStartToUTC(start_date));
+            const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
+            endOfDay.setHours(23, 59, 59, 999);
+            let collectQuery = {
+                trustee_id: trustee_id,
+                school_id: { $in: school_id },
+                createdAt: {
+                    $gte: new Date(startDates.getTime() - 24 * 60 * 60 * 1000),
+                    $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
+                },
+            };
+            console.log({ collectQuery });
+            if (isQRPayment) {
+                collectQuery = {
+                    ...collectQuery,
+                    isQRPayment: true,
+                };
+            }
+            if (gateway) {
+                collectQuery = {
+                    ...collectQuery,
+                    gateway: { $in: gateway },
+                };
+            }
+            const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
+            let transactions = [];
+            const orderIds = orders.map((order) => order._id);
+            let query = {
+                collect_id: { $in: orderIds },
+            };
+            const startDate = new Date(start_date);
+            const endDate = end_date;
+            if (startDate && endDate) {
+                query = {
+                    ...query,
+                    $or: [
+                        {
+                            payment_time: {
+                                $ne: null,
+                                $gte: startOfDayUTC,
+                                $lt: endOfDayUTC,
+                            },
+                        },
+                        {
+                            $and: [
+                                { payment_time: { $eq: null } },
+                                {
+                                    updatedAt: {
+                                        $gte: startOfDayUTC,
+                                        $lt: endOfDayUTC,
+                                    },
+                                },
+                            ],
+                        },
+                    ],
+                };
+            }
+            if ((status && status === 'SUCCESS') || status === 'PENDING') {
+                query = {
+                    ...query,
+                    status: { $in: [status.toUpperCase(), status.toLowerCase()] },
+                };
+            }
+            if (school_id) {
+            }
+            if (mode) {
+                query = {
+                    ...query,
+                    payment_method: { $in: mode },
+                };
+            }
+            transactions =
+                await this.databaseService.CollectRequestStatusModel.aggregate([
+                    {
+                        $match: query,
+                    },
+                    {
+                        $project: {
+                            collect_id: 1,
+                            transaction_amount: 1,
+                            order_amount: 1,
+                            status: 1,
+                            createdAt: 1,
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: 'collectrequests',
+                            localField: 'collect_id',
+                            foreignField: '_id',
+                            as: 'collect_request',
+                        },
+                    },
+                    {
+                        $unwind: '$collect_request',
+                    },
+                    {
+                        $group: {
+                            _id: '$collect_request.trustee_id',
+                            totalTransactionAmount: { $sum: '$transaction_amount' },
+                            totalOrderAmount: { $sum: '$order_amount' },
+                            totalTransactions: { $sum: 1 },
+                        },
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            totalTransactionAmount: 1,
+                            totalOrderAmount: 1,
+                            totalTransactions: 1,
+                        },
+                    },
+                ]);
+            console.timeEnd('transactionsCount');
+            return {
+                transactions: transactions[0],
+            };
+        }
+        catch (e) {
+            console.log(e);
+            throw new Error(e.message);
+        }
+    }
     async getTransactionReportBatchedFilterd(trustee_id, start_date, end_date, status, school_id, mode, isQRPayment, gateway) {
         try {
             const endOfDay = new Date(end_date);
@@ -1644,6 +1822,64 @@ let EdvironPgService = class EdvironPgService {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async getSUbTrusteeBatchTransactions(school_id, year) {
+        try {
+            const batch = await this.databaseService.BatchTransactionModel.find({
+                school_id: { $in: school_id },
+                year,
+            });
+            if (!batch) {
+                throw new Error('Batch not found');
+            }
+            return batch;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async getSubTrusteeBatchTransactions(school_ids, year) {
+        try {
+            const batch = await this.databaseService.BatchTransactionModel.aggregate([
+                {
+                    $match: {
+                        school_id: { $in: school_ids },
+                        year: year,
+                    },
+                },
+                {
+                    $project: {
+                        order_amount: 1,
+                        transaction_amount: {
+                            $ifNull: ['$transaction_amount', '$order_amount'],
+                        },
+                    },
+                },
+                {
+                    $group: {
+                        _id: null,
+                        total_order_amount: { $sum: '$order_amount' },
+                        total_transaction_amount: { $sum: '$transaction_amount' },
+                        total_transactions: { $sum: 1 },
+                    },
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        total_order_amount: 1,
+                        total_transaction_amount: 1,
+                        total_transactions: 1,
+                    },
+                },
+            ]);
+            if (!batch || batch.length === 0) {
+                throw new Error('Batch not found');
+            }
+            return batch[0];
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
     async getSingleTransaction(collect_id) {
         const objId = new mongoose_1.Types.ObjectId(collect_id);
         const vendotTransaction = await this.databaseService.CollectRequestModel.aggregate([
@@ -1755,6 +1991,7 @@ exports.EdvironPgService = EdvironPgService;
 exports.EdvironPgService = EdvironPgService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
-        cashfree_service_1.CashfreeService])
+        cashfree_service_1.CashfreeService,
+        razorpay_service_1.RazorpayService])
 ], EdvironPgService);
 //# sourceMappingURL=edviron-pg.service.js.map

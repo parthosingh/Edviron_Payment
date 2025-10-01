@@ -17,6 +17,7 @@ import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 import { GatepayService } from 'src/gatepay/gatepay.service';
+import { RazorpayService } from 'src/razorpay/razorpay.service';
 @Module({
   controllers: [CheckStatusController],
   providers: [
@@ -31,6 +32,7 @@ import { GatepayService } from 'src/gatepay/gatepay.service';
     WorldlineService,
     RazorpayNonseamlessService,
     GatepayService,
+    RazorpayService
   ],
   imports: [
     DatabaseModule,

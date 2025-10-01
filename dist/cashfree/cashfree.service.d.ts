@@ -186,7 +186,7 @@ export declare class CashfreeService {
             amount?: number;
             name?: string;
         }
-    ], isVBAPayment?: boolean, vba_account_number?: string): Promise<{
+    ], isVBAPayment?: boolean, vba_account_number?: string, isSelectGateway?: boolean): Promise<{
         _id: import("mongoose").Schema.Types.ObjectId;
         url: string;
     }>;
@@ -203,11 +203,16 @@ export declare class CashfreeService {
         };
     }>;
     createOrderCashfree(request: CollectRequest, splitPayments?: boolean, cashfreeVedors?: [
+
         {
             vendor_id: string;
             percentage?: number;
             amount?: number;
             name?: string;
+            scheme_code?: string;
         }
-    ]): Promise<any>;
+    ]): Promise<{
+        _id: import("mongoose").Schema.Types.ObjectId;
+        url: string;
+    } | undefined>;
 }

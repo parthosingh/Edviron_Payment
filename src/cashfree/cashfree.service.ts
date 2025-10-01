@@ -852,15 +852,18 @@ export class CashfreeService {
     };
 
     try {
-      console.log(config, 'config for cashfree merchant');
+
 
       const response = await axios.request(config);
       await this.uploadKycDocs(merchant_id);
       // return response.data;
       return 'Merchant Request Created Successfully on Cashfree';
     } catch (error) {
-      console.error('Cashfree API error:', error);
-      throw new Error('Cashfree API request failed');
+      console.log(error.response?.data || error.message);
+      if (error.response?.data?.message) {
+        throw new BadRequestException(error.response?.data?.message);
+      }
+      throw new BadRequestException('Cashfree API request failed');
     }
   }
 
@@ -1450,6 +1453,7 @@ export class CashfreeService {
     ],
     isVBAPayment?: boolean,
     vba_account_number?: string,
+    isSelectGateway?: boolean
   ) {
     try {
       if (custom_order_id) {
@@ -1482,7 +1486,8 @@ export class CashfreeService {
         vba_account_number: vba_account_number || 'NA',
         isSplitPayments: splitPayments || false,
         cashfree_credentials: cashfree_credentials,
-        cashfree_non_partner: true
+        cashfree_non_partner: true,
+        isMasterGateway: isSelectGateway || false
       }).save();
 
       await new this.databaseService.CollectRequestStatusModel({
@@ -1501,7 +1506,6 @@ export class CashfreeService {
         easebuzz_cc_id: null,
         easebuzz_dc_id: null,
         ccavenue_id: null,
-        easebuzz_upi_id: null,
       };
       let schoolName = '';
       if (school_name) {
@@ -1585,8 +1589,7 @@ export class CashfreeService {
           }).save();
         });
       }
-      console.log(cashfree_credentials);
-
+    
       let config = {
         method: 'post',
         maxBodyLength: Infinity,
@@ -1622,7 +1625,22 @@ export class CashfreeService {
         JSON.stringify(platform_charges),
       );
       request.paymentIds = paymentInfo;
+      const url = process.env.URL +
+        '/edviron-pg/redirect?session_id=' +
+        cf_payment_id +
+        '&collect_request_id=' +
+        request._id +
+        '&amount=' +
+        request.amount.toFixed(2) +
+        '&' +
+        disabled_modes_string +
+        '&platform_charges=' +
+        encodedPlatformCharges +
+        '&school_name=' +
+        schoolName
+      request.payment_data = `"${url}"`
       await request.save();
+     
       return {
         _id: request._id,
         url:

@@ -21,17 +21,19 @@
 /// <reference types="mongoose/types/utility" />
 /// <reference types="mongoose/types/validation" />
 /// <reference types="mongoose/types/virtuals" />
-/// <reference types="mongoose" />
 /// <reference types="mongoose/types/inferschematype" />
 import { DatabaseService } from '../database/database.service';
 import { EdvironPgService } from './edviron-pg.service';
-import { Gateway } from 'src/database/schemas/collect_request.schema';
+import { Types } from 'mongoose';
+import { Gateway, I_Razorpay } from 'src/database/schemas/collect_request.schema';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { PlatformCharge, rangeCharge } from 'src/database/schemas/platform.charges.schema';
 import { NttdataService } from 'src/nttdata/nttdata.service';
 import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
+import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
+import { RazorpayService } from 'src/razorpay/razorpay.service';
 export declare class EdvironPgController {
     private readonly edvironPgService;
     private readonly databaseService;
@@ -40,7 +42,9 @@ export declare class EdvironPgController {
     private readonly nttDataService;
     private readonly posPaytmService;
     private readonly worldlineService;
-    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, nttDataService: NttdataService, posPaytmService: PosPaytmService, worldlineService: WorldlineService);
+    private readonly razorpayNonseamless;
+    private readonly razorpaySeamless;
+    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, nttDataService: NttdataService, posPaytmService: PosPaytmService, worldlineService: WorldlineService, razorpayNonseamless: RazorpayNonseamlessService, razorpaySeamless: RazorpayService);
     handleRedirect(req: any, res: any): Promise<void>;
     handleSdkRedirect(req: any, res: any): Promise<any>;
     handleCallback(req: any, res: any): Promise<any>;
@@ -99,12 +103,15 @@ export declare class EdvironPgController {
     }): Promise<{
         cashfreeSum: number;
         easebuzzSum: number;
+        razorpaySum: number;
         percentageCashfree: number;
         percentageEasebuzz: number;
+        percentageRazorpay: number;
     }>;
     getPgStatus(collect_id: string): Promise<{
         cashfree: boolean;
         easebuzz: boolean;
+        razorpay: boolean;
     }>;
     initiaterefund(body: {
         collect_id: string;
@@ -254,10 +261,23 @@ export declare class EdvironPgController {
     }): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{
         _id: import("mongoose").Schema.Types.ObjectId;
     }>)[]>;
+    getSubtrusteeBatchTransactions(body: {
+        school_ids: string[];
+        year: string;
+        token: string;
+    }): Promise<any>;
     getMerchantBatchTransactions(query: {
         school_id: string;
         year: string;
         token: string;
+    }): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{
+        _id: import("mongoose").Schema.Types.ObjectId;
+    }>)[]>;
+    getSubTrusteeBatchTransactions(body: {
+        school_id: string[];
+        year: string;
+        token: string;
+        subTrusteeId: string;
     }): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/batch.transactions.schema").BatchTransactionsDocument> & import("../database/schemas/batch.transactions.schema").BatchTransactions & Document & Required<{
         _id: import("mongoose").Schema.Types.ObjectId;
     }>)[]>;
@@ -324,7 +344,7 @@ export declare class EdvironPgController {
     }): Promise<{
         message: string;
     }>;
-    getPaymentMdr(collect_id: string, payment_mode: string, platform_type: string): Promise<{
+    getPaymentMdr(collect_id: string, payment_mode: string, platform_type: string, currency: string): Promise<{
         range_charge: {
             charge: number;
             charge_type: string;
@@ -391,6 +411,17 @@ export declare class EdvironPgController {
         yearlyTotal?: undefined;
         monthlyReport?: undefined;
     }>;
+    bulkSubTrusteeTransactions(body: {
+        trustee_id: string;
+        token: string;
+        searchParams?: string;
+        isCustomSearch?: boolean;
+        seachFilter?: string;
+        payment_modes?: string[];
+        isQRCode?: boolean;
+        gateway?: string[];
+        school_ids: Types.ObjectId[];
+    }, res: any, req: any): Promise<void>;
     getVba(collect_id: string): Promise<any>;
     getDisputesbyOrderId(collect_id: string): Promise<{
         data: {
@@ -409,4 +440,38 @@ export declare class EdvironPgController {
         message: string;
     }>;
     retriveEasebuzz(body: any): Promise<any>;
+    setMdrZero(body: {
+        school_ids: string[];
+    }): Promise<import("mongoose").UpdateWriteOpResult | undefined>;
+    subTrusteeTransactionsSum(body: {
+        trustee_id: string;
+        school_id: string[];
+        gateway?: string[] | null;
+        start_date: string;
+        end_date: string;
+        status: string;
+        mode: string[] | null;
+        isQRPayment: boolean;
+    }): Promise<{
+        transactions: any;
+    }>;
+    webhookTrigger(body: {
+        collect_id: string;
+        school_ids: string[];
+        start_date: string;
+        end_date: string;
+    }): Promise<{
+        length: number;
+        successCount: number;
+        failCount: number;
+        noUrlCount: number;
+    }>;
+    orderDetail(collect_id: string): Promise<{
+        razorpay_seamless: I_Razorpay;
+        additional_data: string;
+        amount: number;
+    }>;
+    rzpOrderDetail(order_id: string): Promise<{
+        razorpay_seamless: I_Razorpay;
+    }>;
 }

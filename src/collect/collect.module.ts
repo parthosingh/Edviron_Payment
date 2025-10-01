@@ -15,6 +15,7 @@ import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 import { GatepayService } from 'src/gatepay/gatepay.service';
+import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 
 @Module({
   controllers: [CollectController],
@@ -29,6 +30,7 @@ import { GatepayService } from 'src/gatepay/gatepay.service';
     PosPaytmService,
     WorldlineService,
     GatepayService,
+    EasebuzzService
   ],
   imports: [
     PhonepeModule,

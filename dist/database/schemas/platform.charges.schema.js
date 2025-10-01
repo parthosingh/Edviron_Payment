@@ -72,6 +72,10 @@ __decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
 ], SchoolMdr.prototype, "comment", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], SchoolMdr.prototype, "currency", void 0);
 exports.SchoolMdr = SchoolMdr = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], SchoolMdr);

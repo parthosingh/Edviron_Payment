@@ -18,9 +18,12 @@ const collect_req_status_schema_1 = require("../database/schemas/collect_req_sta
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const hdfc_razorpay_service_1 = require("../hdfc_razporpay/hdfc_razorpay.service");
 const transactionStatus_1 = require("../types/transactionStatus");
+const _jwt = require("jsonwebtoken");
+const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 let RazorpayNonseamlessService = class RazorpayNonseamlessService {
-    constructor(databaseService) {
+    constructor(databaseService, edvironPgService) {
         this.databaseService = databaseService;
+        this.edvironPgService = edvironPgService;
     }
     async createOrder(collectRequest) {
         try {
@@ -32,9 +35,9 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 currency: 'INR',
                 receipt: _id.toString(),
                 notes: {
-                    student_id: studentDetail?.student_details?.student_id || 'N/A',
                     student_name: studentDetail?.student_details?.student_name || 'N/A',
                     student_email: studentDetail?.student_details?.student_email || 'N/A',
+                    student_id: studentDetail?.student_details?.student_id || 'N/A',
                     student_phone_no: studentDetail?.student_details?.student_phone_no || 'N/A',
                 },
             };
@@ -101,8 +104,92 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
             throw new common_1.BadRequestException(error.response?.data || error.message);
         }
     }
+    async createOrderV2(collectRequest) {
+        try {
+            const { _id, amount: totalRupees, razorpay, razorpay_vendors_info, additional_data, } = collectRequest;
+            const studentDetail = JSON.parse(additional_data);
+            const totalPaise = Math.round(totalRupees * 100);
+            const data = {
+                amount: totalPaise,
+                currency: 'INR',
+                receipt: _id.toString(),
+                notes: {
+                    student_name: studentDetail?.student_details?.student_name || 'N/A',
+                    student_email: studentDetail?.student_details?.student_email || 'N/A',
+                    student_id: studentDetail?.student_details?.student_id || 'N/A',
+                    student_phone_no: studentDetail?.student_details?.student_phone_no || 'N/A',
+                },
+            };
+            if (razorpay_vendors_info?.length) {
+                let computed = 0;
+                const transfers = razorpay_vendors_info.map((v, idx) => {
+                    console.log(v, 'vendor');
+                    let amtPaise;
+                    if (v.amount !== undefined) {
+                        amtPaise = Math.round(v.amount * 100);
+                    }
+                    else if (v.percentage !== undefined) {
+                        amtPaise = Math.floor((totalPaise * v.percentage) / 100);
+                    }
+                    else {
+                        throw new Error(`Vendor at index ${idx} must have amount or percentage`);
+                    }
+                    computed += amtPaise;
+                    return {
+                        account: v.account,
+                        amount: amtPaise,
+                        currency: 'INR',
+                        notes: v.notes || {},
+                        linked_account_notes: v.linked_account_notes,
+                        on_hold: v.on_hold,
+                        on_hold_until: v.on_hold_until
+                            ? Math.floor(v.on_hold_until.getTime() / 1000)
+                            : undefined,
+                    };
+                });
+                const remainder = totalPaise - computed;
+                if (remainder !== 0 && transfers.length > 0) {
+                    transfers[0].amount += remainder;
+                }
+                data.transfers = transfers;
+            }
+            const config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${process.env.RAZORPAY_URL}/v1/orders`,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Razorpay-Account': razorpay.razorpay_mid,
+                },
+                auth: {
+                    username: razorpay.razorpay_id,
+                    password: razorpay.razorpay_secret,
+                },
+                data,
+            };
+            const { data: rpRes } = await axios_1.default.request(config);
+            if (rpRes.status !== 'created') {
+                throw new common_1.BadRequestException('Failed to create Razorpay order');
+            }
+            await collectRequest.constructor.updateOne({ _id }, {
+                $set: {
+                    gateway: collect_request_schema_1.Gateway.EDVIRON_RAZORPAY,
+                    razorpay_partner: true,
+                    'razorpay.order_id': rpRes.id,
+                },
+            });
+            return {
+                url: `${process.env.URL}/razorpay-nonseamless/redirect/v2?collect_id=${_id}`,
+                collect_req: collectRequest,
+            };
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.response?.data || error.message);
+        }
+    }
     async getPaymentStatus(order_id, collectRequest) {
         try {
+            console.log('razorpay hit');
             const config = {
                 method: 'get',
                 maxBodyLength: Infinity,
@@ -116,8 +203,12 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 },
             };
             const { data: orderStatus } = await axios_1.default.request(config);
-            const status = orderStatus?.items[0];
-            return await this.formatRazorpayPaymentStatusResponse(status, collectRequest);
+            const items = orderStatus.items || [];
+            const capturedItem = items.find((item) => item.status === 'captured');
+            if (capturedItem) {
+                return await this.formatRazorpayPaymentStatusResponse(capturedItem, collectRequest);
+            }
+            return await this.formatRazorpayPaymentStatusResponse(items[items.length - 1] || [], collectRequest);
         }
         catch (error) {
             console.log(error);
@@ -140,8 +231,8 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     : 202;
             const formattedResponse = {
                 status: status,
-                amount: response?.amount ? response?.amount / 100 : null,
-                transaction_amount: response?.amount ? response?.amount / 100 : null,
+                amount: response?.amount ? response?.amount / 100 : collectRequest.amount,
+                transaction_amount: response?.amount ? response?.amount / 100 : collectRequest.amount,
                 status_code: statusCode,
                 custom_order_id: collectRequest?.custom_order_id,
                 details: {
@@ -164,10 +255,11 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     response?.acquirer_data?.rrn || null;
             }
             if (response?.method === 'card') {
-                const cardDetails = await this.fetchCardDetailsOfaPaymentFromRazorpay(response?.id, collectRequest);
+                console.log(response, 'response');
+                const cardDetails = response.card;
                 formattedResponse.details.payment_mode = cardDetails?.type;
                 formattedResponse.details.payment_methods['card'] = {
-                    card_bank_name: cardDetails?.card_issuer || null,
+                    card_bank_name: cardDetails?.issuer || null,
                     card_country: cardDetails?.international ? null : 'IN',
                     card_network: cardDetails?.network || null,
                     card_number: `XXXXXXXXXXXX${cardDetails?.last4}` || null,
@@ -230,9 +322,26 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 throw new common_1.BadRequestException('Refund amount cannot be greater than the original amount.');
             }
             const status = await this.getPaymentStatus(collectRequest.razorpay.order_id, collectRequest);
-            console.log(status, 'status');
             if (status.status !== 'SUCCESS') {
                 throw new common_1.BadRequestException('Payment not captured yet.');
+            }
+            const payload = {
+                refund_id
+            };
+            const token = _jwt.sign(payload, process.env.JWT_SECRET_FOR_INTRANET);
+            const refundConfig = {
+                method: 'get',
+                maxBodyLength: Infinity,
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-single-refund?refund_id=${refund_id}&token=${token}`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                },
+            };
+            const { data: refundInfo } = await axios_1.default.request(refundConfig);
+            let isSplit = false;
+            if (refundInfo.isSplitRedund) {
+                isSplit = true;
             }
             const totalPaise = Math.round(refundAmount * 100);
             const config = {
@@ -247,8 +356,10 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 },
                 data: {
                     amount: totalPaise,
+                    reverse_all: isSplit || false
                 },
             };
+            console.log(config, 'razorpay refind config');
             const response = await axios_1.default.request(config);
             console.log(response.data, 'refund response');
             return response.data;
@@ -471,7 +582,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     ],
                 });
                 const customOrderMap = new Map(customOrders.map((doc) => [
-                    doc.custom_order_id,
+                    doc._id.toString(),
                     {
                         _id: doc._id.toString(),
                         custom_order_id: doc.custom_order_id,
@@ -482,6 +593,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 const enrichedOrders = await Promise.all(response.data.items
                     .filter((order) => order.order_receipt)
                     .map(async (order) => {
+                    console.log(order, "order");
                     let customData = {};
                     let additionalData = {};
                     let custom_order_id = null;
@@ -492,8 +604,11 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     let payment_group = null;
                     let school_id = null;
                     let studentDetails = {};
+                    let razorpay_order_id = null;
                     if (order.order_receipt) {
+                        console.log(order.order_receipt, "order.order_receipt");
                         customData = customOrderMap.get(order.order_receipt) || {};
+                        console.log(customData, "customData");
                         try {
                             custom_order_id = order.order_receipt;
                             school_id = customData.school_id || null;
@@ -511,6 +626,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                                 : null;
                             payment_group = order.method;
                             studentDetails = additionalData?.student_details || {};
+                            razorpay_order_id = order.order_id || null;
                             order.order_id = customData._id || null;
                         }
                         catch {
@@ -521,6 +637,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                             event_amount = null;
                             event_time = null;
                             payment_group = null;
+                            razorpay_order_id = order.order_id || null;
                         }
                     }
                     if (order.payment_group &&
@@ -592,6 +709,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     }
                     return {
                         ...order,
+                        razorpay_order_id,
                         custom_order_id: custom_order_id || null,
                         school_id: school_id || null,
                         student_id: studentDetails?.student_id || null,
@@ -623,10 +741,185 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
             return false;
         }
     }
+    async updateOrder(collect_id) {
+        try {
+            const [collect_request, collect_req_status] = await Promise.all([
+                this.databaseService.CollectRequestModel.findById(collect_id),
+                this.databaseService.CollectRequestStatusModel.findOne({
+                    collect_id: new mongoose_1.Types.ObjectId(collect_id),
+                }),
+            ]);
+            if (!collect_request || !collect_req_status) {
+                throw new common_1.NotFoundException('Order not found');
+            }
+            if (collect_req_status.status !== 'PENDING') {
+                return true;
+            }
+            const status = await this.getPaymentStatus(collect_request.razorpay.order_id.toString(), collect_request);
+            let payment_method = status.details.payment_mode || null;
+            let payload = status?.details?.payment_methods || {};
+            let detail;
+            let pg_mode = payment_method;
+            console.log(payment_method, 'payment_method');
+            switch (payment_method) {
+                case 'upi':
+                    detail = {
+                        upi: {
+                            channel: null,
+                            upi_id: payload?.upi?.vpa || null,
+                        },
+                    };
+                    break;
+                case 'credit':
+                    (pg_mode = 'credit_card'), console.log(payload, 'payloadin here');
+                    detail = {
+                        card: {
+                            card_bank_name: payload?.card?.card_type || null,
+                            card_country: payload?.card?.card_country || null,
+                            card_network: payload?.card?.card_network || null,
+                            card_number: payload?.card?.card_number || null,
+                            card_sub_type: payload?.card?.card_sub_type || null,
+                            card_type: payload?.card?.card_type || null,
+                            channel: null,
+                        },
+                    };
+                    break;
+                case 'debit':
+                    (pg_mode = 'debit_card'),
+                        (detail = {
+                            card: {
+                                card_bank_name: payload?.card?.card_type || null,
+                                card_country: payload?.card?.card_country || null,
+                                card_network: payload?.card?.card_network || null,
+                                card_number: payload?.card?.card_number || null,
+                                card_sub_type: payload?.card?.card_sub_type || null,
+                                card_type: payload?.card?.card_type || null,
+                                channel: null,
+                            },
+                        });
+                    break;
+                case 'net_banking':
+                    detail = {
+                        netbanking: {
+                            channel: null,
+                            netbanking_bank_code: null,
+                            netbanking_bank_name: payload.net_banking.bank || null,
+                        },
+                    };
+                    break;
+                case 'wallet':
+                    detail = {
+                        wallet: {
+                            channel: null,
+                            provider: payload.wallet.wallet || null,
+                        },
+                    };
+                    break;
+                default:
+                    detail = {};
+            }
+            const collectIdObject = new mongoose_1.Types.ObjectId(collect_id);
+            const transaction_time = status?.details?.transaction_time
+                ? new Date(status?.details?.transaction_time)
+                : null;
+            const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
+                collect_id: collectIdObject,
+            }, {
+                $set: {
+                    status: status.status,
+                    payment_time: transaction_time
+                        ? transaction_time.toISOString()
+                        : null,
+                    transaction_amount: status?.transaction_amount || status?.amount,
+                    payment_method: pg_mode || '',
+                    details: JSON.stringify(detail),
+                    bank_reference: status?.details?.bank_ref || '',
+                    reason: status.details?.order_status || '',
+                    payment_message: status?.details?.order_status || '',
+                },
+            }, {
+                upsert: true,
+                new: true,
+            });
+            const webhookUrl = collect_request?.req_webhook_urls;
+            const transaction_time_str = transaction_time
+                ? transaction_time.toISOString()
+                : null;
+            const webHookDataInfo = {
+                collect_id,
+                amount: collect_request.amount,
+                status: status.status,
+                trustee_id: collect_request.trustee_id,
+                school_id: collect_request.school_id,
+                req_webhook_urls: collect_request?.req_webhook_urls,
+                custom_order_id: collect_request?.custom_order_id || null,
+                createdAt: collect_req_status?.createdAt,
+                transaction_time: transaction_time
+                    ? transaction_time.toISOString()
+                    : collect_req_status?.updatedAt,
+                additional_data: collect_request?.additional_data || null,
+                details: collect_req_status.details,
+                transaction_amount: status.transaction_amount,
+                bank_reference: collect_req_status.bank_reference,
+                payment_method: collect_req_status.payment_method,
+                payment_details: collect_req_status.details,
+                formattedDate: (() => {
+                    const rawDate = transaction_time || collect_req_status?.updatedAt;
+                    const dateObj = new Date(rawDate || new Date());
+                    if (isNaN(dateObj.getTime()))
+                        return null;
+                    return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+                })(),
+            };
+            if (webhookUrl !== null) {
+                let webhook_key = null;
+                try {
+                    const token = _jwt.sign({ trustee_id: collect_request.trustee_id.toString() }, process.env.KEY);
+                    const config = {
+                        method: 'get',
+                        maxBodyLength: Infinity,
+                        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-webhook-key?token=${token}&trustee_id=${collect_request.trustee_id.toString()}`,
+                        headers: {
+                            accept: 'application/json',
+                            'content-type': 'application/json',
+                        },
+                    };
+                    const { data } = await axios_1.default.request(config);
+                    webhook_key = data?.webhook_key;
+                }
+                catch (error) {
+                    console.error('Error getting webhook key:', error.message);
+                }
+                if (collect_request?.trustee_id.toString() === '66505181ca3e97e19f142075') {
+                    setTimeout(async () => {
+                        try {
+                            await this.edvironPgService.sendErpWebhook(webhookUrl, webHookDataInfo, webhook_key);
+                        }
+                        catch (e) {
+                            console.log(`Error sending webhook to ${webhookUrl}:`, e.message);
+                        }
+                    }, 60000);
+                }
+                else {
+                    try {
+                        await this.edvironPgService.sendErpWebhook(webhookUrl, webHookDataInfo, webhook_key);
+                    }
+                    catch (e) {
+                        console.log(`Error sending webhook to ${webhookUrl}:`, e.message);
+                    }
+                }
+            }
+            return true;
+        }
+        catch (error) {
+            console.log(error);
+        }
+    }
 };
 exports.RazorpayNonseamlessService = RazorpayNonseamlessService;
 exports.RazorpayNonseamlessService = RazorpayNonseamlessService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [database_service_1.DatabaseService])
+    __metadata("design:paramtypes", [database_service_1.DatabaseService,
+        edviron_pg_service_1.EdvironPgService])
 ], RazorpayNonseamlessService);
 //# sourceMappingURL=razorpay-nonseamless.service.js.map
