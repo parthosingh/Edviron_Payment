@@ -26,10 +26,9 @@ let EdvironPayController = class EdvironPayController {
         this.edvironPay = edvironPay;
     }
     async upsertInstallments(body) {
-
         const { school_id, trustee_id, student_detail, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, allvendors, cashfreeVedors, easebuzzVendors, } = body;
-        let { student_id, student_number, student_name, student_email, } = student_detail;
-
+        const { student_id, student_number, student_name, student_email } = student_detail;
+        await this.edvironPay.createStudent(student_detail, school_id, trustee_id);
         if (isInstallement && installments && installments.length > 0) {
             await Promise.all(installments.map(async (installment) => {
                 const filter = {
@@ -100,10 +99,8 @@ let EdvironPayController = class EdvironPayController {
         console.log('Installments upserted successfully');
         return {
             status: 'installment updated successfully for student_id: ' + student_id,
-
             student_id: student_id,
             url: `${process.env.PG_FRONTEND}/collect-fee?student_id=${student_id}&school_id=${school_id}&trustee_id=${trustee_id}`,
-
         };
     }
     async collect(body) {
@@ -183,7 +180,6 @@ let EdvironPayController = class EdvironPayController {
     }
     async getStudentInstallments(student_id, school_id, trustee_id) {
         try {
-
             const studentDetail = await this.edvironPay.studentFind(student_id, school_id, trustee_id);
             if (!studentDetail) {
                 throw new common_1.BadRequestException('student not found');
@@ -192,7 +188,6 @@ let EdvironPayController = class EdvironPayController {
                 student_id,
             });
             installments.sort((a, b) => Number(a.month) - Number(b.month));
-
             return {
                 installments,
                 studentDetail,
