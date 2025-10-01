@@ -409,7 +409,7 @@ export class RazorpayService {
           fixed_amount: true,
           payment_amount: collectRequest.amount * 100, 
           order_id: order_id,
-          callback_url: `https://payments.edviron.com/razorpay/callback?collect_id=${collect_id}`,
+          // callback_url: `https://payments.edviron.com/razorpay/callback?collect_id=${collect_id}`,
         },
       };
 
