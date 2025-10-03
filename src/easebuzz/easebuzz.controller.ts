@@ -344,7 +344,7 @@ export class EasebuzzController {
 
 
       const { data: resData } = await axios.request(config);
-
+      console.log(utr,'utrnumb');
       const record = resData.data.find((item: any) => item.bank_transaction_id === utr);
 
       const orderIds = record.peb_transactions.map((tx: any) => {

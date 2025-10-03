@@ -238,6 +238,7 @@ let EasebuzzController = class EasebuzzController {
             };
             console.log(config);
             const { data: resData } = await axios_1.default.request(config);
+            console.log(utr, 'utrnumb');
             const record = resData.data.find((item) => item.bank_transaction_id === utr);
             const orderIds = record.peb_transactions.map((tx) => {
                 if (tx?.txnid?.startsWith("upi_")) {

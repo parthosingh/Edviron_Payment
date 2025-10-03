@@ -346,6 +346,18 @@ export class CashfreeService {
               console.log('order not found');
               throw new BadRequestException('order not found');
             }
+            const requestStatus =
+              await this.databaseService.CollectRequestStatusModel.findOne(
+                { collect_id: request._id }
+              );
+              if (!requestStatus) {
+                console.log('order not found');
+                throw new BadRequestException('order not found');
+              }
+              const order_time=request.createdAt || null
+              const payment_details=requestStatus.details
+              const split=request.vendors_info || []
+
             if (
               request.payment_id === null ||
               request.payment_id === '' ||
@@ -423,6 +435,9 @@ export class CashfreeService {
                 additionalData?.student_details?.student_phone_no || null,
               additional_data: JSON.stringify(additionalData) || null,
               payment_id: payment_id || null,
+              order_time,
+              payment_details,
+              split
             };
           }),
       );
@@ -1585,7 +1600,7 @@ export class CashfreeService {
           }).save();
         });
       }
-    
+
       let config = {
         method: 'post',
         maxBodyLength: Infinity,
@@ -1636,7 +1651,7 @@ export class CashfreeService {
         schoolName
       request.payment_data = `"${url}"`
       await request.save();
-     
+
       return {
         _id: request._id,
         url:
@@ -1744,8 +1759,8 @@ export class CashfreeService {
   async generateMasterGatewaypayment(
     collectRequest: CollectRequest,
     school_name: string,
-      platform_charges: platformChange[],
-      vendor?: [
+    platform_charges: platformChange[],
+    vendor?: [
       {
         vendor_id: string;
         percentage?: number;
@@ -1756,8 +1771,8 @@ export class CashfreeService {
     ],
   ) {
     try {
-      const request=await this.databaseService.CollectRequestModel.findById(collectRequest._id)
-      if(!request){
+      const request = await this.databaseService.CollectRequestModel.findById(collectRequest._id)
+      if (!request) {
         throw new BadRequestException('invalid id')
       }
       let paymentInfo: PaymentIds = {
@@ -1794,8 +1809,8 @@ export class CashfreeService {
       });
 
       if (
-        request.isSplitPayments && 
-        request.cashfreeVedors && 
+        request.isSplitPayments &&
+        request.cashfreeVedors &&
         request.cashfreeVedors.length > 0
       ) {
         const vendor_data = request.cashfreeVedors
@@ -1902,7 +1917,7 @@ export class CashfreeService {
         schoolName
       request.payment_data = `"${url}"`
       await request.save();
-      
+
       return {
         _id: request._id,
         url:
