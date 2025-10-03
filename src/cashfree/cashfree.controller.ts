@@ -24,14 +24,17 @@ import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { platformChange } from 'src/collect/collect.controller';
 import { sign } from '../utils/sign';
 import { TransactionStatus } from 'src/types/transactionStatus';
+import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
+import { RazorpayService } from 'src/razorpay/razorpay.service';
 @Controller('cashfree')
 export class CashfreeController {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly cashfreeService: CashfreeService,
     private readonly edvironPgService: EdvironPgService,
-    private readonly easebuzzService: EasebuzzService, // Assuming easebuzzService is defined elsewhere
-  ) {}
+    private readonly easebuzzService: EasebuzzService, 
+    private readonly razorpayService: RazorpayService
+  ) { }
   @Post('/refund')
   async initiateRefund(@Body() body: any) {
     const { collect_id, amount, refund_id } = body;
@@ -158,13 +161,23 @@ export class CashfreeController {
     request.gateway = Gateway.EDVIRON_PG;
     await request.save();
     const cashfreeId = request.paymentIds.cashfree_id;
-    
+
     if (!cashfreeId) {
       try {
         return await this.easebuzzService.getQrBase64(collect_id);
       } catch (e) {
         throw new BadRequestException('Error in Getting QR Code');
       }
+    }
+
+    if (
+      request.razorpay_seamless &&
+      request.razorpay_seamless.order_id &&
+      request.razorpay_seamless.razorpay_secret &&
+      request.razorpay_seamless.razorpay_id
+
+    ) {
+      return await this.razorpayService.getQr(request)
     }
     let intentData = JSON.stringify({
       payment_method: {
@@ -534,7 +547,7 @@ export class CashfreeController {
       } catch (error) {
         console.error('Error calculating commission:', error.message);
       }
-    } catch (e) {}
+    } catch (e) { }
     const webHookUrl = request.req_webhook_urls;
     const webHookDataInfo = {
       collect_id: request._id.toString(),
@@ -571,9 +584,8 @@ export class CashfreeController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${
-            process.env.VANILLA_SERVICE_ENDPOINT
-          }/main-backend/get-webhook-key?token=${token}&trustee_id=${request.trustee_id.toString()}`,
+          url: `${process.env.VANILLA_SERVICE_ENDPOINT
+            }/main-backend/get-webhook-key?token=${token}&trustee_id=${request.trustee_id.toString()}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
@@ -1191,9 +1203,8 @@ export class CashfreeController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${
-            process.env.VANILLA_SERVICE_ENDPOINT
-          }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+          url: `${process.env.VANILLA_SERVICE_ENDPOINT
+            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
