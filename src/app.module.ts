@@ -33,6 +33,7 @@ import { AwsS3ServiceModule } from './aws-s3-service/aws-s3-service.module';
 import { RazorpayModule } from './razorpay/razorpay.module';
 import { GatewayController } from './gateway/gateway.controller';
 import { GatewayModule } from './gateway/gateway.module';
+import { RazorpayService } from './razorpay/razorpay.service';
 
 @Module({
   imports: [
@@ -73,6 +74,7 @@ import { GatewayModule } from './gateway/gateway.module';
     CcavenueService,
     PosPaytmService,
     WorldlineService,
+    RazorpayService,
     RazorpayNonseamlessService,
   ],
 })
