@@ -440,10 +440,17 @@ let RazorpayService = class RazorpayService {
             const qrData = qrCode.data || 'p';
             var QRCode = require('qrcode');
             const base64Image = await QRCode.toDataURL(qrData, { type: "image/png" });
-            console.log(base64Image);
+            const phonePe = qrCode.data.replace('upi:', 'phonepe:');
+            const paytm = qrCode.data.replace('upi:', 'paytmmp:');
+            const gpay = qrCode.data.replace('upi://', 'upi:/');
+            const googlePe = 'tez://' + gpay;
+            const qrBase64 = base64Image.split(',')[1];
             return {
-                base64Image,
-                intent: qrCode.data
+                base64Image: qrBase64,
+                intent: qrCode.data,
+                phonePe,
+                paytm,
+                googlePe
             };
         }
         catch (e) {
