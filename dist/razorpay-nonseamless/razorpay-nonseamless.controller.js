@@ -230,6 +230,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             let payment_method = status.details.payment_mode || null;
             let payload = status?.details?.payment_methods || {};
             let detail;
+            let platform_type = 'Others';
             let pg_mode = payment_method;
             console.log(payment_method, 'payment_method');
             switch (payment_method) {
@@ -242,7 +243,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                     };
                     break;
                 case 'credit':
-                    (pg_mode = 'credit_card'), console.log(payload, 'payloadin here');
+                    platform_type = payload?.card?.card_network(pg_mode = 'credit_card'), console.log(payload, 'payloadin here');
                     detail = {
                         card: {
                             card_bank_name: payload?.card?.card_type || null,
@@ -256,7 +257,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                     };
                     break;
                 case 'debit':
-                    (pg_mode = 'debit_card'),
+                    platform_type = payload?.card?.card_network(pg_mode = 'debit_card'),
                         (detail = {
                             card: {
                                 card_bank_name: payload?.card?.card_type || null,
@@ -270,6 +271,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                         });
                     break;
                 case 'net_banking':
+                    platform_type = payload.net_banking.bank;
                     detail = {
                         netbanking: {
                             channel: null,

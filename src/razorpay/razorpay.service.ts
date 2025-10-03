@@ -6,7 +6,7 @@ import { CollectRequest } from '../database/schemas/collect_request.schema';
 import { DatabaseService } from '../database/database.service';
 import * as _jwt from 'jsonwebtoken';
 import { createCanvas, loadImage } from 'canvas';
-import jsQR from "jsqr";
+import jsQR from "jsqr";
 
 export const formatRazorpayPaymentStatus = (
   status: string,
@@ -26,7 +26,7 @@ export class RazorpayService {
   private readonly CLIENT_SECRET = process.env.RAZORPAY_PARTNER_KEY_SECRET;
   private readonly API_URL = process.env.RAZORPAY_URL;
 
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) { }
 
   async verifySignature(orderId: string, paymentId: string, signature: string) {
     const body = `${orderId}|${paymentId}`;
@@ -269,8 +269,8 @@ export class RazorpayService {
         status === TransactionStatus.SUCCESS
           ? 200
           : status === TransactionStatus.FAILURE
-          ? 400
-          : 202;
+            ? 400
+            : 202;
       const formattedResponse: any = {
         status: status,
         amount: response?.amount ? response?.amount / 100 : null,
@@ -389,7 +389,7 @@ export class RazorpayService {
 
   async getQr(collectRequest: CollectRequest) {
     try {
-      const {order_id} = collectRequest.razorpay_seamless
+      const { order_id } = collectRequest.razorpay_seamless
       const collect_id = collectRequest._id.toString()
       const createQrConfig = {
         method: 'post',
@@ -403,17 +403,22 @@ export class RazorpayService {
           'Content-Type': 'application/json',
         },
         data: {
-          type: 'upi_qr', 
+          type: 'upi_qr',
           name: 'qr_code',
-          usage: 'single_use', 
+          usage: 'single_use',
           fixed_amount: true,
-          payment_amount: collectRequest.amount * 100, 
+          payment_amount: collectRequest.amount * 100,
           order_id: order_id,
           // callback_url: `https://payments.edviron.com/razorpay/callback?collect_id=${collect_id}`,
         },
       };
 
+      console.log(createQrConfig,"createQrConfig");
+      
       const { data: razorpayRes } = await axios.request(createQrConfig);
+      console.log(razorpayRes,"");
+      console.log(razorpayRes,"response");
+      
       return await this.getbase64(razorpayRes.image_url)
 
     } catch (error) {
@@ -458,10 +463,10 @@ export class RazorpayService {
           'content-type': 'application/json',
         },
       }
-      const {data:refundInfo}=await axios.request(refundConfig)
-      let isSplit=false
-      if(refundInfo.isSplitRedund){
-        isSplit=true
+      const { data: refundInfo } = await axios.request(refundConfig)
+      let isSplit = false
+      if (refundInfo.isSplitRedund) {
+        isSplit = true
       }
       const totalPaise = Math.round(refundAmount * 100);
       const config = {
@@ -530,11 +535,70 @@ export class RazorpayService {
         intent: qrCode.data,
         phonePe,
         paytm,
-        googlePe 
+        googlePe
       };
     } catch (e) {
       throw new BadRequestException(e.message)
-    }
-  }
+    }
+  }
+
+  async saveRazorpayCommission(
+    collectReq: CollectRequest,
+    platform_type:string
+  ) {
+    try {
+      const collecRequestStatus=await this.databaseService.CollectRequestStatusModel.findOne({collect_id:collectReq._id})
+      if(!collecRequestStatus){
+        throw new BadRequestException('Invalid Request')
+      }
+      const tokenData = {
+        school_id: collectReq?.school_id,
+        trustee_id: collectReq?.trustee_id,
+        order_amount: collectReq?.amount,
+        transaction_amount:collecRequestStatus.transaction_amount,
+        platform_type: platform_type,
+        payment_mode: collecRequestStatus.payment_method,
+        collect_id: collectReq._id,
+      };
+
+      const sign = _jwt.sign(tokenData, process.env.KEY!, {
+        noTimestamp: true,
+      });
+
+      let data = JSON.stringify({
+        token: sign,
+        school_id: collectReq?.school_id,
+        trustee_id: collectReq?.trustee_id,
+         order_amount: collectReq?.amount,
+        transaction_amount:collecRequestStatus.transaction_amount,
+        platform_type: "mappedPaymentMethod",
+        payment_mode: collecRequestStatus.payment_method,
+        collect_id: collectReq._id,
+      });
+
+      // save commission data on trustee service
+
+      let config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-api-version': '2023-08-01',
+        },
+        data: data,
+      };
+
+      try {
+        const { data: commissionRes } = await axios.request(config);
+        console.log('Commission calculation response:', commissionRes);
+      } catch (error) {
+        console.error('Error calculating commission:', error.message);
+      }
+    } catch (e) {
+
+    }
+  }
 
 }

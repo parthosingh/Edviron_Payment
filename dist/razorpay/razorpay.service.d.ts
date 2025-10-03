@@ -32,4 +32,5 @@ export declare class RazorpayService {
         paytm: any;
         googlePe: string;
     }>;
+    saveRazorpayCommission(collectReq: CollectRequest, platform_type: string): Promise<void>;
 }

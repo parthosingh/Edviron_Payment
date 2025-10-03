@@ -25,7 +25,7 @@ export class RazorpayNonseamlessController {
     private readonly databaseService: DatabaseService,
     private readonly razorpayServiceModel: RazorpayNonseamlessService,
     private readonly edvironPgService: EdvironPgService,
-  ) {}
+  ) { }
 
   @Get('/redirect')
   async razorpayRedirect(@Req() req: any, @Res() res: any) {
@@ -258,6 +258,7 @@ export class RazorpayNonseamlessController {
       let payload = status?.details?.payment_methods || {};
 
       let detail;
+      let platform_type = 'Others'
       let pg_mode = payment_method;
       console.log(payment_method, 'payment_method');
       switch (payment_method) {
@@ -271,7 +272,8 @@ export class RazorpayNonseamlessController {
           break;
 
         case 'credit':
-          (pg_mode = 'credit_card'), console.log(payload, 'payloadin here');
+          platform_type = payload?.card?.card_network
+            (pg_mode = 'credit_card'), console.log(payload, 'payloadin here');
           detail = {
             card: {
               card_bank_name: payload?.card?.card_type || null,
@@ -286,7 +288,8 @@ export class RazorpayNonseamlessController {
           break;
 
         case 'debit':
-          (pg_mode = 'debit_card'),
+          platform_type = payload?.card?.card_network
+            (pg_mode = 'debit_card'),
             (detail = {
               card: {
                 card_bank_name: payload?.card?.card_type || null,
@@ -301,6 +304,7 @@ export class RazorpayNonseamlessController {
           break;
 
         case 'net_banking':
+          platform_type = payload.net_banking.bank
           detail = {
             netbanking: {
               channel: null,
@@ -434,9 +438,8 @@ export class RazorpayNonseamlessController {
           const config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: `${
-              process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collect_request.trustee_id.toString()}`,
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT
+              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collect_request.trustee_id.toString()}`,
             headers: {
               accept: 'application/json',
               'content-type': 'application/json',
@@ -591,8 +594,8 @@ export class RazorpayNonseamlessController {
                   card.international === false
                     ? 'IN'
                     : card.international === true
-                    ? 'OI'
-                    : null,
+                      ? 'OI'
+                      : null,
                 card_network: card.network || null,
                 card_number: card_id || null,
                 card_sub_type: card.sub_type || null,
@@ -696,6 +699,9 @@ export class RazorpayNonseamlessController {
           })(),
         };
 
+        // Commission 
+
+
         if (webhookUrl !== null) {
           let webhook_key: null | string = null;
           try {
@@ -706,9 +712,8 @@ export class RazorpayNonseamlessController {
             const config = {
               method: 'get',
               maxBodyLength: Infinity,
-              url: `${
-                process.env.VANILLA_SERVICE_ENDPOINT
-              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+              url: `${process.env.VANILLA_SERVICE_ENDPOINT
+                }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
               headers: {
                 accept: 'application/json',
                 'content-type': 'application/json',
@@ -783,8 +788,8 @@ export class RazorpayNonseamlessController {
                 card.international === false
                   ? 'IN'
                   : card.international === true
-                  ? 'OI'
-                  : null,
+                    ? 'OI'
+                    : null,
               card_network: card.network || null,
               card_number: card_id || null,
               card_sub_type: card.sub_type || null,
@@ -898,9 +903,8 @@ export class RazorpayNonseamlessController {
           const config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: `${
-              process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT
+              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
             headers: {
               accept: 'application/json',
               'content-type': 'application/json',
@@ -1019,8 +1023,8 @@ export class RazorpayNonseamlessController {
                 card.international === false
                   ? 'IN'
                   : card.international === true
-                  ? 'OI'
-                  : null,
+                    ? 'OI'
+                    : null,
               card_network: card.network || null,
               card_number: card_id || null,
               card_sub_type: card.sub_type || null,
@@ -1134,9 +1138,8 @@ export class RazorpayNonseamlessController {
           const config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: `${
-              process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT
+              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
             headers: {
               accept: 'application/json',
               'content-type': 'application/json',
@@ -1247,8 +1250,7 @@ export class RazorpayNonseamlessController {
     } catch (err) {
       console.error('[API ERROR]', err);
       throw new InternalServerErrorException(
-        `Razorpay API error: ${
-          err.response?.data?.error?.description || err.message
+        `Razorpay API error: ${err.response?.data?.error?.description || err.message
         }`,
       );
     }
