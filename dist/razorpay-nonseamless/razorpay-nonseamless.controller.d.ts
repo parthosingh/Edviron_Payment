@@ -9,6 +9,7 @@ export declare class RazorpayNonseamlessController {
     razorpayRedirect(req: any, res: any): Promise<any>;
     razorpayRedirectV2(req: any, res: any): Promise<any>;
     handleCallback(req: any, res: any): Promise<any>;
+    handleCallbackGet(req: any, res: any): Promise<any>;
     webhook(body: any, res: any): Promise<any>;
     webhookV2(body: any, res: any): Promise<any>;
     refund(body: any): Promise<any>;
