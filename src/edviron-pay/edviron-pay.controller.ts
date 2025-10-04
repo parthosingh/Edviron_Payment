@@ -6,6 +6,8 @@ import {
   Get,
   Post,
   Query,
+  Req,
+  Res,
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
@@ -40,7 +42,6 @@ export class EdvironPayController {
       allvendors,
       cashfreeVedors,
       easebuzzVendors,
-
     } = body;
 
     const { student_id, student_number, student_name, student_email } =
@@ -134,6 +135,7 @@ export class EdvironPayController {
   async collect(
     @Body()
     body: {
+      mode: string;
       isInstallment: boolean;
       InstallmentsIds: string[];
       school_id: string;
@@ -195,6 +197,12 @@ export class EdvironPayController {
           },
         ];
       };
+      student_detail: {
+        student_id: string;
+        student_name: string;
+        student_number: string;
+        student_email: string;
+      };
       easebuzzVendors?: [
         {
           vendor_id: string;
@@ -226,9 +234,53 @@ export class EdvironPayController {
           on_hold_until?: Date;
         },
       ];
+      cash_detail?: {
+        note: {
+          [denomination: number]: number;
+        };
+        total_cash_amount?: number;
+        amount?: number;
+        depositor_name?: string;
+        collector_name?: string;
+        date?: Date;
+        remark?: string;
+      };
+      dd_detail?: {
+        amount: number;
+        dd_number: string;
+        bank_name: string;
+        branch_name: string;
+        depositor_name?: string;
+        remark?: string;
+      };
+      document_url?: string | null;
+      static_qr?: {
+        upiId: string;
+        transactionAmount: number | string;
+        bankReferenceNo: string;
+        appName?: string;
+      };
+      netBankingDetails?: {
+        utr: string;
+        amount: string;
+        remarks: string;
+        payer: {
+          bank_holder_name: string;
+          bank_name: string;
+          ifsc: string;
+        };
+        recivers: {
+          bank_holder_name: string;
+          bank_name: string;
+          ifsc: string;
+        };
+      };
     },
+    @Req() req?: any,
+    @Res() res?: any,
   ) {
     const {
+      mode,
       isInstallment,
       InstallmentsIds,
       school_id,
@@ -251,9 +303,17 @@ export class EdvironPayController {
       easebuzzVendors,
       cashfreeVedors,
       razorpay_vendors,
+      cash_detail,
+      dd_detail,
+      document_url,
+      student_detail,
+      static_qr,
+      netBankingDetails,
     } = body;
 
     try {
+      let { student_id, student_name, student_email, student_number } =
+        student_detail;
       if (!token) {
         throw new Error('Token is required');
       }
@@ -323,6 +383,7 @@ export class EdvironPayController {
           cashfree_credentials: cashfreeCred,
           isCFNonSeamless: !cashfree?.isSeamless || false,
           vba_account_number,
+          document_url,
         });
 
         const requestStatus =
@@ -334,18 +395,321 @@ export class EdvironPayController {
             payment_method: null,
           }).save();
 
+        let student_details = await new this.databaseService.StudentDetailModel(
+          {
+            student_id: student_id,
+            student_name,
+            trustee_id,
+            school_id,
+            student_email,
+            student_number,
+          },
+        ).save();
+
         // Link installments to this collect request
         await this.databaseService.InstallmentsModel.updateMany(
           { _id: { $in: InstallmentsIds } },
           { $set: { collect_id: request._id, status: 'pending' } },
         );
+        if (mode === 'EDVIRON_CASH') {
+          let collectIdObject = request._id;
+          const detail = {
+            cash: {
+              amount,
+              notes: cash_detail?.note || {},
+              depositor_name: cash_detail?.depositor_name || 'N/A',
+              collector_name: cash_detail?.collector_name || 'N/A',
+              remark: cash_detail?.remark || 'N/A',
+              date: cash_detail?.date || 'N/A',
+              total_cash_amount: cash_detail?.total_cash_amount || 'N/A',
+            },
+          };
+          await this.databaseService.CollectRequestModel.updateOne(
+            {
+              _id: collectIdObject,
+            },
+            {
+              $set: {
+                gateway: Gateway.EDVIRON_PAY,
+                isMethodIsCash: true,
+              },
+            },
+          );
+          const updateReq =
+            await this.databaseService.CollectRequestStatusModel.updateOne(
+              {
+                collect_id: collectIdObject,
+              },
+              {
+                $set: {
+                  status: 'SUCCESS',
+                  payment_time: new Date().toISOString(),
+                  transaction_amount: amount,
+                  payment_method: 'cash',
+                  details: JSON.stringify(detail),
+                  bank_reference: 'N/A',
+                  reason: `payment successfully collected by ${
+                    (cash_detail && cash_detail?.collector_name) || 'school'
+                  }`,
+                  payment_message: `payment successfully collected by ${
+                    (cash_detail && cash_detail?.collector_name) || 'school'
+                  }`,
+                },
+              },
+              {
+                upsert: true,
+                new: true,
+              },
+            );
 
-        return await this.edvironPay.createOrder(
+          const updateinstallments =
+            await this.databaseService.InstallmentsModel.updateMany(
+              {
+                _id: { $in: InstallmentsIds },
+                school_id,
+                trustee_id,
+              },
+              {
+                $set: {
+                  status: 'paid',
+                  payment_time: new Date().toISOString(),
+                },
+              },
+            );
+
+          const callbackUrl = new URL(request.callbackUrl);
+          console.log(callbackUrl, 'callbackUrl');
+          callbackUrl.searchParams.set('status', 'SUCCESS');
+          return res.json({ redirectUrl: callbackUrl.toString() });
+        }
+        if (mode === 'EDVIRON_STATIC_QR') {
+          let collectIdObject = request._id;
+          const detail = {
+            upi: {
+              amount,
+              upi_id: static_qr?.upiId || {},
+              transaction_amount: static_qr?.transactionAmount || 'N/A',
+              bank_ref: static_qr?.bankReferenceNo || 'N/A',
+              app_name: static_qr?.appName || 'N/A',
+            },
+          };
+          await this.databaseService.CollectRequestModel.updateOne(
+            {
+              _id: collectIdObject,
+            },
+            {
+              $set: {
+                gateway: Gateway.EDVIRON_PAY,
+                isMethodIsCash: true,
+              },
+            },
+          );
+          const updateReq =
+            await this.databaseService.CollectRequestStatusModel.updateOne(
+              {
+                collect_id: collectIdObject,
+              },
+              {
+                $set: {
+                  status: 'SUCCESS',
+                  payment_time: new Date().toISOString(),
+                  transaction_amount: amount,
+                  payment_method: 'upi',
+                  details: JSON.stringify(detail),
+                  bank_reference: 'N/A',
+                  reason: `payment successfull with static upi`,
+                  payment_message: `payment successfull with static upi`,
+                },
+              },
+              {
+                upsert: true,
+                new: true,
+              },
+            );
+
+          const updateinstallments =
+            await this.databaseService.InstallmentsModel.updateMany(
+              {
+                _id: { $in: InstallmentsIds },
+                school_id,
+                trustee_id,
+              },
+              {
+                $set: {
+                  status: 'paid',
+                  payment_time: new Date().toISOString(),
+                },
+              },
+            );
+
+          const callbackUrl = new URL(request.callbackUrl);
+          console.log(callbackUrl, 'callbackUrl');
+          callbackUrl.searchParams.set('status', 'SUCCESS');
+          return res.json({ redirectUrl: callbackUrl.toString() });
+        }
+        if (mode === 'DEMAND_DRAFT') {
+          let collectIdObject = request._id;
+          const detail = {
+            demand_draft: {
+              amount,
+              dd_number: dd_detail?.dd_number || 'N/A',
+              bank_name: dd_detail?.bank_name || 'N/A',
+              branch_name: dd_detail?.branch_name || 'N/A',
+              depositor_name: dd_detail?.depositor_name || 'N/A',
+              remarks: dd_detail?.remark || 'N/A',
+            },
+          };
+          await this.databaseService.CollectRequestModel.updateOne(
+            {
+              _id: collectIdObject,
+            },
+            {
+              $set: {
+                gateway: Gateway.EDVIRON_PAY,
+              },
+            },
+          );
+          const updateReq =
+            await this.databaseService.CollectRequestStatusModel.updateOne(
+              {
+                collect_id: collectIdObject,
+              },
+              {
+                $set: {
+                  status: 'SUCCESS',
+                  payment_time: new Date().toISOString(),
+                  transaction_amount: amount,
+                  payment_method: 'demand_draft',
+                  details: JSON.stringify(detail),
+                  bank_reference: dd_detail?.dd_number || 'N/A',
+                  reason: `Payment successfully collected via Demand Draft ${
+                    dd_detail?.dd_number
+                      ? `(DD No: ${dd_detail.dd_number})`
+                      : ''
+                  } from ${dd_detail?.depositor_name || 'payer'}`,
+                  payment_message: `Payment successfully collected via Demand Draft ${
+                    dd_detail?.dd_number
+                      ? `(DD No: ${dd_detail.dd_number})`
+                      : ''
+                  } from ${dd_detail?.depositor_name || 'payer'}`,
+                },
+              },
+              {
+                upsert: true,
+                new: true,
+              },
+            );
+
+          const updateinstallments =
+            await this.databaseService.InstallmentsModel.updateMany(
+              {
+                _id: { $in: InstallmentsIds },
+                school_id,
+                trustee_id,
+              },
+              {
+                $set: {
+                  status: 'paid',
+                  payment_time: new Date().toISOString(),
+                },
+              },
+            );
+
+          const callbackUrl = new URL(request.callbackUrl);
+          callbackUrl.searchParams.set('status', 'SUCCESS');
+          return res.json({ redirectUrl: callbackUrl.toString() });
+        }
+        if (mode === 'EDVIRON_NETBANKING') {
+          console.log(netBankingDetails, "netBankingDetails")
+          let collectIdObject = request._id;
+          const detail = {
+            net_banking: {
+              utr: netBankingDetails?.utr,
+              amount,
+              transaction_amount: amount,
+              remarks: netBankingDetails?.remarks || 'N/A',
+              payer: {
+                bank_holder_name:
+                  netBankingDetails?.payer?.bank_holder_name || 'N/A',
+                bank_name: netBankingDetails?.payer?.bank_name || 'N/A',
+                ifsc: netBankingDetails?.payer?.ifsc || 'N/A',
+              },
+              recivers: {
+                bank_holder_name:
+                  netBankingDetails?.recivers.bank_holder_name || 'N/A',
+                bank_name: netBankingDetails?.recivers.bank_name || 'N/A',
+                ifsc: netBankingDetails?.recivers.ifsc || 'N/A',
+              },
+            },
+          };
+          await this.databaseService.CollectRequestModel.updateOne(
+            {
+              _id: collectIdObject,
+            },
+            {
+              $set: {
+                gateway: Gateway.EDVIRON_PAY,
+              },
+            },
+          );
+          const updateReq =
+            await this.databaseService.CollectRequestStatusModel.updateOne(
+              {
+                collect_id: collectIdObject,
+              },
+              {
+                $set: {
+                  status: 'SUCCESS',
+                  payment_time: new Date().toISOString(),
+                  transaction_amount: netBankingDetails?.amount,
+                  payment_method: 'net_banking',
+                  details: JSON.stringify(detail),
+                  bank_reference: netBankingDetails?.utr || 'N/A',
+                  reason: `Payment successfully collected via NetBanking (UTR: ${
+                    netBankingDetails?.utr || 'N/A'
+                  }) from ${
+                    netBankingDetails?.payer?.bank_holder_name || 'payer'
+                  }`,
+                  payment_message: `Payment successfully collected via NetBanking (UTR: ${
+                    netBankingDetails?.utr || 'N/A'
+                  }) from ${
+                    netBankingDetails?.payer?.bank_holder_name || 'payer'
+                  }`,
+                },
+              },
+              {
+                upsert: true,
+                new: true,
+              },
+            );
+
+          const updateinstallments =
+            await this.databaseService.InstallmentsModel.updateMany(
+              {
+                _id: { $in: InstallmentsIds },
+                school_id,
+                trustee_id,
+              },
+              {
+                $set: {
+                  status: 'paid',
+                  payment_time: new Date().toISOString(),
+                },
+              },
+            );
+
+          const callbackUrl = new URL(request.callbackUrl);
+          callbackUrl.searchParams.set('status', 'SUCCESS');
+          return res.json({ redirectUrl: callbackUrl.toString() });
+        }
+
+        const response = await this.edvironPay.createOrder(
           request,
           school_name,
           gateway,
           PlatformCharge,
         );
+        return res.send(response);
       }
     } catch (e) {
       console.log(e);

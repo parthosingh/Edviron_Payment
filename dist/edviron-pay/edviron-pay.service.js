@@ -64,6 +64,7 @@ let EdvironPayService = class EdvironPayService {
             const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
             collectReq.paymentIds = paymentInfo;
             await collectReq.save();
+            console.log(paymentInfo, 'sdfjdslakfjasld');
             return {
                 collect_request_id: request._id,
                 url: process.env.URL +
@@ -108,7 +109,7 @@ let EdvironPayService = class EdvironPayService {
                     student_class,
                     section,
                     gender,
-                    additional_info
+                    additional_info,
                 });
             }
             return studentDetail;
@@ -128,6 +129,33 @@ let EdvironPayService = class EdvironPayService {
                 throw new common_1.BadRequestException('student not found');
             }
             return studentDetail;
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
+    async nonEdvironInstallments(collect_id) {
+        try {
+            const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectReq)
+                throw new Error('Collect request not found');
+            let collectIdObject = collectReq._id;
+            const collectReqStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: collectIdObject,
+            });
+            if (!collectReqStatus)
+                throw new Error('Collect request not found');
+            if (collectReq?.isCollectNow) {
+                let status = collectReqStatus.status === 'SUCCESS' ? 'paid' : 'unpaid';
+                const installments = await this.databaseService.InstallmentsModel.find({
+                    collect_id: collectIdObject,
+                });
+                for (let installment of installments) {
+                    await this.databaseService.InstallmentsModel.findOneAndUpdate({ _id: installment._id }, { $set: { status: status } }, { new: true });
+                }
+                return 'installments update successfull';
+            }
+            return 'no installment found for this collect id';
         }
         catch (error) {
             throw new common_1.BadRequestException(error.message);

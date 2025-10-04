@@ -36,6 +36,7 @@ export declare class EdvironPayController {
         url: string;
     }>;
     collect(body: {
+        mode: string;
         isInstallment: boolean;
         InstallmentsIds: string[];
         school_id: string;
@@ -97,6 +98,12 @@ export declare class EdvironPayController {
                 }
             ];
         };
+        student_detail: {
+            student_id: string;
+            student_name: string;
+            student_number: string;
+            student_email: string;
+        };
         easebuzzVendors?: [
             {
                 vendor_id: string;
@@ -128,10 +135,48 @@ export declare class EdvironPayController {
                 on_hold_until?: Date;
             }
         ];
-    }): Promise<{
-        collect_request_id: import("mongoose").Schema.Types.ObjectId;
-        url: string;
-    } | undefined>;
+        cash_detail?: {
+            note: {
+                [denomination: number]: number;
+            };
+            total_cash_amount?: number;
+            amount?: number;
+            depositor_name?: string;
+            collector_name?: string;
+            date?: Date;
+            remark?: string;
+        };
+        dd_detail?: {
+            amount: number;
+            dd_number: string;
+            bank_name: string;
+            branch_name: string;
+            depositor_name?: string;
+            remark?: string;
+        };
+        document_url?: string | null;
+        static_qr?: {
+            upiId: string;
+            transactionAmount: number | string;
+            bankReferenceNo: string;
+            appName?: string;
+        };
+        netBankingDetails?: {
+            utr: string;
+            amount: string;
+            remarks: string;
+            payer: {
+                bank_holder_name: string;
+                bank_name: string;
+                ifsc: string;
+            };
+            recivers: {
+                bank_holder_name: string;
+                bank_name: string;
+                ifsc: string;
+            };
+        };
+    }, req?: any, res?: any): Promise<any>;
     getStudentInstallments(student_id: string, school_id: string, trustee_id: string): Promise<{
         installments: (import("mongoose").Document<unknown, {}, import("src/database/schemas/installments.schema").InstallmentsDocument> & Installments & Document & {
             _id: import("mongoose").Types.ObjectId;

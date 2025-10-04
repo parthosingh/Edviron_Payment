@@ -31,6 +31,7 @@ var Gateway;
     Gateway["EDVIRON_RAZORPAY"] = "EDVIRON_RAZORPAY";
     Gateway["EDVIRON_RAZORPAY_SEAMLESS"] = "EDVIRON_RAZORPAY_SEAMLESS";
     Gateway["EDVIRON_GATEPAY"] = "EDVIRON_GATEPAY";
+    Gateway["EDVIRON_PAY"] = "EDVIRON_PAY";
 })(Gateway || (exports.Gateway = Gateway = {}));
 let PaymentIds = class PaymentIds {
 };
@@ -570,6 +571,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], CollectRequest.prototype, "vba_account_number", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], CollectRequest.prototype, "document_url", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
         required: false,

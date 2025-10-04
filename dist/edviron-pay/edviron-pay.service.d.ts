@@ -57,4 +57,5 @@ export declare class EdvironPayService {
     studentFind(student_id: string, school_id: string, trustee_id: string): Promise<import("mongoose").Document<unknown, {}, import("../database/schemas/student_detail.schema").StudentDetails> & import("../database/schemas/student_detail.schema").StudentDetail & Document & {
         _id: import("mongoose").Types.ObjectId;
     }>;
+    nonEdvironInstallments(collect_id: string): Promise<"installments update successfull" | "no installment found for this collect id">;
 }

@@ -757,6 +757,21 @@ export class EdvironPgController {
         },
       );
 
+    if (collectReq?.isCollectNow) {
+      let status = webhookStatus === 'SUCCESS' ? 'paid' : 'unpaid';
+
+      const installments = await this.databaseService.InstallmentsModel.find({
+        collect_id: collectIdObject,
+      });
+
+      for (let installment of installments) {
+        await this.databaseService.InstallmentsModel.findOneAndUpdate(
+          { _id: installment._id },
+          { $set: { status: status } },
+          { new: true },
+        );
+      }
+    }
     const webHookUrl = collectReq?.req_webhook_urls;
 
     const collectRequest =
@@ -2828,8 +2843,8 @@ export class EdvironPgController {
         );
         return refund;
       }
-      
-       if (gateway === Gateway.EDVIRON_RAZORPAY_SEAMLESS) {
+
+      if (gateway === Gateway.EDVIRON_RAZORPAY_SEAMLESS) {
         const refund = await this.razorpaySeamless.refund(
           collect_id,
           amount,
@@ -3472,11 +3487,11 @@ export class EdvironPgController {
   @Get('/get-sub-trustee-batch-transactions')
   async getSubTrusteeBatchTransactions(
     @Body()
-    body : {
+    body: {
       school_id: string[];
       year: string;
       token: string;
-      subTrusteeId: string
+      subTrusteeId: string;
     },
   ) {
     try {
@@ -3486,7 +3501,7 @@ export class EdvironPgController {
       if (decoded.subTrusteeId !== subTrusteeId) {
         throw new UnauthorizedException('Invalid token');
       }
-      
+
       return await this.edvironPgService.getSUbTrusteeBatchTransactions(
         school_id,
         year,

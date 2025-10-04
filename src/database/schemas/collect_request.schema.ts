@@ -20,6 +20,7 @@ export enum Gateway {
   EDVIRON_RAZORPAY = 'EDVIRON_RAZORPAY',
   EDVIRON_RAZORPAY_SEAMLESS = 'EDVIRON_RAZORPAY_SEAMLESS',
   EDVIRON_GATEPAY = 'EDVIRON_GATEPAY',
+  EDVIRON_PAY = 'EDVIRON_PAY',
 }
 
 interface I_NTT_DATA {
@@ -589,6 +590,9 @@ export class CollectRequest {
 
   @Prop({ required: false })
   vba_account_number: string;
+
+  @Prop({ required: false })
+  document_url: string;
 
   @Prop({
     required: false,
