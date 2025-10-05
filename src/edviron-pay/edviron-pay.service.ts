@@ -17,6 +17,14 @@ export class EdvironPayService {
     private readonly edvironPgService: EdvironPgService,
   ) {}
 
+  async vpaOrder(request: CollectRequest) {
+    try {
+      return this.cashfreeService.createPayoutCashfree(request)
+    } catch (error) {
+      console.log(error, "lund")
+    }
+  }
+
   async createOrder(
     request: CollectRequest,
     school_name: string,
@@ -217,14 +225,10 @@ export class EdvironPayService {
     }
   }
 
-  async nonEdvironInstallments(
-   collect_id:string
-  ) {
+  async nonEdvironInstallments(collect_id: string) {
     try {
       const collectReq =
-        await this.databaseService.CollectRequestModel.findById(
-          collect_id,
-        );
+        await this.databaseService.CollectRequestModel.findById(collect_id);
       if (!collectReq) throw new Error('Collect request not found');
       let collectIdObject = collectReq._id;
       const collectReqStatus =
@@ -247,11 +251,11 @@ export class EdvironPayService {
             { new: true },
           );
         }
-        return 'installments update successfull'
+        return 'installments update successfull';
       }
-      return 'no installment found for this collect id'
+      return 'no installment found for this collect id';
     } catch (error) {
-      throw new BadRequestException(error.message)
+      throw new BadRequestException(error.message);
     }
   }
 }

@@ -176,6 +176,13 @@ export declare class EdvironPayController {
                 ifsc: string;
             };
         };
+        cheque_detail?: {
+            accountHolderName: string;
+            bankName: string;
+            chequeNo: string;
+            dateOnCheque: string;
+            remarks?: string;
+        };
     }, req?: any, res?: any): Promise<any>;
     getStudentInstallments(student_id: string, school_id: string, trustee_id: string): Promise<{
         installments: (import("mongoose").Document<unknown, {}, import("src/database/schemas/installments.schema").InstallmentsDocument> & Installments & Document & {

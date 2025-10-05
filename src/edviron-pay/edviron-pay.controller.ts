@@ -275,6 +275,13 @@ export class EdvironPayController {
           ifsc: string;
         };
       };
+      cheque_detail?: {
+        accountHolderName: string;
+        bankName: string;
+        chequeNo: string;
+        dateOnCheque: string;
+        remarks?: string;
+      };
     },
     @Req() req?: any,
     @Res() res?: any,
@@ -309,6 +316,7 @@ export class EdvironPayController {
       student_detail,
       static_qr,
       netBankingDetails,
+      cheque_detail,
     } = body;
 
     try {
@@ -406,6 +414,8 @@ export class EdvironPayController {
           },
         ).save();
 
+        console.log(mode, 'mode'),
+        console.log(cheque_detail, "cheque_detail")
         // Link installments to this collect request
         await this.databaseService.InstallmentsModel.updateMany(
           { _id: { $in: InstallmentsIds } },
@@ -620,7 +630,6 @@ export class EdvironPayController {
           return res.json({ redirectUrl: callbackUrl.toString() });
         }
         if (mode === 'EDVIRON_NETBANKING') {
-          console.log(netBankingDetails, "netBankingDetails")
           let collectIdObject = request._id;
           const detail = {
             net_banking: {
@@ -701,6 +710,79 @@ export class EdvironPayController {
           const callbackUrl = new URL(request.callbackUrl);
           callbackUrl.searchParams.set('status', 'SUCCESS');
           return res.json({ redirectUrl: callbackUrl.toString() });
+        }
+
+        if (mode === 'Cheque') {
+          let collectIdObject = request._id;
+          const detail = {
+            cheque: {
+              cheque_no: cheque_detail?.chequeNo,
+              date_on_cheque: cheque_detail?.dateOnCheque,
+              amount,
+              remarks: cheque_detail?.remarks || 'N/A',
+              payer: {
+                account_holder_name: cheque_detail?.accountHolderName || 'N/A',
+                bank_name: cheque_detail?.bankName || 'N/A',
+              },
+            },
+          };
+          await this.databaseService.CollectRequestModel.updateOne(
+            {
+              _id: collectIdObject,
+            },
+            {
+              $set: {
+                gateway: Gateway.EDVIRON_PAY,
+              },
+            },
+          );
+          const updateReq =
+            await this.databaseService.CollectRequestStatusModel.updateOne(
+              {
+                collect_id: collectIdObject,
+              },
+              {
+                $set: {
+                  status: 'SUCCESS',
+                  payment_time: new Date().toISOString(),
+                  transaction_amount: amount,
+                   payment_method: 'cheque',
+                  details: JSON.stringify(detail),
+                  bank_reference:  'N/A',
+                  reason: `Payment successfully collected via cheque (cheque number: ${
+                    cheque_detail?.chequeNo }`,
+                  payment_message:`Payment successfully collected via cheque (cheque number: ${
+                    cheque_detail?.chequeNo }`,
+                },
+              },
+              {
+                upsert: true,
+                new: true,
+              },
+            );
+
+          const updateinstallments =
+            await this.databaseService.InstallmentsModel.updateMany(
+              {
+                _id: { $in: InstallmentsIds },
+                school_id,
+                trustee_id,
+              },
+              {
+                $set: {
+                  status: 'paid',
+                  payment_time: new Date().toISOString(),
+                },
+              },
+            );
+
+          const callbackUrl = new URL(request.callbackUrl);
+          callbackUrl.searchParams.set('status', 'SUCCESS');
+          return res.json({ redirectUrl: callbackUrl.toString() });
+        }
+
+        if (mode === 'CASHFREE_VPA') {
+          return this.edvironPay.vpaOrder(request);
         }
 
         const response = await this.edvironPay.createOrder(

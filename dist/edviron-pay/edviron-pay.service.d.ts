@@ -34,6 +34,7 @@ export declare class EdvironPayService {
     private readonly easebuzzService;
     private readonly edvironPgService;
     constructor(databaseService: DatabaseService, cashfreeService: CashfreeService, easebuzzService: EasebuzzService, edvironPgService: EdvironPgService);
+    vpaOrder(request: CollectRequest): Promise<any>;
     createOrder(request: CollectRequest, school_name: string, gatewat: {
         cashfree: boolean;
         easebuzz: boolean;

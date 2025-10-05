@@ -1867,4 +1867,88 @@ export class CashfreeService {
       throw new BadRequestException(e.message);
     }
   }
+
+  async createPayoutCashfree(
+    request: CollectRequest,
+    splitPayments?: boolean,
+    cashfreeVedors?: [
+      {
+        vendor_id: string;
+        percentage?: number;
+        amount?: number;
+        name?: string;
+      },
+    ],
+) {
+  try {
+    const authConfig = {
+      method: "post",
+      url: `${process.env.CASHFREE_PAYOUT_ENDPOINT}/authorize`,
+      headers: { 
+        "X-Client-Id": process.env.CF_PAYOUT_CLIENT_ID,
+      "X-Client-Secret": process.env.CF_PAYOUT_CLIENT_SECRET,
+       },
+      // data: {
+      //   clientId: "CF_b830d89e-9d19-476d-9542-e984608d0254",
+      //   clientSecret: "4Uvn82GDY1jNdef0fe4f0ef6457302cbfe9f823e262d663d7e40",
+      // },
+    };
+    console.log(authConfig, "authConfig")
+
+    const { data: authRes } = await axios.request(authConfig);
+    if (!authRes?.data?.token) {
+      throw new BadRequestException("Unable to fetch Cashfree token");
+    }
+    const token = authRes.data.token;
+
+    // 2. Add Beneficiary (if not already added)
+    const addBeneConfig = {
+      method: "post",
+      url: `${process.env.CASHFREE_PAYOUT_ENDPOINT}/addBeneficiary`,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      data: {
+        beneId: request._id.toString(),
+        name: "Test User",
+        email: "test@example.com",
+        phone: "9876543210",
+        vpa: "7053468609@ptsbi",
+        address1: "Delhi",
+      },
+    };
+
+    const { data: beneRes } = await axios.request(addBeneConfig);
+    console.log("Beneficiary Response:", beneRes);
+
+    // 3. Send Payout
+    const transferId = "TXN_" + Date.now();
+    const payoutConfig = {
+      method: "post",
+      url: `${process.env.CASHFREE_PAYOUT_ENDPOINT}/request`,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      data: {
+        beneId: "request.",
+        amount: request.amount.toFixed(2),
+        transferMode: "upi",
+        transferId,
+        remarks: "Vendor settlement",
+      },
+    };
+
+    const { data: payoutRes } = await axios.request(payoutConfig);
+    console.log("Payout Response:", payoutRes);
+
+    return payoutRes;
+  } catch (e) {
+    console.log(e, "cashfree-payout-error");
+    throw new BadRequestException(e.message);
+  }
+}
+
+
 }

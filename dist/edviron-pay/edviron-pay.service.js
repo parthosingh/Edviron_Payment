@@ -22,6 +22,14 @@ let EdvironPayService = class EdvironPayService {
         this.easebuzzService = easebuzzService;
         this.edvironPgService = edvironPgService;
     }
+    async vpaOrder(request) {
+        try {
+            return this.cashfreeService.createPayoutCashfree(request);
+        }
+        catch (error) {
+            console.log(error, "lund");
+        }
+    }
     async createOrder(request, school_name, gatewat, platform_charges) {
         try {
             let paymentInfo = {
