@@ -859,7 +859,6 @@ let CashfreeService = class CashfreeService {
             merchant_site_url: 'https://www.edviron.com/',
             business_details: {
                 business_legal_name: response.businessProofDetails?.business_name,
-                business_type: response.business_type,
                 business_model: 'B2C',
                 business_category: response.businessCategory || null,
                 business_subcategory: response.businessSubCategory || null,
