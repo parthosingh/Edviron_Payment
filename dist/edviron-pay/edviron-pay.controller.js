@@ -104,7 +104,7 @@ let EdvironPayController = class EdvironPayController {
         };
     }
     async collect(body, req, res) {
-        const { mode, isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, vba_account_number, easebuzz, easebuzzVendors, cashfreeVedors, razorpay_vendors, cash_detail, dd_detail, document_url, student_detail, static_qr, netBankingDetails, cheque_detail, } = body;
+        const { mode, isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, vba_account_number, easebuzz, easebuzzVendors, cashfreeVedors, razorpay_vendors, cash_detail, dd_detail, document_url, student_detail, static_qr, netBankingDetails, cheque_detail, date } = body;
         try {
             let { student_id, student_name, student_email, student_number } = student_detail;
             if (!token) {
@@ -199,7 +199,6 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             gateway: collect_request_schema_1.Gateway.EDVIRON_PAY,
-                            isMethodIsCash: true,
                         },
                     });
                     const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
@@ -207,7 +206,7 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'SUCCESS',
-                            payment_time: new Date().toISOString(),
+                            payment_time: cash_detail?.date ? new Date(cash_detail?.date).toISOString() : new Date().toISOString(),
                             transaction_amount: amount,
                             payment_method: 'cash',
                             details: JSON.stringify(detail),
@@ -250,7 +249,6 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             gateway: collect_request_schema_1.Gateway.EDVIRON_PAY,
-                            isMethodIsCash: true,
                         },
                     });
                     const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
@@ -258,7 +256,7 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'SUCCESS',
-                            payment_time: new Date().toISOString(),
+                            payment_time: date ? new Date(date).toISOString() : new Date().toISOString(),
                             transaction_amount: amount,
                             payment_method: 'upi',
                             details: JSON.stringify(detail),
@@ -309,7 +307,7 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'SUCCESS',
-                            payment_time: new Date().toISOString(),
+                            payment_time: dd_detail?.date ? new Date(dd_detail?.date).toISOString() : new Date().toISOString(),
                             transaction_amount: amount,
                             payment_method: 'demand_draft',
                             details: JSON.stringify(detail),
@@ -371,7 +369,7 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'SUCCESS',
-                            payment_time: new Date().toISOString(),
+                            payment_time: date ? new Date(date).toISOString() : new Date().toISOString(),
                             transaction_amount: netBankingDetails?.amount,
                             payment_method: 'net_banking',
                             details: JSON.stringify(detail),
@@ -423,7 +421,7 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'SUCCESS',
-                            payment_time: new Date().toISOString(),
+                            payment_time: cheque_detail?.dateOnCheque ? new Date(cheque_detail?.dateOnCheque).toISOString() : new Date().toISOString(),
                             transaction_amount: amount,
                             payment_method: 'cheque',
                             details: JSON.stringify(detail),

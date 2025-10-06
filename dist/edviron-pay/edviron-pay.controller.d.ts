@@ -153,6 +153,7 @@ export declare class EdvironPayController {
             bank_name: string;
             branch_name: string;
             depositor_name?: string;
+            date?: Date;
             remark?: string;
         };
         document_url?: string | null;
@@ -184,6 +185,7 @@ export declare class EdvironPayController {
             dateOnCheque: string;
             remarks?: string;
         };
+        date?: string;
     }, req?: any, res?: any): Promise<any>;
     getStudentInstallments(student_id: string, school_id: string, trustee_id: string): Promise<{
         installments: (import("mongoose").Document<unknown, {}, import("src/database/schemas/installments.schema").InstallmentsDocument> & Installments & Document & {

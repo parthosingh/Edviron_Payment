@@ -251,6 +251,7 @@ export class EdvironPayController {
         bank_name: string;
         branch_name: string;
         depositor_name?: string;
+        date?: Date;
         remark?: string;
       };
       document_url?: string | null;
@@ -282,6 +283,7 @@ export class EdvironPayController {
         dateOnCheque: string;
         remarks?: string;
       };
+      date?: string;
     },
     @Req() req?: any,
     @Res() res?: any,
@@ -317,6 +319,7 @@ export class EdvironPayController {
       static_qr,
       netBankingDetails,
       cheque_detail,
+      date
     } = body;
 
     try {
@@ -440,7 +443,6 @@ export class EdvironPayController {
             {
               $set: {
                 gateway: Gateway.EDVIRON_PAY,
-                isMethodIsCash: true,
               },
             },
           );
@@ -452,7 +454,7 @@ export class EdvironPayController {
               {
                 $set: {
                   status: 'SUCCESS',
-                  payment_time: new Date().toISOString(),
+                  payment_time: cash_detail?.date  ?  new Date(cash_detail?.date).toISOString() : new Date().toISOString(),
                   transaction_amount: amount,
                   payment_method: 'cash',
                   details: JSON.stringify(detail),
@@ -509,7 +511,6 @@ export class EdvironPayController {
             {
               $set: {
                 gateway: Gateway.EDVIRON_PAY,
-                isMethodIsCash: true,
               },
             },
           );
@@ -521,7 +522,7 @@ export class EdvironPayController {
               {
                 $set: {
                   status: 'SUCCESS',
-                  payment_time: new Date().toISOString(),
+                  payment_time: date ?  new Date(date).toISOString() :  new Date().toISOString(),
                   transaction_amount: amount,
                   payment_method: 'upi',
                   details: JSON.stringify(detail),
@@ -586,7 +587,7 @@ export class EdvironPayController {
               {
                 $set: {
                   status: 'SUCCESS',
-                  payment_time: new Date().toISOString(),
+                  payment_time: dd_detail?.date  ?  new Date(dd_detail?.date).toISOString() : new Date().toISOString(),
                   transaction_amount: amount,
                   payment_method: 'demand_draft',
                   details: JSON.stringify(detail),
@@ -668,7 +669,7 @@ export class EdvironPayController {
               {
                 $set: {
                   status: 'SUCCESS',
-                  payment_time: new Date().toISOString(),
+                  payment_time: date ?  new Date(date).toISOString() :  new Date().toISOString(),
                   transaction_amount: netBankingDetails?.amount,
                   payment_method: 'net_banking',
                   details: JSON.stringify(detail),
@@ -743,7 +744,7 @@ export class EdvironPayController {
               {
                 $set: {
                   status: 'SUCCESS',
-                  payment_time: new Date().toISOString(),
+                  payment_time:cheque_detail?.dateOnCheque ? new Date(cheque_detail?.dateOnCheque).toISOString() : new Date().toISOString() ,
                   transaction_amount: amount,
                   payment_method: 'cheque',
                   details: JSON.stringify(detail),
