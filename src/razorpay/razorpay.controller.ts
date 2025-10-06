@@ -432,7 +432,7 @@ export class RazorpayController {
       error_reason,
       card,
       card_id,
-      wallet,
+      wallet, 
     } = payload.payment.entity;
     let { status } = payload.payment.entity;
     const { created_at } = payload.payment.entity;
@@ -475,6 +475,7 @@ export class RazorpayController {
         payment_method = 'net_banking';
       }
       let detail;
+      let platform_type="Others"
       switch (payment_method) {
         case 'upi':
           detail = {
@@ -485,26 +486,50 @@ export class RazorpayController {
           };
           break;
 
+        //seprate cc and DD 
         case 'card':
-          detail = {
-            card: {
-              card_bank_name: card.type || null,
-              card_country:
-                card.international === false
-                  ? 'IN'
-                  : card.international === true
-                  ? 'OI'
-                  : null,
-              card_network: card.network || null,
-              card_number: card_id || null,
-              card_sub_type: card.sub_type || null,
-              card_type: card.type || null,
-              channel: null,
-            },
-          };
+          platform_type=card.network
+          if(card.type==='debit'){
+            payment_method='debit_card'
+            detail = {
+              card: {
+                card_bank_name: card.type || null,
+                card_country:
+                  card.international === false
+                    ? 'IN'
+                    : card.international === true
+                    ? 'OI'
+                    : null,
+                card_network: card.network || null,
+                card_number: card_id || null,
+                card_sub_type: card.sub_type || null,
+                card_type: card.type || null,
+                channel: null,
+              },
+            };
+          }else if(card.type==='credit'){
+            payment_method='debit_card'
+            detail = {
+              card: {
+                card_bank_name: card.type || null,
+                card_country:
+                  card.international === false
+                    ? 'IN'
+                    : card.international === true
+                    ? 'OI'
+                    : null,
+                card_network: card.network || null,
+                card_number: card_id || null,
+                card_sub_type: card.sub_type || null,
+                card_type: card.type || null,
+                channel: null,
+              },
+            };
+          }
           break;
 
-        case 'netbanking':
+        case 'net_banking':
+          platform_type=bank
           detail = {
             netbanking: {
               channel: null,
@@ -610,6 +635,12 @@ export class RazorpayController {
         })(),
       };
 
+      // Commission 
+      try{
+        await this.razorpayService.saveRazorpayCommission(collectReq,platform_type)
+      }catch(e){
+        // throw erro Mail
+      }
       if (webhookUrl !== null) {
         let webhook_key: null | string = null;
         try {

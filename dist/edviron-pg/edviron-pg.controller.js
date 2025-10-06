@@ -230,6 +230,16 @@ let EdvironPgController = class EdvironPgController {
             if (!info) {
                 throw new Error('transaction not found');
             }
+            if (info.gateway !== collect_request_schema_1.Gateway.PENDING && info.gateway !== collect_request_schema_1.Gateway.EDVIRON_PG) {
+                const reqStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: info._id });
+                const callbackUrl = new URL(collectRequest?.callbackUrl);
+                callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
+                if (!reqStatus) {
+                    return res.redirect(callbackUrl.toString());
+                }
+                callbackUrl.searchParams.set('status', reqStatus?.status.toString());
+                return res.redirect(callbackUrl.toString());
+            }
             info.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
             await info.save();
             if (!collectRequest) {
@@ -276,6 +286,16 @@ let EdvironPgController = class EdvironPgController {
         const { collect_request_id } = req.query;
         console.log(req.query.status, 'easebuzz callback status');
         const collectRequest = (await this.databaseService.CollectRequestModel.findById(collect_request_id));
+        if (collectRequest.gateway !== collect_request_schema_1.Gateway.PENDING && collectRequest.gateway !== collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ) {
+            const reqStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: collectRequest._id });
+            const callbackUrl = new URL(collectRequest?.callbackUrl);
+            callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
+            if (!reqStatus) {
+                return res.redirect(callbackUrl.toString());
+            }
+            callbackUrl.searchParams.set('status', reqStatus?.status.toString());
+            return res.redirect(callbackUrl.toString());
+        }
         collectRequest.gateway = collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ;
         await collectRequest.save();
         const reqToCheck = await this.easebuzzService.statusResponse(collect_request_id, collectRequest);

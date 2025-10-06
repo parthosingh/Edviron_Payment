@@ -555,6 +555,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     password: razropay_secret,
                 },
             };
+            console.log(config);
             try {
                 const response = await axios_1.default.request(config);
                 const settlements = response.data.items;
@@ -610,7 +611,8 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                         customData = customOrderMap.get(order.order_receipt) || {};
                         console.log(customData, "customData");
                         try {
-                            custom_order_id = order.order_receipt;
+                            custom_order_id = customData.custom_order_id || order.order_receipt;
+                            additionalData = customData.additional_fields || {};
                             school_id = customData.school_id || null;
                             if (typeof customData?.additional_data === 'string') {
                                 additionalData = JSON.parse(customData.additional_data);
@@ -699,7 +701,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                                 }
                             }
                             catch {
-                                additionalData = null;
+                                additionalData = {};
                                 order_amount = null;
                                 event_amount = null;
                                 event_time = null;
@@ -707,9 +709,13 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                             }
                         }
                     }
+                    const req = await this.databaseService.CollectRequestModel.findById(order.order_id);
                     return {
                         ...order,
                         razorpay_order_id,
+                        split: req?.vendors_info || [],
+                        order_time: req?.createdAt || 'NA',
+                        additionalData: JSON.stringify(additionalData || {}),
                         custom_order_id: custom_order_id || null,
                         school_id: school_id || null,
                         student_id: studentDetails?.student_id || null,

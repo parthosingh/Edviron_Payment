@@ -3,12 +3,14 @@ import { CashfreeService } from './cashfree.service';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { platformChange } from 'src/collect/collect.controller';
+import { RazorpayService } from 'src/razorpay/razorpay.service';
 export declare class CashfreeController {
     private readonly databaseService;
     private readonly cashfreeService;
     private readonly edvironPgService;
     private readonly easebuzzService;
-    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService, edvironPgService: EdvironPgService, easebuzzService: EasebuzzService);
+    private readonly razorpayService;
+    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService, edvironPgService: EdvironPgService, easebuzzService: EasebuzzService, razorpayService: RazorpayService);
     initiateRefund(body: any): Promise<any>;
     initiateSplitRefund(body: {
         token: string;
@@ -27,6 +29,12 @@ export declare class CashfreeController {
         ];
     }): Promise<any>;
     getUpiPaymentInfoUrl(req: any): Promise<{
+        base64Image: any;
+        intent: any;
+        phonePe: any;
+        paytm: any;
+        googlePe: string;
+    } | {
         intentUrl: any;
         qrCodeBase64: any;
         collect_id: any;

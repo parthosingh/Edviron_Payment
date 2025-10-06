@@ -264,6 +264,14 @@ let CashfreeService = class CashfreeService {
                     console.log('order not found');
                     throw new common_1.BadRequestException('order not found');
                 }
+                const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: request._id });
+                if (!requestStatus) {
+                    console.log('order not found');
+                    throw new common_1.BadRequestException('order not found');
+                }
+                const order_time = request.createdAt || null;
+                const payment_details = requestStatus.details;
+                const split = request.vendors_info || [];
                 if (request.payment_id === null ||
                     request.payment_id === '' ||
                     request.payment_id === undefined) {
@@ -331,6 +339,9 @@ let CashfreeService = class CashfreeService {
                     student_phone_no: additionalData?.student_details?.student_phone_no || null,
                     additional_data: JSON.stringify(additionalData) || null,
                     payment_id: payment_id || null,
+                    order_time,
+                    payment_details,
+                    split
                 };
             }));
             return {

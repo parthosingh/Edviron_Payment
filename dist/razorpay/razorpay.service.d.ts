@@ -20,10 +20,17 @@ export declare class RazorpayService {
     getQr(collectRequest: CollectRequest): Promise<{
         base64Image: any;
         intent: any;
+        phonePe: any;
+        paytm: any;
+        googlePe: string;
     }>;
     refund(collect_id: string, refundAmount: number, refund_id: string): Promise<any>;
     getbase64(url: string): Promise<{
         base64Image: any;
         intent: any;
+        phonePe: any;
+        paytm: any;
+        googlePe: string;
     }>;
+    saveRazorpayCommission(collectReq: CollectRequest, platform_type: string): Promise<void>;
 }

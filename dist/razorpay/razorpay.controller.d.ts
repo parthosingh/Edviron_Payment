@@ -13,6 +13,9 @@ export declare class RazorpayController {
     getQr(collect_id: string): Promise<{
         base64Image: any;
         intent: any;
+        phonePe: any;
+        paytm: any;
+        googlePe: string;
     }>;
     initiateRefund(collect_id: string, refundAmount: number, refund_id: string): Promise<any>;
 }

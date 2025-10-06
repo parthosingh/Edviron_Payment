@@ -36,6 +36,8 @@ import { EdvironPayModule } from './edviron-pay/edviron-pay.module';
 import { RazorpayModule } from './razorpay/razorpay.module';
 import { GatewayController } from './gateway/gateway.controller';
 import { GatewayModule } from './gateway/gateway.module';
+import { RazorpayService } from './razorpay/razorpay.service';
+import { EdvironSeamlessController } from './edviron-seamless/edviron-seamless.controller';
 
 
 @Module({
@@ -71,6 +73,7 @@ import { GatewayModule } from './gateway/gateway.module';
     RazorpayNonseamlessController,
     EdvironPayController,
     GatewayController,
+    EdvironSeamlessController,
   ],
   providers: [
     AppService,
@@ -79,6 +82,7 @@ import { GatewayModule } from './gateway/gateway.module';
     CcavenueService,
     PosPaytmService,
     WorldlineService,
+    RazorpayService,
     RazorpayNonseamlessService,
     EdvironPayService,
   ],

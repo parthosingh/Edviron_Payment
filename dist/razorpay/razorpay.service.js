@@ -356,7 +356,10 @@ let RazorpayService = class RazorpayService {
                     order_id: order_id,
                 },
             };
+            console.log(createQrConfig, "createQrConfig");
             const { data: razorpayRes } = await axios_1.default.request(createQrConfig);
+            console.log(razorpayRes, "");
+            console.log(razorpayRes, "response");
             return await this.getbase64(razorpayRes.image_url);
         }
         catch (error) {
@@ -440,14 +443,71 @@ let RazorpayService = class RazorpayService {
             const qrData = qrCode.data || 'p';
             var QRCode = require('qrcode');
             const base64Image = await QRCode.toDataURL(qrData, { type: "image/png" });
-            console.log(base64Image);
+            const phonePe = qrCode.data.replace('upi:', 'phonepe:');
+            const paytm = qrCode.data.replace('upi:', 'paytmmp:');
+            const gpay = qrCode.data.replace('upi://', 'upi:/');
+            const googlePe = 'tez://' + gpay;
+            const qrBase64 = base64Image.split(',')[1];
             return {
-                base64Image,
-                intent: qrCode.data
+                base64Image: qrBase64,
+                intent: qrCode.data,
+                phonePe,
+                paytm,
+                googlePe
             };
         }
         catch (e) {
             throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async saveRazorpayCommission(collectReq, platform_type) {
+        try {
+            const collecRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: collectReq._id });
+            if (!collecRequestStatus) {
+                throw new common_1.BadRequestException('Invalid Request');
+            }
+            const tokenData = {
+                school_id: collectReq?.school_id,
+                trustee_id: collectReq?.trustee_id,
+                order_amount: collectReq?.amount,
+                transaction_amount: collecRequestStatus.transaction_amount,
+                platform_type: platform_type,
+                payment_mode: collecRequestStatus.payment_method,
+                collect_id: collectReq._id,
+            };
+            const sign = _jwt.sign(tokenData, process.env.KEY, {
+                noTimestamp: true,
+            });
+            let data = JSON.stringify({
+                token: sign,
+                school_id: collectReq?.school_id,
+                trustee_id: collectReq?.trustee_id,
+                order_amount: collectReq?.amount,
+                transaction_amount: collecRequestStatus.transaction_amount,
+                platform_type: "mappedPaymentMethod",
+                payment_mode: collecRequestStatus.payment_method,
+                collect_id: collectReq._id,
+            });
+            let config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                },
+                data: data,
+            };
+            try {
+                const { data: commissionRes } = await axios_1.default.request(config);
+                console.log('Commission calculation response:', commissionRes);
+            }
+            catch (error) {
+                console.error('Error calculating commission:', error.message);
+            }
+        }
+        catch (e) {
         }
     }
 };

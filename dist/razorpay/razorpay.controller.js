@@ -388,6 +388,7 @@ let RazorpayController = class RazorpayController {
                 payment_method = 'net_banking';
             }
             let detail;
+            let platform_type = "Others";
             switch (payment_method) {
                 case 'upi':
                     detail = {
@@ -398,23 +399,46 @@ let RazorpayController = class RazorpayController {
                     };
                     break;
                 case 'card':
-                    detail = {
-                        card: {
-                            card_bank_name: card.type || null,
-                            card_country: card.international === false
-                                ? 'IN'
-                                : card.international === true
-                                    ? 'OI'
-                                    : null,
-                            card_network: card.network || null,
-                            card_number: card_id || null,
-                            card_sub_type: card.sub_type || null,
-                            card_type: card.type || null,
-                            channel: null,
-                        },
-                    };
+                    platform_type = card.network;
+                    if (card.type === 'debit') {
+                        payment_method = 'debit_card';
+                        detail = {
+                            card: {
+                                card_bank_name: card.type || null,
+                                card_country: card.international === false
+                                    ? 'IN'
+                                    : card.international === true
+                                        ? 'OI'
+                                        : null,
+                                card_network: card.network || null,
+                                card_number: card_id || null,
+                                card_sub_type: card.sub_type || null,
+                                card_type: card.type || null,
+                                channel: null,
+                            },
+                        };
+                    }
+                    else if (card.type === 'credit') {
+                        payment_method = 'debit_card';
+                        detail = {
+                            card: {
+                                card_bank_name: card.type || null,
+                                card_country: card.international === false
+                                    ? 'IN'
+                                    : card.international === true
+                                        ? 'OI'
+                                        : null,
+                                card_network: card.network || null,
+                                card_number: card_id || null,
+                                card_sub_type: card.sub_type || null,
+                                card_type: card.type || null,
+                                channel: null,
+                            },
+                        };
+                    }
                     break;
-                case 'netbanking':
+                case 'net_banking':
+                    platform_type = bank;
                     detail = {
                         netbanking: {
                             channel: null,
@@ -497,6 +521,11 @@ let RazorpayController = class RazorpayController {
                     return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
                 })(),
             };
+            try {
+                await this.razorpayService.saveRazorpayCommission(collectReq, platform_type);
+            }
+            catch (e) {
+            }
             if (webhookUrl !== null) {
                 let webhook_key = null;
                 try {

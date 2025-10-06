@@ -44,6 +44,8 @@ const edviron_pay_module_1 = require("./edviron-pay/edviron-pay.module");
 const razorpay_module_1 = require("./razorpay/razorpay.module");
 const gateway_controller_1 = require("./gateway/gateway.controller");
 const gateway_module_1 = require("./gateway/gateway.module");
+const razorpay_service_1 = require("./razorpay/razorpay.service");
+const edviron_seamless_controller_1 = require("./edviron-seamless/edviron-seamless.controller");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -81,6 +83,7 @@ exports.AppModule = AppModule = __decorate([
             razorpay_nonseamless_controller_1.RazorpayNonseamlessController,
             edviron_pay_controller_1.EdvironPayController,
             gateway_controller_1.GatewayController,
+            edviron_seamless_controller_1.EdvironSeamlessController,
         ],
         providers: [
             app_service_1.AppService,
@@ -89,6 +92,7 @@ exports.AppModule = AppModule = __decorate([
             ccavenue_service_1.CcavenueService,
             pos_paytm_service_1.PosPaytmService,
             worldline_service_1.WorldlineService,
+            razorpay_service_1.RazorpayService,
             razorpay_nonseamless_service_1.RazorpayNonseamlessService,
             edviron_pay_service_1.EdvironPayService,
         ],

@@ -26,12 +26,14 @@ const axios_1 = require("axios");
 const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 const sign_2 = require("../utils/sign");
 const transactionStatus_1 = require("../types/transactionStatus");
+const razorpay_service_1 = require("../razorpay/razorpay.service");
 let CashfreeController = class CashfreeController {
-    constructor(databaseService, cashfreeService, edvironPgService, easebuzzService) {
+    constructor(databaseService, cashfreeService, edvironPgService, easebuzzService, razorpayService) {
         this.databaseService = databaseService;
         this.cashfreeService = cashfreeService;
         this.edvironPgService = edvironPgService;
         this.easebuzzService = easebuzzService;
+        this.razorpayService = razorpayService;
     }
     async initiateRefund(body) {
         const { collect_id, amount, refund_id } = body;
@@ -131,6 +133,12 @@ let CashfreeController = class CashfreeController {
             catch (e) {
                 throw new common_1.BadRequestException('Error in Getting QR Code');
             }
+        }
+        if (request.razorpay_seamless &&
+            request.razorpay_seamless.order_id &&
+            request.razorpay_seamless.razorpay_secret &&
+            request.razorpay_seamless.razorpay_id) {
+            return await this.razorpayService.getQr(request);
         }
         let intentData = JSON.stringify({
             payment_method: {
@@ -997,6 +1005,7 @@ exports.CashfreeController = CashfreeController = __decorate([
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
         cashfree_service_1.CashfreeService,
         edviron_pg_service_1.EdvironPgService,
-        easebuzz_service_1.EasebuzzService])
+        easebuzz_service_1.EasebuzzService,
+        razorpay_service_1.RazorpayService])
 ], CashfreeController);
 //# sourceMappingURL=cashfree.controller.js.map
