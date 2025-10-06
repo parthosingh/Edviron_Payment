@@ -510,6 +510,15 @@ let EdvironPgController = class EdvironPgController {
             upsert: true,
             new: true,
         });
+        if (collectReq?.isCollectNow) {
+            let status = webhookStatus === 'SUCCESS' ? 'paid' : 'unpaid';
+            const installments = await this.databaseService.InstallmentsModel.find({
+                collect_id: collectIdObject,
+            });
+            for (let installment of installments) {
+                await this.databaseService.InstallmentsModel.findOneAndUpdate({ _id: installment._id }, { $set: { status: status } }, { new: true });
+            }
+        }
         const webHookUrl = collectReq?.req_webhook_urls;
         const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
         const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({

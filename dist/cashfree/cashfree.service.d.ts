@@ -200,16 +200,12 @@ export declare class CashfreeService {
             order_status: any;
         };
     }>;
-    generateMasterGatewaypayment(collectRequest: CollectRequest, school_name: string, platform_charges: platformChange[], vendor?: [
+    createOrderCashfree(request: CollectRequest, splitPayments?: boolean, cashfreeVedors?: [
         {
             vendor_id: string;
             percentage?: number;
             amount?: number;
             name?: string;
-            scheme_code?: string;
         }
-    ]): Promise<{
-        _id: import("mongoose").Schema.Types.ObjectId;
-        url: string;
-    } | undefined>;
+    ]): Promise<any>;
 }

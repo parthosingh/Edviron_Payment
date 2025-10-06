@@ -30,11 +30,15 @@ import { WorldlineController } from './worldline/worldline.controller';
 import { GatepayModule } from './gatepay/gatepay.module';
 import { ReportsModule } from './reports/reports.module';
 import { AwsS3ServiceModule } from './aws-s3-service/aws-s3-service.module';
+import { EdvironPayController } from './edviron-pay/edviron-pay.controller';
+import { EdvironPayService } from './edviron-pay/edviron-pay.service';
+import { EdvironPayModule } from './edviron-pay/edviron-pay.module';
 import { RazorpayModule } from './razorpay/razorpay.module';
 import { GatewayController } from './gateway/gateway.controller';
 import { GatewayModule } from './gateway/gateway.module';
 import { RazorpayService } from './razorpay/razorpay.service';
 import { EdvironSeamlessController } from './edviron-seamless/edviron-seamless.controller';
+
 
 @Module({
   imports: [
@@ -57,6 +61,7 @@ import { EdvironSeamlessController } from './edviron-seamless/edviron-seamless.c
     GatepayModule,
     ReportsModule,
     AwsS3ServiceModule,
+    EdvironPayModule,
     GatewayModule,
   ],
   controllers: [
@@ -66,6 +71,7 @@ import { EdvironSeamlessController } from './edviron-seamless/edviron-seamless.c
     PosPaytmController,
     WorldlineController,
     RazorpayNonseamlessController,
+    EdvironPayController,
     GatewayController,
     EdvironSeamlessController,
   ],
@@ -78,6 +84,7 @@ import { EdvironSeamlessController } from './edviron-seamless/edviron-seamless.c
     WorldlineService,
     RazorpayService,
     RazorpayNonseamlessService,
+    EdvironPayService,
   ],
 })
 export class AppModule {}

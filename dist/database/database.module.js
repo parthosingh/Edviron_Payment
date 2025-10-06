@@ -19,6 +19,8 @@ const erp_webhooks_logs_schema_1 = require("./schemas/erp.webhooks.logs.schema")
 const batch_transactions_schema_1 = require("./schemas/batch.transactions.schema");
 const error_logs_schema_1 = require("./schemas/error.logs.schema");
 const platform_charges_schema_1 = require("./schemas/platform.charges.schema");
+const installments_schema_1 = require("./schemas/installments.schema");
+const student_detail_schema_1 = require("./schemas/student_detail.schema");
 dotenv.config();
 let DatabaseModule = class DatabaseModule {
 };
@@ -51,6 +53,12 @@ exports.DatabaseModule = DatabaseModule = __decorate([
             mongoose_1.MongooseModule.forFeature([
                 { name: platform_charges_schema_1.SchoolMdr.name, schema: platform_charges_schema_1.SchoolMdrSchema },
             ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: installments_schema_1.Installments.name, schema: installments_schema_1.InstallmentsSchema },
+            ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: student_detail_schema_1.StudentDetail.name, schema: student_detail_schema_1.StudentDetailSchema },
+            ]),
         ],
         providers: [database_service_1.DatabaseService],
         exports: [
@@ -79,6 +87,12 @@ exports.DatabaseModule = DatabaseModule = __decorate([
             ]),
             mongoose_1.MongooseModule.forFeature([
                 { name: platform_charges_schema_1.SchoolMdr.name, schema: platform_charges_schema_1.SchoolMdrSchema },
+            ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: installments_schema_1.Installments.name, schema: installments_schema_1.InstallmentsSchema },
+            ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: student_detail_schema_1.StudentDetail.name, schema: student_detail_schema_1.StudentDetailSchema },
             ]),
         ],
     })

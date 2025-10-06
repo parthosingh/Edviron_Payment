@@ -67,5 +67,7 @@ export declare class EasebuzzService {
         collect_request_id: import("mongoose").Schema.Types.ObjectId;
         collect_request_url: string;
     }>;
+    createOrderSeamlessNonSplit(request: CollectRequest): Promise<any>;
     netBankingSeamless(collect_id: string, selectedBank: string): Promise<string>;
+    createOrderSeamlessSplit(request: CollectRequest): Promise<any>;
 }
