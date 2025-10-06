@@ -1,0 +1,79 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.EdvironSeamlessController = void 0;
+const common_1 = require("@nestjs/common");
+const database_service_1 = require("../database/database.service");
+const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
+let EdvironSeamlessController = class EdvironSeamlessController {
+    constructor(easebuzzService, databaseService) {
+        this.easebuzzService = easebuzzService;
+        this.databaseService = databaseService;
+    }
+    async initiatePayment(body, res) {
+        try {
+            const { school_id, trustee_id, token, mode, collect_id, net_banking } = body;
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request) {
+                throw new common_1.BadRequestException('Invalid Collect Id');
+            }
+            if (request?.school_id !== school_id || request.trustee_id !== trustee_id) {
+                throw new common_1.BadRequestException("Unauthorized Access");
+            }
+            if (mode === 'NB') {
+                if (!net_banking ||
+                    !net_banking.bank_code) {
+                    throw new common_1.BadRequestException('Required Parameter Missing');
+                }
+                const response = await this.easebuzzService.netBankingSeamless(collect_id, net_banking.bank_code);
+                return res.send(response);
+            }
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async testNB(req, res) {
+        try {
+            const { collect_id, bank_code } = req.query;
+            const response = await this.easebuzzService.netBankingSeamless(collect_id, bank_code);
+            return res.send(response);
+        }
+        catch (e) {
+        }
+    }
+};
+exports.EdvironSeamlessController = EdvironSeamlessController;
+__decorate([
+    (0, common_1.Post)('/initiate-payment'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], EdvironSeamlessController.prototype, "initiatePayment", null);
+__decorate([
+    (0, common_1.Get)('/test-nb'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], EdvironSeamlessController.prototype, "testNB", null);
+exports.EdvironSeamlessController = EdvironSeamlessController = __decorate([
+    (0, common_1.Controller)('edviron-seamless'),
+    __metadata("design:paramtypes", [easebuzz_service_1.EasebuzzService,
+        database_service_1.DatabaseService])
+], EdvironSeamlessController);
+//# sourceMappingURL=edviron-seamless.controller.js.map
