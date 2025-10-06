@@ -35,6 +35,7 @@ import { GatewayController } from './gateway/gateway.controller';
 import { GatewayModule } from './gateway/gateway.module';
 import { RazorpayService } from './razorpay/razorpay.service';
 import { EdvironSeamlessController } from './edviron-seamless/edviron-seamless.controller';
+import { EdvironSeamlessService } from './edviron-seamless/edviron-seamless.service';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { EdvironSeamlessController } from './edviron-seamless/edviron-seamless.c
     WorldlineService,
     RazorpayService,
     RazorpayNonseamlessService,
+    EdvironSeamlessService,
   ],
 })
 export class AppModule {}

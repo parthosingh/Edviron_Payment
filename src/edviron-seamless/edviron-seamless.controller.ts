@@ -1,12 +1,14 @@
 import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
-
+import * as jwt from 'jsonwebtoken'
+import { EdvironSeamlessService } from './edviron-seamless.service';
 @Controller('edviron-seamless')
 export class EdvironSeamlessController {
     constructor(
         private readonly easebuzzService: EasebuzzService,
         private readonly databaseService: DatabaseService,
+        private readonly edvironSeamlessService: EdvironSeamlessService,
     ) { }
 
     @Post('/initiate-payment')
@@ -20,6 +22,12 @@ export class EdvironSeamlessController {
             amount: number,
             net_banking?: {
                 bank_code: string
+            },
+            card: {
+                enc_card_number: string,
+                enc_card_holder_name: string,
+                enc_card_cvv: string,
+                enc_card_expiry_date: string
             }
         },
         @Res() res: any
@@ -31,7 +39,8 @@ export class EdvironSeamlessController {
                 token,
                 mode,
                 collect_id,
-                net_banking
+                net_banking,
+                card
             } = body
 
             const request = await this.databaseService.CollectRequestModel.findById(collect_id)
@@ -48,9 +57,28 @@ export class EdvironSeamlessController {
                 ) {
                     throw new BadRequestException('Required Parameter Missing')
                 }
+                const url = `${process.env.URL}/seamless-pay/?school_id=${school_id}&token=${token}&mode=NB&code=${net_banking.bank_code}`
+                return res.send({ url })
+            } else if (mode === "CC" || mode === "DC") {
+                const {
+                    enc_card_number,
+                    enc_card_holder_name,
+                    enc_card_cvv,
+                    enc_card_expiry_date,
+                } = card
+                const cardInfo = await this.edvironSeamlessService.processcards(
+                    enc_card_number,
+                    enc_card_holder_name,
+                    enc_card_cvv,
+                    enc_card_expiry_date,
+                    school_id,
+                    collect_id
+                )
+                const url = `${process.env.URL}/seamless-pay?mode=${mode}&enc_card_number=${cardInfo.card_number}&enc_card_holder_name=${cardInfo.card_holder}&enc_card_cvv=${cardInfo.card_cvv}&enc_card_exp=${cardInfo.card_exp}&sign=${token}`
 
-                const response = await this.easebuzzService.netBankingSeamless(collect_id, net_banking.bank_code)
-                return res.send(response)
+                return res.send({ url })
+            }else if(mode ==="WALLET"){
+                
             }
         } catch (e) {
             throw new BadRequestException(e.message)

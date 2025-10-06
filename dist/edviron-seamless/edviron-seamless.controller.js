@@ -16,14 +16,16 @@ exports.EdvironSeamlessController = void 0;
 const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
+const edviron_seamless_service_1 = require("./edviron-seamless.service");
 let EdvironSeamlessController = class EdvironSeamlessController {
-    constructor(easebuzzService, databaseService) {
+    constructor(easebuzzService, databaseService, edvironSeamlessService) {
         this.easebuzzService = easebuzzService;
         this.databaseService = databaseService;
+        this.edvironSeamlessService = edvironSeamlessService;
     }
     async initiatePayment(body, res) {
         try {
-            const { school_id, trustee_id, token, mode, collect_id, net_banking } = body;
+            const { school_id, trustee_id, token, mode, collect_id, net_banking, card } = body;
             const request = await this.databaseService.CollectRequestModel.findById(collect_id);
             if (!request) {
                 throw new common_1.BadRequestException('Invalid Collect Id');
@@ -36,8 +38,16 @@ let EdvironSeamlessController = class EdvironSeamlessController {
                     !net_banking.bank_code) {
                     throw new common_1.BadRequestException('Required Parameter Missing');
                 }
-                const response = await this.easebuzzService.netBankingSeamless(collect_id, net_banking.bank_code);
-                return res.send(response);
+                const url = `${process.env.URL}/seamless-pay/?school_id=${school_id}&token=${token}&mode=NB&code=${net_banking.bank_code}`;
+                return res.send({ url });
+            }
+            else if (mode === "CC" || mode === "DC") {
+                const { enc_card_number, enc_card_holder_name, enc_card_cvv, enc_card_expiry_date, } = card;
+                const cardInfo = await this.edvironSeamlessService.processcards(enc_card_number, enc_card_holder_name, enc_card_cvv, enc_card_expiry_date, school_id, collect_id);
+                const url = `${process.env.URL}/seamless-pay?mode=${mode}&enc_card_number=${cardInfo.card_number}&enc_card_holder_name=${cardInfo.card_holder}&enc_card_cvv=${cardInfo.card_cvv}&enc_card_exp=${cardInfo.card_exp}&sign=${token}`;
+                return res.send({ url });
+            }
+            else if (mode === "WALLET") {
             }
         }
         catch (e) {
@@ -74,6 +84,7 @@ __decorate([
 exports.EdvironSeamlessController = EdvironSeamlessController = __decorate([
     (0, common_1.Controller)('edviron-seamless'),
     __metadata("design:paramtypes", [easebuzz_service_1.EasebuzzService,
-        database_service_1.DatabaseService])
+        database_service_1.DatabaseService,
+        edviron_seamless_service_1.EdvironSeamlessService])
 ], EdvironSeamlessController);
 //# sourceMappingURL=edviron-seamless.controller.js.map

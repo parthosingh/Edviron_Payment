@@ -115,4 +115,19 @@ export declare class EasebuzzController {
     handleEasebuzzCallbackPost(req: any, res: any): Promise<any>;
     handleEasebuzzNonSeamlessCallbackPost(body: any, req: any, res: any): Promise<any>;
     handleEasebuzzNonSeamlessCallback(body: any, req: any, res: any): Promise<any>;
+    encCardData(body: {
+        merchant_id: string;
+        pg_key: string;
+        data: {
+            card_number: string;
+            card_holder_name: string;
+            card_cvv: string;
+            card_expiry_date: string;
+        };
+    }): Promise<{
+        enc_card_number: any;
+        enc_card_holder_name: any;
+        enc_card_cvv: any;
+        enc_card_expiry_date: any;
+    }>;
 }

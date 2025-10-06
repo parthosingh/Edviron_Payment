@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateSignature = exports.decrypt = exports.encryptCard = exports.generateHMACBase64Type = exports.merchantKeySHA256 = exports.calculateSHA256 = exports.calculateSHA512Hash = exports.sign = void 0;
+exports.generateSignature = exports.decrypt = exports.encryptCard = exports.merchantKeyIv = exports.generateHMACBase64Type = exports.merchantKeySHA256 = exports.calculateSHA256 = exports.calculateSHA512Hash = exports.sign = void 0;
+const common_1 = require("@nestjs/common");
 const _jwt = require("jsonwebtoken");
 const crypto = require('crypto');
 const sign = async (body) => {
@@ -58,6 +59,32 @@ const generateHMACBase64Type = (signed_payload, secret) => {
     return hmac.digest('base64');
 };
 exports.generateHMACBase64Type = generateHMACBase64Type;
+const merchantKeyIv = (merchant_id, pg_key) => {
+    try {
+        let merchantKey = merchant_id;
+        let salt = pg_key;
+        const key = crypto
+            .createHash('sha256')
+            .update(merchantKey)
+            .digest()
+            .toString('hex')
+            .slice(0, 32);
+        const iv = crypto
+            .createHash('sha256')
+            .update(salt)
+            .digest()
+            .toString('hex')
+            .slice(0, 16);
+        return {
+            key,
+            iv,
+        };
+    }
+    catch (e) {
+        throw new common_1.BadRequestException(e.message);
+    }
+};
+exports.merchantKeyIv = merchantKeyIv;
 const encryptCard = async (data, key, iv) => {
     console.log(`encrypting card info ${data}`);
     const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
@@ -67,6 +94,7 @@ const encryptCard = async (data, key, iv) => {
 };
 exports.encryptCard = encryptCard;
 const decrypt = async (encryptedData, key, iv) => {
+    console.log({ encryptedData, key, iv });
     const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
     let decrypted = decipher.update(encryptedData, 'base64', 'utf-8');
     decrypted += decipher.final('utf-8');

@@ -344,7 +344,7 @@ export class EasebuzzController {
 
 
       const { data: resData } = await axios.request(config);
-      console.log(utr,'utrnumb');
+      console.log(utr, 'utrnumb');
       const record = resData.data.find((item: any) => item.bank_transaction_id === utr);
 
       const orderIds = record.peb_transactions.map((tx: any) => {
@@ -392,7 +392,7 @@ export class EasebuzzController {
           }
 
           const collectReq = await this.databaseService.CollectRequestModel.findOne(query);
-          if(!collectReq){
+          if (!collectReq) {
             throw new BadRequestException('transaction not found in edviron DB')
           }
           if (collect_id) {
@@ -2092,5 +2092,35 @@ export class EasebuzzController {
     callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
     callbackUrl.searchParams.set('status', 'SUCCESS');
     return res.redirect(callbackUrl.toString());
+  }
+
+  @Post('/enc-card')
+  async encCardData(
+    @Body() body: {
+      merchant_id: string,
+      pg_key: string,
+      data: {
+        card_number: string,
+        card_holder_name: string,
+        card_cvv: string,
+        card_expiry_date: string,
+      }
+    }
+  ) {
+    const { merchant_id, pg_key, data } = body
+    try {
+      const enc_card_number = await this.easebuzzService.encCard(merchant_id, pg_key, data.card_number)
+      const enc_card_holder_name = await this.easebuzzService.encCard(merchant_id, pg_key, data.card_holder_name)
+      const enc_card_cvv = await this.easebuzzService.encCard(merchant_id, pg_key, data.card_cvv)
+      const enc_card_expiry_date = await this.easebuzzService.encCard(merchant_id, pg_key, data.card_expiry_date)
+      return {
+        enc_card_number,
+        enc_card_holder_name,
+        enc_card_cvv,
+        enc_card_expiry_date,
+      }
+    } catch (e) {
+      throw new BadRequestException(e.message)
+    }
   }
 }

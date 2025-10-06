@@ -1520,6 +1520,24 @@ let EasebuzzController = class EasebuzzController {
         callbackUrl.searchParams.set('status', 'SUCCESS');
         return res.redirect(callbackUrl.toString());
     }
+    async encCardData(body) {
+        const { merchant_id, pg_key, data } = body;
+        try {
+            const enc_card_number = await this.easebuzzService.encCard(merchant_id, pg_key, data.card_number);
+            const enc_card_holder_name = await this.easebuzzService.encCard(merchant_id, pg_key, data.card_holder_name);
+            const enc_card_cvv = await this.easebuzzService.encCard(merchant_id, pg_key, data.card_cvv);
+            const enc_card_expiry_date = await this.easebuzzService.encCard(merchant_id, pg_key, data.card_expiry_date);
+            return {
+                enc_card_number,
+                enc_card_holder_name,
+                enc_card_cvv,
+                enc_card_expiry_date,
+            };
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EasebuzzController = EasebuzzController;
 __decorate([
@@ -1639,6 +1657,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], EasebuzzController.prototype, "handleEasebuzzNonSeamlessCallback", null);
+__decorate([
+    (0, common_1.Post)('/enc-card'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EasebuzzController.prototype, "encCardData", null);
 exports.EasebuzzController = EasebuzzController = __decorate([
     (0, common_1.Controller)('easebuzz'),
     __metadata("design:paramtypes", [easebuzz_service_1.EasebuzzService,
