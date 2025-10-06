@@ -34,6 +34,7 @@ import { RazorpayModule } from './razorpay/razorpay.module';
 import { GatewayController } from './gateway/gateway.controller';
 import { GatewayModule } from './gateway/gateway.module';
 import { RazorpayService } from './razorpay/razorpay.service';
+import { EdvironSeamlessController } from './edviron-seamless/edviron-seamless.controller';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { RazorpayService } from './razorpay/razorpay.service';
     WorldlineController,
     RazorpayNonseamlessController,
     GatewayController,
+    EdvironSeamlessController,
   ],
   providers: [
     AppService,

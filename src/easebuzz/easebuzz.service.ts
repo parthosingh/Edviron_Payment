@@ -1391,4 +1391,59 @@ export class EasebuzzService {
       throw new BadRequestException(e.message);
     }
   }
+
+  async netBankingSeamless(collect_id: string, selectedBank: string) {
+    try {
+      const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collectReq) {
+        throw new BadRequestException('Invalid Collect Id');
+      }
+
+      const easebuzzPaymentId = collectReq.paymentIds.easebuzz_id;
+      if (!easebuzzPaymentId) {
+        throw new BadRequestException('Invalid Payment');
+      }
+
+      // Generate HTML form with auto-submit
+      const htmlForm = `
+     <script type="text/javascript">
+        window.onload = function() {
+          // Create a hidden form dynamically
+          var form = document.createElement("form");
+          form.method = "POST";
+          form.action = "https://pay.easebuzz.in/initiate_seamless_payment/";
+
+          var input1 = document.createElement("input");
+          input1.type = "hidden";
+          input1.name = "access_key";
+          input1.value = "${easebuzzPaymentId}";
+          form.appendChild(input1);
+
+          var input2 = document.createElement("input");
+          input2.type = "hidden";
+          input2.name = "payment_mode";
+          input2.value = "NB";
+          form.appendChild(input2);
+
+          var input3 = document.createElement("input");
+          input3.type = "hidden";
+          input3.name = "bank_code";
+          input3.value = "${selectedBank}";
+          form.appendChild(input3);
+
+          document.body.appendChild(form);
+          form.submit();
+        }
+      </script>
+
+    `;
+
+      // Return HTML so frontend browser can render it
+      return htmlForm;
+    } catch (e) {
+      console.error(e);
+      throw new BadRequestException(e.message);
+    }
+  }
+
 }
