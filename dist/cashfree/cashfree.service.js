@@ -1365,7 +1365,9 @@ let CashfreeService = class CashfreeService {
             return cf_payment_id;
         }
         catch (e) {
-            console.log(e, "emessage");
+            if (e?.response?.data) {
+                throw new common_1.BadRequestException(e?.response?.data?.message || "cashfree error");
+            }
             throw new common_1.BadRequestException(e.message);
         }
     }

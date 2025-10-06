@@ -1862,8 +1862,9 @@ export class CashfreeService {
       const cf_payment_id = cashfreeRes.payment_session_id;
       return cf_payment_id
     } catch (e) {
-      console.log(e, "emessage");
-      
+      if(e?.response?.data){  
+        throw new BadRequestException(e?.response?.data?.message || "cashfree error");
+      }
       throw new BadRequestException(e.message);
     }
   }

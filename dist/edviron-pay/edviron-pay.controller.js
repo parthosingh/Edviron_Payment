@@ -179,8 +179,7 @@ let EdvironPayController = class EdvironPayController {
                     student_email,
                     student_number,
                 }).save();
-                console.log(mode, 'mode'),
-                    console.log(cheque_detail, "cheque_detail");
+                console.log(mode, 'mode'), console.log(cheque_detail, 'cheque_detail');
                 await this.databaseService.InstallmentsModel.updateMany({ _id: { $in: InstallmentsIds } }, { $set: { collect_id: request._id, status: 'pending' } });
                 if (mode === 'EDVIRON_CASH') {
                     let collectIdObject = request._id;
@@ -459,6 +458,9 @@ let EdvironPayController = class EdvironPayController {
         }
         catch (e) {
             console.log(e);
+            if (e?.response) {
+                throw new common_1.BadRequestException(e?.response?.message || 'cashfree error');
+            }
             throw new Error('Error occurred while processing payment: ' + e.message);
         }
     }

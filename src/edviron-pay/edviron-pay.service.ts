@@ -19,9 +19,9 @@ export class EdvironPayService {
 
   async vpaOrder(request: CollectRequest) {
     try {
-      return this.cashfreeService.createPayoutCashfree(request)
+      return this.cashfreeService.createPayoutCashfree(request);
     } catch (error) {
-      console.log(error, "lund")
+      console.log(error, 'lund');
     }
   }
 
@@ -109,8 +109,12 @@ export class EdvironPayService {
           paymentInfo.easebuzz_id,
       };
     } catch (err) {
-      console.log(err);
-
+      
+      if (err?.response) {
+        throw new BadRequestException(
+          err?.response?.message || 'cashfree error',
+        );
+      }
       throw new BadRequestException(err.message);
     }
   }

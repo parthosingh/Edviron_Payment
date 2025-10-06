@@ -27,7 +27,7 @@ let EdvironPayService = class EdvironPayService {
             return this.cashfreeService.createPayoutCashfree(request);
         }
         catch (error) {
-            console.log(error, "lund");
+            console.log(error, 'lund');
         }
     }
     async createOrder(request, school_name, gatewat, platform_charges) {
@@ -95,7 +95,9 @@ let EdvironPayService = class EdvironPayService {
             };
         }
         catch (err) {
-            console.log(err);
+            if (err?.response) {
+                throw new common_1.BadRequestException(err?.response?.message || 'cashfree error');
+            }
             throw new common_1.BadRequestException(err.message);
         }
     }

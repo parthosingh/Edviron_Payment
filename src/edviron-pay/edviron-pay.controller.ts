@@ -414,8 +414,7 @@ export class EdvironPayController {
           },
         ).save();
 
-        console.log(mode, 'mode'),
-        console.log(cheque_detail, "cheque_detail")
+        console.log(mode, 'mode'), console.log(cheque_detail, 'cheque_detail');
         // Link installments to this collect request
         await this.databaseService.InstallmentsModel.updateMany(
           { _id: { $in: InstallmentsIds } },
@@ -746,13 +745,11 @@ export class EdvironPayController {
                   status: 'SUCCESS',
                   payment_time: new Date().toISOString(),
                   transaction_amount: amount,
-                   payment_method: 'cheque',
+                  payment_method: 'cheque',
                   details: JSON.stringify(detail),
-                  bank_reference:  'N/A',
-                  reason: `Payment successfully collected via cheque (cheque number: ${
-                    cheque_detail?.chequeNo }`,
-                  payment_message:`Payment successfully collected via cheque (cheque number: ${
-                    cheque_detail?.chequeNo }`,
+                  bank_reference: 'N/A',
+                  reason: `Payment successfully collected via cheque (cheque number: ${cheque_detail?.chequeNo}`,
+                  payment_message: `Payment successfully collected via cheque (cheque number: ${cheque_detail?.chequeNo}`,
                 },
               },
               {
@@ -795,6 +792,9 @@ export class EdvironPayController {
       }
     } catch (e) {
       console.log(e);
+      if (e?.response) {
+        throw new BadRequestException(e?.response?.message || 'cashfree error');
+      }
       throw new Error('Error occurred while processing payment: ' + e.message);
     }
   }
