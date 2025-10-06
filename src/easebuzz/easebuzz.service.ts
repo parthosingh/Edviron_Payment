@@ -1402,7 +1402,7 @@ export class EasebuzzService {
       const easebuzzPaymentId = collectReq.paymentIds.easebuzz_id;
       if (!easebuzzPaymentId) {
         throw new BadRequestException('Invalid Payment');
-      }
+      } 
 
       // Generate HTML form with auto-submit
       const htmlForm = `
