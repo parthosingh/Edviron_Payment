@@ -584,6 +584,7 @@ export class EdvironPayController {
               {
                 collect_id: collectIdObject,
               },
+              //commit
               {
                 $set: {
                   status: 'SUCCESS',
