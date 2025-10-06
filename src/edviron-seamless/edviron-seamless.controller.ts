@@ -28,6 +28,9 @@ export class EdvironSeamlessController {
                 enc_card_holder_name: string,
                 enc_card_cvv: string,
                 enc_card_expiry_date: string
+            },
+            wallet:{
+                bank_code:string,
             }
         },
         @Res() res: any
@@ -40,7 +43,8 @@ export class EdvironSeamlessController {
                 mode,
                 collect_id,
                 net_banking,
-                card
+                card,
+                wallet
             } = body
 
             const request = await this.databaseService.CollectRequestModel.findById(collect_id)
@@ -50,6 +54,7 @@ export class EdvironSeamlessController {
             if (request?.school_id !== school_id || request.trustee_id !== trustee_id) {
                 throw new BadRequestException("Unauthorized Access")
             }
+            const access_key=request.paymentIds.easebuzz_id
             if (mode === 'NB') {
                 if (
                     !net_banking ||
@@ -57,7 +62,7 @@ export class EdvironSeamlessController {
                 ) {
                     throw new BadRequestException('Required Parameter Missing')
                 }
-                const url = `${process.env.URL}/seamless-pay/?school_id=${school_id}&token=${token}&mode=NB&code=${net_banking.bank_code}`
+                const url = `${process.env.URL}/seamless-pay/?school_id=${school_id}&access_key=${access_key}&mode=NB&code=${net_banking.bank_code}`
                 return res.send({ url })
             } else if (mode === "CC" || mode === "DC") {
                 const {
@@ -74,11 +79,16 @@ export class EdvironSeamlessController {
                     school_id,
                     collect_id
                 )
-                const url = `${process.env.URL}/seamless-pay?mode=${mode}&enc_card_number=${cardInfo.card_number}&enc_card_holder_name=${cardInfo.card_holder}&enc_card_cvv=${cardInfo.card_cvv}&enc_card_exp=${cardInfo.card_exp}&sign=${token}`
+                const url = `${process.env.URL}/seamless-pay?mode=${mode}&enc_card_number=${cardInfo.card_number}&enc_card_holder_name=${cardInfo.card_holder}&enc_card_cvv=${cardInfo.card_cvv}&enc_card_exp=${cardInfo.card_exp}&access_key=${access_key}`
 
                 return res.send({ url })
             }else if(mode ==="WALLET"){
-                
+                if(!wallet || !wallet.bank_code){
+                    throw new BadRequestException("Wallet bank code Required")
+                }
+                const url = `${process.env.URL}/seamless-pay?mode=${mode}&bank_code=${wallet.bank_code}`
+
+                return res.send({ url })
             }
         } catch (e) {
             throw new BadRequestException(e.message)
