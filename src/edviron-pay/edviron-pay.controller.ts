@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
-import { Gateway } from 'src/database/schemas/collect_request.schema';
+import { Gateway, PaymentIds } from 'src/database/schemas/collect_request.schema';
 import { Installments } from 'src/database/schemas/installments.schema';
 import { EdvironPayService } from './edviron-pay.service';
 import { PlatformCharge } from 'src/database/schemas/platform.charges.schema';
@@ -858,4 +858,22 @@ export class EdvironPayController {
       throw new BadRequestException(e.message);
     }
   }
+
+  @Get('get-order-detail')
+    async orderDetail(@Query('collect_id') collect_id: string): Promise<{
+      paymentIds : PaymentIds
+    }> {
+      try {
+        const collect_request =
+          await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!collect_request) {
+          throw new BadRequestException('Order not found');
+        }
+        return {
+          paymentIds: collect_request.paymentIds
+        };
+      } catch (error) {
+        throw new BadRequestException(error);
+      }
+    }
 }

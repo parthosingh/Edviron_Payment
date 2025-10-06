@@ -509,6 +509,20 @@ let EdvironPayController = class EdvironPayController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async orderDetail(collect_id) {
+        try {
+            const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collect_request) {
+                throw new common_1.BadRequestException('Order not found');
+            }
+            return {
+                paymentIds: collect_request.paymentIds
+            };
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error);
+        }
+    }
 };
 exports.EdvironPayController = EdvironPayController;
 __decorate([
@@ -550,6 +564,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EdvironPayController.prototype, "getVendorsForSchool", null);
+__decorate([
+    (0, common_1.Get)('get-order-detail'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPayController.prototype, "orderDetail", null);
 exports.EdvironPayController = EdvironPayController = __decorate([
     (0, common_1.Controller)('edviron-pay'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

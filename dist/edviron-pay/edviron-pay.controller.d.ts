@@ -24,6 +24,7 @@
 /// <reference types="mongoose" />
 /// <reference types="mongoose/types/inferschematype" />
 import { DatabaseService } from 'src/database/database.service';
+import { PaymentIds } from 'src/database/schemas/collect_request.schema';
 import { Installments } from 'src/database/schemas/installments.schema';
 import { EdvironPayService } from './edviron-pay.service';
 export declare class EdvironPayController {
@@ -194,4 +195,7 @@ export declare class EdvironPayController {
     } | undefined>;
     getInstallCallbackCashfree(collect_id: string): Promise<void>;
     getVendorsForSchool(school_id: string): Promise<any>;
+    orderDetail(collect_id: string): Promise<{
+        paymentIds: PaymentIds;
+    }>;
 }
