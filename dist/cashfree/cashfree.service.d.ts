@@ -76,7 +76,6 @@ export declare class CashfreeService {
     acceptDispute(disputeId: string, client_id: string): Promise<any>;
     createMerchant(merchant_id: string, merchant_email: string, merchant_name: string, poc_phone: string, merchant_site_url: string, business_details: {
         business_legal_name: string;
-        business_type: string;
         business_model: string;
         business_category?: string | null;
         business_subcategory?: string | null;
@@ -114,7 +113,6 @@ export declare class CashfreeService {
         merchant_site_url: string;
         business_details: {
             business_legal_name: string;
-            business_type: string;
             business_model: string;
             business_category?: string | null;
             business_subcategory?: string | null;

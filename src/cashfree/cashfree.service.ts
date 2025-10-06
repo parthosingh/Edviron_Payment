@@ -797,7 +797,7 @@ export class CashfreeService {
     merchant_site_url: string, //edviron
     business_details: {
       business_legal_name: string; //req
-      business_type: string; //req
+      // business_type: string; //req
       business_model: string; //req
       business_category?: string | null;
       business_subcategory?: string | null;
@@ -1117,7 +1117,7 @@ export class CashfreeService {
     merchant_site_url: string; //edviron
     business_details: {
       business_legal_name: string; //req
-      business_type: string; //req
+      // business_type: string; //req
       business_model: string; //req
       business_category?: string | null;
       business_subcategory?: string | null;
@@ -1183,7 +1183,7 @@ export class CashfreeService {
       merchant_site_url: 'https://www.edviron.com/',
       business_details: {
         business_legal_name: response.businessProofDetails?.business_name,
-        business_type: response.business_type, // trust society
+        // business_type: response.business_type, // trust society
         business_model: 'B2C', //Same for everyone
         business_category: response.businessCategory || null, // Education
         business_subcategory: response.businessSubCategory || null,
