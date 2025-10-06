@@ -62,7 +62,7 @@ export class EdvironSeamlessController {
                 ) {
                     throw new BadRequestException('Required Parameter Missing')
                 }
-                const url = `${process.env.URL}/seamless-pay/?school_id=${school_id}&access_key=${access_key}&mode=NB&code=${net_banking.bank_code}`
+                const url = `${process.env.URL}/seamless-pay/?mode=NB&school_id=${school_id}&access_key=${access_key}&mode=NB&code=${net_banking.bank_code}`
                 return res.send({ url })
             } else if (mode === "CC" || mode === "DC") {
                 const {
@@ -89,6 +89,8 @@ export class EdvironSeamlessController {
                 const url = `${process.env.URL}/seamless-pay?mode=${mode}&bank_code=${wallet.bank_code}`
 
                 return res.send({ url })
+            }else if(mode==="PAY_LATER"){
+                
             }
         } catch (e) {
             throw new BadRequestException(e.message)

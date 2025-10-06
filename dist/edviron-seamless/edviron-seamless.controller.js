@@ -25,7 +25,7 @@ let EdvironSeamlessController = class EdvironSeamlessController {
     }
     async initiatePayment(body, res) {
         try {
-            const { school_id, trustee_id, token, mode, collect_id, net_banking, card } = body;
+            const { school_id, trustee_id, token, mode, collect_id, net_banking, card, wallet } = body;
             const request = await this.databaseService.CollectRequestModel.findById(collect_id);
             if (!request) {
                 throw new common_1.BadRequestException('Invalid Collect Id');
@@ -33,21 +33,29 @@ let EdvironSeamlessController = class EdvironSeamlessController {
             if (request?.school_id !== school_id || request.trustee_id !== trustee_id) {
                 throw new common_1.BadRequestException("Unauthorized Access");
             }
+            const access_key = request.paymentIds.easebuzz_id;
             if (mode === 'NB') {
                 if (!net_banking ||
                     !net_banking.bank_code) {
                     throw new common_1.BadRequestException('Required Parameter Missing');
                 }
-                const url = `${process.env.URL}/seamless-pay/?school_id=${school_id}&token=${token}&mode=NB&code=${net_banking.bank_code}`;
+                const url = `${process.env.URL}/seamless-pay/?mode=NB&school_id=${school_id}&access_key=${access_key}&mode=NB&code=${net_banking.bank_code}`;
                 return res.send({ url });
             }
             else if (mode === "CC" || mode === "DC") {
                 const { enc_card_number, enc_card_holder_name, enc_card_cvv, enc_card_expiry_date, } = card;
                 const cardInfo = await this.edvironSeamlessService.processcards(enc_card_number, enc_card_holder_name, enc_card_cvv, enc_card_expiry_date, school_id, collect_id);
-                const url = `${process.env.URL}/seamless-pay?mode=${mode}&enc_card_number=${cardInfo.card_number}&enc_card_holder_name=${cardInfo.card_holder}&enc_card_cvv=${cardInfo.card_cvv}&enc_card_exp=${cardInfo.card_exp}&sign=${token}`;
+                const url = `${process.env.URL}/seamless-pay?mode=${mode}&enc_card_number=${cardInfo.card_number}&enc_card_holder_name=${cardInfo.card_holder}&enc_card_cvv=${cardInfo.card_cvv}&enc_card_exp=${cardInfo.card_exp}&access_key=${access_key}`;
                 return res.send({ url });
             }
             else if (mode === "WALLET") {
+                if (!wallet || !wallet.bank_code) {
+                    throw new common_1.BadRequestException("Wallet bank code Required");
+                }
+                const url = `${process.env.URL}/seamless-pay?mode=${mode}&bank_code=${wallet.bank_code}`;
+                return res.send({ url });
+            }
+            else if (mode === "PAY_LATER") {
             }
         }
         catch (e) {

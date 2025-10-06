@@ -22,6 +22,9 @@ export declare class EdvironSeamlessController {
             enc_card_cvv: string;
             enc_card_expiry_date: string;
         };
+        wallet: {
+            bank_code: string;
+        };
     }, res: any): Promise<any>;
     testNB(req: any, res: any): Promise<any>;
 }
