@@ -191,8 +191,13 @@ export declare class EdvironPayController {
         installments: (import("mongoose").Document<unknown, {}, import("src/database/schemas/installments.schema").InstallmentsDocument> & Installments & Document & {
             _id: import("mongoose").Types.ObjectId;
         })[];
-        studentDetail: import("mongoose").Document<unknown, {}, import("../database/schemas/student_detail.schema").StudentDetails> & import("../database/schemas/student_detail.schema").StudentDetail & Document & {
-            _id: import("mongoose").Types.ObjectId;
+        studentDetail: {
+            student_id: string;
+            student_name: string;
+            trustee_id: string;
+            school_id: string;
+            student_email: string;
+            student_number: string;
         };
     } | undefined>;
     getInstallCallbackCashfree(collect_id: string): Promise<void>;

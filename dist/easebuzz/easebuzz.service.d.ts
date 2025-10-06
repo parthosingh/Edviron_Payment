@@ -68,5 +68,6 @@ export declare class EasebuzzService {
         collect_request_url: string;
     }>;
     createOrderSeamlessNonSplit(request: CollectRequest): Promise<any>;
+    netBankingSeamless(collect_id: string, selectedBank: string): Promise<string>;
     createOrderSeamlessSplit(request: CollectRequest): Promise<any>;
 }

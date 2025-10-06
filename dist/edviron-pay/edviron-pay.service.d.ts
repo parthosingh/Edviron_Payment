@@ -34,7 +34,6 @@ export declare class EdvironPayService {
     private readonly easebuzzService;
     private readonly edvironPgService;
     constructor(databaseService: DatabaseService, cashfreeService: CashfreeService, easebuzzService: EasebuzzService, edvironPgService: EdvironPgService);
-    vpaOrder(request: CollectRequest): Promise<any>;
     createOrder(request: CollectRequest, school_name: string, gatewat: {
         cashfree: boolean;
         easebuzz: boolean;
@@ -55,8 +54,13 @@ export declare class EdvironPayService {
     }, school_id: string, trustee_id: string): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/student_detail.schema").StudentDetails> & import("../database/schemas/student_detail.schema").StudentDetail & Document & {
         _id: import("mongoose").Types.ObjectId;
     }) | null>;
-    studentFind(student_id: string, school_id: string, trustee_id: string): Promise<import("mongoose").Document<unknown, {}, import("../database/schemas/student_detail.schema").StudentDetails> & import("../database/schemas/student_detail.schema").StudentDetail & Document & {
-        _id: import("mongoose").Types.ObjectId;
+    studentFind(student_id: string, school_id: string, trustee_id: string): Promise<{
+        student_id: string;
+        student_name: string;
+        trustee_id: string;
+        school_id: string;
+        student_email: string;
+        student_number: string;
     }>;
     nonEdvironInstallments(collect_id: string): Promise<"installments update successfull" | "no installment found for this collect id">;
 }

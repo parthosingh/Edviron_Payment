@@ -210,12 +210,4 @@ export declare class CashfreeService {
             name?: string;
         }
     ]): Promise<any>;
-    createPayoutCashfree(request: CollectRequest, splitPayments?: boolean, cashfreeVedors?: [
-        {
-            vendor_id: string;
-            percentage?: number;
-            amount?: number;
-            name?: string;
-        }
-    ]): Promise<any>;
 }

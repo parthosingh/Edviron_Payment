@@ -17,14 +17,6 @@ export class EdvironPayService {
     private readonly edvironPgService: EdvironPgService,
   ) {}
 
-  async vpaOrder(request: CollectRequest) {
-    try {
-      return this.cashfreeService.createPayoutCashfree(request);
-    } catch (error) {
-      console.log(error, 'lund');
-    }
-  }
-
   async createOrder(
     request: CollectRequest,
     school_name: string,
@@ -223,7 +215,14 @@ export class EdvironPayService {
       if (!studentDetail) {
         throw new BadRequestException('student not found');
       }
-      return studentDetail;
+      return {
+        student_id : studentDetail.student_id,
+        student_name : studentDetail.student_name,
+        trustee_id : studentDetail.trustee_id,
+        school_id : studentDetail.school_id,
+        student_email : studentDetail.student_email,
+        student_number : studentDetail.student_number
+      };
     } catch (error) {
       throw new BadRequestException(error.message);
     }

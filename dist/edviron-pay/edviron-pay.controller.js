@@ -20,6 +20,7 @@ const collect_request_schema_1 = require("../database/schemas/collect_request.sc
 const edviron_pay_service_1 = require("./edviron-pay.service");
 const platform_charges_schema_1 = require("../database/schemas/platform.charges.schema");
 const axios_1 = require("axios");
+const _jwt = require("jsonwebtoken");
 let EdvironPayController = class EdvironPayController {
     constructor(databaseService, edvironPay) {
         this.databaseService = databaseService;
@@ -110,6 +111,11 @@ let EdvironPayController = class EdvironPayController {
             if (!token) {
                 throw new Error('Token is required');
             }
+            const decrypt = _jwt.verify(token, process.env.KEY);
+            console.log(decrypt, "decrypt");
+            if (decrypt.school_id.toString() !== school_id.toString()) {
+                throw new common_1.BadRequestException('Request fordge');
+            }
             if (custom_order_id) {
                 const count = await this.databaseService.CollectRequestModel.countDocuments({
                     school_id,
@@ -179,7 +185,6 @@ let EdvironPayController = class EdvironPayController {
                     student_email,
                     student_number,
                 }).save();
-                console.log(mode, 'mode'), console.log(cheque_detail, 'cheque_detail');
                 await this.databaseService.InstallmentsModel.updateMany({ _id: { $in: InstallmentsIds } }, { $set: { collect_id: request._id, status: 'pending' } });
                 if (mode === 'EDVIRON_CASH') {
                     let collectIdObject = request._id;
@@ -225,11 +230,10 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'paid',
-                            payment_time: new Date().toISOString(),
+                            payment_time: cash_detail?.date ? new Date(cash_detail?.date).toISOString() : new Date().toISOString(),
                         },
                     });
                     const callbackUrl = new URL(request.callbackUrl);
-                    console.log(callbackUrl, 'callbackUrl');
                     callbackUrl.searchParams.set('status', 'SUCCESS');
                     return res.json({ redirectUrl: callbackUrl.toString() });
                 }
@@ -260,7 +264,7 @@ let EdvironPayController = class EdvironPayController {
                             transaction_amount: amount,
                             payment_method: 'upi',
                             details: JSON.stringify(detail),
-                            bank_reference: 'N/A',
+                            bank_reference: static_qr?.bankReferenceNo || 'N/A',
                             reason: `payment successfull with static upi`,
                             payment_message: `payment successfull with static upi`,
                         },
@@ -275,11 +279,10 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'paid',
-                            payment_time: new Date().toISOString(),
+                            payment_time: date ? new Date(date).toISOString() : new Date().toISOString(),
                         },
                     });
                     const callbackUrl = new URL(request.callbackUrl);
-                    console.log(callbackUrl, 'callbackUrl');
                     callbackUrl.searchParams.set('status', 'SUCCESS');
                     return res.json({ redirectUrl: callbackUrl.toString() });
                 }
@@ -330,7 +333,7 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'paid',
-                            payment_time: new Date().toISOString(),
+                            payment_time: dd_detail?.date ? new Date(dd_detail?.date).toISOString() : new Date().toISOString(),
                         },
                     });
                     const callbackUrl = new URL(request.callbackUrl);
@@ -388,14 +391,14 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'paid',
-                            payment_time: new Date().toISOString(),
+                            payment_time: date ? new Date(date).toISOString() : new Date().toISOString(),
                         },
                     });
                     const callbackUrl = new URL(request.callbackUrl);
                     callbackUrl.searchParams.set('status', 'SUCCESS');
                     return res.json({ redirectUrl: callbackUrl.toString() });
                 }
-                if (mode === 'Cheque') {
+                if (mode === 'CHEQUE') {
                     let collectIdObject = request._id;
                     const detail = {
                         cheque: {
@@ -440,15 +443,12 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'paid',
-                            payment_time: new Date().toISOString(),
+                            payment_time: cheque_detail?.dateOnCheque ? new Date(cheque_detail?.dateOnCheque).toISOString() : new Date().toISOString(),
                         },
                     });
                     const callbackUrl = new URL(request.callbackUrl);
                     callbackUrl.searchParams.set('status', 'SUCCESS');
                     return res.json({ redirectUrl: callbackUrl.toString() });
-                }
-                if (mode === 'CASHFREE_VPA') {
-                    return this.edvironPay.vpaOrder(request);
                 }
                 const response = await this.edvironPay.createOrder(request, school_name, gateway, platform_charges_schema_1.PlatformCharge);
                 return res.send(response);
@@ -457,7 +457,7 @@ let EdvironPayController = class EdvironPayController {
         catch (e) {
             console.log(e);
             if (e?.response) {
-                throw new common_1.BadRequestException(e?.response?.message || 'cashfree error');
+                throw new common_1.BadRequestException(e?.response?.message || 'network error');
             }
             throw new Error('Error occurred while processing payment: ' + e.message);
         }

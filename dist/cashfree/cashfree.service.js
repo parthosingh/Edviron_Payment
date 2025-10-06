@@ -234,9 +234,7 @@ let CashfreeService = class CashfreeService {
                 },
                 data,
             };
-            console.log(config);
             const { data: response } = await axios_1.default.request(config);
-            console.log({ response });
             const orderIds = response.data
                 .filter((order) => order.order_id !== null)
                 .map((order) => order.order_id);
@@ -1356,7 +1354,6 @@ let CashfreeService = class CashfreeService {
                     }).save();
                 });
             }
-            console.log(request.cashfree_credentials, 'cf cred');
             let config = {
                 method: 'post',
                 maxBodyLength: Infinity,
@@ -1379,65 +1376,6 @@ let CashfreeService = class CashfreeService {
             if (e?.response?.data) {
                 throw new common_1.BadRequestException(e?.response?.data?.message || "cashfree error");
             }
-            throw new common_1.BadRequestException(e.message);
-        }
-    }
-    async createPayoutCashfree(request, splitPayments, cashfreeVedors) {
-        try {
-            const authConfig = {
-                method: "post",
-                url: `${process.env.CASHFREE_PAYOUT_ENDPOINT}/authorize`,
-                headers: {
-                    "X-Client-Id": process.env.CF_PAYOUT_CLIENT_ID,
-                    "X-Client-Secret": process.env.CF_PAYOUT_CLIENT_SECRET,
-                },
-            };
-            console.log(authConfig, "authConfig");
-            const { data: authRes } = await axios_1.default.request(authConfig);
-            if (!authRes?.data?.token) {
-                throw new common_1.BadRequestException("Unable to fetch Cashfree token");
-            }
-            const token = authRes.data.token;
-            const addBeneConfig = {
-                method: "post",
-                url: `${process.env.CASHFREE_PAYOUT_ENDPOINT}/addBeneficiary`,
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                data: {
-                    beneId: request._id.toString(),
-                    name: "Test User",
-                    email: "test@example.com",
-                    phone: "9876543210",
-                    vpa: "7053468609@ptsbi",
-                    address1: "Delhi",
-                },
-            };
-            const { data: beneRes } = await axios_1.default.request(addBeneConfig);
-            console.log("Beneficiary Response:", beneRes);
-            const transferId = "TXN_" + Date.now();
-            const payoutConfig = {
-                method: "post",
-                url: `${process.env.CASHFREE_PAYOUT_ENDPOINT}/request`,
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                data: {
-                    beneId: "request.",
-                    amount: request.amount.toFixed(2),
-                    transferMode: "upi",
-                    transferId,
-                    remarks: "Vendor settlement",
-                },
-            };
-            const { data: payoutRes } = await axios_1.default.request(payoutConfig);
-            console.log("Payout Response:", payoutRes);
-            return payoutRes;
-        }
-        catch (e) {
-            console.log(e, "cashfree-payout-error");
             throw new common_1.BadRequestException(e.message);
         }
     }
