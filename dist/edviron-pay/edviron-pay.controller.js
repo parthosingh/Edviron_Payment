@@ -139,7 +139,6 @@ let EdvironPayController = class EdvironPayController {
                 if (installments.length !== InstallmentsIds.length) {
                     throw new Error('Some installments are invalid or already paid');
                 }
-                console.log(cashfree, 'api cashfree');
                 const cashfreeCred = {
                     cf_x_client_id: cashfree.client_id,
                     cf_x_client_secret: cashfree.client_secret,
