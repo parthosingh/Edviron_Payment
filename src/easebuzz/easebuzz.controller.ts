@@ -316,7 +316,7 @@ export class EasebuzzController {
         throw new BadRequestException('Request Forged');
 
       const hashString = `${easebuzz_key}|${start_date}|${end_date}|${easebuzz_salt}`;
-      console.log(hashString);
+      // console.log(hashString);
 
       const hash = await calculateSHA512Hash(hashString);
       const payload = {
@@ -340,11 +340,11 @@ export class EasebuzzController {
         },
         data: payload,
       };
-      console.log(config);
+      // console.log(config);
 
 
       const { data: resData } = await axios.request(config);
-      console.log(utr, 'utrnumb');
+      // console.log(utr, 'utrnumb');
       const record = resData.data.find((item: any) => item.bank_transaction_id === utr);
 
       const orderIds = record.peb_transactions.map((tx: any) => {
@@ -366,14 +366,7 @@ export class EasebuzzController {
         }
       });
 
-      const customOrders = await this.databaseService.CollectRequestModel.find({
-        $or: [
-          { _id: { $in: objectIds } },
-          { custom_order_id: { $in: customIds } }
-        ]
-      });
-
-
+  
       const enrichedOrders = await Promise.all(
         record.peb_transactions.map(async (order: any) => {
           let additionalData: any = {};
@@ -402,8 +395,12 @@ export class EasebuzzController {
             additionalData = JSON.parse(collectReq?.additional_data);
           }
           const collectStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: collectReq._id });
+          // console.log(order);
+          
           return {
             ...order,
+            payment_id:order.peb_transaction_id,
+            payment_details:collectStatus?.details,
             custom_order_id: collectReq.custom_order_id || null,
             order_id: collectReq?._id || null,
             event_status: order?.status || null,

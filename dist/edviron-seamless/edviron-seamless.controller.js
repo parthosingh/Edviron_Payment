@@ -74,6 +74,7 @@ let EdvironSeamlessController = class EdvironSeamlessController {
             }
         }
         catch (e) {
+            console.log(e);
             throw new common_1.BadRequestException(e.message);
         }
     }
