@@ -211,5 +211,6 @@ export declare class EdvironPayController {
     getVendorsForSchool(school_id: string): Promise<any>;
     orderDetail(collect_id: string): Promise<{
         paymentIds: PaymentIds;
+        gateway: string;
     }>;
 }

@@ -191,7 +191,7 @@ export class EdvironPayController {
         key: string;
         salt: string;
         isPartner: boolean;
-        easebuzz_merchant_email:string;
+        easebuzz_merchant_email: string;
         bank_label?: string;
         easebuzzVendors?: [
           {
@@ -896,6 +896,7 @@ export class EdvironPayController {
   @Get('get-order-detail')
   async orderDetail(@Query('collect_id') collect_id: string): Promise<{
     paymentIds: PaymentIds;
+    gateway: string;
   }> {
     try {
       const collect_request =
@@ -903,8 +904,24 @@ export class EdvironPayController {
       if (!collect_request) {
         throw new BadRequestException('Order not found');
       }
+      let activeGateway = 'none';
+      let paymentIds = collect_request.paymentIds;
+      if (paymentIds?.cashfree_id) {
+        activeGateway = 'CASHFREE';
+      } else if (paymentIds?.easebuzz_id) {
+        activeGateway = 'EASEBUZZ';
+      } else if (paymentIds?.easebuzz_upi_id) {
+        activeGateway = 'EASEBUZZ_UPI';
+      } else if (paymentIds?.easebuzz_cc_id) {
+        activeGateway = 'EASEBUZZ_CC';
+      } else if (paymentIds?.easebuzz_dc_id) {
+        activeGateway = 'EASEBUZZ_DC';
+      } else if (paymentIds?.ccavenue_id) {
+        activeGateway = 'CCAVENUE';
+      }
       return {
         paymentIds: collect_request.paymentIds,
+        gateway : activeGateway,
       };
     } catch (error) {
       throw new BadRequestException(error);
