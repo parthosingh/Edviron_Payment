@@ -35,9 +35,9 @@ export class EdvironSeamlessController {
             pay_later: {
                 bank_code: string
             },
-            upi:{
-                mode:string,
-                vpa:string
+            upi: {
+                mode: string,
+                vpa: string
             }
         },
         @Res() res: any
@@ -55,6 +55,7 @@ export class EdvironSeamlessController {
                 pay_later,
                 upi
             } = body
+            console.log(upi);
 
             const request = await this.databaseService.CollectRequestModel.findById(collect_id)
             if (!request) {
@@ -104,15 +105,17 @@ export class EdvironSeamlessController {
                 const url = `${process.env.URL}/seamless-pay?mode=PL&bank_code=${pay_later.bank_code}&access_key=${access_key}`
                 return res.send({ url })
             } else if (mode === "UPI") {
-
-                if(upi.mode==='QR'){
+                if (upi.mode === 'QR') {
                     const upiRes = await this.easebuzzService.getQrBase64(collect_id)
+                    console.log(upiRes);
+
                     return res.send({
-                        mode: "UPI",
+                        mode: "VPA",
                         upiRes
                     })
-                }else if(upi.mode==="VPA"){
-                     const url = `${process.env.URL}/seamless-pay?mode=${mode}&vpa=${upi.vpa}&access_key=${access_key}`
+                } else if (upi.mode === "VPA") {
+                    const url = `${process.env.URL}/seamless-pay?mode=${mode}&vpa=${upi.vpa}&access_key=${access_key}`
+                    return res.send({ url })
                 }
             }
             else {

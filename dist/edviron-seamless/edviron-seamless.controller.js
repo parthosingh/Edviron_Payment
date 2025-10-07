@@ -26,6 +26,7 @@ let EdvironSeamlessController = class EdvironSeamlessController {
     async initiatePayment(body, res) {
         try {
             const { school_id, trustee_id, token, mode, collect_id, net_banking, card, wallet, pay_later, upi } = body;
+            console.log(upi);
             const request = await this.databaseService.CollectRequestModel.findById(collect_id);
             if (!request) {
                 throw new common_1.BadRequestException('Invalid Collect Id');
@@ -65,13 +66,15 @@ let EdvironSeamlessController = class EdvironSeamlessController {
             else if (mode === "UPI") {
                 if (upi.mode === 'QR') {
                     const upiRes = await this.easebuzzService.getQrBase64(collect_id);
+                    console.log(upiRes);
                     return res.send({
-                        mode: "UPI",
+                        mode: "VPA",
                         upiRes
                     });
                 }
                 else if (upi.mode === "VPA") {
                     const url = `${process.env.URL}/seamless-pay?mode=${mode}&vpa=${upi.vpa}&access_key=${access_key}`;
+                    return res.send({ url });
                 }
             }
             else {
