@@ -25,7 +25,7 @@ let EdvironSeamlessController = class EdvironSeamlessController {
     }
     async initiatePayment(body, res) {
         try {
-            const { school_id, trustee_id, token, mode, collect_id, net_banking, card, wallet, pay_later } = body;
+            const { school_id, trustee_id, token, mode, collect_id, net_banking, card, wallet, pay_later, upi } = body;
             const request = await this.databaseService.CollectRequestModel.findById(collect_id);
             if (!request) {
                 throw new common_1.BadRequestException('Invalid Collect Id');
@@ -52,22 +52,27 @@ let EdvironSeamlessController = class EdvironSeamlessController {
                 if (!wallet || !wallet.bank_code) {
                     throw new common_1.BadRequestException("Wallet bank code Required");
                 }
-                const url = `${process.env.URL}/seamless-pay?mode=MW&bank_code=${wallet.bank_code}`;
+                const url = `${process.env.URL}/seamless-pay?mode=MW&bank_code=${wallet.bank_code}&access_key=${access_key}`;
                 return res.send({ url });
             }
             else if (mode === "PAY_LATER") {
                 if (!pay_later || !pay_later.bank_code) {
                     throw new common_1.BadRequestException("Pay Later bank code Required");
                 }
-                const url = `${process.env.URL}/seamless-pay?mode=PL&bank_code=${pay_later.bank_code}`;
+                const url = `${process.env.URL}/seamless-pay?mode=PL&bank_code=${pay_later.bank_code}&access_key=${access_key}`;
                 return res.send({ url });
             }
             else if (mode === "UPI") {
-                const res = await this.easebuzzService.getQrBase64(collect_id);
-                return {
-                    mode: "UPI",
-                    res
-                };
+                if (upi.mode === 'QR') {
+                    const upiRes = await this.easebuzzService.getQrBase64(collect_id);
+                    return res.send({
+                        mode: "UPI",
+                        upiRes
+                    });
+                }
+                else if (upi.mode === "VPA") {
+                    const url = `${process.env.URL}/seamless-pay?mode=${mode}&vpa=${upi.vpa}&access_key=${access_key}`;
+                }
             }
             else {
                 throw new common_1.BadRequestException("Invalid Mode ");

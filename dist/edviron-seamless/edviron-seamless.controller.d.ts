@@ -28,6 +28,10 @@ export declare class EdvironSeamlessController {
         pay_later: {
             bank_code: string;
         };
+        upi: {
+            mode: string;
+            vpa: string;
+        };
     }, res: any): Promise<any>;
     testNB(req: any, res: any): Promise<any>;
 }
