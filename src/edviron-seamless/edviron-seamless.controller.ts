@@ -29,8 +29,11 @@ export class EdvironSeamlessController {
                 enc_card_cvv: string,
                 enc_card_expiry_date: string
             },
-            wallet:{
-                bank_code:string,
+            wallet: {
+                bank_code: string,
+            },
+            pay_later: {
+                bank_code: string
             }
         },
         @Res() res: any
@@ -44,7 +47,8 @@ export class EdvironSeamlessController {
                 collect_id,
                 net_banking,
                 card,
-                wallet
+                wallet,
+                pay_later
             } = body
 
             const request = await this.databaseService.CollectRequestModel.findById(collect_id)
@@ -54,7 +58,7 @@ export class EdvironSeamlessController {
             if (request?.school_id !== school_id || request.trustee_id !== trustee_id) {
                 throw new BadRequestException("Unauthorized Access")
             }
-            const access_key=request.paymentIds.easebuzz_id
+            const access_key = request.paymentIds.easebuzz_id
             if (mode === 'NB') {
                 if (
                     !net_banking ||
@@ -82,15 +86,28 @@ export class EdvironSeamlessController {
                 const url = `${process.env.URL}/seamless-pay?mode=${mode}&enc_card_number=${cardInfo.card_number}&enc_card_holder_name=${cardInfo.card_holder}&enc_card_cvv=${cardInfo.card_cvv}&enc_card_exp=${cardInfo.card_exp}&access_key=${access_key}`
 
                 return res.send({ url })
-            }else if(mode ==="WALLET"){
-                if(!wallet || !wallet.bank_code){
+            } else if (mode === "WALLET") {
+                if (!wallet || !wallet.bank_code) {
                     throw new BadRequestException("Wallet bank code Required")
                 }
-                const url = `${process.env.URL}/seamless-pay?mode=${mode}&bank_code=${wallet.bank_code}`
+                const url = `${process.env.URL}/seamless-pay?mode=MW&bank_code=${wallet.bank_code}`
 
                 return res.send({ url })
-            }else if(mode==="PAY_LATER"){
-                
+            } else if (mode === "PAY_LATER") {
+                if (!pay_later || !pay_later.bank_code) {
+                    throw new BadRequestException("Pay Later bank code Required")
+                }
+                const url = `${process.env.URL}/seamless-pay?mode=PL&bank_code=${pay_later.bank_code}`
+                return res.send({ url })
+            }else if(mode ==="UPI"){
+                const res=await this.easebuzzService.getQrBase64(collect_id)
+                return {
+                    mode:"UPI",
+                    res
+                }
+            } 
+            else {
+                throw new BadRequestException("Invalid Mode ")
             }
         } catch (e) {
             throw new BadRequestException(e.message)

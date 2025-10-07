@@ -25,6 +25,9 @@ export declare class EdvironSeamlessController {
         wallet: {
             bank_code: string;
         };
+        pay_later: {
+            bank_code: string;
+        };
     }, res: any): Promise<any>;
     testNB(req: any, res: any): Promise<any>;
 }
