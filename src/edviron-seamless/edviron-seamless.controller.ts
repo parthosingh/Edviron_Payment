@@ -91,7 +91,6 @@ export class EdvironSeamlessController {
                     throw new BadRequestException("Wallet bank code Required")
                 }
                 const url = `${process.env.URL}/seamless-pay?mode=MW&bank_code=${wallet.bank_code}`
-
                 return res.send({ url })
             } else if (mode === "PAY_LATER") {
                 if (!pay_later || !pay_later.bank_code) {
@@ -110,6 +109,7 @@ export class EdvironSeamlessController {
                 throw new BadRequestException("Invalid Mode ")
             }
         } catch (e) {
+            console.log(e);
             throw new BadRequestException(e.message)
         }
     }

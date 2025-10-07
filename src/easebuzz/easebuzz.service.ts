@@ -1405,7 +1405,7 @@ export class EasebuzzService {
       let email = 'noreply@edviron.com';
       let hashData =
         process.env.EASEBUZZ_KEY +
-        '|' +
+        '|' + 
         request._id +
         '|' +
         parseFloat(request.amount.toFixed(2)) +

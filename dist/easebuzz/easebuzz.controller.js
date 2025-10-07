@@ -217,7 +217,6 @@ let EasebuzzController = class EasebuzzController {
             if (data.submerchant_id !== submerchant_id)
                 throw new common_1.BadRequestException('Request Forged');
             const hashString = `${easebuzz_key}|${start_date}|${end_date}|${easebuzz_salt}`;
-            console.log(hashString);
             const hash = await (0, sign_1.calculateSHA512Hash)(hashString);
             const payload = {
                 merchant_key: easebuzz_key,
@@ -236,9 +235,7 @@ let EasebuzzController = class EasebuzzController {
                 },
                 data: payload,
             };
-            console.log(config);
             const { data: resData } = await axios_1.default.request(config);
-            console.log(utr, 'utrnumb');
             const record = resData.data.find((item) => item.bank_transaction_id === utr);
             const orderIds = record.peb_transactions.map((tx) => {
                 if (tx?.txnid?.startsWith("upi_")) {
@@ -255,12 +252,6 @@ let EasebuzzController = class EasebuzzController {
                 else {
                     customIds.push(id);
                 }
-            });
-            const customOrders = await this.databaseService.CollectRequestModel.find({
-                $or: [
-                    { _id: { $in: objectIds } },
-                    { custom_order_id: { $in: customIds } }
-                ]
             });
             const enrichedOrders = await Promise.all(record.peb_transactions.map(async (order) => {
                 let additionalData = {};
@@ -287,6 +278,8 @@ let EasebuzzController = class EasebuzzController {
                 const collectStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: collectReq._id });
                 return {
                     ...order,
+                    payment_id: order.peb_transaction_id,
+                    payment_details: collectStatus?.details,
                     custom_order_id: collectReq.custom_order_id || null,
                     order_id: collectReq?._id || null,
                     event_status: order?.status || null,
