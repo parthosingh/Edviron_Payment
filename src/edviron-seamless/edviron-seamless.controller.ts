@@ -1,12 +1,14 @@
 import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
-
+import * as jwt from 'jsonwebtoken'
+import { EdvironSeamlessService } from './edviron-seamless.service';
 @Controller('edviron-seamless')
 export class EdvironSeamlessController {
     constructor(
         private readonly easebuzzService: EasebuzzService,
         private readonly databaseService: DatabaseService,
+        private readonly edvironSeamlessService: EdvironSeamlessService,
     ) { }
 
     @Post('/initiate-payment')
@@ -20,6 +22,18 @@ export class EdvironSeamlessController {
             amount: number,
             net_banking?: {
                 bank_code: string
+            },
+            card: {
+                enc_card_number: string,
+                enc_card_holder_name: string,
+                enc_card_cvv: string,
+                enc_card_expiry_date: string
+            },
+            wallet: {
+                bank_code: string,
+            },
+            pay_later: {
+                bank_code: string
             }
         },
         @Res() res: any
@@ -31,7 +45,10 @@ export class EdvironSeamlessController {
                 token,
                 mode,
                 collect_id,
-                net_banking
+                net_banking,
+                card,
+                wallet,
+                pay_later
             } = body
 
             const request = await this.databaseService.CollectRequestModel.findById(collect_id)
@@ -41,6 +58,7 @@ export class EdvironSeamlessController {
             if (request?.school_id !== school_id || request.trustee_id !== trustee_id) {
                 throw new BadRequestException("Unauthorized Access")
             }
+            const access_key = request.paymentIds.easebuzz_id
             if (mode === 'NB') {
                 if (
                     !net_banking ||
@@ -48,9 +66,48 @@ export class EdvironSeamlessController {
                 ) {
                     throw new BadRequestException('Required Parameter Missing')
                 }
+                const url = `${process.env.URL}/seamless-pay/?mode=NB&school_id=${school_id}&access_key=${access_key}&mode=NB&code=${net_banking.bank_code}`
+                return res.send({ url })
+            } else if (mode === "CC" || mode === "DC") {
+                const {
+                    enc_card_number,
+                    enc_card_holder_name,
+                    enc_card_cvv,
+                    enc_card_expiry_date,
+                } = card
+                const cardInfo = await this.edvironSeamlessService.processcards(
+                    enc_card_number,
+                    enc_card_holder_name,
+                    enc_card_cvv,
+                    enc_card_expiry_date,
+                    school_id,
+                    collect_id
+                )
+                const url = `${process.env.URL}/seamless-pay?mode=${mode}&enc_card_number=${cardInfo.card_number}&enc_card_holder_name=${cardInfo.card_holder}&enc_card_cvv=${cardInfo.card_cvv}&enc_card_exp=${cardInfo.card_exp}&access_key=${access_key}`
 
-                const response = await this.easebuzzService.netBankingSeamless(collect_id, net_banking.bank_code)
-                return res.send(response)
+                return res.send({ url })
+            } else if (mode === "WALLET") {
+                if (!wallet || !wallet.bank_code) {
+                    throw new BadRequestException("Wallet bank code Required")
+                }
+                const url = `${process.env.URL}/seamless-pay?mode=MW&bank_code=${wallet.bank_code}`
+
+                return res.send({ url })
+            } else if (mode === "PAY_LATER") {
+                if (!pay_later || !pay_later.bank_code) {
+                    throw new BadRequestException("Pay Later bank code Required")
+                }
+                const url = `${process.env.URL}/seamless-pay?mode=PL&bank_code=${pay_later.bank_code}`
+                return res.send({ url })
+            }else if(mode ==="UPI"){
+                const res=await this.easebuzzService.getQrBase64(collect_id)
+                return {
+                    mode:"UPI",
+                    res
+                }
+            } 
+            else {
+                throw new BadRequestException("Invalid Mode ")
             }
         } catch (e) {
             throw new BadRequestException(e.message)

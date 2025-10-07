@@ -4,11 +4,12 @@ import {
   CollectRequest,
   Gateway,
 } from 'src/database/schemas/collect_request.schema';
-import { calculateSHA512Hash } from 'src/utils/sign';
+import { calculateSHA512Hash, encryptCard, merchantKeyIv, merchantKeySHA256 } from 'src/utils/sign';
 import axios from 'axios';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import { platformChange } from 'src/collect/collect.controller';
 import e from 'express';
+const crypto = require('crypto');
 
 @Injectable()
 export class EasebuzzService {
@@ -1464,8 +1465,8 @@ export class EasebuzzService {
       throw new BadRequestException(e.message);
     }
   }
-  
-   async netBankingSeamless(collect_id: string, selectedBank: string) {
+
+  async netBankingSeamless(collect_id: string, selectedBank: string) {
     try {
       const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
       if (!collectReq) {
@@ -1475,7 +1476,7 @@ export class EasebuzzService {
       const easebuzzPaymentId = collectReq.paymentIds.easebuzz_id;
       if (!easebuzzPaymentId) {
         throw new BadRequestException('Invalid Payment');
-      } 
+      }
 
       // Generate HTML form with auto-submit
       const htmlForm = `
@@ -1518,6 +1519,64 @@ export class EasebuzzService {
       throw new BadRequestException(e.message);
     }
   }
+
+  async encCard(
+    merchant_id: string,
+    pg_key: string,
+    data: string
+  ) {
+    try {
+      const { key, iv } = await merchantKeyIv(merchant_id, pg_key)
+      const end_data = await encryptCard(data, key, iv)
+      return end_data
+    } catch (e) {
+      throw new BadRequestException(e.message)
+    }
+  }
+
+  async easebuzzEncryption(
+    card_number: string,
+    card_holder: string,
+    card_cvv: string,
+    card_exp: string,
+    collect_id: string
+  ) {
+    try {
+      const request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!request) {
+        throw new BadRequestException('Collect Request not found');
+      }
+
+      const { key, iv } = await merchantKeySHA256(request);
+      const enc_card_number = await encryptCard(card_number, key, iv);
+      const enc_card_holder = await encryptCard(card_holder, key, iv);
+      const enc_card_cvv = await encryptCard(card_cvv, key, iv);
+      const enc_card_exp = await encryptCard(card_exp, key, iv);
+
+      return {
+        card_number: enc_card_number,
+        card_holder: enc_card_holder,
+        card_cvv: enc_card_cvv,
+        card_exp: enc_card_exp,
+      }
+
+    } catch (e) {
+      throw new BadRequestException(e.message)
+    }
+  }
+
+  async processcards(
+    card_number: string,
+    card_holder_name: string,
+    card_cvv: string,
+    card_expiry_date: string
+  ) {
+    try {
+
+    } catch (e) { }
+  }
+
 
   async createOrderSeamlessSplit(
     request: CollectRequest,

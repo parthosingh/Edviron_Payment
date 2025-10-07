@@ -69,5 +69,13 @@ export declare class EasebuzzService {
     }>;
     createOrderSeamlessNonSplit(request: CollectRequest): Promise<any>;
     netBankingSeamless(collect_id: string, selectedBank: string): Promise<string>;
+    encCard(merchant_id: string, pg_key: string, data: string): Promise<any>;
+    easebuzzEncryption(card_number: string, card_holder: string, card_cvv: string, card_exp: string, collect_id: string): Promise<{
+        card_number: any;
+        card_holder: any;
+        card_cvv: any;
+        card_exp: any;
+    }>;
+    processcards(card_number: string, card_holder_name: string, card_cvv: string, card_expiry_date: string): Promise<void>;
     createOrderSeamlessSplit(request: CollectRequest): Promise<any>;
 }

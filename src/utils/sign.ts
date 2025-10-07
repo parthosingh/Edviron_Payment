@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import * as _jwt from 'jsonwebtoken';
 import { CollectRequest } from 'src/database/schemas/collect_request.schema';
 const crypto = require('crypto');
@@ -60,6 +61,36 @@ export const generateHMACBase64Type = (
   return hmac.digest('base64');
 };
 
+export const merchantKeyIv = (
+  merchant_id: string,
+  pg_key: string
+) => {
+  try {
+    let merchantKey = merchant_id;
+    let salt = pg_key;
+
+    const key = crypto
+      .createHash('sha256')
+      .update(merchantKey)
+      .digest()
+      .toString('hex')
+      .slice(0, 32);
+    const iv = crypto
+      .createHash('sha256')
+      .update(salt)
+      .digest()
+      .toString('hex')
+      .slice(0, 16);
+    return {
+      key,
+      iv,
+    };
+
+  } catch (e) {
+    throw new BadRequestException(e.message)
+  }
+}
+
 // export const encryptCard=async(data:string,key:string,iv:string)=>{
 //   console.log({data,key,iv});
 
@@ -87,6 +118,8 @@ export const decrypt = async (
   key: string,
   iv: string,
 ) => {
+  console.log({encryptedData,key,iv});
+  
   const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
   let decrypted = decipher.update(encryptedData, 'base64', 'utf-8');
   decrypted += decipher.final('utf-8');

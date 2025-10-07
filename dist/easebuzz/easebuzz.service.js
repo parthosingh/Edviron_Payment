@@ -16,6 +16,7 @@ const collect_request_schema_1 = require("../database/schemas/collect_request.sc
 const sign_1 = require("../utils/sign");
 const axios_1 = require("axios");
 const transactionStatus_1 = require("../types/transactionStatus");
+const crypto = require('crypto');
 let EasebuzzService = class EasebuzzService {
     constructor(databaseService) {
         this.databaseService = databaseService;
@@ -1157,6 +1158,43 @@ let EasebuzzService = class EasebuzzService {
             console.error(e);
             throw new common_1.BadRequestException(e.message);
         }
+    }
+    async encCard(merchant_id, pg_key, data) {
+        try {
+            const { key, iv } = await (0, sign_1.merchantKeyIv)(merchant_id, pg_key);
+            const end_data = await (0, sign_1.encryptCard)(data, key, iv);
+            return end_data;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async easebuzzEncryption(card_number, card_holder, card_cvv, card_exp, collect_id) {
+        try {
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request) {
+                throw new common_1.BadRequestException('Collect Request not found');
+            }
+            const { key, iv } = await (0, sign_1.merchantKeySHA256)(request);
+            const enc_card_number = await (0, sign_1.encryptCard)(card_number, key, iv);
+            const enc_card_holder = await (0, sign_1.encryptCard)(card_holder, key, iv);
+            const enc_card_cvv = await (0, sign_1.encryptCard)(card_cvv, key, iv);
+            const enc_card_exp = await (0, sign_1.encryptCard)(card_exp, key, iv);
+            return {
+                card_number: enc_card_number,
+                card_holder: enc_card_holder,
+                card_cvv: enc_card_cvv,
+                card_exp: enc_card_exp,
+            };
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async processcards(card_number, card_holder_name, card_cvv, card_expiry_date) {
+        try {
+        }
+        catch (e) { }
     }
     async createOrderSeamlessSplit(request) {
         try {
