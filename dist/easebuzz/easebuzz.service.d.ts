@@ -78,4 +78,6 @@ export declare class EasebuzzService {
     }>;
     processcards(card_number: string, card_holder_name: string, card_cvv: string, card_expiry_date: string): Promise<void>;
     createOrderSeamlessSplit(request: CollectRequest): Promise<any>;
+    createOrderV3(request: CollectRequest, platform_charges: platformChange[], school_name: string): Promise<any>;
+    createOrderV3NonSplit(request: CollectRequest, platform_charges: platformChange[], school_name: string, easebuzz_school_label?: string | null, isMasterGateway?: boolean): Promise<any>;
 }

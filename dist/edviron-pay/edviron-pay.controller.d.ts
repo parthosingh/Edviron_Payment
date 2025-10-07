@@ -89,6 +89,7 @@ export declare class EdvironPayController {
             key: string;
             salt: string;
             isPartner: boolean;
+            easebuzz_merchant_email: string;
             bank_label?: string;
             easebuzzVendors?: [
                 {
@@ -185,6 +186,12 @@ export declare class EdvironPayController {
             dateOnCheque: string;
             remarks?: string;
         };
+        parents_info: {
+            name: string;
+            phone: string;
+            email: string;
+            relationship: string;
+        };
         date?: string;
     }, req?: any, res?: any): Promise<any>;
     getStudentInstallments(student_id: string, school_id: string, trustee_id: string): Promise<{
@@ -204,5 +211,6 @@ export declare class EdvironPayController {
     getVendorsForSchool(school_id: string): Promise<any>;
     orderDetail(collect_id: string): Promise<{
         paymentIds: PaymentIds;
+        gateway: string;
     }>;
 }

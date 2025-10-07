@@ -62,10 +62,10 @@ export class EdvironPayService {
         let easebuzzSessionId;
         if (request.isSplitPayments) {
           easebuzzSessionId =
-            await this.easebuzzService.createOrderSeamlessSplit(request);
+            await this.easebuzzService.createOrderV3(request, platform_charges, school_name);
         } else {
           easebuzzSessionId =
-            await this.easebuzzService.createOrderSeamlessNonSplit(request);
+            await this.easebuzzService.createOrderV3NonSplit(request, platform_charges, school_name);
         }
         paymentInfo.easebuzz_id = easebuzzSessionId;
         await collectReq.save();
