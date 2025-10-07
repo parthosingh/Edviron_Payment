@@ -1465,8 +1465,8 @@ export class EasebuzzService {
       throw new BadRequestException(e.message);
     }
   }
-  
-   async netBankingSeamless(collect_id: string, selectedBank: string) {
+
+  async netBankingSeamless(collect_id: string, selectedBank: string) {
     try {
       const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
       if (!collectReq) {
@@ -1574,7 +1574,8 @@ export class EasebuzzService {
   ) {
     try {
 
-    } catch (e) {}}
+    } catch (e) { }
+  }
 
 
   async createOrderSeamlessSplit(
@@ -1708,6 +1709,6 @@ export class EasebuzzService {
       return easebuzzPaymentId;
     } catch (error) {
       throw new BadRequestException(error.message);
-
+    }
   }
 }

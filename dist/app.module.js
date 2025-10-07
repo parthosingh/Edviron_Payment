@@ -95,6 +95,7 @@ exports.AppModule = AppModule = __decorate([
             worldline_service_1.WorldlineService,
             razorpay_service_1.RazorpayService,
             razorpay_nonseamless_service_1.RazorpayNonseamlessService,
+            edviron_seamless_service_1.EdvironSeamlessService,
             edviron_pay_service_1.EdvironPayService,
         ],
     })
