@@ -1405,6 +1405,7 @@ let EasebuzzService = class EasebuzzService {
                 const { data: easebuzzRes } = await axios_1.default.request(Ezboptions);
                 console.log({ easebuzzRes });
                 const easebuzzPaymentId = easebuzzRes.data;
+                await this.getQr(request._id.toString(), request, ezb_split_payments);
                 return easebuzzPaymentId;
             }
         }
@@ -1491,6 +1492,7 @@ let EasebuzzService = class EasebuzzService {
             };
             const { data: easebuzzRes } = await axios_1.default.request(Ezboptions);
             const easebuzzPaymentId = easebuzzRes.data;
+            await this.getQrNonSplit(request._id.toString(), request);
             const schoolName = school_name.replace(/ /g, '_');
             return easebuzzPaymentId;
         }

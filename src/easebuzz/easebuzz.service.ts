@@ -1867,9 +1867,9 @@ export class EasebuzzService {
         console.log({ easebuzzRes });
 
         const easebuzzPaymentId = easebuzzRes.data;
+        await this.getQr(request._id.toString(), request, ezb_split_payments); // uncomment after fixing easebuzz QR code issue
         return easebuzzPaymentId
 
-        // await this.getQr(request._id.toString(), request, ezb_split_payments); // uncomment after fixing easebuzz QR code issue
       }
     } catch (e) {
       throw new BadRequestException(e.message);
@@ -1988,7 +1988,7 @@ export class EasebuzzService {
       const { data: easebuzzRes } = await axios.request(Ezboptions);
 
       const easebuzzPaymentId = easebuzzRes.data;
-      // await this.getQrNonSplit(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
+      await this.getQrNonSplit(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
       const schoolName = school_name.replace(/ /g, '_');
 
 return easebuzzPaymentId
