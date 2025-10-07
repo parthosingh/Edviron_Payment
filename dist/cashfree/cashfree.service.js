@@ -859,7 +859,6 @@ let CashfreeService = class CashfreeService {
             merchant_site_url: 'https://www.edviron.com/',
             business_details: {
                 business_legal_name: response.businessProofDetails?.business_name,
-                business_type: response.business_type,
                 business_model: 'B2C',
                 business_category: response.businessCategory || null,
                 business_subcategory: response.businessSubCategory || null,
@@ -1283,25 +1282,13 @@ let CashfreeService = class CashfreeService {
             throw new common_1.BadRequestException(e.message);
         }
     }
-    async generateMasterGatewaypayment(collectRequest, school_name, platform_charges, vendor) {
+    async createOrderCashfree(request, splitPayments, cashfreeVedors) {
         try {
-            const request = await this.databaseService.CollectRequestModel.findById(collectRequest._id);
-            if (!request) {
-                throw new common_1.BadRequestException('invalid id');
-            }
-            let paymentInfo = {
-                cashfree_id: null,
-                easebuzz_id: null,
-                easebuzz_cc_id: null,
-                easebuzz_dc_id: null,
-                ccavenue_id: null,
-            };
-            let schoolName = '';
-            if (school_name) {
-                schoolName = school_name.replace(/ /g, '-');
-            }
-            const axios = require('axios');
             const currentTime = new Date();
+            const collectReq = await this.databaseService.CollectRequestModel.findById(request._id);
+            if (!collectReq) {
+                throw new common_1.BadRequestException('Collect Request not found');
+            }
             const expiryTime = new Date(currentTime.getTime() + 20 * 60000);
             const isoExpiryTime = expiryTime.toISOString();
             let data = JSON.stringify({
@@ -1319,10 +1306,8 @@ let CashfreeService = class CashfreeService {
                 },
                 order_expiry_time: isoExpiryTime,
             });
-            if (request.isSplitPayments &&
-                request.cashfreeVedors &&
-                request.cashfreeVedors.length > 0) {
-                const vendor_data = request.cashfreeVedors
+            if (splitPayments && cashfreeVedors && cashfreeVedors.length > 0) {
+                const vendor_data = cashfreeVedors
                     .filter(({ amount, percentage }) => {
                     return (amount && amount > 0) || (percentage && percentage > 0);
                 })
@@ -1346,17 +1331,14 @@ let CashfreeService = class CashfreeService {
                     },
                     order_splits: vendor_data,
                 });
-                request.isSplitPayments = true;
-                request.vendors_info = vendor;
-                await request.save();
-                request.cashfreeVedors.map(async (info) => {
-                    const { vendor_id, percentage, amount, name } = info;
+                collectReq.isSplitPayments = true;
+                collectReq.vendors_info = cashfreeVedors;
+                await collectReq.save();
+                cashfreeVedors.map(async (info) => {
+                    const { vendor_id, amount, name } = info;
                     let split_amount = 0;
                     if (amount) {
                         split_amount = amount;
-                    }
-                    if (percentage && percentage !== 0) {
-                        split_amount = (request.amount * percentage) / 100;
                     }
                     await new this.databaseService.VendorTransactionModel({
                         vendor_id: vendor_id,
@@ -1379,57 +1361,21 @@ let CashfreeService = class CashfreeService {
                     accept: 'application/json',
                     'content-type': 'application/json',
                     'x-api-version': '2023-08-01',
-                    'x-partner-merchantid': request.cashfree_credentials?.cf_x_client_id || null,
-                    'x-partner-apikey': request.cashfree_credentials?.cf_api_key,
+                    'x-partner-merchantid': request.cashfree_credentials.cf_x_client_id || null,
+                    'x-partner-apikey': request.cashfree_credentials.cf_api_key,
                 },
                 data: data,
             };
-            const { data: cashfreeRes } = await axios.request(config);
+            console.log(config, 'config');
+            const { data: cashfreeRes } = await axios_1.default.request(config);
             const cf_payment_id = cashfreeRes.payment_session_id;
-            paymentInfo.cashfree_id = cf_payment_id || null;
-            if (!request.isVBAPayment) {
-                setTimeout(() => {
-                    this.terminateOrder(request._id.toString());
-                }, 25 * 60 * 1000);
-            }
-            const disabled_modes_string = request.disabled_modes
-                .map((mode) => `${mode}=false`)
-                .join('&');
-            const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
-            request.paymentIds = paymentInfo;
-            const url = process.env.URL +
-                '/edviron-pg/redirect?session_id=' +
-                cf_payment_id +
-                '&collect_request_id=' +
-                request._id +
-                '&amount=' +
-                request.amount.toFixed(2) +
-                '&' +
-                disabled_modes_string +
-                '&platform_charges=' +
-                encodedPlatformCharges +
-                '&school_name=' +
-                schoolName;
-            request.payment_data = `"${url}"`;
-            await request.save();
-            return {
-                _id: request._id,
-                url: process.env.URL +
-                    '/edviron-pg/redirect?session_id=' +
-                    cf_payment_id +
-                    '&collect_request_id=' +
-                    request._id +
-                    '&amount=' +
-                    request.amount.toFixed(2) +
-                    '&' +
-                    disabled_modes_string +
-                    '&platform_charges=' +
-                    encodedPlatformCharges +
-                    '&school_name=' +
-                    schoolName,
-            };
+            return cf_payment_id;
         }
         catch (e) {
+            if (e?.response?.data) {
+                throw new common_1.BadRequestException(e?.response?.data?.message || "cashfree error");
+            }
+            throw new common_1.BadRequestException(e.message);
         }
     }
 };

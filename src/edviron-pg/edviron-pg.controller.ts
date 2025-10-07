@@ -780,6 +780,21 @@ export class EdvironPgController {
         },
       );
 
+    if (collectReq?.isCollectNow) {
+      let status = webhookStatus === 'SUCCESS' ? 'paid' : 'unpaid';
+
+      const installments = await this.databaseService.InstallmentsModel.find({
+        collect_id: collectIdObject,
+      });
+
+      for (let installment of installments) {
+        await this.databaseService.InstallmentsModel.findOneAndUpdate(
+          { _id: installment._id },
+          { $set: { status: status } },
+          { new: true },
+        );
+      }
+    }
     const webHookUrl = collectReq?.req_webhook_urls;
 
     const collectRequest =
@@ -3498,7 +3513,7 @@ export class EdvironPgController {
       school_id: string[];
       year: string;
       token: string;
-      subTrusteeId: string
+      subTrusteeId: string;
     },
   ) {
     try {

@@ -41,7 +41,8 @@ export declare enum Gateway {
     EDVIRON_WORLDLINE = "EDVIRON_WORLDLINE",
     EDVIRON_RAZORPAY = "EDVIRON_RAZORPAY",
     EDVIRON_RAZORPAY_SEAMLESS = "EDVIRON_RAZORPAY_SEAMLESS",
-    EDVIRON_GATEPAY = "EDVIRON_GATEPAY"
+    EDVIRON_GATEPAY = "EDVIRON_GATEPAY",
+    EDVIRON_PAY = "EDVIRON_PAY"
 }
 interface I_NTT_DATA {
     nttdata_id: string;
@@ -280,6 +281,7 @@ export declare class CollectRequest {
     isCFNonSeamless: boolean;
     isVBAPayment: boolean;
     isVBAPaymentComplete: boolean;
+    isCollectNow: boolean;
     custom_order_id: string;
     req_webhook_urls: string[];
     ccavenue_merchant_id: string;
@@ -368,6 +370,7 @@ export declare class CollectRequest {
     razorpay_partner: boolean;
     worldline_token: string;
     vba_account_number: string;
+    document_url: string;
     razorpay: I_Razorpay;
     razorpay_seamless: I_Razorpay;
     _id: ObjectId;

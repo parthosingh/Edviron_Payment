@@ -76,7 +76,6 @@ export declare class CashfreeService {
     acceptDispute(disputeId: string, client_id: string): Promise<any>;
     createMerchant(merchant_id: string, merchant_email: string, merchant_name: string, poc_phone: string, merchant_site_url: string, business_details: {
         business_legal_name: string;
-        business_type: string;
         business_model: string;
         business_category?: string | null;
         business_subcategory?: string | null;
@@ -114,7 +113,6 @@ export declare class CashfreeService {
         merchant_site_url: string;
         business_details: {
             business_legal_name: string;
-            business_type: string;
             business_model: string;
             business_category?: string | null;
             business_subcategory?: string | null;
@@ -202,16 +200,12 @@ export declare class CashfreeService {
             order_status: any;
         };
     }>;
-    generateMasterGatewaypayment(collectRequest: CollectRequest, school_name: string, platform_charges: platformChange[], vendor?: [
+    createOrderCashfree(request: CollectRequest, splitPayments?: boolean, cashfreeVedors?: [
         {
             vendor_id: string;
             percentage?: number;
             amount?: number;
             name?: string;
-            scheme_code?: string;
         }
-    ]): Promise<{
-        _id: import("mongoose").Schema.Types.ObjectId;
-        url: string;
-    } | undefined>;
+    ]): Promise<any>;
 }
