@@ -11,7 +11,10 @@ import {
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
-import { Gateway, PaymentIds } from 'src/database/schemas/collect_request.schema';
+import {
+  Gateway,
+  PaymentIds,
+} from 'src/database/schemas/collect_request.schema';
 import { Installments } from 'src/database/schemas/installments.schema';
 import { EdvironPayService } from './edviron-pay.service';
 import { PlatformCharge } from 'src/database/schemas/platform.charges.schema';
@@ -188,6 +191,7 @@ export class EdvironPayController {
         key: string;
         salt: string;
         isPartner: boolean;
+        easebuzz_merchant_email:string;
         bank_label?: string;
         easebuzzVendors?: [
           {
@@ -284,6 +288,12 @@ export class EdvironPayController {
         dateOnCheque: string;
         remarks?: string;
       };
+      parents_info: {
+        name: string;
+        phone: string;
+        email: string;
+        relationship: string;
+      };
       date?: string;
     },
     @Req() req?: any,
@@ -320,7 +330,8 @@ export class EdvironPayController {
       static_qr,
       netBankingDetails,
       cheque_detail,
-      date
+      date,
+      parents_info,
     } = body;
 
     try {
@@ -331,9 +342,9 @@ export class EdvironPayController {
       }
 
       const decrypt = _jwt.verify(token, process.env.KEY!) as any;
-      console.log(decrypt, "decrypt")
-      if(decrypt.school_id.toString() !==  school_id.toString()){
-        throw new BadRequestException('Request fordge')
+      console.log(decrypt, 'decrypt');
+      if (decrypt.school_id.toString() !== school_id.toString()) {
+        throw new BadRequestException('Request fordge');
       }
 
       if (custom_order_id) {
@@ -389,6 +400,12 @@ export class EdvironPayController {
           custom_order_id,
           req_webhook_urls: [webhook_url],
           easebuzz_sub_merchant_id: easebuzz?.mid || null,
+          easebuzz_non_partner_cred: {
+            easebuzz_salt: easebuzz.salt,
+            easebuzz_key: easebuzz.key,
+            easebuzz_merchant_email: easebuzz.easebuzz_merchant_email,
+            easebuzz_submerchant_id: easebuzz.mid,
+          },
           easebuzzVendors: easebuzzVendors || [],
           cashfreeVedors: cashfreeVedors || [],
           razorpay_vendors_info: razorpay_vendors,
@@ -457,7 +474,9 @@ export class EdvironPayController {
               {
                 $set: {
                   status: 'SUCCESS',
-                  payment_time: cash_detail?.date  ?  new Date(cash_detail?.date).toISOString() : new Date().toISOString(),
+                  payment_time: cash_detail?.date
+                    ? new Date(cash_detail?.date).toISOString()
+                    : new Date().toISOString(),
                   transaction_amount: amount,
                   payment_method: 'cash',
                   details: JSON.stringify(detail),
@@ -486,7 +505,9 @@ export class EdvironPayController {
               {
                 $set: {
                   status: 'paid',
-                  payment_time: cash_detail?.date  ?  new Date(cash_detail?.date).toISOString() : new Date().toISOString(),
+                  payment_time: cash_detail?.date
+                    ? new Date(cash_detail?.date).toISOString()
+                    : new Date().toISOString(),
                 },
               },
             );
@@ -524,7 +545,9 @@ export class EdvironPayController {
               {
                 $set: {
                   status: 'SUCCESS',
-                  payment_time: date ?  new Date(date).toISOString() :  new Date().toISOString(),
+                  payment_time: date
+                    ? new Date(date).toISOString()
+                    : new Date().toISOString(),
                   transaction_amount: amount,
                   payment_method: 'upi',
                   details: JSON.stringify(detail),
@@ -549,7 +572,9 @@ export class EdvironPayController {
               {
                 $set: {
                   status: 'paid',
-                  payment_time: date ?  new Date(date).toISOString() :  new Date().toISOString(),
+                  payment_time: date
+                    ? new Date(date).toISOString()
+                    : new Date().toISOString(),
                 },
               },
             );
@@ -584,11 +609,13 @@ export class EdvironPayController {
             await this.databaseService.CollectRequestStatusModel.updateOne(
               {
                 collect_id: collectIdObject,
-              }, 
+              },
               {
                 $set: {
                   status: 'SUCCESS',
-                  payment_time: dd_detail?.date  ?  new Date(dd_detail?.date).toISOString() : new Date().toISOString(),
+                  payment_time: dd_detail?.date
+                    ? new Date(dd_detail?.date).toISOString()
+                    : new Date().toISOString(),
                   transaction_amount: amount,
                   payment_method: 'demand_draft',
                   details: JSON.stringify(detail),
@@ -621,7 +648,9 @@ export class EdvironPayController {
               {
                 $set: {
                   status: 'paid',
-                  payment_time: dd_detail?.date  ?  new Date(dd_detail?.date).toISOString() : new Date().toISOString(),
+                  payment_time: dd_detail?.date
+                    ? new Date(dd_detail?.date).toISOString()
+                    : new Date().toISOString(),
                 },
               },
             );
@@ -670,7 +699,9 @@ export class EdvironPayController {
               {
                 $set: {
                   status: 'SUCCESS',
-                  payment_time: date ?  new Date(date).toISOString() :  new Date().toISOString(),
+                  payment_time: date
+                    ? new Date(date).toISOString()
+                    : new Date().toISOString(),
                   transaction_amount: netBankingDetails?.amount,
                   payment_method: 'net_banking',
                   details: JSON.stringify(detail),
@@ -703,7 +734,9 @@ export class EdvironPayController {
               {
                 $set: {
                   status: 'paid',
-                  payment_time: date ?  new Date(date).toISOString() :  new Date().toISOString(),
+                  payment_time: date
+                    ? new Date(date).toISOString()
+                    : new Date().toISOString(),
                 },
               },
             );
@@ -712,7 +745,6 @@ export class EdvironPayController {
           callbackUrl.searchParams.set('status', 'SUCCESS');
           return res.json({ redirectUrl: callbackUrl.toString() });
         }
-
         if (mode === 'CHEQUE') {
           let collectIdObject = request._id;
           const detail = {
@@ -745,7 +777,9 @@ export class EdvironPayController {
               {
                 $set: {
                   status: 'SUCCESS',
-                  payment_time:cheque_detail?.dateOnCheque ? new Date(cheque_detail?.dateOnCheque).toISOString() : new Date().toISOString() ,
+                  payment_time: cheque_detail?.dateOnCheque
+                    ? new Date(cheque_detail?.dateOnCheque).toISOString()
+                    : new Date().toISOString(),
                   transaction_amount: amount,
                   payment_method: 'cheque',
                   details: JSON.stringify(detail),
@@ -770,7 +804,9 @@ export class EdvironPayController {
               {
                 $set: {
                   status: 'paid',
-                  payment_time: cheque_detail?.dateOnCheque ? new Date(cheque_detail?.dateOnCheque).toISOString() : new Date().toISOString() ,
+                  payment_time: cheque_detail?.dateOnCheque
+                    ? new Date(cheque_detail?.dateOnCheque).toISOString()
+                    : new Date().toISOString(),
                 },
               },
             );
@@ -858,20 +894,20 @@ export class EdvironPayController {
   }
 
   @Get('get-order-detail')
-    async orderDetail(@Query('collect_id') collect_id: string): Promise<{
-      paymentIds : PaymentIds
-    }> {
-      try {
-        const collect_request =
-          await this.databaseService.CollectRequestModel.findById(collect_id);
-        if (!collect_request) {
-          throw new BadRequestException('Order not found');
-        }
-        return {
-          paymentIds: collect_request.paymentIds
-        };
-      } catch (error) {
-        throw new BadRequestException(error);
+  async orderDetail(@Query('collect_id') collect_id: string): Promise<{
+    paymentIds: PaymentIds;
+  }> {
+    try {
+      const collect_request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collect_request) {
+        throw new BadRequestException('Order not found');
       }
+      return {
+        paymentIds: collect_request.paymentIds,
+      };
+    } catch (error) {
+      throw new BadRequestException(error);
     }
+  }
 }

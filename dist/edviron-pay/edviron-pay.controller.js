@@ -105,14 +105,14 @@ let EdvironPayController = class EdvironPayController {
         };
     }
     async collect(body, req, res) {
-        const { mode, isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, vba_account_number, easebuzz, easebuzzVendors, cashfreeVedors, razorpay_vendors, cash_detail, dd_detail, document_url, student_detail, static_qr, netBankingDetails, cheque_detail, date } = body;
+        const { mode, isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, vba_account_number, easebuzz, easebuzzVendors, cashfreeVedors, razorpay_vendors, cash_detail, dd_detail, document_url, student_detail, static_qr, netBankingDetails, cheque_detail, date, parents_info, } = body;
         try {
             let { student_id, student_name, student_email, student_number } = student_detail;
             if (!token) {
                 throw new Error('Token is required');
             }
             const decrypt = _jwt.verify(token, process.env.KEY);
-            console.log(decrypt, "decrypt");
+            console.log(decrypt, 'decrypt');
             if (decrypt.school_id.toString() !== school_id.toString()) {
                 throw new common_1.BadRequestException('Request fordge');
             }
@@ -158,6 +158,12 @@ let EdvironPayController = class EdvironPayController {
                     custom_order_id,
                     req_webhook_urls: [webhook_url],
                     easebuzz_sub_merchant_id: easebuzz?.mid || null,
+                    easebuzz_non_partner_cred: {
+                        easebuzz_salt: easebuzz.salt,
+                        easebuzz_key: easebuzz.key,
+                        easebuzz_merchant_email: easebuzz.easebuzz_merchant_email,
+                        easebuzz_submerchant_id: easebuzz.mid,
+                    },
                     easebuzzVendors: easebuzzVendors || [],
                     cashfreeVedors: cashfreeVedors || [],
                     razorpay_vendors_info: razorpay_vendors,
@@ -210,7 +216,9 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'SUCCESS',
-                            payment_time: cash_detail?.date ? new Date(cash_detail?.date).toISOString() : new Date().toISOString(),
+                            payment_time: cash_detail?.date
+                                ? new Date(cash_detail?.date).toISOString()
+                                : new Date().toISOString(),
                             transaction_amount: amount,
                             payment_method: 'cash',
                             details: JSON.stringify(detail),
@@ -229,7 +237,9 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'paid',
-                            payment_time: cash_detail?.date ? new Date(cash_detail?.date).toISOString() : new Date().toISOString(),
+                            payment_time: cash_detail?.date
+                                ? new Date(cash_detail?.date).toISOString()
+                                : new Date().toISOString(),
                         },
                     });
                     const callbackUrl = new URL(request.callbackUrl);
@@ -259,7 +269,9 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'SUCCESS',
-                            payment_time: date ? new Date(date).toISOString() : new Date().toISOString(),
+                            payment_time: date
+                                ? new Date(date).toISOString()
+                                : new Date().toISOString(),
                             transaction_amount: amount,
                             payment_method: 'upi',
                             details: JSON.stringify(detail),
@@ -278,7 +290,9 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'paid',
-                            payment_time: date ? new Date(date).toISOString() : new Date().toISOString(),
+                            payment_time: date
+                                ? new Date(date).toISOString()
+                                : new Date().toISOString(),
                         },
                     });
                     const callbackUrl = new URL(request.callbackUrl);
@@ -309,7 +323,9 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'SUCCESS',
-                            payment_time: dd_detail?.date ? new Date(dd_detail?.date).toISOString() : new Date().toISOString(),
+                            payment_time: dd_detail?.date
+                                ? new Date(dd_detail?.date).toISOString()
+                                : new Date().toISOString(),
                             transaction_amount: amount,
                             payment_method: 'demand_draft',
                             details: JSON.stringify(detail),
@@ -332,7 +348,9 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'paid',
-                            payment_time: dd_detail?.date ? new Date(dd_detail?.date).toISOString() : new Date().toISOString(),
+                            payment_time: dd_detail?.date
+                                ? new Date(dd_detail?.date).toISOString()
+                                : new Date().toISOString(),
                         },
                     });
                     const callbackUrl = new URL(request.callbackUrl);
@@ -371,7 +389,9 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'SUCCESS',
-                            payment_time: date ? new Date(date).toISOString() : new Date().toISOString(),
+                            payment_time: date
+                                ? new Date(date).toISOString()
+                                : new Date().toISOString(),
                             transaction_amount: netBankingDetails?.amount,
                             payment_method: 'net_banking',
                             details: JSON.stringify(detail),
@@ -390,7 +410,9 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'paid',
-                            payment_time: date ? new Date(date).toISOString() : new Date().toISOString(),
+                            payment_time: date
+                                ? new Date(date).toISOString()
+                                : new Date().toISOString(),
                         },
                     });
                     const callbackUrl = new URL(request.callbackUrl);
@@ -423,7 +445,9 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'SUCCESS',
-                            payment_time: cheque_detail?.dateOnCheque ? new Date(cheque_detail?.dateOnCheque).toISOString() : new Date().toISOString(),
+                            payment_time: cheque_detail?.dateOnCheque
+                                ? new Date(cheque_detail?.dateOnCheque).toISOString()
+                                : new Date().toISOString(),
                             transaction_amount: amount,
                             payment_method: 'cheque',
                             details: JSON.stringify(detail),
@@ -442,7 +466,9 @@ let EdvironPayController = class EdvironPayController {
                     }, {
                         $set: {
                             status: 'paid',
-                            payment_time: cheque_detail?.dateOnCheque ? new Date(cheque_detail?.dateOnCheque).toISOString() : new Date().toISOString(),
+                            payment_time: cheque_detail?.dateOnCheque
+                                ? new Date(cheque_detail?.dateOnCheque).toISOString()
+                                : new Date().toISOString(),
                         },
                     });
                     const callbackUrl = new URL(request.callbackUrl);
@@ -513,7 +539,7 @@ let EdvironPayController = class EdvironPayController {
                 throw new common_1.BadRequestException('Order not found');
             }
             return {
-                paymentIds: collect_request.paymentIds
+                paymentIds: collect_request.paymentIds,
             };
         }
         catch (error) {

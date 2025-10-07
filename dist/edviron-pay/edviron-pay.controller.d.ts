@@ -89,6 +89,7 @@ export declare class EdvironPayController {
             key: string;
             salt: string;
             isPartner: boolean;
+            easebuzz_merchant_email: string;
             bank_label?: string;
             easebuzzVendors?: [
                 {
@@ -184,6 +185,12 @@ export declare class EdvironPayController {
             chequeNo: string;
             dateOnCheque: string;
             remarks?: string;
+        };
+        parents_info: {
+            name: string;
+            phone: string;
+            email: string;
+            relationship: string;
         };
         date?: string;
     }, req?: any, res?: any): Promise<any>;
