@@ -1602,6 +1602,7 @@ let EdvironPgController = class EdvironPgController {
                                 payment_time: 1,
                                 reason: 1,
                                 capture_status: 1,
+                                currency: 1
                             },
                         },
                         {
@@ -1618,7 +1619,7 @@ let EdvironPgController = class EdvironPgController {
                                             collect_id: '$collect_id',
                                             order_amount: '$order_amount',
                                             merchant_id: '$collect_request.school_id',
-                                            currency: 'INR',
+                                            currency: '$currency',
                                             createdAt: '$createdAt',
                                             updatedAt: '$updatedAt',
                                             transaction_time: '$updatedAt',
@@ -1711,6 +1712,7 @@ let EdvironPgController = class EdvironPgController {
                                 payment_time: 1,
                                 reason: 1,
                                 capture_status: 1,
+                                currency: 1
                             },
                         },
                         {
@@ -1727,7 +1729,6 @@ let EdvironPgController = class EdvironPgController {
                                             collect_id: '$collect_id',
                                             order_amount: '$order_amount',
                                             merchant_id: '$collect_request.school_id',
-                                            currency: 'INR',
                                             createdAt: '$createdAt',
                                             updatedAt: '$updatedAt',
                                             transaction_time: '$updatedAt',
@@ -1740,6 +1741,7 @@ let EdvironPgController = class EdvironPgController {
                                             gateway: '$gateway',
                                             capture_status: '$capture_status',
                                             isVBAPaymentComplete: '$isVBAPaymentComplete',
+                                            currency: '$currency'
                                         },
                                     ],
                                 },
@@ -1759,6 +1761,7 @@ let EdvironPgController = class EdvironPgController {
                     ]);
             }
             console.timeEnd('aggregating transaction');
+            console.log(transactions, "transactions");
             console.time('counting');
             const tnxCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
             console.timeEnd('counting');
