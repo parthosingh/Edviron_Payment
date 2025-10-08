@@ -1073,6 +1073,7 @@ let EdvironPgService = class EdvironPgService {
                         createdAt: 1,
                         updatedAt: 1,
                         error_details: '$collect_req_status.error_details',
+                        currency: 1
                     },
                 },
             ]);
