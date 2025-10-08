@@ -26,7 +26,6 @@ let EdvironSeamlessController = class EdvironSeamlessController {
     async initiatePayment(body, res) {
         try {
             const { school_id, trustee_id, token, mode, collect_id, net_banking, card, wallet, pay_later, upi } = body;
-            console.log(upi);
             const request = await this.databaseService.CollectRequestModel.findById(collect_id);
             if (!request) {
                 throw new common_1.BadRequestException('Invalid Collect Id');
@@ -40,40 +39,39 @@ let EdvironSeamlessController = class EdvironSeamlessController {
                     !net_banking.bank_code) {
                     throw new common_1.BadRequestException('Required Parameter Missing');
                 }
-                const url = `${process.env.URL}/seamless-pay/?mode=NB&school_id=${school_id}&access_key=${access_key}&mode=NB&code=${net_banking.bank_code}`;
+                const url = `${process.env.PG_FRONTEND}/seamless-pay/?mode=NB&school_id=${school_id}&access_key=${access_key}&mode=NB&code=${net_banking.bank_code}`;
                 return res.send({ url });
             }
             else if (mode === "CC" || mode === "DC") {
                 const { enc_card_number, enc_card_holder_name, enc_card_cvv, enc_card_expiry_date, } = card;
                 const cardInfo = await this.edvironSeamlessService.processcards(enc_card_number, enc_card_holder_name, enc_card_cvv, enc_card_expiry_date, school_id, collect_id);
-                const url = `${process.env.URL}/seamless-pay?mode=${mode}&enc_card_number=${cardInfo.card_number}&enc_card_holder_name=${cardInfo.card_holder}&enc_card_cvv=${cardInfo.card_cvv}&enc_card_exp=${cardInfo.card_exp}&access_key=${access_key}`;
+                const url = `${process.env.PG_FRONTEND}/seamless-pay?mode=${mode}&enc_card_number=${cardInfo.card_number}&enc_card_holder_name=${cardInfo.card_holder}&enc_card_cvv=${cardInfo.card_cvv}&enc_card_exp=${cardInfo.card_exp}&access_key=${access_key}`;
                 return res.send({ url });
             }
             else if (mode === "WALLET") {
                 if (!wallet || !wallet.bank_code) {
                     throw new common_1.BadRequestException("Wallet bank code Required");
                 }
-                const url = `${process.env.URL}/seamless-pay?mode=MW&bank_code=${wallet.bank_code}&access_key=${access_key}`;
+                const url = `${process.env.PG_FRONTEND}/seamless-pay?mode=MW&bank_code=${wallet.bank_code}&access_key=${access_key}`;
                 return res.send({ url });
             }
             else if (mode === "PAY_LATER") {
                 if (!pay_later || !pay_later.bank_code) {
                     throw new common_1.BadRequestException("Pay Later bank code Required");
                 }
-                const url = `${process.env.URL}/seamless-pay?mode=PL&bank_code=${pay_later.bank_code}&access_key=${access_key}`;
+                const url = `${process.env.PG_FRONTEND}/seamless-pay?mode=PL&bank_code=${pay_later.bank_code}&access_key=${access_key}`;
                 return res.send({ url });
             }
             else if (mode === "UPI") {
                 if (upi.mode === 'QR') {
                     const upiRes = await this.easebuzzService.getQrBase64(collect_id);
-                    console.log(upiRes);
                     return res.send({
                         mode: "VPA",
                         upiRes
                     });
                 }
                 else if (upi.mode === "VPA") {
-                    const url = `${process.env.URL}/seamless-pay?mode=${mode}&vpa=${upi.vpa}&access_key=${access_key}`;
+                    const url = `${process.env.PG_FRONTEND}/seamless-pay?mode=${mode}&vpa=${upi.vpa}&access_key=${access_key}`;
                     return res.send({ url });
                 }
             }
@@ -93,6 +91,7 @@ let EdvironSeamlessController = class EdvironSeamlessController {
             return res.send(response);
         }
         catch (e) {
+            throw new common_1.BadRequestException(e.message);
         }
     }
 };
