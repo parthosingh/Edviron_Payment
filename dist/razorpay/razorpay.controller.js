@@ -22,11 +22,13 @@ const collect_req_status_schema_1 = require("../database/schemas/collect_req_sta
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const mongoose_1 = require("mongoose");
 const axios_1 = require("axios");
+const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
 let RazorpayController = class RazorpayController {
-    constructor(razorpayService, databaseService, edvironPgService) {
+    constructor(razorpayService, databaseService, edvironPgService, razorpayNonSeamless) {
         this.razorpayService = razorpayService;
         this.databaseService = databaseService;
         this.edvironPgService = edvironPgService;
+        this.razorpayNonSeamless = razorpayNonSeamless;
     }
     async handleCallback(req, res) {
         try {
@@ -646,6 +648,7 @@ exports.RazorpayController = RazorpayController = __decorate([
     (0, common_1.Controller)('razorpay'),
     __metadata("design:paramtypes", [razorpay_service_1.RazorpayService,
         database_service_1.DatabaseService,
-        edviron_pg_service_1.EdvironPgService])
+        edviron_pg_service_1.EdvironPgService,
+        razorpay_nonseamless_service_1.RazorpayNonseamlessService])
 ], RazorpayController);
 //# sourceMappingURL=razorpay.controller.js.map

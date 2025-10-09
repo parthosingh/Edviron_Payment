@@ -20,6 +20,7 @@ import { Types } from 'mongoose';
 import axios from 'axios';
 import { createCanvas, loadImage } from 'canvas';
 import jsQR from "jsqr";
+import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 
 @Controller('razorpay')
 export class RazorpayController {
@@ -27,6 +28,7 @@ export class RazorpayController {
     private readonly razorpayService: RazorpayService,
     private readonly databaseService: DatabaseService,
     private readonly edvironPgService: EdvironPgService,
+    private readonly razorpayNonSeamless: RazorpayNonseamlessService,
   ) {}
 
   @Get('/callback')
@@ -64,7 +66,6 @@ export class RazorpayController {
         collect_request.razorpay_seamless.order_id.toString(),
         collect_request,
       );
-
       let payment_method = status.details.payment_mode || null;
       let payload = status?.details?.payment_methods || {};
 

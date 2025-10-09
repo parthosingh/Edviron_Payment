@@ -271,10 +271,11 @@ export class RazorpayService {
           : status === TransactionStatus.FAILURE
             ? 400
             : 202;
+
       const formattedResponse: any = {
         status: status,
-        amount: response?.amount ? response?.amount / 100 : null,
-        transaction_amount: collectRequestStatus?.transaction_amount,
+        amount: response?.amount ? response?.amount / 100 : collectRequest.amount,
+        transaction_amount: response?.amount ? response?.amount / 100 : collectRequest.amount,
         status_code: statusCode,
         custom_order_id: collectRequest?.custom_order_id,
         details: {
@@ -292,19 +293,21 @@ export class RazorpayService {
         },
         capture_status: response?.captured || null,
       };
+
       if (response?.method === 'upi') {
         formattedResponse.details.payment_methods['upi'] = response?.upi;
         formattedResponse.details.bank_ref =
           response?.acquirer_data?.rrn || null;
       }
       if (response?.method === 'card') {
-        const cardDetails = await this.fetchCardDetailsOfaPaymentFromRazorpay(
-          response?.id,
-          collectRequest,
-        );
+        const cardDetails = response.card;
+        // await this.fetchCardDetailsOfaPaymentFromRazorpay(
+        //   response?.id,
+        //   collectRequest,
+        // );
         formattedResponse.details.payment_mode = cardDetails?.type;
         formattedResponse.details.payment_methods['card'] = {
-          card_bank_name: cardDetails?.card_issuer || null,
+          card_bank_name: cardDetails?.issuer || null,
           card_country: cardDetails?.international ? null : 'IN',
           card_network: cardDetails?.network || null,
           card_number: `XXXXXXXXXXXX${cardDetails?.last4}` || null,

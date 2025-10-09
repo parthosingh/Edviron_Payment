@@ -1428,7 +1428,7 @@ export class EdvironPgService implements GatewayService {
     start_date: string,
     end_date: string,
     status?: string | null,
-    school_id?: string | null,
+    school_id?: string[] ,
   ) {
     try {
       const endOfDay = new Date(end_date);
@@ -1449,10 +1449,10 @@ export class EdvironPgService implements GatewayService {
         },
       };
 
-      if (school_id) {
+      if (school_id && school_id.length > 0) {
         collectQuery = {
           ...collectQuery,
-          school_id: school_id,
+          school_id: { $in: school_id },
         };
       }
       const orders =

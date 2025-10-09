@@ -1172,10 +1172,10 @@ let EdvironPgService = class EdvironPgService {
                     $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
                 },
             };
-            if (school_id) {
+            if (school_id && school_id.length > 0) {
                 collectQuery = {
                     ...collectQuery,
-                    school_id: school_id,
+                    school_id: { $in: school_id },
                 };
             }
             const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');

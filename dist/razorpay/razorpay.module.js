@@ -13,6 +13,7 @@ const razorpay_service_1 = require("./razorpay.service");
 const database_module_1 = require("../database/database.module");
 const cashfree_module_1 = require("../cashfree/cashfree.module");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
+const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
 let RazorpayModule = class RazorpayModule {
 };
 exports.RazorpayModule = RazorpayModule;
@@ -20,7 +21,7 @@ exports.RazorpayModule = RazorpayModule = __decorate([
     (0, common_1.Module)({
         imports: [database_module_1.DatabaseModule, (0, common_1.forwardRef)(() => cashfree_module_1.CashfreeModule)],
         controllers: [razorpay_controller_1.RazorpayController],
-        providers: [razorpay_service_1.RazorpayService, edviron_pg_service_1.EdvironPgService],
+        providers: [razorpay_service_1.RazorpayService, edviron_pg_service_1.EdvironPgService, razorpay_nonseamless_service_1.RazorpayNonseamlessService],
     })
 ], RazorpayModule);
 //# sourceMappingURL=razorpay.module.js.map

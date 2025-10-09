@@ -230,8 +230,11 @@ let EdvironPgController = class EdvironPgController {
             if (!info) {
                 throw new Error('transaction not found');
             }
-            if (info.gateway !== collect_request_schema_1.Gateway.PENDING && info.gateway !== collect_request_schema_1.Gateway.EDVIRON_PG) {
-                const reqStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: info._id });
+            if (info.gateway !== collect_request_schema_1.Gateway.PENDING &&
+                info.gateway !== collect_request_schema_1.Gateway.EDVIRON_PG) {
+                const reqStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                    collect_id: info._id,
+                });
                 const callbackUrl = new URL(collectRequest?.callbackUrl);
                 callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
                 if (!reqStatus) {
@@ -286,8 +289,11 @@ let EdvironPgController = class EdvironPgController {
         const { collect_request_id } = req.query;
         console.log(req.query.status, 'easebuzz callback status');
         const collectRequest = (await this.databaseService.CollectRequestModel.findById(collect_request_id));
-        if (collectRequest.gateway !== collect_request_schema_1.Gateway.PENDING && collectRequest.gateway !== collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ) {
-            const reqStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: collectRequest._id });
+        if (collectRequest.gateway !== collect_request_schema_1.Gateway.PENDING &&
+            collectRequest.gateway !== collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ) {
+            const reqStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: collectRequest._id,
+            });
             const callbackUrl = new URL(collectRequest?.callbackUrl);
             callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
             if (!reqStatus) {
@@ -1602,7 +1608,7 @@ let EdvironPgController = class EdvironPgController {
                                 payment_time: 1,
                                 reason: 1,
                                 capture_status: 1,
-                                currency: 1
+                                currency: 1,
                             },
                         },
                         {
@@ -1712,7 +1718,7 @@ let EdvironPgController = class EdvironPgController {
                                 payment_time: 1,
                                 reason: 1,
                                 capture_status: 1,
-                                currency: 1
+                                currency: 1,
                             },
                         },
                         {
@@ -1741,7 +1747,7 @@ let EdvironPgController = class EdvironPgController {
                                             gateway: '$gateway',
                                             capture_status: '$capture_status',
                                             isVBAPaymentComplete: '$isVBAPaymentComplete',
-                                            currency: '$currency'
+                                            currency: '$currency',
                                         },
                                     ],
                                 },
@@ -1761,7 +1767,7 @@ let EdvironPgController = class EdvironPgController {
                     ]);
             }
             console.timeEnd('aggregating transaction');
-            console.log(transactions, "transactions");
+            console.log(transactions, 'transactions');
             console.time('counting');
             const tnxCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
             console.timeEnd('counting');
@@ -2314,7 +2320,10 @@ let EdvironPgController = class EdvironPgController {
         }
     }
     async getTransactionReportBatched(start_date, end_date, trustee_id, school_id, status) {
-        return await this.edvironPgService.getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id);
+        const SchoolIds = school_id && typeof school_id === 'string'
+            ? school_id.split(',').map((id) => id.trim()).filter(Boolean)
+            : [];
+        return await this.edvironPgService.getTransactionReportBatched(trustee_id, start_date, end_date, status, SchoolIds);
     }
     async getTransactionReportBatchedFiltered(body) {
         const { start_date, end_date, trustee_id, school_id, mode, status, isQRPayment, gateway, } = body;
