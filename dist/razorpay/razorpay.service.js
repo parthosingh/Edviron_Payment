@@ -229,8 +229,8 @@ let RazorpayService = class RazorpayService {
                     : 202;
             const formattedResponse = {
                 status: status,
-                amount: response?.amount ? response?.amount / 100 : null,
-                transaction_amount: collectRequestStatus?.transaction_amount,
+                amount: response?.amount ? response?.amount / 100 : collectRequest.amount,
+                transaction_amount: response?.amount ? response?.amount / 100 : collectRequest.amount,
                 status_code: statusCode,
                 custom_order_id: collectRequest?.custom_order_id,
                 details: {
@@ -253,10 +253,11 @@ let RazorpayService = class RazorpayService {
                     response?.acquirer_data?.rrn || null;
             }
             if (response?.method === 'card') {
-                const cardDetails = await this.fetchCardDetailsOfaPaymentFromRazorpay(response?.id, collectRequest);
+                console.log(response, 'response');
+                const cardDetails = response.card;
                 formattedResponse.details.payment_mode = cardDetails?.type;
                 formattedResponse.details.payment_methods['card'] = {
-                    card_bank_name: cardDetails?.card_issuer || null,
+                    card_bank_name: cardDetails?.issuer || null,
                     card_country: cardDetails?.international ? null : 'IN',
                     card_network: cardDetails?.network || null,
                     card_number: `XXXXXXXXXXXX${cardDetails?.last4}` || null,

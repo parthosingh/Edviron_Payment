@@ -22,11 +22,13 @@ const collect_req_status_schema_1 = require("../database/schemas/collect_req_sta
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const mongoose_1 = require("mongoose");
 const axios_1 = require("axios");
+const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
 let RazorpayController = class RazorpayController {
-    constructor(razorpayService, databaseService, edvironPgService) {
+    constructor(razorpayService, databaseService, edvironPgService, razorpayNonSeamless) {
         this.razorpayService = razorpayService;
         this.databaseService = databaseService;
         this.edvironPgService = edvironPgService;
+        this.razorpayNonSeamless = razorpayNonSeamless;
     }
     async handleCallback(req, res) {
         try {
@@ -38,6 +40,7 @@ let RazorpayController = class RazorpayController {
                 throw new common_1.BadRequestException('no order found');
             }
             const collect_id = request?._id.toString();
+            console.log(collect_id, 'dsflkdsaj');
             try {
                 const details = JSON.stringify(req.body || {});
                 await new this.databaseService.WebhooksModel({
@@ -58,6 +61,7 @@ let RazorpayController = class RazorpayController {
                 throw new common_1.NotFoundException('Order not found');
             }
             const status = await this.razorpayService.getPaymentStatus(collect_request.razorpay_seamless.order_id.toString(), collect_request);
+            console.log(status);
             let payment_method = status.details.payment_mode || null;
             let payload = status?.details?.payment_methods || {};
             let detail;
@@ -646,6 +650,7 @@ exports.RazorpayController = RazorpayController = __decorate([
     (0, common_1.Controller)('razorpay'),
     __metadata("design:paramtypes", [razorpay_service_1.RazorpayService,
         database_service_1.DatabaseService,
-        edviron_pg_service_1.EdvironPgService])
+        edviron_pg_service_1.EdvironPgService,
+        razorpay_nonseamless_service_1.RazorpayNonseamlessService])
 ], RazorpayController);
 //# sourceMappingURL=razorpay.controller.js.map

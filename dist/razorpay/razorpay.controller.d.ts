@@ -1,11 +1,13 @@
 import { RazorpayService } from './razorpay.service';
 import { DatabaseService } from '../database/database.service';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
+import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 export declare class RazorpayController {
     private readonly razorpayService;
     private readonly databaseService;
     private readonly edvironPgService;
-    constructor(razorpayService: RazorpayService, databaseService: DatabaseService, edvironPgService: EdvironPgService);
+    private readonly razorpayNonSeamless;
+    constructor(razorpayService: RazorpayService, databaseService: DatabaseService, edvironPgService: EdvironPgService, razorpayNonSeamless: RazorpayNonseamlessService);
     handleCallback(req: any, res: any): Promise<any>;
     handleCallbackV2(req: any, res: any): Promise<any>;
     getDispute(collect_id: string, dispute_id: string, token: string): Promise<any>;
