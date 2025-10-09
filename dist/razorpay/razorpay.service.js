@@ -253,7 +253,6 @@ let RazorpayService = class RazorpayService {
                     response?.acquirer_data?.rrn || null;
             }
             if (response?.method === 'card') {
-                console.log(response, 'response');
                 const cardDetails = response.card;
                 formattedResponse.details.payment_mode = cardDetails?.type;
                 formattedResponse.details.payment_methods['card'] = {

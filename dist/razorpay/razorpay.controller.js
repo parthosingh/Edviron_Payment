@@ -40,7 +40,6 @@ let RazorpayController = class RazorpayController {
                 throw new common_1.BadRequestException('no order found');
             }
             const collect_id = request?._id.toString();
-            console.log(collect_id, 'dsflkdsaj');
             try {
                 const details = JSON.stringify(req.body || {});
                 await new this.databaseService.WebhooksModel({
@@ -61,7 +60,6 @@ let RazorpayController = class RazorpayController {
                 throw new common_1.NotFoundException('Order not found');
             }
             const status = await this.razorpayService.getPaymentStatus(collect_request.razorpay_seamless.order_id.toString(), collect_request);
-            console.log(status);
             let payment_method = status.details.payment_mode || null;
             let payload = status?.details?.payment_methods || {};
             let detail;

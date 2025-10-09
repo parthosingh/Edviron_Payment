@@ -300,8 +300,6 @@ export class RazorpayService {
           response?.acquirer_data?.rrn || null;
       }
       if (response?.method === 'card') {
-        console.log(response, 'response');
-
         const cardDetails = response.card;
         // await this.fetchCardDetailsOfaPaymentFromRazorpay(
         //   response?.id,
