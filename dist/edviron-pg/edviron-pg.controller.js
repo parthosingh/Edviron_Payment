@@ -2314,7 +2314,8 @@ let EdvironPgController = class EdvironPgController {
         }
     }
     async getTransactionReportBatched(start_date, end_date, trustee_id, school_id, status) {
-        return await this.edvironPgService.getTransactionReportBatched(trustee_id, start_date, end_date, status, school_id);
+        const SchoolIds = school_id?.split(',') ?? [];
+        return await this.edvironPgService.getTransactionReportBatched(trustee_id, start_date, end_date, status, SchoolIds);
     }
     async getTransactionReportBatchedFiltered(body) {
         const { start_date, end_date, trustee_id, school_id, mode, status, isQRPayment, gateway, } = body;

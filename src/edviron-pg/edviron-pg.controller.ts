@@ -3248,12 +3248,13 @@ export class EdvironPgController {
     @Query('school_id') school_id: string,
     @Query('status') status: string,
   ) {
+    const SchoolIds = school_id?.split(',') ?? [];
     return await this.edvironPgService.getTransactionReportBatched(
       trustee_id,
       start_date,
       end_date,
       status,
-      school_id,
+      SchoolIds,
     );
   }
 
