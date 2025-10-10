@@ -4602,7 +4602,6 @@ export class EdvironPgController {
       }
 
       console.time('fetching all transaction');
-      console.log(`collectQuery`, collectQuery);
       const orders =
         await this.databaseService.CollectRequestModel.find(
           collectQuery,

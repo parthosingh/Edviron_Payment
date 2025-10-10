@@ -3190,7 +3190,6 @@ let EdvironPgController = class EdvironPgController {
                 throw new common_1.ForbiddenException('Request forged');
             }
             console.time('fetching all transaction');
-            console.log(`collectQuery`, collectQuery);
             const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
             let transactions = [];
             const orderIds = orders.map((order) => order._id);
