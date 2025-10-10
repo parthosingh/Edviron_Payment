@@ -4538,7 +4538,6 @@ export class EdvironPgController {
       const startDate = req.query.startDate || null;
       const endDate = req.query.endDate || null;
       const status = req.query.status || null;
-      console.log(school_id, 'CHECKING SCHOOL ID');
 
       const startOfDayUTC = new Date(
         await this.edvironPgService.convertISTStartToUTC(startDate),
@@ -4569,7 +4568,7 @@ export class EdvironPgController {
       }
 
       if (school_id && school_id.length > 0) {
-        console.log(school_id, 'school_id');
+        
         collectQuery = {
           ...collectQuery,
           school_id: { $in: school_id },
@@ -4728,13 +4727,11 @@ export class EdvironPgController {
             _id: new Types.ObjectId(searchParams),
           };
 
-          console.log(findQuery, 'findQuery');
-
           const checkReq =
             await this.databaseService.CollectRequestModel.findOne(findQuery);
           if (!checkReq)
             throw new NotFoundException('No record found for Input');
-          console.log('Serching Order_id');
+          
           searchIfo = {
             collect_id: new Types.ObjectId(searchParams),
           };
@@ -4743,8 +4740,7 @@ export class EdvironPgController {
             ...findQuery,
             custom_order_id: searchParams,
           };
-          console.log('Serching custom_order_id');
-          console.log(findQuery, 'findQuery');
+        
           const requestInfo =
             await this.databaseService.CollectRequestModel.findOne(findQuery);
           if (!requestInfo)
@@ -4753,14 +4749,12 @@ export class EdvironPgController {
             collect_id: requestInfo._id,
           };
         } else if (seachFilter === 'student_info') {
-          console.log('Serching student_info');
+          
           const studentRegex = {
             $regex: searchParams,
             $options: 'i',
           };
-          console.log(studentRegex);
-          console.log(trustee_id, 'trustee');
-
+        
           const requestInfo =
             await this.databaseService.CollectRequestModel.find({
               trustee_id: trustee_id,
@@ -4768,7 +4762,6 @@ export class EdvironPgController {
             })
               .sort({ createdAt: -1 })
               .select('_id');
-          console.log(requestInfo, 'Regex');
 
           if (!requestInfo)
             throw new NotFoundException(`No record found for ${searchParams}`);
@@ -5042,7 +5035,7 @@ export class EdvironPgController {
           ]);
       }
       console.timeEnd('aggregating transaction');
-      console.log(transactions, 'transactions');
+      
       console.time('counting');
       const tnxCount =
         await this.databaseService.CollectRequestStatusModel.countDocuments(
