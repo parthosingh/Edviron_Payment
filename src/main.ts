@@ -11,6 +11,7 @@ async function bootstrap() {
     'https://qa.pg.edviron.com',
     'https://partner.edviron.com',
     'https://merchant.edviron.com',
+    'https://sub-partner.edviron.com',
     'https://dev.dqeoas0bnp0pl.amplifyapp.com', // aws frontend
   ];
   app.enableCors({
