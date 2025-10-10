@@ -3128,9 +3128,9 @@ let EdvironPgController = class EdvironPgController {
             return { error: 'Failed to generate report' };
         }
     }
-    async bulkSubTrusteeTransactions(body, res, req) {
+    async bulkTransactionsSubtrustee(body, res, req) {
         console.time('bulk-transactions-report');
-        const { trustee_id, token, searchParams, isCustomSearch, seachFilter, school_ids, isQRCode, gateway, } = body;
+        const { trustee_id, token, searchParams, isCustomSearch, seachFilter, isQRCode, gateway, school_id } = body;
         let { payment_modes } = body;
         if (!token)
             throw new Error('Token not provided');
@@ -3143,6 +3143,7 @@ let EdvironPgController = class EdvironPgController {
             const startDate = req.query.startDate || null;
             const endDate = req.query.endDate || null;
             const status = req.query.status || null;
+            console.log(school_id, 'CHECKING SCHOOL ID');
             const startOfDayUTC = new Date(await this.edvironPgService.convertISTStartToUTC(startDate));
             const endOfDayUTC = new Date(await this.edvironPgService.convertISTEndToUTC(endDate));
             const endOfDay = new Date(endDate);
@@ -3156,14 +3157,15 @@ let EdvironPgController = class EdvironPgController {
             };
             if (seachFilter === 'student_info') {
                 collectQuery = {
-                    ...collectQuery,
+                    trustee_id: trustee_id,
                     additional_data: { $regex: searchParams, $options: 'i' },
                 };
             }
-            if (school_ids && school_ids.length > 0) {
+            if (school_id && school_id.length > 0) {
+                console.log(school_id, 'school_id');
                 collectQuery = {
                     ...collectQuery,
-                    school_id: { $in: school_ids },
+                    school_id: { $in: school_id },
                 };
             }
             if (isQRCode) {
@@ -3189,13 +3191,11 @@ let EdvironPgController = class EdvironPgController {
                 })) {
                 throw new common_1.ForbiddenException('Request forged');
             }
-            console.log(collectQuery);
             console.time('fetching all transaction');
+            console.log(`collectQuery`, collectQuery);
             const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
-            console.log(orders, 'order');
             let transactions = [];
             const orderIds = orders.map((order) => order._id);
-            console.log(orderIds.length);
             console.timeEnd('fetching all transaction');
             let query = {
                 collect_id: { $in: orderIds },
@@ -3270,16 +3270,18 @@ let EdvironPgController = class EdvironPgController {
                 };
             }
             console.time('aggregating transaction');
-            if (seachFilter === 'order_id' || seachFilter === 'custom_order_id') {
+            if (seachFilter === 'order_id' ||
+                seachFilter === 'custom_order_id' ||
+                seachFilter === 'student_info') {
                 console.log('Serching custom');
                 let searchIfo = {};
                 let findQuery = {
                     trustee_id,
                 };
-                if (school_ids && school_ids.length > 0) {
+                if (school_id && school_id.length > 0) {
                     findQuery = {
                         ...findQuery,
-                        school_id: { $in: school_ids },
+                        school_id: { $in: school_id },
                     };
                 }
                 if (seachFilter === 'order_id') {
@@ -3308,6 +3310,28 @@ let EdvironPgController = class EdvironPgController {
                         throw new common_1.NotFoundException('No record found for Input');
                     searchIfo = {
                         collect_id: requestInfo._id,
+                    };
+                }
+                else if (seachFilter === 'student_info') {
+                    console.log('Serching student_info');
+                    const studentRegex = {
+                        $regex: searchParams,
+                        $options: 'i',
+                    };
+                    console.log(studentRegex);
+                    console.log(trustee_id, 'trustee');
+                    const requestInfo = await this.databaseService.CollectRequestModel.find({
+                        trustee_id: trustee_id,
+                        additional_data: { $regex: searchParams, $options: 'i' },
+                    })
+                        .sort({ createdAt: -1 })
+                        .select('_id');
+                    console.log(requestInfo, 'Regex');
+                    if (!requestInfo)
+                        throw new common_1.NotFoundException(`No record found for ${searchParams}`);
+                    const requestId = requestInfo.map((order) => order._id);
+                    searchIfo = {
+                        collect_id: { $in: requestId },
                     };
                 }
                 transactions =
@@ -3354,6 +3378,7 @@ let EdvironPgController = class EdvironPgController {
                                 'collect_request.easebuzz_sub_merchant_id': 0,
                                 'collect_request.paymentIds': 0,
                                 'collect_request.deepLink': 0,
+                                isVBAPaymentComplete: 0,
                             },
                         },
                         {
@@ -3372,6 +3397,7 @@ let EdvironPgController = class EdvironPgController {
                                 payment_time: 1,
                                 reason: 1,
                                 capture_status: 1,
+                                currency: 1,
                             },
                         },
                         {
@@ -3388,7 +3414,7 @@ let EdvironPgController = class EdvironPgController {
                                             collect_id: '$collect_id',
                                             order_amount: '$order_amount',
                                             merchant_id: '$collect_request.school_id',
-                                            currency: 'INR',
+                                            currency: '$currency',
                                             createdAt: '$createdAt',
                                             updatedAt: '$updatedAt',
                                             transaction_time: '$updatedAt',
@@ -3401,6 +3427,7 @@ let EdvironPgController = class EdvironPgController {
                                             reason: '$reason',
                                             gateway: '$gateway',
                                             capture_status: '$capture_status',
+                                            isVBAPaymentComplete: '$isVBAPaymentComplete',
                                         },
                                     ],
                                 },
@@ -3417,7 +3444,6 @@ let EdvironPgController = class EdvironPgController {
                     ]);
             }
             else {
-                console.log(query, 'else query');
                 transactions =
                     await this.databaseService.CollectRequestStatusModel.aggregate([
                         {
@@ -3427,9 +3453,7 @@ let EdvironPgController = class EdvironPgController {
                         {
                             $skip: (page - 1) * limit,
                         },
-                        {
-                            $limit: Number(limit),
-                        },
+                        { $limit: Number(limit) },
                         {
                             $lookup: {
                                 from: 'collectrequests',
@@ -3464,6 +3488,7 @@ let EdvironPgController = class EdvironPgController {
                                 'collect_request.easebuzz_sub_merchant_id': 0,
                                 'collect_request.paymentIds': 0,
                                 'collect_request.deepLink': 0,
+                                isVBAPaymentComplete: 0,
                             },
                         },
                         {
@@ -3482,6 +3507,7 @@ let EdvironPgController = class EdvironPgController {
                                 payment_time: 1,
                                 reason: 1,
                                 capture_status: 1,
+                                currency: 1,
                             },
                         },
                         {
@@ -3498,7 +3524,6 @@ let EdvironPgController = class EdvironPgController {
                                             collect_id: '$collect_id',
                                             order_amount: '$order_amount',
                                             merchant_id: '$collect_request.school_id',
-                                            currency: 'INR',
                                             createdAt: '$createdAt',
                                             updatedAt: '$updatedAt',
                                             transaction_time: '$updatedAt',
@@ -3510,6 +3535,8 @@ let EdvironPgController = class EdvironPgController {
                                             reason: '$reason',
                                             gateway: '$gateway',
                                             capture_status: '$capture_status',
+                                            isVBAPaymentComplete: '$isVBAPaymentComplete',
+                                            currency: '$currency',
                                         },
                                     ],
                                 },
@@ -3526,15 +3553,10 @@ let EdvironPgController = class EdvironPgController {
                         {
                             $sort: { createdAt: -1 },
                         },
-                        {
-                            $skip: page,
-                        },
-                        {
-                            $limit: Number(limit),
-                        },
                     ]);
             }
             console.timeEnd('aggregating transaction');
+            console.log(transactions, 'transactions');
             console.time('counting');
             const tnxCount = await this.databaseService.CollectRequestStatusModel.countDocuments(query);
             console.timeEnd('counting');
@@ -4475,7 +4497,7 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
-], EdvironPgController.prototype, "bulkSubTrusteeTransactions", null);
+], EdvironPgController.prototype, "bulkTransactionsSubtrustee", null);
 __decorate([
     (0, common_1.Get)('/vba-details'),
     __param(0, (0, common_1.Query)('collect_id')),
