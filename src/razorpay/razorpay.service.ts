@@ -95,10 +95,10 @@ export class RazorpayService {
           };
         });
 
-        const remainder = totalPaise - computed;
-        if (remainder !== 0 && transfers.length > 0) {
-          transfers[0].amount += remainder;
-        }
+        // const remainder = totalPaise - computed;
+        // if (remainder !== 0 && transfers.length > 0) {
+        //   transfers[0].amount += remainder;
+        // }
         data.transfers = transfers;
       }
 
@@ -416,12 +416,12 @@ export class RazorpayService {
         },
       };
 
-      console.log(createQrConfig,"createQrConfig");
-      
+      console.log(createQrConfig, "createQrConfig");
+
       const { data: razorpayRes } = await axios.request(createQrConfig);
-      console.log(razorpayRes,"");
-      console.log(razorpayRes,"response");
-      
+      console.log(razorpayRes, "");
+      console.log(razorpayRes, "response");
+
       return await this.getbase64(razorpayRes.image_url)
 
     } catch (error) {
@@ -547,18 +547,18 @@ export class RazorpayService {
 
   async saveRazorpayCommission(
     collectReq: CollectRequest,
-    platform_type:string
+    platform_type: string
   ) {
     try {
-      const collecRequestStatus=await this.databaseService.CollectRequestStatusModel.findOne({collect_id:collectReq._id})
-      if(!collecRequestStatus){
+      const collecRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: collectReq._id })
+      if (!collecRequestStatus) {
         throw new BadRequestException('Invalid Request')
       }
       const tokenData = {
         school_id: collectReq?.school_id,
         trustee_id: collectReq?.trustee_id,
         order_amount: collectReq?.amount,
-        transaction_amount:collecRequestStatus.transaction_amount,
+        transaction_amount: collecRequestStatus.transaction_amount,
         platform_type: platform_type,
         payment_mode: collecRequestStatus.payment_method,
         collect_id: collectReq._id,
@@ -572,8 +572,8 @@ export class RazorpayService {
         token: sign,
         school_id: collectReq?.school_id,
         trustee_id: collectReq?.trustee_id,
-         order_amount: collectReq?.amount,
-        transaction_amount:collecRequestStatus.transaction_amount,
+        order_amount: collectReq?.amount,
+        transaction_amount: collecRequestStatus.transaction_amount,
         platform_type: "mappedPaymentMethod",
         payment_mode: collecRequestStatus.payment_method,
         collect_id: collectReq._id,

@@ -67,10 +67,6 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                             : undefined,
                     };
                 });
-                const remainder = totalPaise - computed;
-                if (remainder !== 0 && transfers.length > 0) {
-                    transfers[0].amount += remainder;
-                }
                 data.transfers = transfers;
             }
             const config = {

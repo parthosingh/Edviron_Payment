@@ -80,10 +80,10 @@ export class RazorpayNonseamlessService {
           };
         });
 
-        const remainder = totalPaise - computed;
-        if (remainder !== 0 && transfers.length > 0) {
-          transfers[0].amount += remainder;
-        }
+        // const remainder = totalPaise - computed;
+        // if (remainder !== 0 && transfers.length > 0) {
+        //   transfers[0].amount += remainder;
+        // }
         data.transfers = transfers;
       }
       const config = {
