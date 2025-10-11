@@ -390,6 +390,365 @@ export class RazorpayController {
     }
   }
 
+    @Post('/callback')
+  async handleCallbackPost(@Req() req: any, @Res() res: any) {
+    try {
+      const { order_id } = req.query;
+      const request = await this.databaseService.CollectRequestModel.findOne({
+        'razorpay_seamless.order_id': order_id,
+      });
+      if (!request) {
+        throw new BadRequestException('no order found');
+      }
+      const collect_id = request?._id.toString();
+      try {
+        const details = JSON.stringify(req.body || {});
+        await new this.databaseService.WebhooksModel({
+          body: details,
+          gateway: 'RAZORPAY_CALLBACK_BANK',
+        }).save();
+      } catch (e) {
+        console.log(e);
+      }
+      const [collect_request, collect_req_status] = await Promise.all([
+        this.databaseService.CollectRequestModel.findById(collect_id),
+        this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: new Types.ObjectId(collect_id),
+        }),
+      ]);
+
+      if (!collect_request || !collect_req_status) {
+        throw new NotFoundException('Order not found');
+      }
+
+      const status = await this.razorpayService.getPaymentStatus(
+        collect_request.razorpay_seamless.order_id.toString(),
+        collect_request,
+      );
+      let payment_method = status.details.payment_mode || null;
+      let payload = status?.details?.payment_methods || {};
+
+      let detail;
+      let pg_mode = payment_method;
+      switch (payment_method) {
+        case 'upi':
+          detail = {
+            upi: {
+              channel: null,
+              upi_id: payload?.upi?.vpa || null,
+            },
+          };
+          break;
+
+        case 'credit':
+          (pg_mode = 'credit_card'), console.log(payload, 'payloadin here');
+          detail = {
+            card: {
+              card_bank_name: payload?.card?.card_type || null,
+              card_country: payload?.card?.card_country || null,
+              card_network: payload?.card?.card_network || null,
+              card_number: payload?.card?.card_number || null,
+              card_sub_type: payload?.card?.card_sub_type || null,
+              card_type: payload?.card?.card_type || null,
+              channel: null,
+            },
+          };
+          break;
+
+        case 'debit':
+          (pg_mode = 'debit_card'),
+            (detail = {
+              card: {
+                card_bank_name: payload?.card?.card_type || null,
+                card_country: payload?.card?.card_country || null,
+                card_network: payload?.card?.card_network || null,
+                card_number: payload?.card?.card_number || null,
+                card_sub_type: payload?.card?.card_sub_type || null,
+                card_type: payload?.card?.card_type || null,
+                channel: null,
+              },
+            });
+          break;
+
+        case 'net_banking':
+          detail = {
+            netbanking: {
+              channel: null,
+              netbanking_bank_code: null,
+              netbanking_bank_name: payload.net_banking.bank || null,
+            },
+          };
+          break;
+
+        case 'wallet':
+          detail = {
+            wallet: {
+              channel: null,
+              provider: payload.wallet.wallet || null,
+            },
+          };
+          break;
+
+        default:
+          detail = {};
+      }
+
+      await (collect_request as any).constructor.updateOne(
+        { _id: collect_request._id },
+        {
+          $set: {
+            payment_id: req.body.razorpay_payment_id,
+            'razorpay_seamless.payment_id': req.body.razorpay_payment_id,
+            'razorpay_seamless.razorpay_signature': req.body.razorpay_signature,
+            gateway: Gateway.EDVIRON_RAZORPAY_SEAMLESS,
+          },
+        },
+      );
+      let payment_status = status.status;
+      if (payment_status === PaymentStatus.SUCCESS) {
+        // collect_req_status.status = PaymentStatus.SUCCESS;
+        collect_req_status.bank_reference = status.details?.bank_ref || '';
+        collect_req_status.payment_method = pg_mode || '';
+        collect_req_status.details =
+          JSON.stringify(status.details?.payment_methods) || '';
+        collect_req_status.payment_time =
+          status.details?.transaction_time || '';
+        await collect_req_status.save();
+      }
+
+      if (collect_request.sdkPayment) {
+        const redirectBase = process.env.PG_FRONTEND;
+        const route =
+          payment_status === PaymentStatus.SUCCESS
+            ? 'payment-success'
+            : 'payment-failure';
+        return res.redirect(
+          `${redirectBase}/${route}?collect_id=${collect_id}`,
+        );
+      }
+
+      const callbackUrl = new URL(collect_request.callbackUrl);
+      callbackUrl.searchParams.set('EdvironCollectRequestId', collect_id);
+
+      const collectIdObject = new Types.ObjectId(collect_id);
+      const transaction_time = status?.details?.transaction_time
+        ? new Date(status?.details?.transaction_time)
+        : null;
+
+      const updateReq =
+        await this.databaseService.CollectRequestStatusModel.updateOne(
+          {
+            collect_id: collectIdObject,
+          },
+          {
+            $set: {
+              // status: status.status,
+              payment_time: transaction_time
+                ? transaction_time.toISOString()
+                : null,
+              transaction_amount: status?.transaction_amount || status?.amount,
+              payment_method: pg_mode || '',
+              details: JSON.stringify(detail),
+              bank_reference: status?.details?.bank_ref || '',
+              reason: status.details?.order_status || '',
+              payment_message: status?.details?.order_status || '',
+            },
+          },
+          {
+            upsert: true,
+            new: true,
+          },
+        );
+
+      if (payment_status !== PaymentStatus.SUCCESS) {
+        callbackUrl.searchParams.set('status', 'FAILED');
+        callbackUrl.searchParams.set('reason', 'Payment-failed');
+        return res.redirect(callbackUrl.toString());
+      }
+      callbackUrl.searchParams.set('status', 'SUCCESS');
+      return res.redirect(callbackUrl.toString());
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Something went wrong');
+    }
+  }
+
+  @Post('/callback/v2')
+  async handleCallbackV2Post(@Req() req: any, @Res() res: any) {
+    try {
+      const { collect_request_id } = req.query;
+      let collect_id = collect_request_id;
+      try {
+        const details = JSON.stringify(req.body || {});
+        await new this.databaseService.WebhooksModel({
+          body: details,
+          gateway: 'RAZORPAY_CALLBACK_BANK',
+        }).save();
+      } catch (e) {
+        console.log(e);
+      }
+      const [collect_request, collect_req_status] = await Promise.all([
+        this.databaseService.CollectRequestModel.findById(collect_id),
+        this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: new Types.ObjectId(collect_id),
+        }),
+      ]);
+
+      if (!collect_request || !collect_req_status) {
+        throw new NotFoundException('Order not found');
+      }
+
+      const status = await this.razorpayService.getPaymentStatus(
+        collect_request.razorpay_seamless.order_id.toString(),
+        collect_request,
+      );
+
+      let payment_method = status.details.payment_mode || null;
+      let payload = status?.details?.payment_methods || {};
+
+      let detail;
+      let pg_mode = payment_method;
+      switch (payment_method) {
+        case 'upi':
+          detail = {
+            upi: {
+              channel: null,
+              upi_id: payload?.upi?.vpa || null,
+            },
+          };
+          break;
+
+        case 'credit':
+          (pg_mode = 'credit_card'), console.log(payload, 'payloadin here');
+          detail = {
+            card: {
+              card_bank_name: payload?.card?.card_type || null,
+              card_country: payload?.card?.card_country || null,
+              card_network: payload?.card?.card_network || null,
+              card_number: payload?.card?.card_number || null,
+              card_sub_type: payload?.card?.card_sub_type || null,
+              card_type: payload?.card?.card_type || null,
+              channel: null,
+            },
+          };
+          break;
+
+        case 'debit':
+          (pg_mode = 'debit_card'),
+            (detail = {
+              card: {
+                card_bank_name: payload?.card?.card_type || null,
+                card_country: payload?.card?.card_country || null,
+                card_network: payload?.card?.card_network || null,
+                card_number: payload?.card?.card_number || null,
+                card_sub_type: payload?.card?.card_sub_type || null,
+                card_type: payload?.card?.card_type || null,
+                channel: null,
+              },
+            });
+          break;
+
+        case 'net_banking':
+          detail = {
+            netbanking: {
+              channel: null,
+              netbanking_bank_code: null,
+              netbanking_bank_name: payload.net_banking.bank || null,
+            },
+          };
+          break;
+
+        case 'wallet':
+          detail = {
+            wallet: {
+              channel: null,
+              provider: payload.wallet.wallet || null,
+            },
+          };
+          break;
+
+        default:
+          detail = {};
+      }
+
+      await (collect_request as any).constructor.updateOne(
+        { _id: collect_request._id },
+        {
+          $set: {
+            payment_id: req.body.razorpay_payment_id,
+            'razorpay_seamless.payment_id': req.body.razorpay_payment_id,
+            'razorpay_seamless.razorpay_signature': req.body.razorpay_signature,
+            gateway: Gateway.EDVIRON_RAZORPAY_SEAMLESS,
+          },
+        },
+      );
+      let payment_status = status.status;
+      if (payment_status === PaymentStatus.SUCCESS) {
+        // collect_req_status.status = PaymentStatus.SUCCESS;
+        collect_req_status.bank_reference = status.details?.bank_ref || '';
+        collect_req_status.payment_method = pg_mode || '';
+        collect_req_status.details =
+          JSON.stringify(status.details?.payment_methods) || '';
+        collect_req_status.payment_time =
+          status.details?.transaction_time || '';
+        await collect_req_status.save();
+      }
+
+      if (collect_request.sdkPayment) {
+        const redirectBase = process.env.PG_FRONTEND;
+        const route =
+          payment_status === PaymentStatus.SUCCESS
+            ? 'payment-success'
+            : 'payment-failure';
+        return res.redirect(
+          `${redirectBase}/${route}?collect_id=${collect_id}`,
+        );
+      }
+
+      const callbackUrl = new URL(collect_request.callbackUrl);
+      callbackUrl.searchParams.set('EdvironCollectRequestId', collect_id);
+
+      const collectIdObject = new Types.ObjectId(collect_id);
+      const transaction_time = status?.details?.transaction_time
+        ? new Date(status?.details?.transaction_time)
+        : null;
+
+      const updateReq =
+        await this.databaseService.CollectRequestStatusModel.updateOne(
+          {
+            collect_id: collectIdObject,
+          },
+          {
+            $set: {
+              // status: status.status,
+              payment_time: transaction_time
+                ? transaction_time.toISOString()
+                : null,
+              transaction_amount: status?.transaction_amount || status?.amount,
+              payment_method: pg_mode || '',
+              details: JSON.stringify(detail),
+              bank_reference: status?.details?.bank_ref || '',
+              reason: status.details?.order_status || '',
+              payment_message: status?.details?.order_status || '',
+            },
+          },
+          {
+            upsert: true,
+            new: true,
+          },
+        );
+
+      if (payment_status !== PaymentStatus.SUCCESS) {
+        callbackUrl.searchParams.set('status', 'FAILED');
+        callbackUrl.searchParams.set('reason', 'Payment-failed');
+        return res.redirect(callbackUrl.toString());
+      }
+      callbackUrl.searchParams.set('status', 'SUCCESS');
+      return res.redirect(callbackUrl.toString());
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Something went wrong');
+    }
+  }
+
   @Get('/get-dispute')
   async getDispute(
     @Query('collect_id') collect_id: string,

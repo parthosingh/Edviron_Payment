@@ -10,6 +10,8 @@ export declare class RazorpayController {
     constructor(razorpayService: RazorpayService, databaseService: DatabaseService, edvironPgService: EdvironPgService, razorpayNonSeamless: RazorpayNonseamlessService);
     handleCallback(req: any, res: any): Promise<any>;
     handleCallbackV2(req: any, res: any): Promise<any>;
+    handleCallbackPost(req: any, res: any): Promise<any>;
+    handleCallbackV2Post(req: any, res: any): Promise<any>;
     getDispute(collect_id: string, dispute_id: string, token: string): Promise<any>;
     webhook(body: any, res: any): Promise<any>;
     getQr(collect_id: string): Promise<{
