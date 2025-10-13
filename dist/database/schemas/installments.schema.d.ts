@@ -14,6 +14,7 @@ export declare class Installments {
     net_amount: number;
     discount: number;
     year: string;
+    callback_url: string;
     month: string;
     fee_heads: {
         label: string;

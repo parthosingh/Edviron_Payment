@@ -27,7 +27,7 @@ let EdvironPayController = class EdvironPayController {
         this.edvironPay = edvironPay;
     }
     async upsertInstallments(body) {
-        const { school_id, trustee_id, student_detail, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, allvendors, cashfreeVedors, easebuzzVendors, } = body;
+        const { school_id, trustee_id, student_detail, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, allvendors, cashfreeVedors, easebuzzVendors, callback_url } = body;
         const { student_id, student_number, student_name, student_email } = student_detail;
         await this.edvironPay.createStudent(student_detail, school_id, trustee_id);
         if (isInstallement && installments && installments.length > 0) {
@@ -57,6 +57,7 @@ let EdvironPayController = class EdvironPayController {
                         student_name,
                         student_email,
                         additional_data,
+                        callback_url,
                         amount: installment.amount,
                         net_amount: installment.net_amount,
                         discount: installment.discount,
@@ -83,6 +84,7 @@ let EdvironPayController = class EdvironPayController {
                         label: installment.label,
                         body: installment.body,
                         gateway,
+                        callback_url,
                         additional_data,
                         student_number,
                         student_name,
@@ -105,7 +107,7 @@ let EdvironPayController = class EdvironPayController {
         };
     }
     async collect(body, req, res) {
-        const { mode, isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, vba_account_number, easebuzz, easebuzzVendors, cashfreeVedors, razorpay_vendors, cash_detail, dd_detail, document_url, student_detail, static_qr, netBankingDetails, cheque_detail, date, parents_info, } = body;
+        const { mode, isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, vba_account_number, easebuzz, easebuzzVendors, cashfreeVedors, razorpay_vendors, cash_detail, dd_detail, document_url, student_detail, static_qr, netBankingDetails, cheque_detail, date, parents_info, remark } = body;
         try {
             let { student_id, student_name, student_email, student_number } = student_detail;
             if (!token) {
@@ -199,7 +201,7 @@ let EdvironPayController = class EdvironPayController {
                             notes: cash_detail?.note || {},
                             depositor_name: cash_detail?.depositor_name || 'N/A',
                             collector_name: cash_detail?.collector_name || 'N/A',
-                            remark: cash_detail?.remark || 'N/A',
+                            remark: cash_detail?.remark || remark || 'N/A',
                             date: cash_detail?.date || 'N/A',
                             total_cash_amount: cash_detail?.total_cash_amount || 'N/A',
                         },
@@ -255,6 +257,7 @@ let EdvironPayController = class EdvironPayController {
                             transaction_amount: static_qr?.transactionAmount || 'N/A',
                             bank_ref: static_qr?.bankReferenceNo || 'N/A',
                             app_name: static_qr?.appName || 'N/A',
+                            remark: remark || "N/A"
                         },
                     };
                     await this.databaseService.CollectRequestModel.updateOne({
@@ -308,7 +311,7 @@ let EdvironPayController = class EdvironPayController {
                             bank_name: dd_detail?.bank_name || 'N/A',
                             branch_name: dd_detail?.branch_name || 'N/A',
                             depositor_name: dd_detail?.depositor_name || 'N/A',
-                            remarks: dd_detail?.remark || 'N/A',
+                            remarks: dd_detail?.remark || remark || 'N/A',
                         },
                     };
                     await this.databaseService.CollectRequestModel.updateOne({
@@ -364,7 +367,7 @@ let EdvironPayController = class EdvironPayController {
                             utr: netBankingDetails?.utr,
                             amount,
                             transaction_amount: amount,
-                            remarks: netBankingDetails?.remarks || 'N/A',
+                            remarks: netBankingDetails?.remarks || remark || 'N/A',
                             payer: {
                                 bank_holder_name: netBankingDetails?.payer?.bank_holder_name || 'N/A',
                                 bank_name: netBankingDetails?.payer?.bank_name || 'N/A',
@@ -426,7 +429,7 @@ let EdvironPayController = class EdvironPayController {
                             cheque_no: cheque_detail?.chequeNo,
                             date_on_cheque: cheque_detail?.dateOnCheque,
                             amount,
-                            remarks: cheque_detail?.remarks || 'N/A',
+                            remarks: cheque_detail?.remarks || remark || 'N/A',
                             payer: {
                                 account_holder_name: cheque_detail?.accountHolderName || 'N/A',
                                 bank_name: cheque_detail?.bankName || 'N/A',

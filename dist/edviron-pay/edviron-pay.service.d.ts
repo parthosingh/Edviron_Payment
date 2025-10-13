@@ -55,6 +55,7 @@ export declare class EdvironPayService {
         _id: import("mongoose").Types.ObjectId;
     }) | null>;
     studentFind(student_id: string, school_id: string, trustee_id: string): Promise<{
+        school_name: any;
         student_id: string;
         student_name: string;
         trustee_id: string;
