@@ -10,5 +10,6 @@ import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-no
   imports: [DatabaseModule, forwardRef(() => CashfreeModule)],
   controllers: [RazorpayController],
   providers: [RazorpayService, EdvironPgService, RazorpayNonseamlessService],
+  exports: [RazorpayService],
 })
 export class RazorpayModule {}
