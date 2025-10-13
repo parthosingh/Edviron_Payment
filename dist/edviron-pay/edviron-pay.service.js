@@ -15,6 +15,8 @@ const database_service_1 = require("../database/database.service");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
 const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
+const jwt = require("jsonwebtoken");
+const axios = require('axios');
 let EdvironPayService = class EdvironPayService {
     constructor(databaseService, cashfreeService, easebuzzService, edvironPgService) {
         this.databaseService = databaseService;
@@ -39,7 +41,6 @@ let EdvironPayService = class EdvironPayService {
             }
             if (gatewat.cashfree) {
                 const cashfreeSessionId = await this.cashfreeService.createOrderCashfree(request, request.isSplitPayments, request.cashfreeVedors);
-                console.log(cashfreeSessionId);
                 paymentInfo.cashfree_id = cashfreeSessionId;
                 await collectReq.save();
             }
@@ -48,12 +49,10 @@ let EdvironPayService = class EdvironPayService {
                 easebuzz_pg = true;
                 let easebuzzSessionId;
                 if (request.isSplitPayments) {
-                    easebuzzSessionId =
-                        await this.easebuzzService.createOrderV3(request, platform_charges, school_name);
+                    easebuzzSessionId = await this.easebuzzService.createOrderV3(request, platform_charges, school_name);
                 }
                 else {
-                    easebuzzSessionId =
-                        await this.easebuzzService.createOrderV3NonSplit(request, platform_charges, school_name);
+                    easebuzzSessionId = await this.easebuzzService.createOrderV3NonSplit(request, platform_charges, school_name);
                 }
                 paymentInfo.easebuzz_id = easebuzzSessionId;
                 await collectReq.save();
@@ -130,13 +129,31 @@ let EdvironPayService = class EdvironPayService {
             if (!studentDetail) {
                 throw new common_1.BadRequestException('student not found');
             }
+            const payload = { school_id: school_id };
+            const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET, {
+                noTimestamp: true,
+            });
+            const data = { token, school_id: school_id };
+            const config = {
+                method: 'get',
+                maxBodyLength: Infinity,
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/school-info`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                },
+                data: data,
+            };
+            const { data: schoolData } = await axios.request(config);
             return {
+                school_name: schoolData.school_name,
                 student_id: studentDetail.student_id,
                 student_name: studentDetail.student_name,
                 trustee_id: studentDetail.trustee_id,
                 school_id: studentDetail.school_id,
                 student_email: studentDetail.student_email,
-                student_number: studentDetail.student_number
+                student_number: studentDetail.student_number,
             };
         }
         catch (error) {

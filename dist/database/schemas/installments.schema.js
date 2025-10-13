@@ -76,6 +76,10 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({}),
     __metadata("design:type", String)
+], Installments.prototype, "callback_url", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({}),
+    __metadata("design:type", String)
 ], Installments.prototype, "month", void 0);
 __decorate([
     (0, mongoose_1.Prop)({

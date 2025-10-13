@@ -49,6 +49,9 @@ export class Installments {
   year: string;
 
   @Prop({})
+  callback_url: string;
+
+  @Prop({})
   month: string;
 
   @Prop({

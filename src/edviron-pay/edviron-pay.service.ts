@@ -4,10 +4,11 @@ import {
   CollectRequest,
   PaymentIds,
 } from 'src/database/schemas/collect_request.schema';
-import * as axios from 'axios';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
+import * as jwt from 'jsonwebtoken';
+    const axios = require('axios');
 @Injectable()
 export class EdvironPayService {
   constructor(
@@ -49,8 +50,6 @@ export class EdvironPayService {
             request.isSplitPayments,
             request.cashfreeVedors,
           );
-        console.log(cashfreeSessionId);
-
         paymentInfo.cashfree_id = cashfreeSessionId;
         await collectReq.save();
       }
@@ -61,11 +60,17 @@ export class EdvironPayService {
         easebuzz_pg = true;
         let easebuzzSessionId;
         if (request.isSplitPayments) {
-          easebuzzSessionId =
-            await this.easebuzzService.createOrderV3(request, platform_charges, school_name);
+          easebuzzSessionId = await this.easebuzzService.createOrderV3(
+            request,
+            platform_charges,
+            school_name,
+          );
         } else {
-          easebuzzSessionId =
-            await this.easebuzzService.createOrderV3NonSplit(request, platform_charges, school_name);
+          easebuzzSessionId = await this.easebuzzService.createOrderV3NonSplit(
+            request,
+            platform_charges,
+            school_name,
+          );
         }
         paymentInfo.easebuzz_id = easebuzzSessionId;
         await collectReq.save();
@@ -101,7 +106,6 @@ export class EdvironPayService {
           paymentInfo.easebuzz_id,
       };
     } catch (err) {
-      
       if (err?.response) {
         throw new BadRequestException(
           err?.response?.message || 'cashfree error',
@@ -215,13 +219,35 @@ export class EdvironPayService {
       if (!studentDetail) {
         throw new BadRequestException('student not found');
       }
+
+      const payload = { school_id: school_id };
+      const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET!, {
+        noTimestamp: true,
+      });
+      const data = { token, school_id: school_id };
+
+      const config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/school-info`,
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-api-version': '2023-08-01',
+        },
+        data: data,
+      };
+
+      const {data : schoolData} = await axios.request(config)
+
       return {
-        student_id : studentDetail.student_id,
-        student_name : studentDetail.student_name,
-        trustee_id : studentDetail.trustee_id,
-        school_id : studentDetail.school_id,
-        student_email : studentDetail.student_email,
-        student_number : studentDetail.student_number
+        school_name : schoolData.school_name,
+        student_id: studentDetail.student_id,
+        student_name: studentDetail.student_name,
+        trustee_id: studentDetail.trustee_id,
+        school_id: studentDetail.school_id,
+        student_email: studentDetail.student_email,
+        student_number: studentDetail.student_number,
       };
     } catch (error) {
       throw new BadRequestException(error.message);

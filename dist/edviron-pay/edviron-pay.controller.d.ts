@@ -193,12 +193,14 @@ export declare class EdvironPayController {
             relationship: string;
         };
         date?: string;
+        remark?: string;
     }, req?: any, res?: any): Promise<any>;
     getStudentInstallments(student_id: string, school_id: string, trustee_id: string): Promise<{
         installments: (import("mongoose").Document<unknown, {}, import("src/database/schemas/installments.schema").InstallmentsDocument> & Installments & Document & {
             _id: import("mongoose").Types.ObjectId;
         })[];
         studentDetail: {
+            school_name: any;
             student_id: string;
             student_name: string;
             trustee_id: string;
