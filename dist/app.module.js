@@ -47,6 +47,7 @@ const gateway_module_1 = require("./gateway/gateway.module");
 const razorpay_service_1 = require("./razorpay/razorpay.service");
 const edviron_seamless_controller_1 = require("./edviron-seamless/edviron-seamless.controller");
 const edviron_seamless_service_1 = require("./edviron-seamless/edviron-seamless.service");
+const canteen_module_1 = require("./canteen/canteen.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -74,6 +75,7 @@ exports.AppModule = AppModule = __decorate([
             aws_s3_service_module_1.AwsS3ServiceModule,
             edviron_pay_module_1.EdvironPayModule,
             gateway_module_1.GatewayModule,
+            canteen_module_1.CanteenModule,
         ],
         controllers: [
             app_controller_1.AppController,

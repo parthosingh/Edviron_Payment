@@ -22,6 +22,7 @@ exports.RazorpayModule = RazorpayModule = __decorate([
         imports: [database_module_1.DatabaseModule, (0, common_1.forwardRef)(() => cashfree_module_1.CashfreeModule)],
         controllers: [razorpay_controller_1.RazorpayController],
         providers: [razorpay_service_1.RazorpayService, edviron_pg_service_1.EdvironPgService, razorpay_nonseamless_service_1.RazorpayNonseamlessService],
+        exports: [razorpay_service_1.RazorpayService],
     })
 ], RazorpayModule);
 //# sourceMappingURL=razorpay.module.js.map

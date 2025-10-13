@@ -39,6 +39,7 @@ import { GatewayModule } from './gateway/gateway.module';
 import { RazorpayService } from './razorpay/razorpay.service';
 import { EdvironSeamlessController } from './edviron-seamless/edviron-seamless.controller';
 import { EdvironSeamlessService } from './edviron-seamless/edviron-seamless.service';
+import { CanteenModule } from './canteen/canteen.module';
 
 
 @Module({
@@ -64,6 +65,7 @@ import { EdvironSeamlessService } from './edviron-seamless/edviron-seamless.serv
     AwsS3ServiceModule,
     EdvironPayModule,
     GatewayModule,
+    CanteenModule,
   ],
   controllers: [
     AppController,

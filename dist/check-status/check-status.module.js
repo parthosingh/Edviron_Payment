@@ -44,7 +44,8 @@ exports.CheckStatusModule = CheckStatusModule = __decorate([
             worldline_service_1.WorldlineService,
             razorpay_nonseamless_service_1.RazorpayNonseamlessService,
             gatepay_service_1.GatepayService,
-            razorpay_service_1.RazorpayService
+            razorpay_service_1.RazorpayService,
+            check_status_service_1.CheckStatusService
         ],
         imports: [
             database_module_1.DatabaseModule,
@@ -53,6 +54,7 @@ exports.CheckStatusModule = CheckStatusModule = __decorate([
             hdfc_module_1.HdfcModule,
             edviron_pg_module_1.EdvironPgModule,
         ],
+        exports: [check_status_service_1.CheckStatusService],
     })
 ], CheckStatusModule);
 //# sourceMappingURL=check-status.module.js.map

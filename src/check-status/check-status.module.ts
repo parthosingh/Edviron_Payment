@@ -32,7 +32,8 @@ import { RazorpayService } from 'src/razorpay/razorpay.service';
     WorldlineService,
     RazorpayNonseamlessService,
     GatepayService,
-    RazorpayService
+    RazorpayService,
+    CheckStatusService
   ],
   imports: [
     DatabaseModule,
@@ -41,5 +42,6 @@ import { RazorpayService } from 'src/razorpay/razorpay.service';
     HdfcModule,
     EdvironPgModule,
   ],
+  exports: [CheckStatusService],
 })
 export class CheckStatusModule {}
