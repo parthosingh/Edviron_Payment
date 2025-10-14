@@ -131,7 +131,7 @@ export class CollectService {
         account?: string;
         percentage?: number;
         amount?: number;
-        name?:string;
+        name?: string;
         notes?: {
           branch?: string;
           name?: string;
@@ -145,6 +145,7 @@ export class CollectService {
       razorpay_id?: string | null;
       razorpay_secret?: string | null;
       razorpay_mid?: string | null;
+      razorpay_account?: string | null;
     },
     gatepay_credentials?: {
       gatepay_mid?: string | null;
@@ -157,20 +158,21 @@ export class CollectService {
       razorpay_id?: string | null;
       razorpay_secret?: string | null;
       razorpay_mid?: string | null;
+      razorpay_account?: string | null;
     },
     isSelectGateway?: boolean,
     isEasebuzzNonpartner?: boolean,
     easebuzz_non_partner_cred?: {
-        easebuzz_salt: string;
-        easebuzz_key: string;
-        easebuzz_merchant_email: string;
-        easebuzz_submerchant_id: string;
-      },
+      easebuzz_salt: string;
+      easebuzz_key: string;
+      easebuzz_merchant_email: string;
+      easebuzz_submerchant_id: string;
+    },
     razorpay_partner?: boolean,
 
   ): Promise<{ url: string; request: CollectRequest }> {
-    console.log(vendor,'vendor to save in db');
-    
+    console.log(vendor, 'vendor to save in db');
+
     if (custom_order_id) {
       const count =
         await this.databaseService.CollectRequestModel.countDocuments({
@@ -184,14 +186,14 @@ export class CollectService {
     }
     const gateway = clientId === 'edviron' ? Gateway.HDFC : Gateway.PENDING;
     console.log({ isSelectGateway });
-    console.log(razorpay_vendors,'vendors'); 
-    
+    console.log(razorpay_vendors, 'vendors');
+
     const request = await new this.databaseService.CollectRequestModel({
       amount,
       callbackUrl,
       gateway: gateway,
       clientId,
-      currency : currency || "INR",
+      currency: currency || "INR",
       clientSecret,
       webHookUrl: webHook || null,
       disabled_modes,
@@ -221,22 +223,22 @@ export class CollectService {
       worldline_vendors_info: worldLine_vendors,
       razorpay_vendors_info: razorpay_vendors,
       isSplitPayments: splitPayments || false,
-      easebuzz_split_label:easebuzz_school_label,
+      easebuzz_split_label: easebuzz_school_label,
       razorpay: {
         razorpay_id: razorpay_credentials?.razorpay_id || null,
         razorpay_secret: razorpay_credentials?.razorpay_secret || null,
         razorpay_mid: razorpay_credentials?.razorpay_mid || null,
+        razorpay_account: razorpay_credentials?.razorpay_account || null,
       },
       isCFNonSeamless: isCFNonSeamless || false,
       razorpay_seamless: {
         razorpay_id: razorpay_seamless_credentials?.razorpay_id || null,
         razorpay_secret: razorpay_seamless_credentials?.razorpay_secret || null,
         razorpay_mid: razorpay_seamless_credentials?.razorpay_mid || null,
+        razorpay_account: razorpay_seamless_credentials?.razorpay_account || null,
       },
       isMasterGateway: isSelectGateway || false
     }).save();
-
-    console.log(request, "request")
 
     await new this.databaseService.CollectRequestStatusModel({
       collect_id: request._id,
@@ -249,7 +251,7 @@ export class CollectService {
     let non_seamless_payment_links: any = {
       cashfree: null,
       easebuzz: null,
-      edv_easebuzz:null,
+      edv_easebuzz: null,
       razorpay: null,
       ccavenue: null,
       pay_u: null,
@@ -290,11 +292,9 @@ export class CollectService {
       razorpay_credentials?.razorpay_secret &&
       razorpay_credentials?.razorpay_mid
     ) {
-      console.log(razorpay_vendors,'checking vendors');
-      
       
       if (splitPayments && razorpay_vendors && razorpay_vendors.length > 0) {
-        request.vendors_info=vendor
+        request.vendors_info = vendor
         await request.save()
         razorpay_vendors.map(async (info) => {
           const {
@@ -615,29 +615,29 @@ export class CollectService {
     // }
 
     // EASEBUZZ NON PARTNER MASTERGATEWAY
-    if(isSelectGateway){
-      console.log({isEasebuzzNonpartner},easebuzz_non_partner_cred);
-      
-      if(
+    if (isSelectGateway) {
+      console.log({ isEasebuzzNonpartner }, easebuzz_non_partner_cred);
+
+      if (
         isEasebuzzNonpartner &&
         easebuzz_non_partner_cred &&
         easebuzz_non_partner_cred.easebuzz_key &&
         easebuzz_non_partner_cred.easebuzz_merchant_email &&
         easebuzz_non_partner_cred.easebuzz_submerchant_id
-      ){
+      ) {
         console.log('easebuzz non partner');
-        
-        request.easebuzz_sub_merchant_id=easebuzz_non_partner_cred.easebuzz_submerchant_id,
-        request.easebuzz_non_partner=true
-        request.easebuzz_non_partner_cred=easebuzz_non_partner_cred
+
+        request.easebuzz_sub_merchant_id = easebuzz_non_partner_cred.easebuzz_submerchant_id,
+          request.easebuzz_non_partner = true
+        request.easebuzz_non_partner_cred = easebuzz_non_partner_cred
         await request.save()
-        const schoolName=school_name || ' '
-        const info=await this.easebuzzService.createOrderV2NonSplit(
+        const schoolName = school_name || ' '
+        const info = await this.easebuzzService.createOrderV2NonSplit(
           request,
           platform_charges,
           schoolName
-        )       
-        non_seamless_payment_links.edv_easebuzz=info.collect_request_url
+        )
+        non_seamless_payment_links.edv_easebuzz = info.collect_request_url
 
       }
     }
@@ -661,8 +661,8 @@ export class CollectService {
             )
             : await this.hdfcService.collect(request)
         )!;
-        console.log(transaction,'p');
-        
+        console.log(transaction, 'p');
+
         await this.databaseService.CollectRequestModel.updateOne(
           {
             _id: request._id,
@@ -685,16 +685,16 @@ export class CollectService {
     const transaction = (
       gateway === Gateway.PENDING
         ? await this.edvironPgService.collect(
-            request,
-            platform_charges,
-            school_name,
-            splitPayments || false,
-            vendor,
-            vendorgateway,
-            easebuzzVendors,
-            cashfreeVedors,
-            easebuzz_school_label,
-          )
+          request,
+          platform_charges,
+          school_name,
+          splitPayments || false,
+          vendor,
+          vendorgateway,
+          easebuzzVendors,
+          cashfreeVedors,
+          easebuzz_school_label,
+        )
         : await this.hdfcService.collect(request)
     )!;
 

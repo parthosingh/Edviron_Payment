@@ -102,16 +102,17 @@ let CollectService = class CollectService {
                 razorpay_id: razorpay_credentials?.razorpay_id || null,
                 razorpay_secret: razorpay_credentials?.razorpay_secret || null,
                 razorpay_mid: razorpay_credentials?.razorpay_mid || null,
+                razorpay_account: razorpay_credentials?.razorpay_account || null,
             },
             isCFNonSeamless: isCFNonSeamless || false,
             razorpay_seamless: {
                 razorpay_id: razorpay_seamless_credentials?.razorpay_id || null,
                 razorpay_secret: razorpay_seamless_credentials?.razorpay_secret || null,
                 razorpay_mid: razorpay_seamless_credentials?.razorpay_mid || null,
+                razorpay_account: razorpay_seamless_credentials?.razorpay_account || null,
             },
             isMasterGateway: isSelectGateway || false
         }).save();
-        console.log(request, "request");
         await new this.databaseService.CollectRequestStatusModel({
             collect_id: request._id,
             status: collect_req_status_schema_1.PaymentStatus.PENDING,
@@ -150,7 +151,6 @@ let CollectService = class CollectService {
         if (razorpay_credentials?.razorpay_id &&
             razorpay_credentials?.razorpay_secret &&
             razorpay_credentials?.razorpay_mid) {
-            console.log(razorpay_vendors, 'checking vendors');
             if (splitPayments && razorpay_vendors && razorpay_vendors.length > 0) {
                 request.vendors_info = vendor;
                 await request.save();

@@ -67,6 +67,10 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                             : undefined,
                     };
                 });
+                const remainder = totalPaise - computed;
+                if (remainder !== 0 && transfers.length > 0) {
+                    transfers[0].amount += remainder;
+                }
                 data.transfers = transfers;
             }
             const config = {
@@ -80,6 +84,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 },
                 data,
             };
+            console.log(config, 'config');
             const { data: rpRes } = await axios_1.default.request(config);
             if (rpRes.status !== 'created') {
                 throw new common_1.BadRequestException('Failed to create Razorpay order');

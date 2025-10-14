@@ -60,6 +60,7 @@ let RazorpayService = class RazorpayService {
                 },
             };
             if (razorpay_vendors_info?.length) {
+                console.log(razorpay_vendors_info, 'razorpay_vendors_info');
                 let computed = 0;
                 const transfers = razorpay_vendors_info.map((v, idx) => {
                     let amtPaise;
@@ -85,7 +86,37 @@ let RazorpayService = class RazorpayService {
                             : undefined,
                     };
                 });
+                const remainder = totalPaise - computed;
+                console.log(remainder, 'reminder');
                 data.transfers = transfers;
+                if (remainder !== 0 && transfers.length > 0) {
+                    const mainAccount = {
+                        account: collectRequest.razorpay_seamless.razorpay_account,
+                        amount: remainder,
+                        currency: 'INR',
+                        notes: {},
+                        linked_account_notes: undefined,
+                        on_hold: undefined,
+                        on_hold_until: undefined
+                    };
+                    data.transfers.push(mainAccount);
+                }
+            }
+            else {
+                if (collectRequest.razorpay_seamless.razorpay_account) {
+                    console.log(collectRequest.razorpay_seamless, 'test');
+                    const nonSplitConfig = {
+                        account: collectRequest.razorpay_seamless.razorpay_account,
+                        amount: collectRequest.amount * 100,
+                        currency: 'INR',
+                        notes: {},
+                        linked_account_notes: undefined,
+                        on_hold: undefined,
+                        on_hold_until: undefined
+                    };
+                    data.transfers = [nonSplitConfig];
+                }
+                ;
             }
             const createOrderConfig = {
                 method: 'post',
@@ -101,6 +132,7 @@ let RazorpayService = class RazorpayService {
                 },
                 data,
             };
+            console.log(data, 'create');
             const { data: razorpayRes } = await axios_1.default.request(createOrderConfig);
             await collectRequest.constructor.updateOne({ _id }, {
                 $set: {
@@ -110,6 +142,7 @@ let RazorpayService = class RazorpayService {
             return razorpayRes;
         }
         catch (error) {
+            console.log(error.response, 'error in getting razorpay');
             throw new common_1.BadRequestException(error.response?.data || error.message);
         }
     }
