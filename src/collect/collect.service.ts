@@ -265,6 +265,7 @@ export class CollectService {
       console.log('enter atom');
       const { url, collect_req } =
         await this.nttdataService.createOrder(request);
+        
       setTimeout(
         () => {
           this.nttdataService.terminateOrder(collect_req._id.toString());
