@@ -131,7 +131,6 @@ export class RazorpayNonseamlessService {
         { _id },
         {
           $set: {
-            gateway: Gateway.EDVIRON_RAZORPAY,
             'razorpay.order_id': rpRes.id,
           },
         },
@@ -236,7 +235,6 @@ export class RazorpayNonseamlessService {
         { _id },
         {
           $set: {
-            gateway: Gateway.EDVIRON_RAZORPAY,
             razorpay_partner: true,
             'razorpay.order_id': rpRes.id,
           },

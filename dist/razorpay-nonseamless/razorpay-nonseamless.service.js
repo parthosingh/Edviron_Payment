@@ -115,7 +115,6 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
             }
             await collectRequest.constructor.updateOne({ _id }, {
                 $set: {
-                    gateway: collect_request_schema_1.Gateway.EDVIRON_RAZORPAY,
                     'razorpay.order_id': rpRes.id,
                 },
             });
@@ -198,7 +197,6 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
             }
             await collectRequest.constructor.updateOne({ _id }, {
                 $set: {
-                    gateway: collect_request_schema_1.Gateway.EDVIRON_RAZORPAY,
                     razorpay_partner: true,
                     'razorpay.order_id': rpRes.id,
                 },
