@@ -105,6 +105,10 @@ __decorate([
     __metadata("design:type", String)
 ], Installments.prototype, "gst", void 0);
 __decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], Installments.prototype, "webhook_url", void 0);
+__decorate([
     (0, mongoose_1.Prop)({ required: false, default: false }),
     __metadata("design:type", Boolean)
 ], Installments.prototype, "isSplitPayments", void 0);

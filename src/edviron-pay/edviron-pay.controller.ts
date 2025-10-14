@@ -46,7 +46,8 @@ export class EdvironPayController {
       allvendors,
       cashfreeVedors,
       easebuzzVendors,
-      callback_url
+      callback_url,
+      webhook_url
     } = body;
 
     const { student_id, student_number, student_name, student_email } =
@@ -86,6 +87,7 @@ export class EdvironPayController {
               student_email,
               additional_data,
               callback_url,
+              webhook_url,
               amount: installment.amount,
               net_amount: installment.net_amount,
               discount: installment.discount,
@@ -116,6 +118,7 @@ export class EdvironPayController {
               body: installment.body,
               gateway,
               callback_url,
+              webhook_url,
               additional_data,
               student_number,
               student_name,
@@ -277,6 +280,7 @@ export class EdvironPayController {
           bank_holder_name: string;
           bank_name: string;
           ifsc: string;
+          account_no: string;
         };
         recivers: {
           bank_holder_name: string;
@@ -678,6 +682,7 @@ export class EdvironPayController {
                   netBankingDetails?.payer?.bank_holder_name || 'N/A',
                 bank_name: netBankingDetails?.payer?.bank_name || 'N/A',
                 ifsc: netBankingDetails?.payer?.ifsc || 'N/A',
+                account_no: netBankingDetails?.payer?.account_no || 'N/A',
               },
               recivers: {
                 bank_holder_name:

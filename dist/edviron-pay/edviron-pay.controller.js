@@ -27,7 +27,7 @@ let EdvironPayController = class EdvironPayController {
         this.edvironPay = edvironPay;
     }
     async upsertInstallments(body) {
-        const { school_id, trustee_id, student_detail, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, allvendors, cashfreeVedors, easebuzzVendors, callback_url } = body;
+        const { school_id, trustee_id, student_detail, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, allvendors, cashfreeVedors, easebuzzVendors, callback_url, webhook_url } = body;
         const { student_id, student_number, student_name, student_email } = student_detail;
         await this.edvironPay.createStudent(student_detail, school_id, trustee_id);
         if (isInstallement && installments && installments.length > 0) {
@@ -58,6 +58,7 @@ let EdvironPayController = class EdvironPayController {
                         student_email,
                         additional_data,
                         callback_url,
+                        webhook_url,
                         amount: installment.amount,
                         net_amount: installment.net_amount,
                         discount: installment.discount,
@@ -85,6 +86,7 @@ let EdvironPayController = class EdvironPayController {
                         body: installment.body,
                         gateway,
                         callback_url,
+                        webhook_url,
                         additional_data,
                         student_number,
                         student_name,
@@ -372,6 +374,7 @@ let EdvironPayController = class EdvironPayController {
                                 bank_holder_name: netBankingDetails?.payer?.bank_holder_name || 'N/A',
                                 bank_name: netBankingDetails?.payer?.bank_name || 'N/A',
                                 ifsc: netBankingDetails?.payer?.ifsc || 'N/A',
+                                account_no: netBankingDetails?.payer?.account_no || 'N/A',
                             },
                             recivers: {
                                 bank_holder_name: netBankingDetails?.recivers.bank_holder_name || 'N/A',

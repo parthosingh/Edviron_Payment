@@ -79,6 +79,9 @@ export class Installments {
   @Prop({})
   gst: string;
 
+  @Prop({ required: false })
+  webhook_url: string;
+
   @Prop({ required: false, default: false })
   isSplitPayments: boolean;
 
