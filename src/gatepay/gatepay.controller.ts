@@ -61,6 +61,8 @@ export class GatepayController {
       if (!collect_request || !collect_req_status) {
         throw new BadRequestException('Request not found');
       }
+      collect_request.gateway = Gateway.EDVIRON_GATEPAY
+      await collect_request.save()
       const { gatepay_key, gatepay_iv } = collect_request.gatepay;
 
       const decrypted = await this.gatepayService.decryptEas(

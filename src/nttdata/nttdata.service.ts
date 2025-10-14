@@ -143,7 +143,7 @@ export class NttdataService {
             $set: {
               'ntt_data.ntt_atom_token': atomTokenId,
               'ntt_data.ntt_atom_txn_id': _id.toString(),
-              gateway: Gateway.EDVIRON_NTTDATA,
+              // gateway: Gateway.EDVIRON_NTTDATA,
             },
           },
           { new: true },

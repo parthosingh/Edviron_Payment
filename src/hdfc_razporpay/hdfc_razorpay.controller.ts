@@ -207,6 +207,8 @@ export class HdfcRazorpayController {
           collectIdObject,
         );
       if (!collectReq) throw new Error('Collect request not found');
+      collectReq.gateway = Gateway.EDVIRON_HDFC_RAZORPAY;
+      await collectReq.save();
 
       const transaction_amount = amount / 100 || null;
       let payment_method = method || null;

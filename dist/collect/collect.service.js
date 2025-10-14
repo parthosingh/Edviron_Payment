@@ -222,19 +222,17 @@ let CollectService = class CollectService {
             gatepay_credentials.gatepay_terminal_id) {
             console.log('gatepay enter9');
             if (!request.gatepay) {
-                (request.gateway = collect_request_schema_1.Gateway.EDVIRON_GATEPAY),
-                    (request.gatepay = {
-                        gatepay_mid: gatepay_credentials?.gatepay_mid,
-                        gatepay_key: gatepay_credentials?.gatepay_key,
-                        gatepay_iv: gatepay_credentials?.gatepay_iv,
-                        gatepay_terminal_id: gatepay_credentials?.gatepay_terminal_id,
-                        txnId: '',
-                        token: '',
-                    });
+                (request.gatepay = {
+                    gatepay_mid: gatepay_credentials?.gatepay_mid,
+                    gatepay_key: gatepay_credentials?.gatepay_key,
+                    gatepay_iv: gatepay_credentials?.gatepay_iv,
+                    gatepay_terminal_id: gatepay_credentials?.gatepay_terminal_id,
+                    txnId: '',
+                    token: '',
+                });
             }
             else {
-                (request.gateway = collect_request_schema_1.Gateway.EDVIRON_GATEPAY),
-                    (request.gatepay.gatepay_mid = gatepay_credentials?.gatepay_mid);
+                (request.gatepay.gatepay_mid = gatepay_credentials?.gatepay_mid);
                 request.gatepay.gatepay_key = gatepay_credentials?.gatepay_key;
                 request.gatepay.gatepay_iv = gatepay_credentials?.gatepay_iv;
                 request.gatepay.txnId = '';
@@ -264,15 +262,7 @@ let CollectService = class CollectService {
             request.hdfc_razorpay_id = hdfc_razorpay_id;
             request.hdfc_razorpay_secret = hdfc_razorpay_secret;
             request.hdfc_razorpay_mid = hdfc_razorpay_mid;
-            request.gateway = collect_request_schema_1.Gateway.EDVIRON_HDFC_RAZORPAY;
             await request.save();
-            await new this.databaseService.CollectRequestStatusModel({
-                collect_id: request._id,
-                status: collect_req_status_schema_1.PaymentStatus.PENDING,
-                order_amount: request.amount,
-                transaction_amount: request.amount,
-                payment_method: null,
-            }).save();
             const orderData = await this.hdfcRazorpay.createOrder(request);
             if (orderData.status === 'created') {
                 request.hdfc_razorpay_order_id = orderData.id;
@@ -399,7 +389,7 @@ let CollectService = class CollectService {
                     _id: request._id,
                 }, {
                     payment_data: JSON.stringify(transaction.url),
-                }, { new: true });
+                }, { new: true, upsert: true });
                 non_seamless_payment_links.edviron_pg = transaction.url;
                 request.non_seamless_payment_links = non_seamless_payment_links;
             }
