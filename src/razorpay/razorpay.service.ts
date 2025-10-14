@@ -106,7 +106,7 @@ export class RazorpayService {
             amount: remainder,
             currency: 'INR',
             notes: {},
-            linked_account_notes: undefined,
+            linked_account_notes: undefined, 
             on_hold: undefined,
             on_hold_until: undefined
           };
