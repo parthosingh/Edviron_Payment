@@ -265,6 +265,7 @@ export class CollectService {
       console.log('enter atom');
       const { url, collect_req } =
         await this.nttdataService.createOrder(request);
+        
       setTimeout(
         () => {
           this.nttdataService.terminateOrder(collect_req._id.toString());
@@ -397,7 +398,6 @@ export class CollectService {
     ) {
       console.log('gatepay enter9');
       if (!request.gatepay) {
-        (request.gateway = Gateway.EDVIRON_GATEPAY),
           (request.gatepay = {
             gatepay_mid: gatepay_credentials?.gatepay_mid,
             gatepay_key: gatepay_credentials?.gatepay_key,
@@ -407,7 +407,6 @@ export class CollectService {
             token: '',
           });
       } else {
-        (request.gateway = Gateway.EDVIRON_GATEPAY),
           (request.gatepay.gatepay_mid = gatepay_credentials?.gatepay_mid);
         request.gatepay.gatepay_key = gatepay_credentials?.gatepay_key;
         request.gatepay.gatepay_iv = gatepay_credentials?.gatepay_iv;
@@ -442,17 +441,9 @@ export class CollectService {
       request.hdfc_razorpay_id = hdfc_razorpay_id;
       request.hdfc_razorpay_secret = hdfc_razorpay_secret;
       request.hdfc_razorpay_mid = hdfc_razorpay_mid;
-      request.gateway = Gateway.EDVIRON_HDFC_RAZORPAY;
 
       await request.save(); // update the existing request
 
-      await new this.databaseService.CollectRequestStatusModel({
-        collect_id: request._id,
-        status: PaymentStatus.PENDING,
-        order_amount: request.amount,
-        transaction_amount: request.amount,
-        payment_method: null,
-      }).save();
       const orderData = await this.hdfcRazorpay.createOrder(request);
       if (orderData.status === 'created') {
         request.hdfc_razorpay_order_id = orderData.id;
@@ -670,7 +661,7 @@ export class CollectService {
           {
             payment_data: JSON.stringify(transaction.url),
           },
-          { new: true },
+          { new: true , upsert : true},
         );
         non_seamless_payment_links.edviron_pg = transaction.url;
         request.non_seamless_payment_links = non_seamless_payment_links;

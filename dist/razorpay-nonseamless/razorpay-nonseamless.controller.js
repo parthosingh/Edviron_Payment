@@ -226,6 +226,8 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             if (!collect_request || !collect_req_status) {
                 throw new common_1.NotFoundException('Order not found');
             }
+            collect_request.gateway = collect_request_schema_1.Gateway.EDVIRON_RAZORPAY;
+            await collect_request.save();
             const status = await this.razorpayServiceModel.getPaymentStatus(collect_request.razorpay.order_id.toString(), collect_request);
             let payment_method = status.details.payment_mode || null;
             let payload = status?.details?.payment_methods || {};
@@ -444,6 +446,8 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             if (!collect_request || !collect_req_status) {
                 throw new common_1.NotFoundException('Order not found');
             }
+            collect_request.gateway = collect_request_schema_1.Gateway.EDVIRON_RAZORPAY;
+            await collect_request.save();
             const status = await this.razorpayServiceModel.getPaymentStatus(collect_request.razorpay.order_id.toString(), collect_request);
             let payment_method = status.details.payment_mode || null;
             let payload = status?.details?.payment_methods || {};

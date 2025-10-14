@@ -14,7 +14,6 @@ const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const crypto = require("crypto");
 const axios_1 = require("axios");
-const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const sign_1 = require("../utils/sign");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const mongoose_1 = require("mongoose");
@@ -106,7 +105,6 @@ let NttdataService = class NttdataService {
                 $set: {
                     'ntt_data.ntt_atom_token': atomTokenId,
                     'ntt_data.ntt_atom_txn_id': _id.toString(),
-                    gateway: collect_request_schema_1.Gateway.EDVIRON_NTTDATA,
                 },
             }, { new: true });
             if (!updatedRequest)

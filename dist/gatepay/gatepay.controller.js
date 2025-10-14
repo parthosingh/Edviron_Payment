@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("mongoose");
 const database_service_1 = require("../database/database.service");
 const gatepay_service_1 = require("./gatepay.service");
+const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 let GatepayController = class GatepayController {
     constructor(databaseService, gatepayService) {
@@ -60,6 +61,8 @@ let GatepayController = class GatepayController {
             if (!collect_request || !collect_req_status) {
                 throw new common_1.BadRequestException('Request not found');
             }
+            collect_request.gateway = collect_request_schema_1.Gateway.EDVIRON_GATEPAY;
+            await collect_request.save();
             const { gatepay_key, gatepay_iv } = collect_request.gatepay;
             const decrypted = await this.gatepayService.decryptEas(response, gatepay_key, gatepay_iv);
             const parseData = JSON.parse(JSON.parse(decrypted));

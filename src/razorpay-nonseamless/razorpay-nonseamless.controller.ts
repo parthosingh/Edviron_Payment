@@ -249,6 +249,8 @@ export class RazorpayNonseamlessController {
         throw new NotFoundException('Order not found');
       }
 
+      collect_request.gateway = Gateway.EDVIRON_RAZORPAY
+      await collect_request.save();
       const status = await this.razorpayServiceModel.getPaymentStatus(
         collect_request.razorpay.order_id.toString(),
         collect_request,
@@ -512,7 +514,8 @@ export class RazorpayNonseamlessController {
       if (!collect_request || !collect_req_status) {
         throw new NotFoundException('Order not found');
       }
-
+      collect_request.gateway = Gateway.EDVIRON_RAZORPAY
+      await collect_request.save();
       const status = await this.razorpayServiceModel.getPaymentStatus(
         collect_request.razorpay.order_id.toString(),
         collect_request,

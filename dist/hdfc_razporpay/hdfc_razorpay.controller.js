@@ -140,6 +140,8 @@ let HdfcRazorpayController = class HdfcRazorpayController {
             const collectReq = await this.databaseService.CollectRequestModel.findById(collectIdObject);
             if (!collectReq)
                 throw new Error('Collect request not found');
+            collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_HDFC_RAZORPAY;
+            await collectReq.save();
             const transaction_amount = amount / 100 || null;
             let payment_method = method || null;
             if (payment_method === 'netbanking') {
