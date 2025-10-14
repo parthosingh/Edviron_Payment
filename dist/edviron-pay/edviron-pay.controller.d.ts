@@ -172,6 +172,7 @@ export declare class EdvironPayController {
                 bank_holder_name: string;
                 bank_name: string;
                 ifsc: string;
+                account_no: string;
             };
             recivers: {
                 bank_holder_name: string;
