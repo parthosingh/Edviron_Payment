@@ -41,6 +41,7 @@ export interface I_Razorpay {
   order_id: string;
   payment_id: string;
   razorpay_signature: string;
+  razorpay_account: string;
 }
 
 export interface Non_Seamless_Payment_Links {
@@ -603,6 +604,7 @@ export class CollectRequest {
       order_id: { type: String, required: false, default: null },
       payment_id: { type: String, required: false, default: null },
       razorpay_signature: { type: String, required: false, default: null },
+      razorpay_account: { type: String, required: false, default: null },
     },
     _id: false,
   })
@@ -617,6 +619,7 @@ export class CollectRequest {
       order_id: { type: String, required: false, default: null },
       payment_id: { type: String, required: false, default: null },
       razorpay_signature: { type: String, required: false, default: null },
+      razorpay_account: { type: String, required: false, default: null },
     },
     _id: false,
   })

@@ -85,6 +85,7 @@ export declare class CollectService {
         razorpay_id?: string | null;
         razorpay_secret?: string | null;
         razorpay_mid?: string | null;
+        razorpay_account?: string | null;
     }, gatepay_credentials?: {
         gatepay_mid?: string | null;
         gatepay_terminal_id?: string | null;
@@ -94,6 +95,7 @@ export declare class CollectService {
         razorpay_id?: string | null;
         razorpay_secret?: string | null;
         razorpay_mid?: string | null;
+        razorpay_account?: string | null;
     }, isSelectGateway?: boolean, isEasebuzzNonpartner?: boolean, easebuzz_non_partner_cred?: {
         easebuzz_salt: string;
         easebuzz_key: string;

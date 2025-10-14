@@ -61,6 +61,7 @@ export interface I_Razorpay {
     order_id: string;
     payment_id: string;
     razorpay_signature: string;
+    razorpay_account: string;
 }
 export interface Non_Seamless_Payment_Links {
     cashfree: string | null;

@@ -68,6 +68,34 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     };
                 });
                 data.transfers = transfers;
+                const remainder = totalPaise - computed;
+                if (remainder !== 0 && transfers.length > 0) {
+                    const mainAccount = {
+                        account: collectRequest.razorpay.razorpay_account,
+                        amount: remainder,
+                        currency: 'INR',
+                        notes: {},
+                        linked_account_notes: undefined,
+                        on_hold: undefined,
+                        on_hold_until: undefined
+                    };
+                    data.transfers.push(mainAccount);
+                }
+            }
+            else {
+                if (collectRequest.razorpay.razorpay_account) {
+                    const nonSplitConfig = {
+                        account: collectRequest.razorpay.razorpay_account,
+                        amount: collectRequest.amount * 100,
+                        currency: 'INR',
+                        notes: {},
+                        linked_account_notes: undefined,
+                        on_hold: undefined,
+                        on_hold_until: undefined
+                    };
+                    data.transfers = [nonSplitConfig];
+                }
+                ;
             }
             const config = {
                 method: 'post',
@@ -80,6 +108,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                 },
                 data,
             };
+            console.log(config, 'config non seamless');
             const { data: rpRes } = await axios_1.default.request(config);
             if (rpRes.status !== 'created') {
                 throw new common_1.BadRequestException('Failed to create Razorpay order');

@@ -32,7 +32,7 @@ export class CollectController {
   constructor(
     private readonly collectService: CollectService,
     private readonly databaseService: DatabaseService,
-  ) {}
+  ) { }
   @Post('/')
   async collect(
     @Body()
@@ -83,6 +83,7 @@ export class CollectController {
         razorpay_id?: string | null;
         razorpay_secret?: string | null;
         razorpay_mid?: string | null;
+        razorpay_account?: string | null;
       };
       gatepay_credentials?: {
         gatepay_mid?: string | null;
@@ -94,6 +95,7 @@ export class CollectController {
         razorpay_id?: string | null;
         razorpay_secret?: string | null;
         razorpay_mid?: string | null;
+        razorpay_account?: string | null;
       };
       vendors_info?: [
         {
@@ -148,15 +150,15 @@ export class CollectController {
           on_hold_until?: Date;
         },
       ],
-      isEasebuzzNonpartner?:boolean,
-    easebuzz_non_partner_cred?: {
+      isEasebuzzNonpartner?: boolean,
+      easebuzz_non_partner_cred?: {
         easebuzz_salt: string;
         easebuzz_key: string;
         easebuzz_merchant_email: string;
         easebuzz_submerchant_id: string;
       },
-      isSelectGateway?:boolean
-      razorpay_partner?:boolean
+      isSelectGateway?: boolean
+      razorpay_partner?: boolean
     },
   ) {
     const {
@@ -217,7 +219,7 @@ export class CollectController {
       razorpay_partner
     } = body;
     // console.log(razorpay_vendors,'razorpay_vendors');
-     
+
 
     if (!jwt) throw new BadRequestException('JWT not provided');
     if (!amount) throw new BadRequestException('Amount not provided');
