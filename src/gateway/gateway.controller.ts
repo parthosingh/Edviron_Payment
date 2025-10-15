@@ -37,7 +37,7 @@ export class GatewayController {
             if(request.paymentIds?.cashfree_id){
                 edviron_gateways.cashfree=`${request.non_seamless_payment_links.edviron_pg}&gateway=cashfree`
             }
-            if(request.paymentIds?.easebuzz_id){
+            if(request.paymentIds?.easebuzz_id || request.non_seamless_payment_links.edv_easebuzz){
                 edviron_gateways.easebuzz=`${request.non_seamless_payment_links.edv_easebuzz}&gateway=easebuzz`
             }
             // handle razorpay seamless after implementing
