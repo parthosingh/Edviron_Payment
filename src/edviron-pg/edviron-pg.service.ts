@@ -1334,7 +1334,7 @@ export class EdvironPgService implements GatewayService {
             createdAt: 1,
             updatedAt: 1,
             error_details: '$collect_req_status.error_details',
-            currency:1
+            currency: 1,
           },
         },
       ]);
@@ -1428,7 +1428,7 @@ export class EdvironPgService implements GatewayService {
     start_date: string,
     end_date: string,
     status?: string | null,
-    school_id?: string[] ,
+    school_id?: string[],
   ) {
     try {
       const endOfDay = new Date(end_date);
@@ -2477,6 +2477,55 @@ export class EdvironPgService implements GatewayService {
       return data;
     } catch (error) {
       throw new BadRequestException(error.message);
+    }
+  }
+
+  async getNonpartnerStatus(collect_id: string) {
+    try {
+      const request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!request) {
+        throw new BadRequestException('Collect Request not found');
+      }
+      const collect_req_status =
+        await this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: request._id,
+        });
+      if (!collect_req_status) {
+        throw new BadRequestException('Collect Request not found');
+      }
+      const date = new Date(collect_req_status.payment_time);
+      const istDate = date.toLocaleDateString('en-CA', {
+        timeZone: 'Asia/Kolkata',
+      });
+      const transformedResponse = {
+        status: collect_req_status?.status,
+        status_code: 200,
+        custom_order_id: request.custom_order_id,
+        amount: collect_req_status.order_amount,
+        transaction_amount:
+          collect_req_status.transaction_amount ||
+          collect_req_status.order_amount,
+        details: {
+          payment_mode: collect_req_status.payment_method,
+          bank_ref:
+            collect_req_status?.bank_reference &&
+            collect_req_status?.bank_reference,
+          payment_methods:
+            collect_req_status?.details &&
+            JSON.parse(collect_req_status.details as string),
+          transaction_time: collect_req_status.payment_time.toISOString(),
+          formattedTransactionDate: istDate,
+          order_status: collect_req_status?.status,
+          isSettlementComplete: null,
+          transfer_utr: null,
+          service_charge: null,
+        },
+        capture_status: collect_req_status?.status,
+      };
+      return transformedResponse
+    } catch (error) {
+      throw new BadRequestException(error.message)
     }
   }
 }

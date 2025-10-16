@@ -135,7 +135,7 @@ export class CheckStatusService {
 
       if (collectRequest.gateway === Gateway.EDVIRON_EASEBUZZ) {
         console.log('testing easebuzz status response v2');
-        
+
         const easebuzzStatus = await this.easebuzzService.statusResponsev2(
           collect_request_id.toString(),
           collectRequest,
@@ -175,7 +175,8 @@ export class CheckStatusService {
       }
       return await this.checkExpiry(collectRequest);
     }
-
+console.log('here end fist')
+console.log(collectRequest?.gateway)
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
         return await this.hdfcService.checkStatus(collect_request_id);
@@ -206,6 +207,13 @@ export class CheckStatusService {
         );
         return data;
 
+      case Gateway.EDVIRON_PAY:
+        const edviron_pay_response =
+          await this.edvironPgService.getNonpartnerStatus(
+            collectRequest._id.toString(),
+          );
+        return edviron_pay_response
+
       case Gateway.EDVIRON_GATEPAY:
         const gatepay_data = await this.gatepayService.getPaymentStatus(
           collectRequest._id.toString(),
@@ -220,11 +228,12 @@ export class CheckStatusService {
         );
         return razorpayData;
 
-        case Gateway.EDVIRON_RAZORPAY_SEAMLESS:
-        const razorpayDataseamless = await this.razorpay_seamless.getPaymentStatus(
-          collectRequest.razorpay_seamless.order_id.toString(),
-          collectRequest,
-        );
+      case Gateway.EDVIRON_RAZORPAY_SEAMLESS:
+        const razorpayDataseamless =
+          await this.razorpay_seamless.getPaymentStatus(
+            collectRequest.razorpay_seamless.order_id.toString(),
+            collectRequest,
+          );
         return razorpayDataseamless;
 
       case Gateway.EDVIRON_EASEBUZZ:
@@ -504,7 +513,7 @@ export class CheckStatusService {
           custom_order_id: collectRequest.custom_order_id || null,
           capture_status: collect_req_status.capture_status || 'PENDING',
         };
-  
+
       case Gateway.EDVIRON_RAZORPAY:
         const razorpayData = await this.razorpayServiceModel.getPaymentStatus(
           collectRequest.razorpay.order_id.toString(),
