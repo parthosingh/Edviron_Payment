@@ -25,7 +25,7 @@ export class RazorpayNonseamlessController {
     private readonly databaseService: DatabaseService,
     private readonly razorpayServiceModel: RazorpayNonseamlessService,
     private readonly edvironPgService: EdvironPgService,
-  ) { }
+  ) {}
 
   @Get('/redirect')
   async razorpayRedirect(@Req() req: any, @Res() res: any) {
@@ -249,7 +249,7 @@ export class RazorpayNonseamlessController {
         throw new NotFoundException('Order not found');
       }
 
-      collect_request.gateway = Gateway.EDVIRON_RAZORPAY
+      collect_request.gateway = Gateway.EDVIRON_RAZORPAY;
       await collect_request.save();
       const status = await this.razorpayServiceModel.getPaymentStatus(
         collect_request.razorpay.order_id.toString(),
@@ -260,7 +260,7 @@ export class RazorpayNonseamlessController {
       let payload = status?.details?.payment_methods || {};
 
       let detail;
-      let platform_type = 'Others'
+      let platform_type = 'Others';
       let pg_mode = payment_method;
       console.log(payment_method, 'payment_method');
       switch (payment_method) {
@@ -274,8 +274,10 @@ export class RazorpayNonseamlessController {
           break;
 
         case 'credit':
-          platform_type = payload?.card?.card_network
-            (pg_mode = 'credit_card'), console.log(payload, 'payloadin here');
+          (platform_type = payload?.card?.card_network(
+            (pg_mode = 'credit_card'),
+          )),
+            console.log(payload, 'payloadin here');
           detail = {
             card: {
               card_bank_name: payload?.card?.card_type || null,
@@ -290,8 +292,9 @@ export class RazorpayNonseamlessController {
           break;
 
         case 'debit':
-          platform_type = payload?.card?.card_network
+          (platform_type = payload?.card?.card_network(
             (pg_mode = 'debit_card'),
+          )),
             (detail = {
               card: {
                 card_bank_name: payload?.card?.card_type || null,
@@ -306,7 +309,7 @@ export class RazorpayNonseamlessController {
           break;
 
         case 'net_banking':
-          platform_type = payload.net_banking.bank
+          platform_type = payload.net_banking.bank;
           detail = {
             netbanking: {
               channel: null,
@@ -440,8 +443,9 @@ export class RazorpayNonseamlessController {
           const config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: `${process.env.VANILLA_SERVICE_ENDPOINT
-              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collect_request.trustee_id.toString()}`,
+            url: `${
+              process.env.VANILLA_SERVICE_ENDPOINT
+            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collect_request.trustee_id.toString()}`,
             headers: {
               accept: 'application/json',
               'content-type': 'application/json',
@@ -514,7 +518,7 @@ export class RazorpayNonseamlessController {
       if (!collect_request || !collect_req_status) {
         throw new NotFoundException('Order not found');
       }
-      collect_request.gateway = Gateway.EDVIRON_RAZORPAY
+      collect_request.gateway = Gateway.EDVIRON_RAZORPAY;
       await collect_request.save();
       const status = await this.razorpayServiceModel.getPaymentStatus(
         collect_request.razorpay.order_id.toString(),
@@ -525,7 +529,7 @@ export class RazorpayNonseamlessController {
       let payload = status?.details?.payment_methods || {};
 
       let detail;
-      let platform_type = 'Others'
+      let platform_type = 'Others';
       let pg_mode = payment_method;
       console.log(payment_method, 'payment_method');
       switch (payment_method) {
@@ -539,8 +543,10 @@ export class RazorpayNonseamlessController {
           break;
 
         case 'credit':
-          platform_type = payload?.card?.card_network
-            (pg_mode = 'credit_card'), console.log(payload, 'payloadin here');
+          (platform_type = payload?.card?.card_network(
+            (pg_mode = 'credit_card'),
+          )),
+            console.log(payload, 'payloadin here');
           detail = {
             card: {
               card_bank_name: payload?.card?.card_type || null,
@@ -555,8 +561,9 @@ export class RazorpayNonseamlessController {
           break;
 
         case 'debit':
-          platform_type = payload?.card?.card_network
+          (platform_type = payload?.card?.card_network(
             (pg_mode = 'debit_card'),
+          )),
             (detail = {
               card: {
                 card_bank_name: payload?.card?.card_type || null,
@@ -571,7 +578,7 @@ export class RazorpayNonseamlessController {
           break;
 
         case 'net_banking':
-          platform_type = payload.net_banking.bank
+          platform_type = payload.net_banking.bank;
           detail = {
             netbanking: {
               channel: null,
@@ -705,8 +712,9 @@ export class RazorpayNonseamlessController {
           const config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: `${process.env.VANILLA_SERVICE_ENDPOINT
-              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collect_request.trustee_id.toString()}`,
+            url: `${
+              process.env.VANILLA_SERVICE_ENDPOINT
+            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collect_request.trustee_id.toString()}`,
             headers: {
               accept: 'application/json',
               'content-type': 'application/json',
@@ -861,8 +869,8 @@ export class RazorpayNonseamlessController {
                   card.international === false
                     ? 'IN'
                     : card.international === true
-                      ? 'OI'
-                      : null,
+                    ? 'OI'
+                    : null,
                 card_network: card.network || null,
                 card_number: card_id || null,
                 card_sub_type: card.sub_type || null,
@@ -966,8 +974,7 @@ export class RazorpayNonseamlessController {
           })(),
         };
 
-        // Commission 
-
+        // Commission
 
         if (webhookUrl !== null) {
           let webhook_key: null | string = null;
@@ -979,8 +986,9 @@ export class RazorpayNonseamlessController {
             const config = {
               method: 'get',
               maxBodyLength: Infinity,
-              url: `${process.env.VANILLA_SERVICE_ENDPOINT
-                }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+              url: `${
+                process.env.VANILLA_SERVICE_ENDPOINT
+              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
               headers: {
                 accept: 'application/json',
                 'content-type': 'application/json',
@@ -1048,22 +1056,43 @@ export class RazorpayNonseamlessController {
           break;
 
         case 'card':
-          detail = {
-            card: {
-              card_bank_name: card.type || null,
-              card_country:
-                card.international === false
-                  ? 'IN'
-                  : card.international === true
+          if (card.type === 'debit') {
+            payment_method = 'debit_card';
+            detail = {
+              card: {
+                card_bank_name: card.type || null,
+                card_country:
+                  card.international === false
+                    ? 'IN'
+                    : card.international === true
                     ? 'OI'
                     : null,
-              card_network: card.network || null,
-              card_number: card_id || null,
-              card_sub_type: card.sub_type || null,
-              card_type: card.type || null,
-              channel: null,
-            },
-          };
+                card_network: card.network || null,
+                card_number: card_id || null,
+                card_sub_type: card.sub_type || null,
+                card_type: card.type || null,
+                channel: null,
+              },
+            };
+          } else if (card.type === 'credit') {
+            payment_method = 'credit_card';
+            detail = {
+              card: {
+                card_bank_name: card.type || null,
+                card_country:
+                  card.international === false
+                    ? 'IN'
+                    : card.international === true
+                    ? 'OI'
+                    : null,
+                card_network: card.network || null,
+                card_number: card_id || null,
+                card_sub_type: card.sub_type || null,
+                card_type: card.type || null,
+                channel: null,
+              },
+            };
+          }
           break;
 
         case 'netbanking':
@@ -1110,6 +1139,16 @@ export class RazorpayNonseamlessController {
         transaction_id: acquirer_data.bank_transaction_id,
         method: method,
       };
+
+      const updateReqq = await this.databaseService.CollectRequestModel.updateOne(
+        { _id: collectIdObject },
+        {
+          $set: {
+            payment_id: id,
+            'razorpay.payment_id': id
+          },
+        },
+      );
 
       const updateReq =
         await this.databaseService.CollectRequestStatusModel.updateOne(
@@ -1170,8 +1209,9 @@ export class RazorpayNonseamlessController {
           const config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: `${process.env.VANILLA_SERVICE_ENDPOINT
-              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+            url: `${
+              process.env.VANILLA_SERVICE_ENDPOINT
+            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
             headers: {
               accept: 'application/json',
               'content-type': 'application/json',
@@ -1272,6 +1312,7 @@ export class RazorpayNonseamlessController {
         payment_method = 'net_banking';
       }
       let detail;
+
       switch (payment_method) {
         case 'upi':
           detail = {
@@ -1283,23 +1324,45 @@ export class RazorpayNonseamlessController {
           break;
 
         case 'card':
-          detail = {
-            card: {
-              card_bank_name: card.type || null,
-              card_country:
-                card.international === false
-                  ? 'IN'
-                  : card.international === true
+          if (card.type === 'debit') {
+            payment_method = 'debit_card';
+            detail = {
+              card: {
+                card_bank_name: card.type || null,
+                card_country:
+                  card.international === false
+                    ? 'IN'
+                    : card.international === true
                     ? 'OI'
                     : null,
-              card_network: card.network || null,
-              card_number: card_id || null,
-              card_sub_type: card.sub_type || null,
-              card_type: card.type || null,
-              channel: null,
-            },
-          };
+                card_network: card.network || null,
+                card_number: card_id || null,
+                card_sub_type: card.sub_type || null,
+                card_type: card.type || null,
+                channel: null,
+              },
+            };
+          } else if (card.type === 'credit') {
+            payment_method = 'credit_card';
+            detail = {
+              card: {
+                card_bank_name: card.type || null,
+                card_country:
+                  card.international === false
+                    ? 'IN'
+                    : card.international === true
+                    ? 'OI'
+                    : null,
+                card_network: card.network || null,
+                card_number: card_id || null,
+                card_sub_type: card.sub_type || null,
+                card_type: card.type || null,
+                channel: null,
+              },
+            };
+          }
           break;
+
 
         case 'netbanking':
           detail = {
@@ -1405,8 +1468,9 @@ export class RazorpayNonseamlessController {
           const config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: `${process.env.VANILLA_SERVICE_ENDPOINT
-              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+            url: `${
+              process.env.VANILLA_SERVICE_ENDPOINT
+            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
             headers: {
               accept: 'application/json',
               'content-type': 'application/json',
@@ -1517,7 +1581,8 @@ export class RazorpayNonseamlessController {
     } catch (err) {
       console.error('[API ERROR]', err);
       throw new InternalServerErrorException(
-        `Razorpay API error: ${err.response?.data?.error?.description || err.message
+        `Razorpay API error: ${
+          err.response?.data?.error?.description || err.message
         }`,
       );
     }
