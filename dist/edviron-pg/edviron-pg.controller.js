@@ -364,6 +364,14 @@ let EdvironPgController = class EdvironPgController {
     }
     async handleWebhook(body, res) {
         const { data: webHookData } = JSON.parse(JSON.stringify(body));
+        try {
+            await new this.databaseService.WebhooksModel({
+                body: JSON.stringify(body),
+            }).save();
+        }
+        catch (e) {
+            console.log('Error in saving webhook', e.message);
+        }
         if (!webHookData)
             throw new Error('Invalid webhook data');
         const { error_details } = webHookData;
