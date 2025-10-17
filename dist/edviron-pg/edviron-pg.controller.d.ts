@@ -474,4 +474,10 @@ export declare class EdvironPgController {
     rzpOrderDetail(order_id: string): Promise<{
         razorpay_seamless: I_Razorpay;
     }>;
+    updateCashfreeWebhook2(): Promise<{
+        count: number;
+    }>;
+    updateCashfreeWebhook2Cron(): Promise<{
+        count: number;
+    }>;
 }
