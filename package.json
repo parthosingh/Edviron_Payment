@@ -24,6 +24,7 @@
     "@nestjs/core": "^10.0.0",
     "@nestjs/mongoose": "^10.0.1",
     "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/schedule": "^6.0.1",
     "@types/form-data": "^2.2.1",
     "api": "^6.1.1",
     "autoprefixer": "^10.4.20",
