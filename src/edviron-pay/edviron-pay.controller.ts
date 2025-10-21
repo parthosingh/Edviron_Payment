@@ -75,7 +75,7 @@ export class EdvironPayController {
                 easebuzzVendors: easebuzzVendors,
               }
             : {};
-
+            
           if (!existing) {
             // ✅ Create new installment
             return this.databaseService.InstallmentsModel.create({
@@ -97,6 +97,7 @@ export class EdvironPayController {
               fee_heads: installment.fee_heads,
               status: 'unpaid', // default status
               label: installment.label,
+              preSelected: installment.preSelected || false,
               body: installment.body,
               isSplitPayments: split_payments,
               ...vendorsBlock,
@@ -115,6 +116,7 @@ export class EdvironPayController {
               discount: installment.discount,
               fee_head: installment.fee_head,
               label: installment.label,
+              preSelected: installment.preSelected || false,
               body: installment.body,
               gateway,
               callback_url,

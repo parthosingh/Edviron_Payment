@@ -26,6 +26,7 @@ export declare class Installments {
     gst: string;
     webhook_url: string;
     isSplitPayments: boolean;
+    preSelected: boolean;
     vendors_info?: [{
         vendor_id: string;
         amount: number;
