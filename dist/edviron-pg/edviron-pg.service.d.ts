@@ -156,4 +156,23 @@ export declare class EdvironPgService implements GatewayService {
     getSingleTransaction(collect_id: string): Promise<any>;
     sendMailAfterTransaction(collect_id: string): Promise<boolean>;
     retriveEasebuzz(txnid: string, key: string, salt: string): Promise<any>;
+    getNonpartnerStatus(collect_id: string): Promise<{
+        status: String;
+        status_code: number;
+        custom_order_id: string;
+        amount: Number;
+        transaction_amount: Number;
+        details: {
+            payment_mode: String;
+            bank_ref: string;
+            payment_methods: any;
+            transaction_time: string;
+            formattedTransactionDate: string;
+            order_status: String;
+            isSettlementComplete: null;
+            transfer_utr: null;
+            service_charge: null;
+        };
+        capture_status: String;
+    }>;
 }
