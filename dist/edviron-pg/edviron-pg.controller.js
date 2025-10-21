@@ -22,6 +22,7 @@ const axios_1 = require("axios");
 const mongoose_1 = require("mongoose");
 const jwt = require("jsonwebtoken");
 const transactionStatus_1 = require("../types/transactionStatus");
+const schedule_1 = require("@nestjs/schedule");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
@@ -364,6 +365,14 @@ let EdvironPgController = class EdvironPgController {
     }
     async handleWebhook(body, res) {
         const { data: webHookData } = JSON.parse(JSON.stringify(body));
+        try {
+            await new this.databaseService.WebhooksModel({
+                body: JSON.stringify(body),
+            }).save();
+        }
+        catch (e) {
+            console.log('Error in saving webhook', e.message);
+        }
         if (!webHookData)
             throw new Error('Invalid webhook data');
         const { error_details } = webHookData;
@@ -4042,6 +4051,362 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(error);
         }
     }
+    async updateCashfreeWebhook2() {
+        try {
+            const startDate = new Date(await this.edvironPgService.convertISTStartToUTC('2025-10-17'));
+            const endDate = new Date();
+            const collectRequests = await this.databaseService.CollectRequestModel.aggregate([
+                {
+                    $match: {
+                        gateway: 'EDVIRON_PG',
+                        createdAt: { $gte: startDate, $lte: endDate },
+                    },
+                },
+                {
+                    $lookup: {
+                        from: 'collectrequeststatuses',
+                        let: { collectId: '$_id' },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            { $eq: ['$collect_id', '$$collectId'] },
+                                            { $in: ['$status', ['PENDING', 'USER_DROPPED']] },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                        as: 'statuses',
+                    },
+                },
+                { $unwind: { path: '$statuses', preserveNullAndEmptyArrays: false } },
+                {
+                    $project: {
+                        _id: 1,
+                        gateway: 1,
+                        createdAt: 1,
+                        payment_id: 1,
+                        'statuses.status': 1,
+                        'statuses.updatedAt': 1,
+                        'statuses.payment_time': 1,
+                    },
+                },
+            ]);
+            const concurrencyLimit = 10;
+            const chunks = [];
+            for (let i = 0; i < collectRequests.length; i += concurrencyLimit) {
+                chunks.push(collectRequests.slice(i, i + concurrencyLimit));
+            }
+            for (const chunk of chunks) {
+                await Promise.all(chunk.map(async (request) => {
+                    const collectRequestId = request._id.toString();
+                    const config = {
+                        url: `http://localhost:4001/check-status?transactionId=${collectRequestId}`,
+                        method: 'get',
+                    };
+                    try {
+                        const statusResponse = await axios_1.default.request(config);
+                        if (statusResponse.data.statusCode === '400')
+                            return;
+                        const statusData = statusResponse.data;
+                        const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOneAndUpdate({ collect_id: new mongoose_1.Types.ObjectId(collectRequestId) }, {
+                            $set: {
+                                status: statusData.status,
+                                transaction_amount: statusData.transaction_amount,
+                                updatedAt: new Date(statusData.details.transaction_time),
+                                payment_method: statusData.details.payment_mode,
+                                details: JSON.stringify(statusData.details.payment_methods),
+                                bank_reference: statusData.details.bank_ref,
+                                payment_time: statusData.details.transaction_time,
+                                reason: statusData.payment_message || 'NA',
+                                payment_message: statusData.payment_message || 'NA',
+                                error_details: {
+                                    error_description: 'NA',
+                                    error_source: 'NA',
+                                    error_reason: 'NA',
+                                },
+                            },
+                        }, { upsert: true, new: true });
+                        const collectReq = await this.databaseService.CollectRequestModel.findById(collectRequestId);
+                        if (!collectReq)
+                            return;
+                        const payment_time = collectRequestStatus.payment_time;
+                        const webHookDataInfo = {
+                            collect_id: collectRequestId,
+                            amount: collectReq.amount,
+                            status: collectRequestStatus.status,
+                            trustee_id: collectReq.trustee_id,
+                            school_id: collectReq.school_id,
+                            req_webhook_urls: collectReq.req_webhook_urls,
+                            custom_order_id: collectReq.custom_order_id,
+                            createdAt: collectRequestStatus.createdAt,
+                            transaction_time: collectRequestStatus.updatedAt,
+                            additional_data: collectReq.additional_data,
+                            details: collectRequestStatus.details,
+                            transaction_amount: collectRequestStatus.transaction_amount,
+                            bank_reference: collectRequestStatus.bank_reference,
+                            payment_method: collectRequestStatus.payment_method,
+                            payment_details: collectRequestStatus.details,
+                            formattedDate: `${payment_time.getFullYear()}-${String(payment_time.getMonth() + 1).padStart(2, '0')}-${String(payment_time.getDate()).padStart(2, '0')}`,
+                        };
+                        let webhook_key = null;
+                        const webHookUrl = collectReq.req_webhook_urls;
+                        if (webHookUrl) {
+                            const token = jwt.sign({ trustee_id: collectReq.trustee_id.toString() }, process.env.KEY);
+                            const { data } = await axios_1.default.get(`${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-webhook-key`, {
+                                params: {
+                                    token,
+                                    trustee_id: collectReq.trustee_id.toString(),
+                                },
+                                headers: { accept: 'application/json' },
+                            });
+                            webhook_key = data?.webhook_key;
+                        }
+                        if (collectReq.trustee_id.toString() === '66505181ca3e97e19f142075') {
+                            setTimeout(() => this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key)
+                                .catch(() => { }), 60000);
+                        }
+                        else {
+                            await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key);
+                        }
+                        try {
+                            const pgData = JSON.parse(collectRequestStatus.details);
+                            const platformMap = {
+                                net_banking: pgData?.netbanking?.netbanking_bank_name || 'Others',
+                                debit_card: pgData?.card?.card_network || 'Others',
+                                credit_card: pgData?.card?.card_network || 'Others',
+                                upi: 'Others',
+                                wallet: pgData?.app?.provider || 'Others',
+                                cardless_emi: 'Others',
+                                pay_later: pgData?.pay_later?.provider || 'Others',
+                            };
+                            const methodMap = {
+                                net_banking: 'NetBanking',
+                                debit_card: 'DebitCard',
+                                credit_card: 'CreditCard',
+                                upi: 'UPI',
+                                wallet: 'Wallet',
+                                cardless_emi: 'CardLess EMI',
+                                pay_later: 'PayLater',
+                                corporate_card: 'CORPORATE CARDS',
+                            };
+                            const meth = platformMap[collectRequestStatus.payment_method];
+                            const mode = methodMap[collectRequestStatus.payment_method];
+                            const tokenData = {
+                                school_id: collectReq.school_id,
+                                trustee_id: collectReq.trustee_id,
+                                order_amount: collectReq.amount,
+                                transaction_amount: collectRequestStatus.transaction_amount,
+                                platform_type: meth,
+                                payment_mode: mode,
+                                collect_id: collectReq._id,
+                            };
+                            const commissionToken = jwt.sign(tokenData, process.env.KEY, { noTimestamp: true });
+                            await axios_1.default.post(`${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`, {
+                                token: commissionToken,
+                                ...tokenData,
+                            }, {
+                                headers: {
+                                    accept: 'application/json',
+                                    'content-type': 'application/json',
+                                    'x-api-version': '2023-08-01',
+                                },
+                            });
+                        }
+                        catch {
+                            console.log('failed to save commission for', collectRequestId);
+                        }
+                    }
+                    catch {
+                    }
+                }));
+            }
+            return { count: collectRequests.length };
+        }
+        catch {
+            throw new common_1.InternalServerErrorException('Cashfree update failed');
+        }
+    }
+    async updateCashfreeWebhook2Cron() {
+        try {
+            const startDate = new Date(await this.edvironPgService.convertISTStartToUTC('2025-10-17'));
+            const endDate = new Date();
+            const collectRequests = await this.databaseService.CollectRequestModel.aggregate([
+                {
+                    $match: {
+                        gateway: 'EDVIRON_PG',
+                        createdAt: { $gte: startDate, $lte: endDate },
+                    },
+                },
+                {
+                    $lookup: {
+                        from: 'collectrequeststatuses',
+                        let: { collectId: '$_id' },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            { $eq: ['$collect_id', '$$collectId'] },
+                                            { $in: ['$status', ['PENDING', 'USER_DROPPED']] },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                        as: 'statuses',
+                    },
+                },
+                { $unwind: { path: '$statuses', preserveNullAndEmptyArrays: false } },
+                {
+                    $project: {
+                        _id: 1,
+                        gateway: 1,
+                        createdAt: 1,
+                        payment_id: 1,
+                        'statuses.status': 1,
+                        'statuses.updatedAt': 1,
+                        'statuses.payment_time': 1,
+                    },
+                },
+            ]);
+            const concurrencyLimit = 10;
+            const chunks = [];
+            for (let i = 0; i < collectRequests.length; i += concurrencyLimit) {
+                chunks.push(collectRequests.slice(i, i + concurrencyLimit));
+            }
+            for (const chunk of chunks) {
+                await Promise.all(chunk.map(async (request) => {
+                    const collectRequestId = request._id.toString();
+                    const config = {
+                        url: `http://localhost:4001/check-status?transactionId=${collectRequestId}`,
+                        method: 'get',
+                    };
+                    try {
+                        const statusResponse = await axios_1.default.request(config);
+                        if (statusResponse.data.statusCode === '400')
+                            return;
+                        const statusData = statusResponse.data;
+                        const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOneAndUpdate({ collect_id: new mongoose_1.Types.ObjectId(collectRequestId) }, {
+                            $set: {
+                                status: statusData.status,
+                                transaction_amount: statusData.transaction_amount,
+                                updatedAt: new Date(statusData.details.transaction_time),
+                                payment_method: statusData.details.payment_mode,
+                                details: JSON.stringify(statusData.details.payment_methods),
+                                bank_reference: statusData.details.bank_ref,
+                                payment_time: statusData.details.transaction_time,
+                                reason: statusData.payment_message || 'NA',
+                                payment_message: statusData.payment_message || 'NA',
+                                error_details: {
+                                    error_description: 'NA',
+                                    error_source: 'NA',
+                                    error_reason: 'NA',
+                                },
+                            },
+                        }, { upsert: true, new: true });
+                        const collectReq = await this.databaseService.CollectRequestModel.findById(collectRequestId);
+                        if (!collectReq)
+                            return;
+                        const payment_time = collectRequestStatus.payment_time;
+                        const webHookDataInfo = {
+                            collect_id: collectRequestId,
+                            amount: collectReq.amount,
+                            status: collectRequestStatus.status,
+                            trustee_id: collectReq.trustee_id,
+                            school_id: collectReq.school_id,
+                            req_webhook_urls: collectReq.req_webhook_urls,
+                            custom_order_id: collectReq.custom_order_id,
+                            createdAt: collectRequestStatus.createdAt,
+                            transaction_time: collectRequestStatus.updatedAt,
+                            additional_data: collectReq.additional_data,
+                            details: collectRequestStatus.details,
+                            transaction_amount: collectRequestStatus.transaction_amount,
+                            bank_reference: collectRequestStatus.bank_reference,
+                            payment_method: collectRequestStatus.payment_method,
+                            payment_details: collectRequestStatus.details,
+                            formattedDate: `${payment_time.getFullYear()}-${String(payment_time.getMonth() + 1).padStart(2, '0')}-${String(payment_time.getDate()).padStart(2, '0')}`,
+                        };
+                        let webhook_key = null;
+                        const webHookUrl = collectReq.req_webhook_urls;
+                        if (webHookUrl) {
+                            const token = jwt.sign({ trustee_id: collectReq.trustee_id.toString() }, process.env.KEY);
+                            const { data } = await axios_1.default.get(`${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-webhook-key`, {
+                                params: {
+                                    token,
+                                    trustee_id: collectReq.trustee_id.toString(),
+                                },
+                                headers: { accept: 'application/json' },
+                            });
+                            webhook_key = data?.webhook_key;
+                        }
+                        if (collectReq.trustee_id.toString() === '66505181ca3e97e19f142075') {
+                            setTimeout(() => this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key)
+                                .catch(() => { }), 60000);
+                        }
+                        else {
+                            await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key);
+                        }
+                        try {
+                            const pgData = JSON.parse(collectRequestStatus.details);
+                            const platformMap = {
+                                net_banking: pgData?.netbanking?.netbanking_bank_name || 'Others',
+                                debit_card: pgData?.card?.card_network || 'Others',
+                                credit_card: pgData?.card?.card_network || 'Others',
+                                upi: 'Others',
+                                wallet: pgData?.app?.provider || 'Others',
+                                cardless_emi: 'Others',
+                                pay_later: pgData?.pay_later?.provider || 'Others',
+                            };
+                            const methodMap = {
+                                net_banking: 'NetBanking',
+                                debit_card: 'DebitCard',
+                                credit_card: 'CreditCard',
+                                upi: 'UPI',
+                                wallet: 'Wallet',
+                                cardless_emi: 'CardLess EMI',
+                                pay_later: 'PayLater',
+                                corporate_card: 'CORPORATE CARDS',
+                            };
+                            const meth = platformMap[collectRequestStatus.payment_method];
+                            const mode = methodMap[collectRequestStatus.payment_method];
+                            const tokenData = {
+                                school_id: collectReq.school_id,
+                                trustee_id: collectReq.trustee_id,
+                                order_amount: collectReq.amount,
+                                transaction_amount: collectRequestStatus.transaction_amount,
+                                platform_type: meth,
+                                payment_mode: mode,
+                                collect_id: collectReq._id,
+                            };
+                            const commissionToken = jwt.sign(tokenData, process.env.KEY, { noTimestamp: true });
+                            await axios_1.default.post(`${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`, {
+                                token: commissionToken,
+                                ...tokenData,
+                            }, {
+                                headers: {
+                                    accept: 'application/json',
+                                    'content-type': 'application/json',
+                                    'x-api-version': '2023-08-01',
+                                },
+                            });
+                        }
+                        catch {
+                            console.log('failed to save commission for', collectRequestId);
+                        }
+                    }
+                    catch {
+                    }
+                }));
+            }
+            return { count: collectRequests.length };
+        }
+        catch {
+            throw new common_1.InternalServerErrorException('Cashfree update failed');
+        }
+    }
 };
 exports.EdvironPgController = EdvironPgController;
 __decorate([
@@ -4556,6 +4921,18 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "rzpOrderDetail", null);
+__decorate([
+    (0, common_1.Post)('update-cashfree2'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "updateCashfreeWebhook2", null);
+__decorate([
+    (0, schedule_1.Cron)('*/2 * * * *'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "updateCashfreeWebhook2Cron", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,
