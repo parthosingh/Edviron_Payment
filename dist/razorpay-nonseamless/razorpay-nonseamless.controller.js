@@ -245,7 +245,8 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                     };
                     break;
                 case 'credit':
-                    platform_type = payload?.card?.card_network(pg_mode = 'credit_card'), console.log(payload, 'payloadin here');
+                    (platform_type = payload?.card?.card_network((pg_mode = 'credit_card'))),
+                        console.log(payload, 'payloadin here');
                     detail = {
                         card: {
                             card_bank_name: payload?.card?.card_type || null,
@@ -259,7 +260,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                     };
                     break;
                 case 'debit':
-                    platform_type = payload?.card?.card_network(pg_mode = 'debit_card'),
+                    (platform_type = payload?.card?.card_network((pg_mode = 'debit_card'))),
                         (detail = {
                             card: {
                                 card_bank_name: payload?.card?.card_type || null,
@@ -465,7 +466,8 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                     };
                     break;
                 case 'credit':
-                    platform_type = payload?.card?.card_network(pg_mode = 'credit_card'), console.log(payload, 'payloadin here');
+                    (platform_type = payload?.card?.card_network((pg_mode = 'credit_card'))),
+                        console.log(payload, 'payloadin here');
                     detail = {
                         card: {
                             card_bank_name: payload?.card?.card_type || null,
@@ -479,7 +481,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                     };
                     break;
                 case 'debit':
-                    platform_type = payload?.card?.card_network(pg_mode = 'debit_card'),
+                    (platform_type = payload?.card?.card_network((pg_mode = 'debit_card'))),
                         (detail = {
                             card: {
                                 card_bank_name: payload?.card?.card_type || null,
@@ -869,21 +871,42 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                     };
                     break;
                 case 'card':
-                    detail = {
-                        card: {
-                            card_bank_name: card.type || null,
-                            card_country: card.international === false
-                                ? 'IN'
-                                : card.international === true
-                                    ? 'OI'
-                                    : null,
-                            card_network: card.network || null,
-                            card_number: card_id || null,
-                            card_sub_type: card.sub_type || null,
-                            card_type: card.type || null,
-                            channel: null,
-                        },
-                    };
+                    if (card.type === 'debit') {
+                        payment_method = 'debit_card';
+                        detail = {
+                            card: {
+                                card_bank_name: card.type || null,
+                                card_country: card.international === false
+                                    ? 'IN'
+                                    : card.international === true
+                                        ? 'OI'
+                                        : null,
+                                card_network: card.network || null,
+                                card_number: card_id || null,
+                                card_sub_type: card.sub_type || null,
+                                card_type: card.type || null,
+                                channel: null,
+                            },
+                        };
+                    }
+                    else if (card.type === 'credit') {
+                        payment_method = 'credit_card';
+                        detail = {
+                            card: {
+                                card_bank_name: card.type || null,
+                                card_country: card.international === false
+                                    ? 'IN'
+                                    : card.international === true
+                                        ? 'OI'
+                                        : null,
+                                card_network: card.network || null,
+                                card_number: card_id || null,
+                                card_sub_type: card.sub_type || null,
+                                card_type: card.type || null,
+                                channel: null,
+                            },
+                        };
+                    }
                     break;
                 case 'netbanking':
                     detail = {
@@ -921,6 +944,12 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                 transaction_id: acquirer_data.bank_transaction_id,
                 method: method,
             };
+            const updateReqq = await this.databaseService.CollectRequestModel.updateOne({ _id: collectIdObject }, {
+                $set: {
+                    payment_id: id,
+                    'razorpay.payment_id': id
+                },
+            });
             const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
                 collect_id: collectIdObject,
             }, {
@@ -1061,21 +1090,42 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                     };
                     break;
                 case 'card':
-                    detail = {
-                        card: {
-                            card_bank_name: card.type || null,
-                            card_country: card.international === false
-                                ? 'IN'
-                                : card.international === true
-                                    ? 'OI'
-                                    : null,
-                            card_network: card.network || null,
-                            card_number: card_id || null,
-                            card_sub_type: card.sub_type || null,
-                            card_type: card.type || null,
-                            channel: null,
-                        },
-                    };
+                    if (card.type === 'debit') {
+                        payment_method = 'debit_card';
+                        detail = {
+                            card: {
+                                card_bank_name: card.type || null,
+                                card_country: card.international === false
+                                    ? 'IN'
+                                    : card.international === true
+                                        ? 'OI'
+                                        : null,
+                                card_network: card.network || null,
+                                card_number: card_id || null,
+                                card_sub_type: card.sub_type || null,
+                                card_type: card.type || null,
+                                channel: null,
+                            },
+                        };
+                    }
+                    else if (card.type === 'credit') {
+                        payment_method = 'credit_card';
+                        detail = {
+                            card: {
+                                card_bank_name: card.type || null,
+                                card_country: card.international === false
+                                    ? 'IN'
+                                    : card.international === true
+                                        ? 'OI'
+                                        : null,
+                                card_network: card.network || null,
+                                card_number: card_id || null,
+                                card_sub_type: card.sub_type || null,
+                                card_type: card.type || null,
+                                channel: null,
+                            },
+                        };
+                    }
                     break;
                 case 'netbanking':
                     detail = {

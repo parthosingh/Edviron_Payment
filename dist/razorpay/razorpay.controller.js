@@ -719,7 +719,7 @@ let RazorpayController = class RazorpayController {
                         };
                     }
                     else if (card.type === 'credit') {
-                        payment_method = 'debit_card';
+                        payment_method = 'credit_card';
                         detail = {
                             card: {
                                 card_bank_name: card.type || null,
