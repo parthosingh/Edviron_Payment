@@ -27,7 +27,7 @@ let EdvironPayController = class EdvironPayController {
         this.edvironPay = edvironPay;
     }
     async upsertInstallments(body) {
-        const { school_id, trustee_id, student_detail, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, allvendors, cashfreeVedors, easebuzzVendors, callback_url, webhook_url } = body;
+        const { school_id, trustee_id, student_detail, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, allvendors, cashfreeVedors, easebuzzVendors, callback_url, webhook_url, } = body;
         const { student_id, student_number, student_name, student_email } = student_detail;
         await this.edvironPay.createStudent(student_detail, school_id, trustee_id);
         if (isInstallement && installments && installments.length > 0) {
@@ -68,6 +68,7 @@ let EdvironPayController = class EdvironPayController {
                         fee_heads: installment.fee_heads,
                         status: 'unpaid',
                         label: installment.label,
+                        preSelected: installment.preSelected || false,
                         body: installment.body,
                         isSplitPayments: split_payments,
                         ...vendorsBlock,
@@ -83,6 +84,7 @@ let EdvironPayController = class EdvironPayController {
                         discount: installment.discount,
                         fee_head: installment.fee_head,
                         label: installment.label,
+                        preSelected: installment.preSelected || false,
                         body: installment.body,
                         gateway,
                         callback_url,
@@ -109,7 +111,7 @@ let EdvironPayController = class EdvironPayController {
         };
     }
     async collect(body, req, res) {
-        const { mode, isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, vba_account_number, easebuzz, easebuzzVendors, cashfreeVedors, razorpay_vendors, cash_detail, dd_detail, document_url, student_detail, static_qr, netBankingDetails, cheque_detail, date, parents_info, remark } = body;
+        const { mode, isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, vba_account_number, easebuzz, easebuzzVendors, cashfreeVedors, razorpay_vendors, cash_detail, dd_detail, document_url, student_detail, static_qr, netBankingDetails, cheque_detail, date, parents_info, remark, } = body;
         try {
             let { student_id, student_name, student_email, student_number } = student_detail;
             if (!token) {
@@ -259,7 +261,7 @@ let EdvironPayController = class EdvironPayController {
                             transaction_amount: static_qr?.transactionAmount || 'N/A',
                             bank_ref: static_qr?.bankReferenceNo || 'N/A',
                             app_name: static_qr?.appName || 'N/A',
-                            remark: remark || "N/A"
+                            remark: remark || 'N/A',
                         },
                     };
                     await this.databaseService.CollectRequestModel.updateOne({
@@ -499,9 +501,15 @@ let EdvironPayController = class EdvironPayController {
             if (!studentDetail) {
                 throw new common_1.BadRequestException('student not found');
             }
-            const installments = await this.databaseService.InstallmentsModel.find({
+            let installments = await this.databaseService.InstallmentsModel.find({
                 student_id,
-            });
+            }).lean();
+            if (installments.length === 1) {
+                installments[0] = {
+                    ...installments[0],
+                    preSelected: true,
+                };
+            }
             installments.sort((a, b) => Number(a.month) - Number(b.month));
             return {
                 installments,

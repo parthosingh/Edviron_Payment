@@ -160,6 +160,8 @@ let CheckStatusService = class CheckStatusService {
             }
             return await this.checkExpiry(collectRequest);
         }
+        console.log('here end fist');
+        console.log(collectRequest?.gateway);
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:
                 return await this.hdfcService.checkStatus(collect_request_id);
@@ -181,6 +183,9 @@ let CheckStatusService = class CheckStatusService {
             case collect_request_schema_1.Gateway.SMART_GATEWAY:
                 const data = await this.hdfcSmartgatewayService.checkStatus(collectRequest._id.toString(), collectRequest);
                 return data;
+            case collect_request_schema_1.Gateway.EDVIRON_PAY:
+                const edviron_pay_response = await this.edvironPgService.getNonpartnerStatus(collectRequest._id.toString());
+                return edviron_pay_response;
             case collect_request_schema_1.Gateway.EDVIRON_GATEPAY:
                 const gatepay_data = await this.gatepayService.getPaymentStatus(collectRequest._id.toString(), collectRequest);
                 return gatepay_data;

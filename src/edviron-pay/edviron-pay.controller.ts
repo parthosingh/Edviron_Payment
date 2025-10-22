@@ -47,7 +47,7 @@ export class EdvironPayController {
       cashfreeVedors,
       easebuzzVendors,
       callback_url,
-      webhook_url
+      webhook_url,
     } = body;
 
     const { student_id, student_number, student_name, student_email } =
@@ -97,6 +97,7 @@ export class EdvironPayController {
               fee_heads: installment.fee_heads,
               status: 'unpaid', // default status
               label: installment.label,
+              preSelected: installment.preSelected || false,
               body: installment.body,
               isSplitPayments: split_payments,
               ...vendorsBlock,
@@ -115,6 +116,7 @@ export class EdvironPayController {
               discount: installment.discount,
               fee_head: installment.fee_head,
               label: installment.label,
+              preSelected: installment.preSelected || false,
               body: installment.body,
               gateway,
               callback_url,
@@ -340,7 +342,7 @@ export class EdvironPayController {
       cheque_detail,
       date,
       parents_info,
-      remark
+      remark,
     } = body;
 
     try {
@@ -534,7 +536,7 @@ export class EdvironPayController {
               transaction_amount: static_qr?.transactionAmount || 'N/A',
               bank_ref: static_qr?.bankReferenceNo || 'N/A',
               app_name: static_qr?.appName || 'N/A',
-              remark : remark || "N/A"
+              remark: remark || 'N/A',
             },
           };
           await this.databaseService.CollectRequestModel.updateOne(
@@ -602,7 +604,7 @@ export class EdvironPayController {
               bank_name: dd_detail?.bank_name || 'N/A',
               branch_name: dd_detail?.branch_name || 'N/A',
               depositor_name: dd_detail?.depositor_name || 'N/A',
-              remarks: dd_detail?.remark || remark ||'N/A',
+              remarks: dd_detail?.remark || remark || 'N/A',
             },
           };
           await this.databaseService.CollectRequestModel.updateOne(
@@ -859,9 +861,17 @@ export class EdvironPayController {
       if (!studentDetail) {
         throw new BadRequestException('student not found');
       }
-      const installments = await this.databaseService.InstallmentsModel.find({
+      let installments = await this.databaseService.InstallmentsModel.find({
         student_id,
-      });
+      }).lean();
+
+      if (installments.length === 1) {
+        installments[0] = {
+          ...installments[0],
+          preSelected: true,
+        };
+      }
+
       installments.sort((a, b) => Number(a.month) - Number(b.month));
 
       return {
@@ -932,7 +942,7 @@ export class EdvironPayController {
       }
       return {
         paymentIds: collect_request.paymentIds,
-        gateway : activeGateway,
+        gateway: activeGateway,
       };
     } catch (error) {
       throw new BadRequestException(error);

@@ -85,6 +85,9 @@ export class Installments {
   @Prop({ required: false, default: false })
   isSplitPayments: boolean;
 
+  @Prop({ required: false, default: false })
+  preSelected: boolean;
+
   @Prop({ required: false })
   vendors_info?: [{ vendor_id: string; amount: number, name : string }];
 

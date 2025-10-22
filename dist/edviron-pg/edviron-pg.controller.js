@@ -22,7 +22,6 @@ const axios_1 = require("axios");
 const mongoose_1 = require("mongoose");
 const jwt = require("jsonwebtoken");
 const transactionStatus_1 = require("../types/transactionStatus");
-const schedule_1 = require("@nestjs/schedule");
 const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 const cashfree_service_1 = require("../cashfree/cashfree.service");
@@ -4927,12 +4926,6 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "updateCashfreeWebhook2", null);
-__decorate([
-    (0, schedule_1.Cron)('*/2 * * * *'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], EdvironPgController.prototype, "updateCashfreeWebhook2Cron", null);
 exports.EdvironPgController = EdvironPgController = __decorate([
     (0, common_1.Controller)('edviron-pg'),
     __metadata("design:paramtypes", [edviron_pg_service_1.EdvironPgService,

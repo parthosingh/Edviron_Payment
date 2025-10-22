@@ -25,7 +25,6 @@
 /// <reference types="mongoose/types/inferschematype" />
 import { DatabaseService } from 'src/database/database.service';
 import { PaymentIds } from 'src/database/schemas/collect_request.schema';
-import { Installments } from 'src/database/schemas/installments.schema';
 import { EdvironPayService } from './edviron-pay.service';
 export declare class EdvironPayController {
     private readonly databaseService;
@@ -197,7 +196,7 @@ export declare class EdvironPayController {
         remark?: string;
     }, req?: any, res?: any): Promise<any>;
     getStudentInstallments(student_id: string, school_id: string, trustee_id: string): Promise<{
-        installments: (import("mongoose").Document<unknown, {}, import("src/database/schemas/installments.schema").InstallmentsDocument> & Installments & Document & {
+        installments: (import("mongoose").FlattenMaps<import("src/database/schemas/installments.schema").InstallmentsDocument> & {
             _id: import("mongoose").Types.ObjectId;
         })[];
         studentDetail: {

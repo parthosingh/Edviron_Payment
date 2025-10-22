@@ -22,7 +22,7 @@ import { Webhooks } from 'src/database/schemas/webhooks.schema';
 import { isValidObjectId, Types } from 'mongoose';
 import * as jwt from 'jsonwebtoken';
 import { TransactionStatus } from 'src/types/transactionStatus';
-import { Cron, CronExpression } from '@nestjs/schedule';
+// import { Cron, CronExpression } from '@nestjs/schedule';
 
 import {
   CollectRequest,
@@ -5916,7 +5916,7 @@ export class EdvironPgController {
     }
   }
 
-  @Cron('*/2 * * * *') 
+  // @Cron('*/2 * * * *') 
   async updateCashfreeWebhook2Cron() {
     try {
       const startDate = new Date(
