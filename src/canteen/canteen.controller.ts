@@ -84,12 +84,16 @@ export class CanteenController {
                 !gateway ||
                 !canteen_id
             ) {
+                console.log({ amount, callbackUrl, sign, school_id, trustee_id, school_name, gateway, canteen_id });
+
 
                 throw new Error('Missing required fields');
             }
 
             const decoded = jwt.verify(sign, process.env.KEY!)
             if ((decoded as any).school_id !== school_id || (decoded as any).trustee_id !== trustee_id) {
+                console.log(decoded);
+
                 throw new Error('Request Forged')
             }
             if (gateway.length === 0) {
@@ -164,7 +168,7 @@ export class CanteenController {
 
         } catch (error) {
             console.error('Error creating canteen transaction:', error);
-            throw error;
+            throw new BadRequestException(error.message);
         }
     }
 
@@ -179,8 +183,51 @@ export class CanteenController {
             if ((decoded as any).collect_id !== collect_id) {
                 throw new Error('Request Forged | Invalid Sign')
             }
-            const status = await this.checkStatusService.checkStatus(collect_id);
+            const collect_request=await this.databaseService.CollectRequestModel.findById(collect_id)
+            if(!collect_request){
+                throw new BadRequestException('Invalid Collect Id')
+            }
+            return await this.checkStatusService.checkStatus(collect_id)
+            // const status = await this.cashfreeService.checkPaymentStatus(collect_id,collect_request);
             return status;
+        } catch (e) {
+            throw new BadRequestException(e.message)
+        }
+    }
+
+    @Post('capture-payment')
+    async capturePayment(
+        @Body() body: {
+            sign: string,
+            collect_id: string,
+            capture_status: string
+        }
+    ) {
+        try {
+            const { sign, collect_id, capture_status } = body
+            if (!sign || !collect_id || !capture_status) {
+                throw new BadRequestException("Required Parameter Missing")
+            }
+
+            const payload = jwt.verify(sign, process.env.KEY!) as any
+            if (payload.collect_id !== collect_id || payload.capture_status !== capture_status) {
+                throw new BadRequestException("Invalid Sign | Request Fordge")
+            }
+            const request=await this.databaseService.CollectRequestModel.findById(collect_id)
+            if(!request){
+                throw new BadRequestException('Invalid Collect id ')
+            }
+            const client_id=request.clientId
+            if(!client_id){
+                throw new BadRequestException('Invalid Collect ID')
+            }
+
+            return await this.cashfreeService.initiateCapture(
+                client_id,
+                collect_id,
+                capture_status,
+                request.amount
+            )
         } catch (e) {
             throw new BadRequestException(e.message)
         }

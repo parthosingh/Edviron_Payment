@@ -296,7 +296,7 @@ export class CashfreeService {
 
 
       const { data: response } = await axios.request(config);
-      
+
       const orderIds = response.data
         .filter((order: any) => order.order_id !== null) // Filter out null order_id
         .map((order: any) => order.order_id);
@@ -351,13 +351,13 @@ export class CashfreeService {
               await this.databaseService.CollectRequestStatusModel.findOne(
                 { collect_id: request._id }
               );
-              if (!requestStatus) {
-                console.log('order not found');
-                throw new BadRequestException('order not found');
-              }
-              const order_time=request.createdAt || null
-              const payment_details=requestStatus.details
-              const split=request.vendors_info || []
+            if (!requestStatus) {
+              console.log('order not found');
+              throw new BadRequestException('order not found');
+            }
+            const order_time = request.createdAt || null
+            const payment_details = requestStatus.details
+            const split = request.vendors_info || []
 
             if (
               request.payment_id === null ||
@@ -1833,7 +1833,7 @@ export class CashfreeService {
         await collectReq.save();
 
         cashfreeVedors.map(async (info) => {
-          const { vendor_id,  amount, name } = info;
+          const { vendor_id, amount, name } = info;
           let split_amount = 0;
           if (amount) {
             split_amount = amount;
@@ -1847,7 +1847,7 @@ export class CashfreeService {
             trustee_id: request.trustee_id,
             school_id: request.school_id,
             custom_order_id: request.custom_order_id || '',
-            name ,
+            name,
           }).save();
         });
       }
@@ -1867,17 +1867,64 @@ export class CashfreeService {
         data: data,
       };
 
-      console.log(config,'config');
-      
+      console.log(config, 'config');
+
       const { data: cashfreeRes } = await axios.request(config);
       const cf_payment_id = cashfreeRes.payment_session_id;
       return cf_payment_id
     } catch (e) {
-      if(e?.response?.data){  
+      if (e?.response?.data) {
         throw new BadRequestException(e?.response?.data?.message || "cashfree error");
       }
       throw new BadRequestException(e.message);
     }
   }
+
+  async checkPaymentStatus(
+    collect_request_id: string,
+    collect_request: CollectRequest
+  ) {
+    try {
+      const config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/${collect_request_id}/payments`,
+        headers: {
+          accept: 'application/json',
+          'x-api-version': '2023-08-01',
+          'x-partner-merchantid': collect_request.clientId,
+          'x-partner-apikey': process.env.CASHFREE_API_KEY,
+        },
+      };
+
+      const { data: paymentStatus } = await axios.request(config);
+
+      if (!Array.isArray(paymentStatus) || paymentStatus.length === 0) {
+        return null;
+      }
+
+      // ✅ 1. Check if any payment is successful
+      const successPayment = paymentStatus.find(
+        (p) => p.payment_status === 'SUCCESS'
+      );
+      if (successPayment) {
+        return successPayment
+
+      };
+
+      // ✅ 2. Otherwise, return the latest payment (by payment_time)
+      const latestPayment = paymentStatus.sort(
+        (a, b) =>
+          new Date(b.payment_time).getTime() - new Date(a.payment_time).getTime()
+      )[0];
+
+      return latestPayment;
+
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+
 
 }

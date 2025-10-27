@@ -41,10 +41,12 @@ let CanteenController = class CanteenController {
                 !school_name ||
                 !gateway ||
                 !canteen_id) {
+                console.log({ amount, callbackUrl, sign, school_id, trustee_id, school_name, gateway, canteen_id });
                 throw new Error('Missing required fields');
             }
             const decoded = jwt.verify(sign, process.env.KEY);
             if (decoded.school_id !== school_id || decoded.trustee_id !== trustee_id) {
+                console.log(decoded);
                 throw new Error('Request Forged');
             }
             if (gateway.length === 0) {
@@ -110,7 +112,7 @@ let CanteenController = class CanteenController {
         }
         catch (error) {
             console.error('Error creating canteen transaction:', error);
-            throw error;
+            throw new common_1.BadRequestException(error.message);
         }
     }
     async checkStatus(body) {
@@ -123,8 +125,36 @@ let CanteenController = class CanteenController {
             if (decoded.collect_id !== collect_id) {
                 throw new Error('Request Forged | Invalid Sign');
             }
-            const status = await this.checkStatusService.checkStatus(collect_id);
+            const collect_request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collect_request) {
+                throw new common_1.BadRequestException('Invalid Collect Id');
+            }
+            return await this.checkStatusService.checkStatus(collect_id);
             return status;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async capturePayment(body) {
+        try {
+            const { sign, collect_id, capture_status } = body;
+            if (!sign || !collect_id || !capture_status) {
+                throw new common_1.BadRequestException("Required Parameter Missing");
+            }
+            const payload = jwt.verify(sign, process.env.KEY);
+            if (payload.collect_id !== collect_id || payload.capture_status !== capture_status) {
+                throw new common_1.BadRequestException("Invalid Sign | Request Fordge");
+            }
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request) {
+                throw new common_1.BadRequestException('Invalid Collect id ');
+            }
+            const client_id = request.clientId;
+            if (!client_id) {
+                throw new common_1.BadRequestException('Invalid Collect ID');
+            }
+            return await this.cashfreeService.initiateCapture(client_id, collect_id, capture_status, request.amount);
         }
         catch (e) {
             throw new common_1.BadRequestException(e.message);
@@ -146,6 +176,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CanteenController.prototype, "checkStatus", null);
+__decorate([
+    (0, common_1.Post)('capture-payment'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CanteenController.prototype, "capturePayment", null);
 exports.CanteenController = CanteenController = __decorate([
     (0, common_1.Controller)('canteen'),
     __metadata("design:paramtypes", [canteen_service_1.CanteenService,
