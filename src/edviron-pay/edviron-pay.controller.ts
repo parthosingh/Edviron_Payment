@@ -20,6 +20,7 @@ import { EdvironPayService } from './edviron-pay.service';
 import { PlatformCharge } from 'src/database/schemas/platform.charges.schema';
 import axios from 'axios';
 import * as _jwt from 'jsonwebtoken';
+import { Types } from 'mongoose';
 
 @Controller('edviron-pay')
 export class EdvironPayController {
@@ -789,7 +790,7 @@ export class EdvironPayController {
               },
               {
                 $set: {
-                  status: 'SUCCESS',
+                  status: 'PENDING',
                   payment_time: cheque_detail?.dateOnCheque
                     ? new Date(cheque_detail?.dateOnCheque).toISOString()
                     : new Date().toISOString(),
@@ -816,7 +817,7 @@ export class EdvironPayController {
               },
               {
                 $set: {
-                  status: 'paid',
+                  status: 'pending',
                   payment_time: cheque_detail?.dateOnCheque
                     ? new Date(cheque_detail?.dateOnCheque).toISOString()
                     : new Date().toISOString(),
@@ -843,6 +844,68 @@ export class EdvironPayController {
         throw new BadRequestException(e?.response?.message || 'network error');
       }
       throw new Error('Error occurred while processing payment: ' + e.message);
+    }
+  }
+
+  @Post('update-cheque-status')
+  async updateChequeStatus(
+    @Query('collect_id') collect_id: string,
+    @Query('status') status: string,
+  ) {
+    try {
+      if (!collect_id || !status) {
+        throw new BadRequestException('collect_id and status are required');
+      }
+      const collectIdObject = new Types.ObjectId(collect_id);
+      const [request, collect_status] = await Promise.all([
+        this.databaseService.CollectRequestModel.findById(collect_id),
+        this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: new Types.ObjectId(collect_id),
+        }),
+      ]);
+      if (!request) {
+        throw new BadRequestException('Collect request not found');
+      }
+      if (!collect_status) {
+        throw new BadRequestException('Collect request status not found');
+      }
+      await this.databaseService.CollectRequestStatusModel.updateOne(
+        {
+          collect_id: collectIdObject,
+        },
+        {
+          $set: {
+            status: status,
+          },
+        },
+        {
+          upsert: true,
+          new: true,
+        },
+      );
+      const InstallmentsId = await this.databaseService.InstallmentsModel.find({
+        collect_id: collectIdObject,
+      }).select('_id');
+      const newStatus =
+        status === 'SUCCESS'
+          ? 'paid'
+          : status === 'FAILED'
+          ? 'FAILED'
+          : 'pending';
+      await this.databaseService.InstallmentsModel.updateMany(
+        { _id: { $in: InstallmentsId } },
+        { $set: { status: newStatus } },
+      );
+      return {
+        success: true,
+        message: `Cheque status updated successfully to "${status}"`,
+        updatedStatus: newStatus,
+      };
+    } catch (error) {
+      console.error('Error fetching collect request and status:', error);
+      throw new BadRequestException(
+        error.message || 'Something went wrong while fetching data',
+      );
     }
   }
 
