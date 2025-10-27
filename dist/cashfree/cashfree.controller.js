@@ -874,6 +874,12 @@ let CashfreeController = class CashfreeController {
         }
         res.status(200).send('OK');
     }
+    async testFix() {
+        try {
+        }
+        catch (e) {
+        }
+    }
 };
 exports.CashfreeController = CashfreeController;
 __decorate([
@@ -1000,6 +1006,12 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], CashfreeController.prototype, "handleWebhook", null);
+__decorate([
+    (0, common_1.Get)('fix-canteen-transaction'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "testFix", null);
 exports.CashfreeController = CashfreeController = __decorate([
     (0, common_1.Controller)('cashfree'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
