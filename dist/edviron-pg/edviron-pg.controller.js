@@ -1369,6 +1369,7 @@ let EdvironPgController = class EdvironPgController {
             endOfDay.setHours(23, 59, 59, 999);
             let collectQuery = {
                 trustee_id: trustee_id,
+                isCanteenTransaction: { $ne: true },
                 createdAt: {
                     $gte: startOfDayUTC,
                     $lt: endOfDayUTC,

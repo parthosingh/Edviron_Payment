@@ -1885,6 +1885,7 @@ export class EdvironPgController {
 
       let collectQuery: any = {
         trustee_id: trustee_id,
+        isCanteenTransaction:{$ne:true},
         createdAt: {
           $gte: startOfDayUTC,
           $lt: endOfDayUTC,
