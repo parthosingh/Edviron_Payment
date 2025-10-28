@@ -413,7 +413,7 @@ let CheckStatusService = class CheckStatusService {
                 };
             case collect_request_schema_1.Gateway.EDVIRON_RAZORPAY:
                 const razorpayData = await this.razorpayServiceModel.getPaymentStatus(collectRequest.razorpay.order_id.toString(), collectRequest);
-                return razorpayData;
+                return { ...razorpayData, edviron_order_id: collectRequest._id };
             case collect_request_schema_1.Gateway.SMART_GATEWAY:
                 const data = await this.hdfcSmartgatewayService.checkStatus(collectRequest._id.toString(), collectRequest);
                 return data;

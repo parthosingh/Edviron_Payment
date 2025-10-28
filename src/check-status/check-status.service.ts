@@ -42,7 +42,7 @@ export class CheckStatusService {
     private readonly razorpayServiceModel: RazorpayNonseamlessService,
     private readonly razorpay_seamless: RazorpayService,
     private readonly gatepayService: GatepayService,
-  ) {}
+  ) { }
   async checkStatus(collect_request_id: String) {
     console.log('checking status for', collect_request_id);
     const collectRequest =
@@ -175,8 +175,8 @@ export class CheckStatusService {
       }
       return await this.checkExpiry(collectRequest);
     }
-console.log('here end fist')
-console.log(collectRequest?.gateway)
+    console.log('here end fist')
+    console.log(collectRequest?.gateway)
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
         return await this.hdfcService.checkStatus(collect_request_id);
@@ -519,7 +519,7 @@ console.log(collectRequest?.gateway)
           collectRequest.razorpay.order_id.toString(),
           collectRequest,
         );
-        return razorpayData;
+        return {...razorpayData,edviron_order_id:collectRequest._id};
 
       case Gateway.SMART_GATEWAY:
         const data = await this.hdfcSmartgatewayService.checkStatus(
