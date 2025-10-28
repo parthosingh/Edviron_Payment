@@ -790,7 +790,7 @@ export class EdvironPayController {
               },
               {
                 $set: {
-                  status: 'PENDING',
+                  status: 'SUCCESS',
                   payment_time: cheque_detail?.dateOnCheque
                     ? new Date(cheque_detail?.dateOnCheque).toISOString()
                     : new Date().toISOString(),
@@ -817,7 +817,7 @@ export class EdvironPayController {
               },
               {
                 $set: {
-                  status: 'pending',
+                  status: 'paid',
                   payment_time: cheque_detail?.dateOnCheque
                     ? new Date(cheque_detail?.dateOnCheque).toISOString()
                     : new Date().toISOString(),
