@@ -390,7 +390,6 @@ let CheckStatusService = class CheckStatusService {
                 };
                 return ezb_status_response;
             }
-            return await this.checkExpiry(collectRequest);
         }
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:

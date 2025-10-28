@@ -483,7 +483,7 @@ console.log(collectRequest?.gateway)
         };
         return ezb_status_response;
       }
-      return await this.checkExpiry(collectRequest);
+      // return await this.checkExpiry(collectRequest);
     }
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
