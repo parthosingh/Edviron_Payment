@@ -379,6 +379,7 @@ let CheckStatusService = class CheckStatusService {
                     status_code,
                     custom_order_id: collectRequest.custom_order_id || null,
                     amount: parseInt(easebuzzStatus.msg.amount),
+                    edviron_order_id: collectRequest._id,
                     details: {
                         payment_mode: collect_req_status.payment_time,
                         bank_ref: easebuzzStatus.msg.bank_ref_num,
