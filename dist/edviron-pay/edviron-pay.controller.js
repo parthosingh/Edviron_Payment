@@ -453,7 +453,7 @@ let EdvironPayController = class EdvironPayController {
                         collect_id: collectIdObject,
                     }, {
                         $set: {
-                            status: 'PENDING',
+                            status: 'SUCCESS',
                             payment_time: cheque_detail?.dateOnCheque
                                 ? new Date(cheque_detail?.dateOnCheque).toISOString()
                                 : new Date().toISOString(),
@@ -474,7 +474,7 @@ let EdvironPayController = class EdvironPayController {
                         trustee_id,
                     }, {
                         $set: {
-                            status: 'pending',
+                            status: 'paid',
                             payment_time: cheque_detail?.dateOnCheque
                                 ? new Date(cheque_detail?.dateOnCheque).toISOString()
                                 : new Date().toISOString(),
@@ -496,7 +496,7 @@ let EdvironPayController = class EdvironPayController {
             throw new Error('Error occurred while processing payment: ' + e.message);
         }
     }
-    async updateChequeStatus(collect_id, status) {
+    async updateChequeStatus(collect_id, status, token) {
         try {
             if (!collect_id || !status) {
                 throw new common_1.BadRequestException('collect_id and status are required');
@@ -510,6 +510,10 @@ let EdvironPayController = class EdvironPayController {
             ]);
             if (!request) {
                 throw new common_1.BadRequestException('Collect request not found');
+            }
+            const decrypt = _jwt.verify(token, process.env.KEY);
+            if (decrypt.trustee_id.toString() !== request.trustee_id.toString()) {
+                throw new common_1.BadRequestException('Request fordge');
             }
             if (!collect_status) {
                 throw new common_1.BadRequestException('Collect request status not found');
@@ -652,8 +656,9 @@ __decorate([
     (0, common_1.Post)('update-cheque-status'),
     __param(0, (0, common_1.Query)('collect_id')),
     __param(1, (0, common_1.Query)('status')),
+    __param(2, (0, common_1.Query)('token')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], EdvironPayController.prototype, "updateChequeStatus", null);
 __decorate([

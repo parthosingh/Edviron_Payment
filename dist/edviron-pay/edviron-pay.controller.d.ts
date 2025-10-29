@@ -195,7 +195,7 @@ export declare class EdvironPayController {
         date?: string;
         remark?: string;
     }, req?: any, res?: any): Promise<any>;
-    updateChequeStatus(collect_id: string, status: string): Promise<{
+    updateChequeStatus(collect_id: string, status: string, token: string): Promise<{
         success: boolean;
         message: string;
         updatedStatus: string;

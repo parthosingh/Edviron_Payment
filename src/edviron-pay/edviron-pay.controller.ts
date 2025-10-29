@@ -851,6 +851,7 @@ export class EdvironPayController {
   async updateChequeStatus(
     @Query('collect_id') collect_id: string,
     @Query('status') status: string,
+    @Query('token') token: string,
   ) {
     try {
       if (!collect_id || !status) {
@@ -866,6 +867,12 @@ export class EdvironPayController {
       if (!request) {
         throw new BadRequestException('Collect request not found');
       }
+
+      const decrypt = _jwt.verify(token, process.env.KEY!) as any;
+      if (decrypt.trustee_id.toString() !== request.trustee_id.toString()) {
+        throw new BadRequestException('Request fordge');
+      }
+
       if (!collect_status) {
         throw new BadRequestException('Collect request status not found');
       }
