@@ -10,6 +10,13 @@ export declare enum PaymentStatus {
     AUTO_REFUND = "AUTO_REFUND",
     USER_DROPPED = "USER_DROPPED"
 }
+export declare enum EdvironPayPaymentStatus {
+    SUCCESS = "paid",
+    UNPAID = "paid",
+    FAIL = "FAIL",
+    FAILED = "FAILED",
+    PENDING = "PENDING"
+}
 interface error_details {
     error_description: string | null;
     error_reason: string | null;

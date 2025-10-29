@@ -23,6 +23,7 @@
 /// <reference types="mongoose/types/virtuals" />
 /// <reference types="mongoose/types/inferschematype" />
 import { DatabaseService } from 'src/database/database.service';
+import { EdvironPayPaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { PaymentIds } from 'src/database/schemas/collect_request.schema';
 import { EdvironPayService } from './edviron-pay.service';
 import { Types } from 'mongoose';
@@ -198,7 +199,7 @@ export declare class EdvironPayController {
     updateChequeStatus(collect_id: string, status: string, token: string): Promise<{
         success: boolean;
         message: string;
-        updatedStatus: string;
+        updatedStatus: EdvironPayPaymentStatus;
     }>;
     getStudentInstallments(student_id: string, school_id: string, trustee_id: string): Promise<{
         installments: (import("mongoose").FlattenMaps<import("src/database/schemas/installments.schema").InstallmentsDocument> & {

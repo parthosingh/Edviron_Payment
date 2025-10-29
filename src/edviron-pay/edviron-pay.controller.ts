@@ -10,7 +10,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
+import { EdvironPayPaymentStatus, PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import {
   Gateway,
   PaymentIds,
@@ -854,8 +854,8 @@ export class EdvironPayController {
     @Query('token') token: string,
   ) {
     try {
-      if (!collect_id || !status) {
-        throw new BadRequestException('collect_id and status are required');
+      if (!collect_id || !status || !token) {
+        throw new BadRequestException('collect_id , token, and status are required');
       }
       const collectIdObject = new Types.ObjectId(collect_id);
       const [request, collect_status] = await Promise.all([
@@ -868,8 +868,11 @@ export class EdvironPayController {
         throw new BadRequestException('Collect request not found');
       }
 
+      if(collect_status?.payment_method !== "cheque"){
+        throw new BadRequestException('payment is not paid through cheque')
+      }
       const decrypt = _jwt.verify(token, process.env.KEY!) as any;
-      if (decrypt.trustee_id.toString() !== request.trustee_id.toString()) {
+      if (decrypt.school_id.toString() !== request.school_id.toString()) {
         throw new BadRequestException('Request fordge');
       }
 
@@ -895,10 +898,11 @@ export class EdvironPayController {
       }).select('_id');
       const newStatus =
         status === 'SUCCESS'
-          ? 'paid'
+          ? EdvironPayPaymentStatus.SUCCESS
           : status === 'FAILED'
-          ? 'FAILED'
-          : 'pending';
+          ? EdvironPayPaymentStatus.UNPAID
+          : EdvironPayPaymentStatus.UNPAID;
+
       await this.databaseService.InstallmentsModel.updateMany(
         { _id: { $in: InstallmentsId } },
         { $set: { status: newStatus } },
@@ -909,9 +913,8 @@ export class EdvironPayController {
         updatedStatus: newStatus,
       };
     } catch (error) {
-      console.error('Error fetching collect request and status:', error);
       throw new BadRequestException(
-        error.message || 'Something went wrong while fetching data',
+        error.response.message || 'Something went wrong while fetching data',
       );
     }
   }

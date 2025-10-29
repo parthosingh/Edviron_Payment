@@ -498,8 +498,8 @@ let EdvironPayController = class EdvironPayController {
     }
     async updateChequeStatus(collect_id, status, token) {
         try {
-            if (!collect_id || !status) {
-                throw new common_1.BadRequestException('collect_id and status are required');
+            if (!collect_id || !status || !token) {
+                throw new common_1.BadRequestException('collect_id , token, and status are required');
             }
             const collectIdObject = new mongoose_1.Types.ObjectId(collect_id);
             const [request, collect_status] = await Promise.all([
@@ -511,8 +511,11 @@ let EdvironPayController = class EdvironPayController {
             if (!request) {
                 throw new common_1.BadRequestException('Collect request not found');
             }
+            if (collect_status?.payment_method !== "cheque") {
+                throw new common_1.BadRequestException('payment is not paid through cheque');
+            }
             const decrypt = _jwt.verify(token, process.env.KEY);
-            if (decrypt.trustee_id.toString() !== request.trustee_id.toString()) {
+            if (decrypt.school_id.toString() !== request.school_id.toString()) {
                 throw new common_1.BadRequestException('Request fordge');
             }
             if (!collect_status) {
@@ -532,10 +535,10 @@ let EdvironPayController = class EdvironPayController {
                 collect_id: collectIdObject,
             }).select('_id');
             const newStatus = status === 'SUCCESS'
-                ? 'paid'
+                ? collect_req_status_schema_1.EdvironPayPaymentStatus.SUCCESS
                 : status === 'FAILED'
-                    ? 'FAILED'
-                    : 'pending';
+                    ? collect_req_status_schema_1.EdvironPayPaymentStatus.UNPAID
+                    : collect_req_status_schema_1.EdvironPayPaymentStatus.UNPAID;
             await this.databaseService.InstallmentsModel.updateMany({ _id: { $in: InstallmentsId } }, { $set: { status: newStatus } });
             return {
                 success: true,
@@ -544,8 +547,7 @@ let EdvironPayController = class EdvironPayController {
             };
         }
         catch (error) {
-            console.error('Error fetching collect request and status:', error);
-            throw new common_1.BadRequestException(error.message || 'Something went wrong while fetching data');
+            throw new common_1.BadRequestException(error.response.message || 'Something went wrong while fetching data');
         }
     }
     async getStudentInstallments(student_id, school_id, trustee_id) {
