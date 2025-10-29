@@ -2339,6 +2339,11 @@ let EdvironPgController = class EdvironPgController {
         console.log('getting transaction sum');
         return await this.edvironPgService.getTransactionReportBatchedFilterd(trustee_id, start_date, end_date, status, school_id, mode, isQRPayment, gateway);
     }
+    async getTransactionReportBatchedFilteredV2(body) {
+        const { start_date, end_date, trustee_id, school_id, mode, status, isQRPayment, gateway, } = body;
+        console.log('getting transaction sum');
+        return await this.edvironPgService.getTransactionReportBatchedFilterdV2(trustee_id, start_date, end_date, status, school_id, mode, isQRPayment, gateway);
+    }
     async getErpWebhookLogs(body) {
         const { token, startDate, endDate, limit, page, trustee_id, school_id, status, collect_id, custom_id, } = body;
         let query = {
@@ -4657,6 +4662,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "getTransactionReportBatchedFiltered", null);
+__decorate([
+    (0, common_1.Post)('/get-transaction-report-batched-v2'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPgController.prototype, "getTransactionReportBatchedFilteredV2", null);
 __decorate([
     (0, common_1.Post)('/erp-webhook-logs'),
     __param(0, (0, common_1.Body)()),
