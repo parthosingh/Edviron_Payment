@@ -3583,6 +3583,7 @@ let EdvironPgController = class EdvironPgController {
                     cutomer_no: '',
                     customer_email: '',
                     customer_id: '',
+                    isSplit: false
                 };
             }
             if (!request.additional_data) {
@@ -3600,6 +3601,7 @@ let EdvironPgController = class EdvironPgController {
                     cutomer_no: '',
                     customer_email: '',
                     customer_id: '',
+                    isSplit: request.isSplitPayments || false
                 };
             }
             const student_info = JSON.parse(request.additional_data);
@@ -3620,6 +3622,7 @@ let EdvironPgController = class EdvironPgController {
                     cutomer_no: '',
                     customer_email: '',
                     customer_id: '',
+                    isSplit: request.isSplitPayments || false
                 };
             }
             const payload = { vba_account_number: request.vba_account_number };
@@ -3651,6 +3654,7 @@ let EdvironPgController = class EdvironPgController {
                 cutomer_no: '',
                 customer_email: '',
                 customer_id: '',
+                isSplit: false
             };
         }
     }
