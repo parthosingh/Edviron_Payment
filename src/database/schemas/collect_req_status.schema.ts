@@ -13,6 +13,14 @@ export enum PaymentStatus {
   USER_DROPPED = 'USER_DROPPED',
 }
 
+export enum EdvironPayPaymentStatus {
+  SUCCESS = 'paid',
+  UNPAID = 'unpaid',
+  FAIL = 'FAIL',
+  FAILED = 'FAILED',
+  PENDING = 'PENDING',
+}
+
 interface error_details {
   error_description: string | null;
   error_reason: string | null;

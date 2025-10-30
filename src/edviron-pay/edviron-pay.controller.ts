@@ -10,7 +10,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
+import { EdvironPayPaymentStatus, PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import {
   Gateway,
   PaymentIds,
@@ -20,6 +20,7 @@ import { EdvironPayService } from './edviron-pay.service';
 import { PlatformCharge } from 'src/database/schemas/platform.charges.schema';
 import axios from 'axios';
 import * as _jwt from 'jsonwebtoken';
+import { Types } from 'mongoose';
 
 @Controller('edviron-pay')
 export class EdvironPayController {
@@ -843,6 +844,80 @@ export class EdvironPayController {
         throw new BadRequestException(e?.response?.message || 'network error');
       }
       throw new Error('Error occurred while processing payment: ' + e.message);
+    }
+  }
+
+  @Post('update-cheque-status')
+  async updateChequeStatus(
+    @Query('collect_id') collect_id: string,
+    @Query('status') status: string,
+    @Query('token') token: string,
+  ) {
+    try {
+      if (!collect_id || !status || !token) {
+        throw new BadRequestException('collect_id , token, and status are required');
+      }
+
+      const collectIdObject = new Types.ObjectId(collect_id);
+      const [request, collect_status] = await Promise.all([
+        this.databaseService.CollectRequestModel.findById(collect_id),
+        this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: new Types.ObjectId(collect_id),
+        }),
+      ]);
+      if (!request) {
+        throw new BadRequestException('Collect request not found');
+      }
+
+      if(collect_status?.payment_method !== "cheque"){
+        throw new BadRequestException('payment is not paid through cheque')
+      }
+      const decrypt = _jwt.verify(token, process.env.KEY!) as any;
+      if (decrypt.school_id.toString() !== request.school_id.toString()) {
+        throw new BadRequestException('Request fordge');
+      }
+
+      if (!collect_status) {
+        throw new BadRequestException('Collect request status not found');
+      }
+      await this.databaseService.CollectRequestStatusModel.updateOne(
+        {
+          collect_id: collectIdObject,
+        },
+        {
+          $set: {
+            status: status,
+          },
+        },
+        {
+          upsert: true,
+          new: true,
+        },
+      );
+      const InstallmentsId = await this.databaseService.InstallmentsModel.find({
+        collect_id: collectIdObject,
+      }).select('_id');
+      const newStatus =
+        status === 'SUCCESS'
+          ? EdvironPayPaymentStatus.SUCCESS
+          : status === 'FAILED'
+          ? EdvironPayPaymentStatus.UNPAID
+          : EdvironPayPaymentStatus.UNPAID;
+
+      await this.databaseService.InstallmentsModel.updateMany(
+        { _id: { $in: InstallmentsId } },
+        { $set: { status: newStatus } },
+      );
+      return {
+        success: true,
+        message: `Cheque status updated successfully to "${status}"`,
+        updatedStatus: newStatus,
+        collect_id: collect_id,
+      };
+    } catch (error) {
+      throw new BadRequestException(
+        error.response.message || 'Something went wrong while fetching data',
+      );
     }
   }
 

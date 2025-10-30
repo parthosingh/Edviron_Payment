@@ -21,11 +21,12 @@
 /// <reference types="mongoose/types/utility" />
 /// <reference types="mongoose/types/validation" />
 /// <reference types="mongoose/types/virtuals" />
-/// <reference types="mongoose" />
 /// <reference types="mongoose/types/inferschematype" />
 import { DatabaseService } from 'src/database/database.service';
+import { EdvironPayPaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { PaymentIds } from 'src/database/schemas/collect_request.schema';
 import { EdvironPayService } from './edviron-pay.service';
+import { Types } from 'mongoose';
 export declare class EdvironPayController {
     private readonly databaseService;
     private readonly edvironPay;
@@ -195,9 +196,15 @@ export declare class EdvironPayController {
         date?: string;
         remark?: string;
     }, req?: any, res?: any): Promise<any>;
+    updateChequeStatus(collect_id: string, status: string, token: string): Promise<{
+        success: boolean;
+        message: string;
+        updatedStatus: EdvironPayPaymentStatus;
+        collect_id: string;
+    }>;
     getStudentInstallments(student_id: string, school_id: string, trustee_id: string): Promise<{
         installments: (import("mongoose").FlattenMaps<import("src/database/schemas/installments.schema").InstallmentsDocument> & {
-            _id: import("mongoose").Types.ObjectId;
+            _id: Types.ObjectId;
         })[];
         studentDetail: {
             school_name: any;

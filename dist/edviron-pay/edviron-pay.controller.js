@@ -21,6 +21,7 @@ const edviron_pay_service_1 = require("./edviron-pay.service");
 const platform_charges_schema_1 = require("../database/schemas/platform.charges.schema");
 const axios_1 = require("axios");
 const _jwt = require("jsonwebtoken");
+const mongoose_1 = require("mongoose");
 let EdvironPayController = class EdvironPayController {
     constructor(databaseService, edvironPay) {
         this.databaseService = databaseService;
@@ -495,6 +496,61 @@ let EdvironPayController = class EdvironPayController {
             throw new Error('Error occurred while processing payment: ' + e.message);
         }
     }
+    async updateChequeStatus(collect_id, status, token) {
+        try {
+            if (!collect_id || !status || !token) {
+                throw new common_1.BadRequestException('collect_id , token, and status are required');
+            }
+            const collectIdObject = new mongoose_1.Types.ObjectId(collect_id);
+            const [request, collect_status] = await Promise.all([
+                this.databaseService.CollectRequestModel.findById(collect_id),
+                this.databaseService.CollectRequestStatusModel.findOne({
+                    collect_id: new mongoose_1.Types.ObjectId(collect_id),
+                }),
+            ]);
+            if (!request) {
+                throw new common_1.BadRequestException('Collect request not found');
+            }
+            if (collect_status?.payment_method !== "cheque") {
+                throw new common_1.BadRequestException('payment is not paid through cheque');
+            }
+            const decrypt = _jwt.verify(token, process.env.KEY);
+            if (decrypt.school_id.toString() !== request.school_id.toString()) {
+                throw new common_1.BadRequestException('Request fordge');
+            }
+            if (!collect_status) {
+                throw new common_1.BadRequestException('Collect request status not found');
+            }
+            await this.databaseService.CollectRequestStatusModel.updateOne({
+                collect_id: collectIdObject,
+            }, {
+                $set: {
+                    status: status,
+                },
+            }, {
+                upsert: true,
+                new: true,
+            });
+            const InstallmentsId = await this.databaseService.InstallmentsModel.find({
+                collect_id: collectIdObject,
+            }).select('_id');
+            const newStatus = status === 'SUCCESS'
+                ? collect_req_status_schema_1.EdvironPayPaymentStatus.SUCCESS
+                : status === 'FAILED'
+                    ? collect_req_status_schema_1.EdvironPayPaymentStatus.UNPAID
+                    : collect_req_status_schema_1.EdvironPayPaymentStatus.UNPAID;
+            await this.databaseService.InstallmentsModel.updateMany({ _id: { $in: InstallmentsId } }, { $set: { status: newStatus } });
+            return {
+                success: true,
+                message: `Cheque status updated successfully to "${status}"`,
+                updatedStatus: newStatus,
+                collect_id: collect_id,
+            };
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.response.message || 'Something went wrong while fetching data');
+        }
+    }
     async getStudentInstallments(student_id, school_id, trustee_id) {
         try {
             const studentDetail = await this.edvironPay.studentFind(student_id, school_id, trustee_id);
@@ -599,6 +655,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPayController.prototype, "collect", null);
+__decorate([
+    (0, common_1.Post)('update-cheque-status'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __param(1, (0, common_1.Query)('status')),
+    __param(2, (0, common_1.Query)('token')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", Promise)
+], EdvironPayController.prototype, "updateChequeStatus", null);
 __decorate([
     (0, common_1.Get)('/student-installments'),
     __param(0, (0, common_1.Query)('student_id')),
