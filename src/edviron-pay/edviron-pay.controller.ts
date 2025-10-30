@@ -928,13 +928,28 @@ export class EdvironPayController {
     @Query('trustee_id') trustee_id: string,
   ) {
     try {
-      const studentDetail = await this.edvironPay.studentFind(
+      let studentDetail = await this.edvironPay.studentFind(
         student_id,
         school_id,
         trustee_id,
       );
+
+       const config = {
+        method: 'get',
+        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-trustee-school-logo?school_id=${school_id}&trustee_id=${trustee_id}`,
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      };
+
+      const {data} = await axios.request(config)
       if (!studentDetail) {
         throw new BadRequestException('student not found');
+      }
+      studentDetail = {
+        ...studentDetail,
+        ...data
       }
       let installments = await this.databaseService.InstallmentsModel.find({
         student_id,
