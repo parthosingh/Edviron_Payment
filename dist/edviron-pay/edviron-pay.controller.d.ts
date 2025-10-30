@@ -200,6 +200,7 @@ export declare class EdvironPayController {
         success: boolean;
         message: string;
         updatedStatus: EdvironPayPaymentStatus;
+        collect_id: string;
     }>;
     getStudentInstallments(student_id: string, school_id: string, trustee_id: string): Promise<{
         installments: (import("mongoose").FlattenMaps<import("src/database/schemas/installments.schema").InstallmentsDocument> & {

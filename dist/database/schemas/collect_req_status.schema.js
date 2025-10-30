@@ -27,7 +27,7 @@ var PaymentStatus;
 var EdvironPayPaymentStatus;
 (function (EdvironPayPaymentStatus) {
     EdvironPayPaymentStatus["SUCCESS"] = "paid";
-    EdvironPayPaymentStatus["UNPAID"] = "paid";
+    EdvironPayPaymentStatus["UNPAID"] = "unpaid";
     EdvironPayPaymentStatus["FAIL"] = "FAIL";
     EdvironPayPaymentStatus["FAILED"] = "FAILED";
     EdvironPayPaymentStatus["PENDING"] = "PENDING";

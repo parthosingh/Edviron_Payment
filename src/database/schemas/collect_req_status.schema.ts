@@ -15,7 +15,7 @@ export enum PaymentStatus {
 
 export enum EdvironPayPaymentStatus {
   SUCCESS = 'paid',
-  UNPAID = 'paid',
+  UNPAID = 'unpaid',
   FAIL = 'FAIL',
   FAILED = 'FAILED',
   PENDING = 'PENDING',

@@ -544,6 +544,7 @@ let EdvironPayController = class EdvironPayController {
                 success: true,
                 message: `Cheque status updated successfully to "${status}"`,
                 updatedStatus: newStatus,
+                collect_id: collect_id,
             };
         }
         catch (error) {
