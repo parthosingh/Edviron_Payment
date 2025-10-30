@@ -76,4 +76,9 @@ export declare class CanteenController {
         collect_id: string;
         sign: string;
     }): Promise<any>;
+    capturePayment(body: {
+        sign: string;
+        collect_id: string;
+        capture_status: string;
+    }): Promise<any>;
 }

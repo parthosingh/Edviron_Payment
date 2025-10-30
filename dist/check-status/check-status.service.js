@@ -379,6 +379,7 @@ let CheckStatusService = class CheckStatusService {
                     status_code,
                     custom_order_id: collectRequest.custom_order_id || null,
                     amount: parseInt(easebuzzStatus.msg.amount),
+                    edviron_order_id: collectRequest._id,
                     details: {
                         payment_mode: collect_req_status.payment_time,
                         bank_ref: easebuzzStatus.msg.bank_ref_num,
@@ -390,7 +391,6 @@ let CheckStatusService = class CheckStatusService {
                 };
                 return ezb_status_response;
             }
-            return await this.checkExpiry(collectRequest);
         }
         switch (collectRequest?.gateway) {
             case collect_request_schema_1.Gateway.HDFC:
@@ -414,7 +414,7 @@ let CheckStatusService = class CheckStatusService {
                 };
             case collect_request_schema_1.Gateway.EDVIRON_RAZORPAY:
                 const razorpayData = await this.razorpayServiceModel.getPaymentStatus(collectRequest.razorpay.order_id.toString(), collectRequest);
-                return razorpayData;
+                return { ...razorpayData, edviron_order_id: collectRequest._id };
             case collect_request_schema_1.Gateway.SMART_GATEWAY:
                 const data = await this.hdfcSmartgatewayService.checkStatus(collectRequest._id.toString(), collectRequest);
                 return data;

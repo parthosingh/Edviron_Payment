@@ -42,7 +42,7 @@ export class CheckStatusService {
     private readonly razorpayServiceModel: RazorpayNonseamlessService,
     private readonly razorpay_seamless: RazorpayService,
     private readonly gatepayService: GatepayService,
-  ) {}
+  ) { }
   async checkStatus(collect_request_id: String) {
     console.log('checking status for', collect_request_id);
     const collectRequest =
@@ -175,8 +175,8 @@ export class CheckStatusService {
       }
       return await this.checkExpiry(collectRequest);
     }
-console.log('here end fist')
-console.log(collectRequest?.gateway)
+    console.log('here end fist')
+    console.log(collectRequest?.gateway)
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
         return await this.hdfcService.checkStatus(collect_request_id);
@@ -470,6 +470,7 @@ console.log(collectRequest?.gateway)
           status_code,
           custom_order_id: collectRequest.custom_order_id || null,
           amount: parseInt(easebuzzStatus.msg.amount),
+          edviron_order_id:collectRequest._id,
           details: {
             payment_mode: collect_req_status.payment_time,
             bank_ref: easebuzzStatus.msg.bank_ref_num,
@@ -483,7 +484,7 @@ console.log(collectRequest?.gateway)
         };
         return ezb_status_response;
       }
-      return await this.checkExpiry(collectRequest);
+      // return await this.checkExpiry(collectRequest);
     }
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
@@ -519,7 +520,7 @@ console.log(collectRequest?.gateway)
           collectRequest.razorpay.order_id.toString(),
           collectRequest,
         );
-        return razorpayData;
+        return {...razorpayData,edviron_order_id:collectRequest._id};
 
       case Gateway.SMART_GATEWAY:
         const data = await this.hdfcSmartgatewayService.checkStatus(

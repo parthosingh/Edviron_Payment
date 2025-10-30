@@ -208,4 +208,5 @@ export declare class CashfreeService {
             name?: string;
         }
     ]): Promise<any>;
+    checkPaymentStatus(collect_request_id: string, collect_request: CollectRequest): Promise<any>;
 }
