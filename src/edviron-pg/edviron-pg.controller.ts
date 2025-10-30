@@ -3317,6 +3317,46 @@ export class EdvironPgController {
     );
   }
 
+  @Post('/get-transaction-report-batched-v2')
+  async getTransactionReportBatchedFilteredV2(
+    @Body()
+    body: {
+      start_date: string;
+      end_date: string;
+      trustee_id: string;
+      status: string;
+      school_id?: string[] | null;
+      mode?: string[] | null;
+      isQRPayment?: boolean | null;
+      gateway?: string[] | null;
+    },
+  ) {
+    const {
+      start_date,
+      end_date,
+      trustee_id,
+      school_id,
+      mode,
+      status,
+      isQRPayment,
+      gateway,
+    } = body;
+    console.log('getting transaction sum');
+
+    return await this.edvironPgService.getTransactionReportBatchedFilterdV2(
+      trustee_id,
+      start_date,
+      end_date,
+      status,
+      school_id,
+      mode,
+      isQRPayment,
+      gateway,
+    );
+  }
+
+
+
   @Post('/erp-webhook-logs')
   async getErpWebhookLogs(
     @Body()
