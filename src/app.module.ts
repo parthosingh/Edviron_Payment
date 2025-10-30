@@ -40,6 +40,9 @@ import { RazorpayService } from './razorpay/razorpay.service';
 import { EdvironSeamlessController } from './edviron-seamless/edviron-seamless.controller';
 import { EdvironSeamlessService } from './edviron-seamless/edviron-seamless.service';
 import { CanteenModule } from './canteen/canteen.module';
+import { ReconcilationService } from './reconcilation/reconcilation.service';
+import { ReconcilationController } from './reconcilation/reconcilation.controller';
+import { ReconcilationModule } from './reconcilation/reconcilation.module';
 
 
 @Module({
@@ -66,6 +69,7 @@ import { CanteenModule } from './canteen/canteen.module';
     EdvironPayModule,
     GatewayModule,
     CanteenModule,
+    ReconcilationModule,
   ],
   controllers: [
     AppController,
@@ -77,6 +81,7 @@ import { CanteenModule } from './canteen/canteen.module';
     EdvironPayController,
     GatewayController,
     EdvironSeamlessController,
+    ReconcilationController,
   ],
   providers: [
     AppService,
@@ -89,6 +94,7 @@ import { CanteenModule } from './canteen/canteen.module';
     RazorpayNonseamlessService,
     EdvironSeamlessService,
     EdvironPayService,
+    ReconcilationService,
   ],
 })
 export class AppModule {}

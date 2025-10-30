@@ -48,6 +48,9 @@ const razorpay_service_1 = require("./razorpay/razorpay.service");
 const edviron_seamless_controller_1 = require("./edviron-seamless/edviron-seamless.controller");
 const edviron_seamless_service_1 = require("./edviron-seamless/edviron-seamless.service");
 const canteen_module_1 = require("./canteen/canteen.module");
+const reconcilation_service_1 = require("./reconcilation/reconcilation.service");
+const reconcilation_controller_1 = require("./reconcilation/reconcilation.controller");
+const reconcilation_module_1 = require("./reconcilation/reconcilation.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -76,6 +79,7 @@ exports.AppModule = AppModule = __decorate([
             edviron_pay_module_1.EdvironPayModule,
             gateway_module_1.GatewayModule,
             canteen_module_1.CanteenModule,
+            reconcilation_module_1.ReconcilationModule,
         ],
         controllers: [
             app_controller_1.AppController,
@@ -87,6 +91,7 @@ exports.AppModule = AppModule = __decorate([
             edviron_pay_controller_1.EdvironPayController,
             gateway_controller_1.GatewayController,
             edviron_seamless_controller_1.EdvironSeamlessController,
+            reconcilation_controller_1.ReconcilationController,
         ],
         providers: [
             app_service_1.AppService,
@@ -99,6 +104,7 @@ exports.AppModule = AppModule = __decorate([
             razorpay_nonseamless_service_1.RazorpayNonseamlessService,
             edviron_seamless_service_1.EdvironSeamlessService,
             edviron_pay_service_1.EdvironPayService,
+            reconcilation_service_1.ReconcilationService,
         ],
     })
 ], AppModule);
