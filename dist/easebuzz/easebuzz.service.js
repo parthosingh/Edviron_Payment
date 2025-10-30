@@ -690,6 +690,11 @@ let EasebuzzService = class EasebuzzService {
                 },
                 data: encodedParams,
             };
+            let ezb_split_payments = {};
+            if (request.easebuzz_split_label) {
+                ezb_split_payments[request.easebuzz_split_label] = request.amount;
+                encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
+            }
             const { data: easebuzzRes } = await axios_1.default.request(options);
             const access_key = easebuzzRes.data;
             let formData = new FormData();
