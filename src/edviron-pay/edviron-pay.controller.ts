@@ -857,6 +857,7 @@ export class EdvironPayController {
       if (!collect_id || !status || !token) {
         throw new BadRequestException('collect_id , token, and status are required');
       }
+      
       const collectIdObject = new Types.ObjectId(collect_id);
       const [request, collect_status] = await Promise.all([
         this.databaseService.CollectRequestModel.findById(collect_id),
