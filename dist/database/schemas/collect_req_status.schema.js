@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CollectRequestStatusSchema = exports.CollectRequestStatus = exports.PaymentStatus = void 0;
+exports.CollectRequestStatusSchema = exports.CollectRequestStatus = exports.EdvironPayPaymentStatus = exports.PaymentStatus = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const collect_request_schema_1 = require("./collect_request.schema");
@@ -24,6 +24,14 @@ var PaymentStatus;
     PaymentStatus["AUTO_REFUND"] = "AUTO_REFUND";
     PaymentStatus["USER_DROPPED"] = "USER_DROPPED";
 })(PaymentStatus || (exports.PaymentStatus = PaymentStatus = {}));
+var EdvironPayPaymentStatus;
+(function (EdvironPayPaymentStatus) {
+    EdvironPayPaymentStatus["SUCCESS"] = "paid";
+    EdvironPayPaymentStatus["UNPAID"] = "unpaid";
+    EdvironPayPaymentStatus["FAIL"] = "FAIL";
+    EdvironPayPaymentStatus["FAILED"] = "FAILED";
+    EdvironPayPaymentStatus["PENDING"] = "PENDING";
+})(EdvironPayPaymentStatus || (exports.EdvironPayPaymentStatus = EdvironPayPaymentStatus = {}));
 let CollectRequestStatus = class CollectRequestStatus {
 };
 exports.CollectRequestStatus = CollectRequestStatus;
