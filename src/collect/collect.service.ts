@@ -606,7 +606,7 @@ export class CollectService {
     // }
 
     // EASEBUZZ NON PARTNER MASTERGATEWAY
-    if (isSelectGateway) {
+    if (isSelectGateway && !request.isSplitPayments) {
       console.log({ isEasebuzzNonpartner }, easebuzz_non_partner_cred);
 
       if (

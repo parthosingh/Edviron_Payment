@@ -362,7 +362,7 @@ let CollectService = class CollectService {
                 return { url: data?.url, request: data?.request };
             }
         }
-        if (isSelectGateway) {
+        if (isSelectGateway && !request.isSplitPayments) {
             console.log({ isEasebuzzNonpartner }, easebuzz_non_partner_cred);
             if (isEasebuzzNonpartner &&
                 easebuzz_non_partner_cred &&
