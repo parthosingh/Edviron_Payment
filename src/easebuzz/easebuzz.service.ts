@@ -605,28 +605,29 @@ export class EasebuzzService {
         studentDetail?.student_details?.student_phone_no || '0000000000';
       const additionalData = studentDetail.additional_fields || {};
 
-      // const udfValues = [
-      //   student_id,
-      //   student_phone_no,
-      //   ...Object.values(additionalData),
-      // ];
-      // const udfPadded = [
-      //   ...udfValues,
-      //   ...new Array(10 - udfValues.length).fill(''),
-      // ].slice(0, 10);
+      const udfValues = [
+        student_id,
+        student_phone_no,
+        ...Object.values(additionalData),
+      ];
+      const udfPadded = [
+        ...udfValues,
+        ...new Array(10 - udfValues.length).fill(''),
+      ].slice(0, 10);
 
-      // const hashData = [
-      //   easebuzz_key,
-      //   request._id,
-      //   parseFloat(request.amount.toFixed(2)),
-      //   productinfo,
-      //   firstname,
-      //   email,
-      //   ...udfPadded,
-      //   easebuzz_salt,
-      // ].join('|');
-
-       let hashData =
+      const hashData = [
+        easebuzz_key,
+        request._id,
+        parseFloat(request.amount.toFixed(2)),
+        productinfo,
+        firstname,
+        email,
+        ...udfPadded,
+        easebuzz_salt,
+      ].join('|');
+      console.log(hashData);
+      
+       let hashData2 =
         easebuzz_key +
         '|' +
         request._id +

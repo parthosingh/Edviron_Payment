@@ -441,7 +441,27 @@ let EasebuzzService = class EasebuzzService {
             let student_id = studentDetail?.student_details?.student_id || 'NA';
             let student_phone_no = studentDetail?.student_details?.student_phone_no || '0000000000';
             const additionalData = studentDetail.additional_fields || {};
-            let hashData = easebuzz_key +
+            const udfValues = [
+                student_id,
+                student_phone_no,
+                ...Object.values(additionalData),
+            ];
+            const udfPadded = [
+                ...udfValues,
+                ...new Array(10 - udfValues.length).fill(''),
+            ].slice(0, 10);
+            const hashData = [
+                easebuzz_key,
+                request._id,
+                parseFloat(request.amount.toFixed(2)),
+                productinfo,
+                firstname,
+                email,
+                ...udfPadded,
+                easebuzz_salt,
+            ].join('|');
+            console.log(hashData);
+            let hashData2 = easebuzz_key +
                 '|' +
                 request._id +
                 '|' +

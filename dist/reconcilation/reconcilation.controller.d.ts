@@ -4,7 +4,8 @@ export declare class ReconcilationController {
     constructor(databaseService: DatabaseService);
     easebuzzRecon(body: {
         sign: string;
-        utr: string;
         collect_ids: string[];
+        utr: string;
+        school_name: string;
     }): Promise<any[]>;
 }
