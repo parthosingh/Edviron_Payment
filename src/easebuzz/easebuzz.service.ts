@@ -87,7 +87,9 @@ export class EasebuzzService {
         requestId,
         collectReq,
       );
-      if (statusResponse.msg.mode === 'NA') {
+      console.log({statusResponse});
+      
+      if (statusResponse.msg.mode === 'NA' || statusResponse.status === false) {
         console.log(`Status 0 for ${requestId}, retrying with 'upi_' suffix`);
         statusResponse = await this.easebuzzWebhookCheckStatusV2(
           `upi_${requestId}`,

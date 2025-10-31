@@ -69,7 +69,8 @@ let EasebuzzService = class EasebuzzService {
     async statusResponsev2(requestId, collectReq) {
         try {
             let statusResponse = await this.easebuzzWebhookCheckStatusV2(requestId, collectReq);
-            if (statusResponse.msg.mode === 'NA') {
+            console.log({ statusResponse });
+            if (statusResponse.msg.mode === 'NA' || statusResponse.status === false) {
                 console.log(`Status 0 for ${requestId}, retrying with 'upi_' suffix`);
                 statusResponse = await this.easebuzzWebhookCheckStatusV2(`upi_${requestId}`, collectReq);
             }
