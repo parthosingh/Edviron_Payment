@@ -677,6 +677,8 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             if (!collectReq)
                 throw new Error('Collect request not found');
             const isSeamless = collectReq.razorpay_seamless.razorpay_id;
+            collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_RAZORPAY;
+            await collectReq.save();
             if (isSeamless) {
                 await this.databaseService.WebhooksModel.findOneAndUpdate({ collect_id: new mongoose_1.Types.ObjectId(collect_id) }, {
                     $set: {
@@ -1068,6 +1070,8 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             if (isSeamless) {
                 return 'this is seamless transaction';
             }
+            collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_RAZORPAY;
+            await collectReq.save();
             const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
                 collect_id: collectIdObject,
             });
