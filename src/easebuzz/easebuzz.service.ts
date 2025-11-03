@@ -412,25 +412,23 @@ export class EasebuzzService {
         let student_phone_no =
           studentDetail?.student_details?.student_phone_no || '0000000000';
         const additionalData = studentDetail.additional_fields || {};
-  const udfValues = [student_id, ...Object.values(additionalData)];
+        const udfValues = [student_id, ...Object.values(additionalData)];
 
-      const udfPadded = [
-        ...udfValues,
-        ...new Array(Math.max(0, 10 - udfValues.length)).fill(''),
-      ].slice(0, 10);
-      console.log('herehere')
+        const udfPadded = [
+          ...udfValues,
+          ...new Array(Math.max(0, 10 - udfValues.length)).fill(''),
+        ].slice(0, 10);
 
         const hashData2 = [
-        easebuzz_key,
-        request._id,
-        parseFloat(request.amount.toFixed(2)),
-        productinfo,
-        firstname,
-        email,
-        ...udfPadded,
-        easebuzz_salt,
-      ].join('|');
-
+          easebuzz_key,
+          request._id,
+          parseFloat(request.amount.toFixed(2)),
+          productinfo,
+          firstname,
+          email,
+          ...udfPadded,
+          easebuzz_salt,
+        ].join('|');
 
         // let hashData =
         //   easebuzz_key +
@@ -451,7 +449,6 @@ export class EasebuzzService {
         //   '|' +
         //   '||||||||' +
         //   easebuzz_salt;
-
 
         const easebuzz_cb_surl =
           process.env.URL +
@@ -479,7 +476,7 @@ export class EasebuzzService {
 
         encodedParams.set('productinfo', productinfo);
         encodedParams.set('firstname', firstname);
-        encodedParams.set('phone', '9898989898');
+        encodedParams.set('phone', student_phone_no);
         encodedParams.set('email', email);
         encodedParams.set('surl', easebuzz_cb_surl);
         encodedParams.set('furl', easebuzz_cb_furl);
@@ -487,9 +484,9 @@ export class EasebuzzService {
         encodedParams.set('request_flow', 'SEAMLESS');
         // encodedParams.set('udf1', student_id);
         // encodedParams.set('udf2', student_phone_no);
-         udfPadded.forEach((val, index) => {
-        encodedParams.set(`udf${index + 1}`, val);
-      });
+        udfPadded.forEach((val, index) => {
+          encodedParams.set(`udf${index + 1}`, val);
+        });
         // udfPadded.forEach((val, index) => {
         // encodedParams.set(`udf${index + 1}`, val);
         // });
@@ -560,7 +557,7 @@ export class EasebuzzService {
         );
 
         const { data: easebuzzRes } = await axios.request(Ezboptions);
-        console.log({ easebuzzRes });
+        console.log( easebuzzRes, " easebuzzRes" );
 
         const easebuzzPaymentId = easebuzzRes.data;
         collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
@@ -573,7 +570,7 @@ export class EasebuzzService {
 
         return {
           collect_request_id: request._id,
-          url:
+          collect_request_url:
             process.env.URL +
             '/edviron-pg/redirect?' +
             '&collect_request_id=' +
@@ -636,7 +633,6 @@ export class EasebuzzService {
         ...udfValues,
         ...new Array(Math.max(0, 10 - udfValues.length)).fill(''),
       ].slice(0, 10);
-
 
       const hashData2 = [
         easebuzz_key,
@@ -788,27 +784,53 @@ export class EasebuzzService {
       if (!collectReq) {
         throw new BadRequestException('Collect request not found');
       }
+       const { additional_data } = collectReq;
+       const studentDetail = JSON.parse(additional_data);
       const easebuzz_key = request.easebuzz_non_partner_cred.easebuzz_key;
       const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
 
       const upi_collect_id = `upi_${collect_id}`;
       let productinfo = 'payment gateway customer';
-      let firstname = 'customer';
-      let email = 'noreply@edviron.com';
-      let hashData =
-        easebuzz_key +
-        '|' +
-        upi_collect_id +
-        '|' +
-        parseFloat(request.amount.toFixed(2)) +
-        '|' +
-        productinfo +
-        '|' +
-        firstname +
-        '|' +
-        email +
-        '|||||||||||' +
-        easebuzz_salt;
+      let firstname =
+          studentDetail.student_details?.student_name || 'customer';
+        let email =
+          studentDetail.student_details?.student_email || 'noreply@edviron.com';
+        let student_id = studentDetail?.student_details?.student_id || 'NA';
+        let student_phone_no =
+          studentDetail?.student_details?.student_phone_no || '0000000000';
+        const additionalData = studentDetail.additional_fields || {};
+        const udfValues = [student_id, ...Object.values(additionalData)];
+
+        const udfPadded = [
+          ...udfValues,
+          ...new Array(Math.max(0, 10 - udfValues.length)).fill(''),
+        ].slice(0, 10);
+
+        const hashData2 = [
+          easebuzz_key,
+          upi_collect_id,
+          parseFloat(request.amount.toFixed(2)),
+          productinfo,
+          firstname,
+          email,
+          ...udfPadded,
+          easebuzz_salt,
+        ].join('|');
+
+      // let hashData =
+      //   easebuzz_key +
+      //   '|' +
+      //   upi_collect_id +
+      //   '|' +
+      //   parseFloat(request.amount.toFixed(2)) +
+      //   '|' +
+      //   productinfo +
+      //   '|' +
+      //   firstname +
+      //   '|' +
+      //   email +
+      //   '|||||||||||' +
+      //   easebuzz_salt;
 
       const easebuzz_cb_surl =
         process.env.URL +
@@ -822,7 +844,7 @@ export class EasebuzzService {
         upi_collect_id +
         '&status=fail';
 
-      let hash = await calculateSHA512Hash(hashData);
+      let hash = await calculateSHA512Hash(hashData2);
       let encodedParams = new URLSearchParams();
       encodedParams.set('key', easebuzz_key);
       encodedParams.set('txnid', upi_collect_id);
@@ -833,7 +855,7 @@ export class EasebuzzService {
 
       encodedParams.set('productinfo', productinfo);
       encodedParams.set('firstname', firstname);
-      encodedParams.set('phone', '9898989898');
+      encodedParams.set('phone', student_phone_no);
       encodedParams.set('email', email);
       encodedParams.set('surl', easebuzz_cb_surl);
       encodedParams.set('furl', easebuzz_cb_furl);
@@ -841,7 +863,9 @@ export class EasebuzzService {
       encodedParams.set('request_flow', 'SEAMLESS');
       // encodedParams.set('sub_merchant_id', request.easebuzz_sub_merchant_id);
       encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
-
+      udfPadded.forEach((val, index) => {
+          encodedParams.set(`udf${index + 1}`, val);
+      });
       const options = {
         method: 'POST',
         url: `${process.env.EASEBUZZ_ENDPOINT_PROD}/payment/initiateLink`,
@@ -851,6 +875,8 @@ export class EasebuzzService {
         },
         data: encodedParams,
       };
+
+      console.log(options, "optionsoptions")
 
       const { data: easebuzzRes } = await axios.request(options);
       console.log({ easebuzzRes });
@@ -891,44 +917,59 @@ export class EasebuzzService {
       if (!collectReq) {
         throw new BadRequestException('Collect request not found');
       }
+      const { additional_data } = collectReq;
+       const studentDetail = JSON.parse(additional_data);
       const easebuzz_key = request.easebuzz_non_partner_cred.easebuzz_key;
       const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
-      const easebuzz_sub_merchant_id =
-        request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
+
       const upi_collect_id = `upi_${collect_id}`;
       let productinfo = 'payment gateway customer';
-      const { additional_data } = collectReq;
-      const studentDetail = JSON.parse(additional_data);
+      let firstname =
+          studentDetail.student_details?.student_name || 'customer';
+        let email =
+          studentDetail.student_details?.student_email || 'noreply@edviron.com';
+        let student_id = studentDetail?.student_details?.student_id || 'NA';
+        let student_phone_no =
+          studentDetail?.student_details?.student_phone_no || '0000000000';
+        const additionalData = studentDetail.additional_fields || {};
+        const udfValues = [student_id, ...Object.values(additionalData)];
 
-      let firstname = (
-        studentDetail.student_details?.student_name || 'customer'
-      ).trim();
+        const udfPadded = [
+          ...udfValues,
+          ...new Array(Math.max(0, 10 - udfValues.length)).fill(''),
+        ].slice(0, 10);
 
-      let email =
-        studentDetail.student_details?.student_email || 'noreply@edviron.com';
-      let student_id = studentDetail?.student_details?.student_id || 'NA';
-      let student_phone_no =
-        studentDetail?.student_details?.student_phone_no || '0000000000';
+        const hashData2 = [
+          easebuzz_key,
+          upi_collect_id,
+          parseFloat(request.amount.toFixed(2)),
+          productinfo,
+          firstname,
+          email,
+          ...udfPadded,
+          easebuzz_salt,
+        ].join('|');
 
-      let hashData =
-        easebuzz_key +
-        '|' +
-        upi_collect_id +
-        '|' +
-        parseFloat(request.amount.toFixed(2)) +
-        '|' +
-        productinfo +
-        '|' +
-        firstname +
-        '|' +
-        email +
-        '|' +
-        student_id +
-        '|' +
-        student_phone_no +
-        '|' +
-        '||||||||' +
-        easebuzz_salt;
+
+      // let hashData =
+      //   easebuzz_key +
+      //   '|' +
+      //   upi_collect_id +
+      //   '|' +
+      //   parseFloat(request.amount.toFixed(2)) +
+      //   '|' +
+      //   productinfo +
+      //   '|' +
+      //   firstname +
+      //   '|' +
+      //   email +
+      //   '|' +
+      //   student_id +
+      //   '|' +
+      //   student_phone_no +
+      //   '|' +
+      //   '||||||||' +
+      //   easebuzz_salt;
 
       const easebuzz_cb_surl =
         process.env.URL +
@@ -942,9 +983,9 @@ export class EasebuzzService {
         upi_collect_id +
         '&status=fail';
 
-      let hash = await calculateSHA512Hash(hashData);
+      let hash = await calculateSHA512Hash(hashData2);
       let encodedParams = new URLSearchParams();
-      encodedParams.set('key', request.easebuzz_non_partner_cred.easebuzz_key);
+      encodedParams.set('key', easebuzz_key);
       encodedParams.set('txnid', upi_collect_id);
       encodedParams.set(
         'amount',
@@ -959,8 +1000,9 @@ export class EasebuzzService {
       encodedParams.set('furl', easebuzz_cb_furl);
       encodedParams.set('hash', hash);
       encodedParams.set('request_flow', 'SEAMLESS');
-      encodedParams.set('udf1', student_id);
-      encodedParams.set('udf2', student_phone_no);
+      udfPadded.forEach((val, index) => {
+          encodedParams.set(`udf${index + 1}`, val);
+      });
       // encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
       const options = {
         method: 'POST',
