@@ -809,7 +809,8 @@ export class RazorpayNonseamlessController {
         );
       if (!collectReq) throw new Error('Collect request not found');
       const isSeamless = collectReq.razorpay_seamless.razorpay_id;
-
+        collectReq.gateway=  Gateway.EDVIRON_RAZORPAY
+      await collectReq.save()
       if (isSeamless) {
         // return 'this is seamless transaction'
         await this.databaseService.WebhooksModel.findOneAndUpdate(
@@ -1299,6 +1300,8 @@ export class RazorpayNonseamlessController {
       if (isSeamless) {
         return 'this is seamless transaction';
       }
+      collectReq.gateway=  Gateway.EDVIRON_RAZORPAY
+      await collectReq.save()
       const collectRequestStatus =
         await this.databaseService.CollectRequestStatusModel.findOne({
           collect_id: collectIdObject,

@@ -140,7 +140,8 @@ export class CheckStatusService {
           collect_request_id.toString(),
           collectRequest,
         );
-
+        console.log({easebuzzStatus});
+        
         let status_code;
         if (easebuzzStatus.msg.status.toUpperCase() === 'SUCCESS') {
           status_code = 200;

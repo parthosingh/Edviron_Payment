@@ -822,6 +822,8 @@ export class RazorpayController {
         if(isSeamless){
           return 'this is non-seamless transaction'
         }
+        collectReq.gateway=  Gateway.EDVIRON_RAZORPAY
+      await collectReq.save()
       const collectRequestStatus =
         await this.databaseService.CollectRequestStatusModel.findOne({
           collect_id: collectIdObject,

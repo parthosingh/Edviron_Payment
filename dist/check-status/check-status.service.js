@@ -127,6 +127,7 @@ let CheckStatusService = class CheckStatusService {
             if (collectRequest.gateway === collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ) {
                 console.log('testing easebuzz status response v2');
                 const easebuzzStatus = await this.easebuzzService.statusResponsev2(collect_request_id.toString(), collectRequest);
+                console.log({ easebuzzStatus });
                 let status_code;
                 if (easebuzzStatus.msg.status.toUpperCase() === 'SUCCESS') {
                     status_code = 200;

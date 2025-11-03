@@ -127,6 +127,10 @@ export declare class EdvironPgService implements GatewayService {
     subtrusteeTransactionAggregation(trustee_id: string, start_date: string, end_date: string, school_id: string[], status?: string | null, mode?: string[] | null, isQRPayment?: boolean | null, gateway?: string[] | null): Promise<{
         transactions: any;
     }>;
+    getTransactionReportBatchedFilterdV2(trustee_id: string, start_date: string, end_date: string, status?: string | null, school_id?: string[] | null, mode?: string[] | null, isQRPayment?: boolean | null, gateway?: string[] | null): Promise<{
+        length: number;
+        transactions: any[];
+    }>;
     getTransactionReportBatchedFilterd(trustee_id: string, start_date: string, end_date: string, status?: string | null, school_id?: string | null, mode?: string[] | null, isQRPayment?: boolean | null, gateway?: string[] | null): Promise<{
         length: number;
         transactions: any[];
