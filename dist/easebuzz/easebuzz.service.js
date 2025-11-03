@@ -304,7 +304,13 @@ let EasebuzzService = class EasebuzzService {
                 let student_id = studentDetail?.student_details?.student_id || 'NA';
                 let student_phone_no = studentDetail?.student_details?.student_phone_no || '0000000000';
                 const additionalData = studentDetail.additional_fields || {};
-                const udfValues = [student_id, ...Object.values(additionalData)];
+                const topFiveData = Object.entries(additionalData).slice(0, 5);
+                const topFiveObject = Object.fromEntries(topFiveData);
+                const udfValues = [
+                    student_id,
+                    student_phone_no,
+                    ...Object.values(topFiveObject),
+                ];
                 const udfPadded = [
                     ...udfValues,
                     ...new Array(Math.max(0, 10 - udfValues.length)).fill(''),
@@ -391,7 +397,7 @@ let EasebuzzService = class EasebuzzService {
                     .join('&');
                 const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
                 const { data: easebuzzRes } = await axios_1.default.request(Ezboptions);
-                console.log(easebuzzRes, " easebuzzRes");
+                console.log(easebuzzRes, ' easebuzzRes');
                 const easebuzzPaymentId = easebuzzRes.data;
                 collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
                 await collectReq.save();
@@ -438,7 +444,13 @@ let EasebuzzService = class EasebuzzService {
             let student_id = studentDetail?.student_details?.student_id || 'NA';
             let student_phone_no = studentDetail?.student_details?.student_phone_no || '0000000000';
             const additionalData = studentDetail.additional_fields || {};
-            const udfValues = [student_id, ...Object.values(additionalData)];
+            const topFiveData = Object.entries(additionalData).slice(0, 5);
+            const topFiveObject = Object.fromEntries(topFiveData);
+            const udfValues = [
+                student_id,
+                student_phone_no,
+                ...Object.values(topFiveObject),
+            ];
             const udfPadded = [
                 ...udfValues,
                 ...new Array(Math.max(0, 10 - udfValues.length)).fill(''),
@@ -552,7 +564,13 @@ let EasebuzzService = class EasebuzzService {
             let student_id = studentDetail?.student_details?.student_id || 'NA';
             let student_phone_no = studentDetail?.student_details?.student_phone_no || '0000000000';
             const additionalData = studentDetail.additional_fields || {};
-            const udfValues = [student_id, ...Object.values(additionalData)];
+            const topFiveData = Object.entries(additionalData).slice(0, 5);
+            const topFiveObject = Object.fromEntries(topFiveData);
+            const udfValues = [
+                student_id,
+                student_phone_no,
+                ...Object.values(topFiveObject),
+            ];
             const udfPadded = [
                 ...udfValues,
                 ...new Array(Math.max(0, 10 - udfValues.length)).fill(''),
@@ -601,7 +619,7 @@ let EasebuzzService = class EasebuzzService {
                 },
                 data: encodedParams,
             };
-            console.log(options, "optionsoptions");
+            console.log(options, 'optionsoptions');
             const { data: easebuzzRes } = await axios_1.default.request(options);
             console.log({ easebuzzRes });
             const access_key = easebuzzRes.data;
@@ -644,7 +662,13 @@ let EasebuzzService = class EasebuzzService {
             let student_id = studentDetail?.student_details?.student_id || 'NA';
             let student_phone_no = studentDetail?.student_details?.student_phone_no || '0000000000';
             const additionalData = studentDetail.additional_fields || {};
-            const udfValues = [student_id, ...Object.values(additionalData)];
+            const topFiveData = Object.entries(additionalData).slice(0, 5);
+            const topFiveObject = Object.fromEntries(topFiveData);
+            const udfValues = [
+                student_id,
+                student_phone_no,
+                ...Object.values(topFiveObject),
+            ];
             const udfPadded = [
                 ...udfValues,
                 ...new Array(Math.max(0, 10 - udfValues.length)).fill(''),
