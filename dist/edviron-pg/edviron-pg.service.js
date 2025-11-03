@@ -2157,6 +2157,13 @@ let EdvironPgService = class EdvironPgService {
             const istDate = date.toLocaleDateString('en-CA', {
                 timeZone: 'Asia/Kolkata',
             });
+            const installments = await this.databaseService.InstallmentsModel.find({
+                collect_id: request._id
+            }).select('_id student_id student_name status fee_heads').lean();
+            const renamedInstallments = installments.map(i => ({
+                installment_id: i._id,
+                ...i,
+            }));
             const transformedResponse = {
                 status: collect_req_status?.status,
                 status_code: 200,
@@ -2178,6 +2185,7 @@ let EdvironPgService = class EdvironPgService {
                     service_charge: null,
                 },
                 capture_status: collect_req_status?.status,
+                installments: renamedInstallments || null
             };
             return transformedResponse;
         }
