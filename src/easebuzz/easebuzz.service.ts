@@ -87,8 +87,8 @@ export class EasebuzzService {
         requestId,
         collectReq,
       );
-      console.log({statusResponse});
-      
+      console.log({ statusResponse });
+
       if (statusResponse.msg.mode === 'NA' || statusResponse.status === false) {
         console.log(`Status 0 for ${requestId}, retrying with 'upi_' suffix`);
         statusResponse = await this.easebuzzWebhookCheckStatusV2(
@@ -412,48 +412,46 @@ export class EasebuzzService {
         let student_phone_no =
           studentDetail?.student_details?.student_phone_no || '0000000000';
         const additionalData = studentDetail.additional_fields || {};
+  const udfValues = [student_id, ...Object.values(additionalData)];
 
-      // const udfValues = [
-      //   student_id,
-      //   student_phone_no,
-      //   ...Object.values(additionalData),
-      // ];
-      // const udfPadded = [
-      //   ...udfValues,
-      //   ...new Array(10 - udfValues.length).fill(''),
-      // ].slice(0, 10);
+      const udfPadded = [
+        ...udfValues,
+        ...new Array(Math.max(0, 10 - udfValues.length)).fill(''),
+      ].slice(0, 10);
+      console.log('herehere')
 
-      let hashData =
-        easebuzz_key +
-        '|' +
-        request._id +
-        '|' +
-        parseFloat(request.amount.toFixed(2)) +
-        '|' +
-        productinfo +
-        '|' +
-        firstname +
-        '|' +
-        email +
-        '|' +
-        student_id +
-        '|' +
-        student_phone_no +
-        '|' +
-        '||||||||' +
-        easebuzz_salt;
+        const hashData2 = [
+        easebuzz_key,
+        request._id,
+        parseFloat(request.amount.toFixed(2)),
+        productinfo,
+        firstname,
+        email,
+        ...udfPadded,
+        easebuzz_salt,
+      ].join('|');
 
 
-      // const hashData2 = [
-      //   easebuzz_key,
-      //   request._id,
-      //   parseFloat(request.amount.toFixed(2)),
-      //   productinfo,
-      //   firstname,
-      //   email,
-      //   ...udfPadded,
-      //   easebuzz_salt,
-      // ].join('|');
+        // let hashData =
+        //   easebuzz_key +
+        //   '|' +
+        //   request._id +
+        //   '|' +
+        //   parseFloat(request.amount.toFixed(2)) +
+        //   '|' +
+        //   productinfo +
+        //   '|' +
+        //   firstname +
+        //   '|' +
+        //   email +
+        //   '|' +
+        //   student_id +
+        //   '|' +
+        //   student_phone_no +
+        //   '|' +
+        //   '||||||||' +
+        //   easebuzz_salt;
+
 
         const easebuzz_cb_surl =
           process.env.URL +
@@ -467,7 +465,7 @@ export class EasebuzzService {
           request._id +
           '&status=fail';
 
-        let hash = await calculateSHA512Hash(hashData);
+        let hash = await calculateSHA512Hash(hashData2);
         let encodedParams = new URLSearchParams();
         encodedParams.set(
           'key',
@@ -487,11 +485,14 @@ export class EasebuzzService {
         encodedParams.set('furl', easebuzz_cb_furl);
         encodedParams.set('hash', hash);
         encodedParams.set('request_flow', 'SEAMLESS');
-         encodedParams.set('udf1', student_id);
-      encodedParams.set('udf2', student_phone_no);
+        // encodedParams.set('udf1', student_id);
+        // encodedParams.set('udf2', student_phone_no);
+         udfPadded.forEach((val, index) => {
+        encodedParams.set(`udf${index + 1}`, val);
+      });
         // udfPadded.forEach((val, index) => {
         // encodedParams.set(`udf${index + 1}`, val);
-      // });
+        // });
         // encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
         let ezb_split_payments: { [key: string]: number } = {};
 
@@ -550,6 +551,7 @@ export class EasebuzzService {
           data: encodedParams,
         };
 
+        console.log(Ezboptions, 'Ezboptions');
         const disabled_modes_string = request.disabled_modes
           .map((mode) => `${mode}=false`)
           .join('&');
@@ -610,13 +612,13 @@ export class EasebuzzService {
       }
       const { additional_data } = collectReq;
       const studentDetail = JSON.parse(additional_data);
-     
+
       const easebuzz_key = request.easebuzz_non_partner_cred.easebuzz_key;
       const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
       const easebuzz_sub_merchant_id =
         request.easebuzz_non_partner_cred.easebuzz_submerchant_id;
       // Easebuzz pg data
-      
+
       let productinfo = 'payment gateway customer';
       let firstname = (
         studentDetail.student_details?.student_name || 'customer'
@@ -628,15 +630,13 @@ export class EasebuzzService {
         studentDetail?.student_details?.student_phone_no || '0000000000';
       const additionalData = studentDetail.additional_fields || {};
 
-      const udfValues = [
-        student_id,
-        student_phone_no,
-        ...Object.values(additionalData),
-      ];
+      const udfValues = [student_id, ...Object.values(additionalData)];
+
       const udfPadded = [
         ...udfValues,
-        ...new Array(10 - udfValues.length).fill(''),
+        ...new Array(Math.max(0, 10 - udfValues.length)).fill(''),
       ].slice(0, 10);
+
 
       const hashData2 = [
         easebuzz_key,
@@ -649,34 +649,11 @@ export class EasebuzzService {
         easebuzz_salt,
       ].join('|');
       // console.log(hashData);
-      
-       let hashData =
-        easebuzz_key +
-        '|' +
-        request._id +
-        '|' +
-        parseFloat(request.amount.toFixed(2)) +
-        '|' +
-        productinfo +
-        '|' +
-        firstname +
-        '|' +
-        email +
-        '|' +
-        student_id +
-        '|' +
-        student_phone_no +
-        '|' +
-        '||||||||' +
-        easebuzz_salt;
-
-        console.log({hashData});
-        
 
       // let hashData =
       //   easebuzz_key +
       //   '|' +
-      //   collectReq._id.toString() +
+      //   request._id +
       //   '|' +
       //   parseFloat(request.amount.toFixed(2)) +
       //   '|' +
@@ -692,6 +669,9 @@ export class EasebuzzService {
       //   '|' +
       //   '||||||||' +
       //   easebuzz_salt;
+      // console.log(hashData, 'hashData');
+      console.log(hashData2, 'hashData2');
+      let hash = await calculateSHA512Hash(hashData2);
 
       const easebuzz_cb_surl =
         process.env.URL +
@@ -705,7 +685,6 @@ export class EasebuzzService {
         request._id +
         '&status=fail';
 
-      let hash = await calculateSHA512Hash(hashData);
       let encodedParams = new URLSearchParams();
       encodedParams.set('key', request.easebuzz_non_partner_cred.easebuzz_key);
       encodedParams.set('txnid', request._id.toString());
@@ -714,7 +693,7 @@ export class EasebuzzService {
         parseFloat(request.amount.toFixed(2)).toString(),
       );
 
-     encodedParams.set('productinfo', productinfo);
+      encodedParams.set('productinfo', productinfo);
       encodedParams.set('firstname', firstname);
       encodedParams.set('phone', student_phone_no);
       encodedParams.set('email', email);
@@ -722,11 +701,11 @@ export class EasebuzzService {
       encodedParams.set('furl', easebuzz_cb_furl);
       encodedParams.set('hash', hash);
       encodedParams.set('request_flow', 'SEAMLESS');
-      encodedParams.set('udf1', student_id);
-      encodedParams.set('udf2', student_phone_no);
-      // udfPadded.forEach((val, index) => {
-      //   encodedParams.set(`udf${index + 1}`, val);
-      // });
+      // encodedParams.set('udf1', student_id);
+      // encodedParams.set('udf2', student_phone_no);
+      udfPadded.forEach((val, index) => {
+        encodedParams.set(`udf${index + 1}`, val);
+      });
       // encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
       let ezb_split_payments: { [key: string]: number } = {};
 
@@ -751,8 +730,8 @@ export class EasebuzzService {
         data: encodedParams,
       };
 
-      console.log(Ezboptions,'Ezboptions');
-      
+      console.log(Ezboptions, 'Ezboptions');
+
       const { data: easebuzzRes } = await axios.request(Ezboptions);
       console.log(easebuzzRes, 'easebuzzRessss NON UPI');
       const easebuzzPaymentId = easebuzzRes.data;
@@ -811,7 +790,7 @@ export class EasebuzzService {
       }
       const easebuzz_key = request.easebuzz_non_partner_cred.easebuzz_key;
       const easebuzz_salt = request.easebuzz_non_partner_cred.easebuzz_salt;
-      
+
       const upi_collect_id = `upi_${collect_id}`;
       let productinfo = 'payment gateway customer';
       let firstname = 'customer';
@@ -999,8 +978,8 @@ export class EasebuzzService {
         encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
       }
       const { data: easebuzzRes } = await axios.request(options);
-      console.log(easebuzzRes,'UPI');
-      
+      console.log(easebuzzRes, 'UPI');
+
       const access_key = easebuzzRes.data;
       let formData = new FormData();
       formData.append('access_key', access_key);
@@ -1235,28 +1214,28 @@ export class EasebuzzService {
         let student_id = studentDetail?.student_details?.student_id || 'N/A';
         let student_phone_no =
           studentDetail?.student_details?.student_phone_no || 'N/A';
-       const additionalData = studentDetail.additional_fields || {};
+        const additionalData = studentDetail.additional_fields || {};
 
-      const udfValues = [
-        student_id,
-        student_phone_no,
-        ...Object.values(additionalData),
-      ];
-      const udfPadded = [
-        ...udfValues,
-        ...new Array(10 - udfValues.length).fill(''),
-      ].slice(0, 10);
+        const udfValues = [
+          student_id,
+          student_phone_no,
+          ...Object.values(additionalData),
+        ];
+        const udfPadded = [
+          ...udfValues,
+          ...new Array(10 - udfValues.length).fill(''),
+        ].slice(0, 10);
 
-      const hashData = [
-        easebuzz_key,
-        request._id,
-        parseFloat(request.amount.toFixed(2)),
-        productinfo,
-        firstname,
-        email,
-        ...udfPadded,
-        easebuzz_salt,
-      ].join('|');
+        const hashData = [
+          easebuzz_key,
+          request._id,
+          parseFloat(request.amount.toFixed(2)),
+          productinfo,
+          firstname,
+          email,
+          ...udfPadded,
+          easebuzz_salt,
+        ].join('|');
 
         const easebuzz_cb_surl =
           process.env.URL +
@@ -1292,8 +1271,8 @@ export class EasebuzzService {
         encodedParams.set('request_flow', 'SEAMLESS');
         encodedParams.set('sub_merchant_id', easebuzz_sub_merchant_id);
         udfPadded.forEach((val, index) => {
-        encodedParams.set(`udf${index + 1}`, val);
-      });
+          encodedParams.set(`udf${index + 1}`, val);
+        });
         let ezb_split_payments: { [key: string]: number } = {};
 
         if (
@@ -1406,7 +1385,7 @@ export class EasebuzzService {
       let student_id = studentDetail?.student_details?.student_id || 'NA';
       let student_phone_no =
         studentDetail?.student_details?.student_phone_no || '0000000000';
- const additionalData = studentDetail.additional_fields || {};
+      const additionalData = studentDetail.additional_fields || {};
 
       const udfValues = [
         student_id,
@@ -1461,7 +1440,6 @@ export class EasebuzzService {
       udfPadded.forEach((val, index) => {
         encodedParams.set(`udf${index + 1}`, val);
       });
-
 
       const disabled_modes_string = request.disabled_modes
         .map((mode) => `${mode}=false`)
