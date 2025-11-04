@@ -159,7 +159,6 @@ let CheckStatusService = class CheckStatusService {
                 };
                 return ezb_status_response;
             }
-            return await this.checkExpiry(collectRequest);
         }
         console.log('here end fist');
         console.log(collectRequest?.gateway);
