@@ -553,10 +553,23 @@ let EdvironPayController = class EdvironPayController {
     }
     async getStudentInstallments(student_id, school_id, trustee_id) {
         try {
-            const studentDetail = await this.edvironPay.studentFind(student_id, school_id, trustee_id);
+            let studentDetail = await this.edvironPay.studentFind(student_id, school_id, trustee_id);
+            const config = {
+                method: 'get',
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-trustee-school-logo?school_id=${school_id}&trustee_id=${trustee_id}`,
+                headers: {
+                    accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+            };
+            const { data } = await axios_1.default.request(config);
             if (!studentDetail) {
                 throw new common_1.BadRequestException('student not found');
             }
+            studentDetail = {
+                ...studentDetail,
+                ...data
+            };
             let installments = await this.databaseService.InstallmentsModel.find({
                 student_id,
             }).lean();
