@@ -70,7 +70,7 @@ export class EasebuzzService {
 
   async statusResponse(requestId: string, collectReq: CollectRequest) {
     let statusResponse = await this.easebuzzCheckStatus(requestId, collectReq);
-    if (statusResponse.msg.mode === 'NA') {
+     if (statusResponse.msg.mode === 'NA' || statusResponse.status === false) {
       console.log(`Status 0 for ${requestId}, retrying with 'upi_' suffix`);
       statusResponse = await this.easebuzzCheckStatus(
         `upi_${requestId}`,
