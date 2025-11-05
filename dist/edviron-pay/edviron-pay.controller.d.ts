@@ -226,4 +226,29 @@ export declare class EdvironPayController {
         paymentIds: PaymentIds;
         gateway: string;
     }>;
+    getErpDqr(req: any): Promise<{
+        upiIntent: {
+            intentUrl: any;
+            qrCodeBase64: any;
+            collect_id: string;
+        };
+        url: string;
+        collect_id: string;
+        gateway: string;
+    } | {
+        url: string;
+        collect_id: string;
+        upiIntent?: undefined;
+        gateway?: undefined;
+    }>;
+    checkDqrStatus(collect_id: string): Promise<{
+        status: string;
+        returnUrl: null;
+    } | {
+        status: any;
+        returnUrl: string;
+    } | {
+        status: null;
+        returnUrl: null;
+    }>;
 }
