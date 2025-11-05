@@ -583,29 +583,33 @@ let CashfreeService = class CashfreeService {
         }
     }
     async submitDisputeEvidence(dispute_id, documents, client_id) {
-        const data = {
-            dispute_id,
-            documents,
-        };
+        const form = new FormData();
+        for (const doc of documents) {
+            form.append('doc_type', doc.document_type);
+            form.append('file', await axios_1.default
+                .get(doc.file_url, { responseType: 'stream' })
+                .then((r) => r.data), doc.name);
+        }
         const config = {
             method: 'post',
             maxBodyLength: Infinity,
             url: `${process.env.CASHFREE_ENDPOINT}/pg/disputes/${dispute_id}/documents`,
             headers: {
                 accept: 'application/json',
-                'Content-Type': 'multipart/form-data',
                 'x-api-version': '2023-08-01',
                 'x-partner-merchantid': client_id,
                 'x-partner-apikey': process.env.CASHFREE_API_KEY,
+                ...form.getHeaders(),
             },
-            data: data,
+            data: form,
         };
         try {
             const response = await axios_1.default.request(config);
             return response.data;
         }
         catch (error) {
-            throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
+            console.log(error.response.data.message, 'here errorr');
+            throw new common_1.InternalServerErrorException(error.response.data.message || 'Something went wrong');
         }
     }
     async acceptDispute(disputeId, client_id) {
@@ -626,7 +630,8 @@ let CashfreeService = class CashfreeService {
             return response.data;
         }
         catch (error) {
-            throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
+            console.log(error.response.data.message);
+            throw new common_1.InternalServerErrorException(error.response.data.message || 'Something went wrong');
         }
     }
     async createMerchant(merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details) {

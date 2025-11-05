@@ -324,30 +324,36 @@ export class CashfreeController {
     body: {
       dispute_id: string;
       action: string;
-      documents: Array<{
-        file: string;
-        doc_type: string;
-        note: string;
-      }>;
-      client_id: string;
+      documents: any;
       sign: string;
+      collect_id: string;
     },
   ) {
     try {
-      const { dispute_id, documents, action, client_id, sign } = body;
+      console.log('jereee')
+      console.log(body)
+      const { dispute_id, documents, action, sign, collect_id } = body;
+      console.log(dispute_id, documents, action, sign, collect_id, "dispute_id, documents, action, sign, collect_id")
       const decodedToken = jwt.verify(sign, process.env.KEY!) as {
-        client_id: string;
         dispute_id: string;
         action: string;
       };
+      console.log(decodedToken, "decodedToken")
       if (!decodedToken) throw new BadRequestException('Request Forged');
       if (
         decodedToken.action !== action ||
-        decodedToken.client_id !== client_id ||
         decodedToken.dispute_id !== dispute_id
       )
-        throw new BadRequestException('Request Forged');
-      if (action === 'deny') {
+      throw new BadRequestException('Request Forged');
+      const request = await this.databaseService.CollectRequestModel.findById(collect_id)
+      if(!request ){
+        throw new BadRequestException('collect request not found')
+      }
+      if(request.gateway !== Gateway.EDVIRON_PG){
+        throw new BadRequestException('this order is not paid by cashfre')
+      }
+      let client_id = request.clientId.toString()
+      if (action === 'accept') {
         return this.cashfreeService.submitDisputeEvidence(
           dispute_id,
           documents,
@@ -362,6 +368,7 @@ export class CashfreeController {
       );
     }
   }
+
 
   @Post('/webhook/secure-test')
   async testSecureWebhook(@Req() req: any, @Res() res: any) {
