@@ -251,7 +251,6 @@ let CashfreeController = class CashfreeController {
         try {
             const { dispute_id, documents, action, sign, collect_id } = body;
             const decodedToken = jwt.verify(sign, process.env.KEY);
-            console.log(decodedToken, 'decodedToken');
             if (!decodedToken)
                 throw new common_1.BadRequestException('Request Forged');
             if (decodedToken.action !== action ||
@@ -262,7 +261,7 @@ let CashfreeController = class CashfreeController {
                 throw new common_1.BadRequestException('collect request not found');
             }
             if (request.gateway !== collect_request_schema_1.Gateway.EDVIRON_PG) {
-                throw new common_1.BadRequestException('this order is not paid by cashfre');
+                throw new common_1.BadRequestException('this order is not paid by cashfree');
             }
             let client_id = request.clientId.toString();
             if (action === 'accept') {

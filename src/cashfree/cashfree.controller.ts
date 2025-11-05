@@ -340,7 +340,6 @@ export class CashfreeController {
         dispute_id: string;
         action: string;
       };
-      console.log(decodedToken, 'decodedToken');
       if (!decodedToken) throw new BadRequestException('Request Forged');
       if (
         decodedToken.action !== action ||
@@ -353,7 +352,7 @@ export class CashfreeController {
         throw new BadRequestException('collect request not found');
       }
       if (request.gateway !== Gateway.EDVIRON_PG) {
-        throw new BadRequestException('this order is not paid by cashfre');
+        throw new BadRequestException('this order is not paid by cashfree');
       }
       let client_id = request.clientId.toString();
       if (action === 'accept') {
