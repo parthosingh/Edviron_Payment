@@ -968,7 +968,12 @@ export class EdvironPayController {
         installments,
         studentDetail,
       };
-    } catch (e) {}
+    } catch (e) {
+      if(e.response?.data?.message) {
+        throw new BadRequestException(e.response.data.message);
+      }
+      throw new BadRequestException(e.message);
+    }
   }
 
   @Post('/callback/cashfree')

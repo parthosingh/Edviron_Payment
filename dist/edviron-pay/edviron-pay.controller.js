@@ -585,7 +585,12 @@ let EdvironPayController = class EdvironPayController {
                 studentDetail,
             };
         }
-        catch (e) { }
+        catch (e) {
+            if (e.response?.data?.message) {
+                throw new common_1.BadRequestException(e.response.data.message);
+            }
+            throw new common_1.BadRequestException(e.message);
+        }
     }
     async getInstallCallbackCashfree(collect_id) {
         try {

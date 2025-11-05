@@ -215,7 +215,7 @@ export declare class EdvironPayController {
             student_email: string;
             student_number: string;
         };
-    } | undefined>;
+    }>;
     getInstallCallbackCashfree(collect_id: string): Promise<void>;
     getVendorsForSchool(school_id: string): Promise<any>;
     orderDetail(collect_id: string): Promise<{
