@@ -209,4 +209,9 @@ export declare class CashfreeService {
         }
     ]): Promise<any>;
     checkPaymentStatus(collect_request_id: string, collect_request: CollectRequest): Promise<any>;
+    getUpiIntent(cashfreeId: string, collect_id: string): Promise<{
+        intentUrl: any;
+        qrCodeBase64: any;
+        collect_id: string;
+    }>;
 }

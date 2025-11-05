@@ -187,6 +187,31 @@ let EdvironPayService = class EdvironPayService {
             throw new common_1.BadRequestException(error.message);
         }
     }
+    async erpDynamicQrRedirect(collect_id) {
+        try {
+            const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectReq)
+                throw new Error('Collect request not found');
+            const payload = { school_id: collectReq.school_id };
+            let gateway = null;
+            let url = process.env.SPARKIT_DQR_URL;
+            if (collectReq.paymentIds?.cashfree_id) {
+                gateway = 'EDVIRON_PG';
+                const upiIntent = await this.cashfreeService.getUpiIntent(collectReq.paymentIds.cashfree_id, collect_id);
+                url = url?.replace('["intentUrl"]', encodeURIComponent(upiIntent.intentUrl));
+                url = url?.replace('[orderid]', collect_id);
+                url = url?.replace('[totalamount]', collectReq.amount.toFixed(2));
+            }
+            return {
+                url: url,
+                collect_id: collect_id,
+            };
+        }
+        catch (e) {
+            console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPayService = EdvironPayService;
 exports.EdvironPayService = EdvironPayService = __decorate([

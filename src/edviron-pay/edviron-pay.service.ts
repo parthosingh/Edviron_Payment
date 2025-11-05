@@ -8,7 +8,7 @@ import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import * as jwt from 'jsonwebtoken';
-    const axios = require('axios');
+const axios = require('axios');
 @Injectable()
 export class EdvironPayService {
   constructor(
@@ -16,7 +16,7 @@ export class EdvironPayService {
     private readonly cashfreeService: CashfreeService,
     private readonly easebuzzService: EasebuzzService,
     private readonly edvironPgService: EdvironPgService,
-  ) {}
+  ) { }
 
   async createOrder(
     request: CollectRequest,
@@ -238,10 +238,10 @@ export class EdvironPayService {
         data: data,
       };
 
-      const {data : schoolData} = await axios.request(config)
+      const { data: schoolData } = await axios.request(config)
 
       return {
-        school_name : schoolData.school_name,
+        school_name: schoolData.school_name,
         student_id: studentDetail.student_id,
         student_name: studentDetail.student_name,
         trustee_id: studentDetail.trustee_id,
@@ -285,6 +285,35 @@ export class EdvironPayService {
       return 'no installment found for this collect id';
     } catch (error) {
       throw new BadRequestException(error.message);
+    }
+  }
+
+  async erpDynamicQrRedirect(collect_id: string) {
+    try {
+      const collectReq =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collectReq) throw new Error('Collect request not found');
+
+      const payload = { school_id: collectReq.school_id };
+      let gateway: string | null = null;
+      let url = process.env.SPARKIT_DQR_URL;
+      if (collectReq.paymentIds?.cashfree_id) {
+        gateway = 'EDVIRON_PG'
+        const upiIntent = await this.cashfreeService.getUpiIntent(collectReq.paymentIds.cashfree_id, collect_id);
+        url = url?.replace('["intentUrl"]', encodeURIComponent(upiIntent.intentUrl));
+        url = url?.replace('[orderid]', collect_id);
+        url = url?.replace('[totalamount]', collectReq.amount.toFixed(2));
+      }
+
+      return {
+        url: url,
+        collect_id: collect_id,
+      }
+
+    } catch (e) {
+      console.log(e);
+
+      throw new BadRequestException(e.message);
     }
   }
 }

@@ -140,8 +140,26 @@ export class EdvironPayController {
     return {
       status: 'installment updated successfully for student_id: ' + student_id,
       student_id: student_id,
+      school_id: school_id,
       url: `${process.env.PG_FRONTEND}/collect-fee?student_id=${student_id}&school_id=${school_id}&trustee_id=${trustee_id}`,
     };
+  }
+
+  @Get('installment-payments')
+  async getInstallmentPayments(
+  @Req() req: any,
+  ){
+    try{
+      const { student_id,school_id } = req.query;
+      const checkStudent = await this.databaseService.StudentDetailModel.findOne({student_id,school_id:new Types.ObjectId(school_id)});
+      if(!checkStudent){
+        throw new BadRequestException('Student not found');
+      }
+      const url= `${process.env.PG_FRONTEND}/collect-fee?student_id=${student_id}&school_id=${checkStudent?.school_id}&trustee_id=${checkStudent?.trustee_id}`;
+      return {url}
+    }catch(e){
+      throw new BadRequestException(e.message);
+    }
   }
 
   @Post('collect-request')

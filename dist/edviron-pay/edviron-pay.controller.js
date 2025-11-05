@@ -108,8 +108,23 @@ let EdvironPayController = class EdvironPayController {
         return {
             status: 'installment updated successfully for student_id: ' + student_id,
             student_id: student_id,
+            school_id: school_id,
             url: `${process.env.PG_FRONTEND}/collect-fee?student_id=${student_id}&school_id=${school_id}&trustee_id=${trustee_id}`,
         };
+    }
+    async getInstallmentPayments(req) {
+        try {
+            const { student_id, school_id } = req.query;
+            const checkStudent = await this.databaseService.StudentDetailModel.findOne({ student_id, school_id: new mongoose_1.Types.ObjectId(school_id) });
+            if (!checkStudent) {
+                throw new common_1.BadRequestException('Student not found');
+            }
+            const url = `${process.env.PG_FRONTEND}/collect-fee?student_id=${student_id}&school_id=${checkStudent?.school_id}&trustee_id=${checkStudent?.trustee_id}`;
+            return { url };
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
     }
     async collect(body, req, res) {
         const { mode, isInstallment, InstallmentsIds, school_id, trustee_id, callback_url, webhook_url, token, amount, disable_mode, custom_order_id, school_name, isSplit, isVBAPayment, additional_data, gateway, cashfree, razorpay, vba_account_number, easebuzz, easebuzzVendors, cashfreeVedors, razorpay_vendors, cash_detail, dd_detail, document_url, student_detail, static_qr, netBankingDetails, cheque_detail, date, parents_info, remark, } = body;
@@ -664,6 +679,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPayController.prototype, "upsertInstallments", null);
+__decorate([
+    (0, common_1.Get)('installment-payments'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPayController.prototype, "getInstallmentPayments", null);
 __decorate([
     (0, common_1.Post)('collect-request'),
     __param(0, (0, common_1.Body)()),

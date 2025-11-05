@@ -1407,6 +1407,58 @@ let CashfreeService = class CashfreeService {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async getUpiIntent(cashfreeId, collect_id) {
+        try {
+            let intentData = JSON.stringify({
+                payment_method: {
+                    upi: {
+                        channel: 'link',
+                    },
+                },
+                payment_session_id: cashfreeId,
+            });
+            let qrCodeData = JSON.stringify({
+                payment_method: {
+                    upi: {
+                        channel: 'qrcode',
+                    },
+                },
+                payment_session_id: cashfreeId,
+            });
+            let upiConfig = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/sessions`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                },
+                data: intentData,
+            };
+            let qrCodeConfig = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/sessions`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                },
+                data: qrCodeData,
+            };
+            const axios = require('axios');
+            const { data: upiIntent } = await axios.request(upiConfig);
+            const { data: qrCode } = await axios.request(qrCodeConfig);
+            const intent = upiIntent.data.payload.default;
+            const qrCodeUrl = qrCode.data.payload.qrcode;
+            const qrBase64 = qrCodeUrl.split(',')[1];
+            return { intentUrl: intent, qrCodeBase64: qrBase64, collect_id };
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.CashfreeService = CashfreeService;
 exports.CashfreeService = CashfreeService = __decorate([

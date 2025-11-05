@@ -34,6 +34,10 @@ export declare class EdvironPayController {
     upsertInstallments(body: any): Promise<{
         status: string;
         student_id: any;
+        school_id: any;
+        url: string;
+    }>;
+    getInstallmentPayments(req: any): Promise<{
         url: string;
     }>;
     collect(body: {

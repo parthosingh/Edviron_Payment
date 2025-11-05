@@ -64,4 +64,8 @@ export declare class EdvironPayService {
         student_number: string;
     }>;
     nonEdvironInstallments(collect_id: string): Promise<"installments update successfull" | "no installment found for this collect id">;
+    erpDynamicQrRedirect(collect_id: string): Promise<{
+        url: string | undefined;
+        collect_id: string;
+    }>;
 }
