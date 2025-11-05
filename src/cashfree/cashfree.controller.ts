@@ -32,9 +32,9 @@ export class CashfreeController {
     private readonly databaseService: DatabaseService,
     private readonly cashfreeService: CashfreeService,
     private readonly edvironPgService: EdvironPgService,
-    private readonly easebuzzService: EasebuzzService, 
-    private readonly razorpayService: RazorpayService
-  ) { }
+    private readonly easebuzzService: EasebuzzService,
+    private readonly razorpayService: RazorpayService,
+  ) {}
   @Post('/refund')
   async initiateRefund(@Body() body: any) {
     const { collect_id, amount, refund_id } = body;
@@ -175,9 +175,8 @@ export class CashfreeController {
       request.razorpay_seamless.order_id &&
       request.razorpay_seamless.razorpay_secret &&
       request.razorpay_seamless.razorpay_id
-
     ) {
-      return await this.razorpayService.getQr(request)
+      return await this.razorpayService.getQr(request);
     }
     let intentData = JSON.stringify({
       payment_method: {
@@ -324,35 +323,39 @@ export class CashfreeController {
     body: {
       dispute_id: string;
       action: string;
-      documents: any;
+      documents: [
+        {
+          document_type: string;
+          file_url: string;
+          name: string;
+        },
+      ];
       sign: string;
       collect_id: string;
     },
   ) {
     try {
-      console.log('jereee')
-      console.log(body)
       const { dispute_id, documents, action, sign, collect_id } = body;
-      console.log(dispute_id, documents, action, sign, collect_id, "dispute_id, documents, action, sign, collect_id")
       const decodedToken = jwt.verify(sign, process.env.KEY!) as {
         dispute_id: string;
         action: string;
       };
-      console.log(decodedToken, "decodedToken")
+      console.log(decodedToken, 'decodedToken');
       if (!decodedToken) throw new BadRequestException('Request Forged');
       if (
         decodedToken.action !== action ||
         decodedToken.dispute_id !== dispute_id
       )
-      throw new BadRequestException('Request Forged');
-      const request = await this.databaseService.CollectRequestModel.findById(collect_id)
-      if(!request ){
-        throw new BadRequestException('collect request not found')
+        throw new BadRequestException('Request Forged');
+      const request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!request) {
+        throw new BadRequestException('collect request not found');
       }
-      if(request.gateway !== Gateway.EDVIRON_PG){
-        throw new BadRequestException('this order is not paid by cashfre')
+      if (request.gateway !== Gateway.EDVIRON_PG) {
+        throw new BadRequestException('this order is not paid by cashfre');
       }
-      let client_id = request.clientId.toString()
+      let client_id = request.clientId.toString();
       if (action === 'accept') {
         return this.cashfreeService.submitDisputeEvidence(
           dispute_id,
@@ -368,7 +371,6 @@ export class CashfreeController {
       );
     }
   }
-
 
   @Post('/webhook/secure-test')
   async testSecureWebhook(@Req() req: any, @Res() res: any) {
@@ -554,7 +556,7 @@ export class CashfreeController {
       } catch (error) {
         console.error('Error calculating commission:', error.message);
       }
-    } catch (e) { }
+    } catch (e) {}
     const webHookUrl = request.req_webhook_urls;
     const webHookDataInfo = {
       collect_id: request._id.toString(),
@@ -591,8 +593,9 @@ export class CashfreeController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${request.trustee_id.toString()}`,
+          url: `${
+            process.env.VANILLA_SERVICE_ENDPOINT
+          }/main-backend/get-webhook-key?token=${token}&trustee_id=${request.trustee_id.toString()}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
@@ -1210,8 +1213,9 @@ export class CashfreeController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+          url: `${
+            process.env.VANILLA_SERVICE_ENDPOINT
+          }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
@@ -1269,13 +1273,8 @@ export class CashfreeController {
   }
 
   @Get('fix-canteen-transaction')
-  async testFix(){
-    try{
-
-    }catch(e){
-      
-    }
+  async testFix() {
+    try {
+    } catch (e) {}
   }
 }
-
-

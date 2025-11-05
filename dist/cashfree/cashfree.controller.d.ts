@@ -53,7 +53,13 @@ export declare class CashfreeController {
     disputeEvidence(body: {
         dispute_id: string;
         action: string;
-        documents: any;
+        documents: [
+            {
+                document_type: string;
+                file_url: string;
+                name: string;
+            }
+        ];
         sign: string;
         collect_id: string;
     }): Promise<any>;

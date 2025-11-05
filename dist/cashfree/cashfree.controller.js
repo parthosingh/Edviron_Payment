@@ -249,12 +249,9 @@ let CashfreeController = class CashfreeController {
     }
     async disputeEvidence(body) {
         try {
-            console.log('jereee');
-            console.log(body);
             const { dispute_id, documents, action, sign, collect_id } = body;
-            console.log(dispute_id, documents, action, sign, collect_id, "dispute_id, documents, action, sign, collect_id");
             const decodedToken = jwt.verify(sign, process.env.KEY);
-            console.log(decodedToken, "decodedToken");
+            console.log(decodedToken, 'decodedToken');
             if (!decodedToken)
                 throw new common_1.BadRequestException('Request Forged');
             if (decodedToken.action !== action ||
@@ -888,8 +885,7 @@ let CashfreeController = class CashfreeController {
     async testFix() {
         try {
         }
-        catch (e) {
-        }
+        catch (e) { }
     }
 };
 exports.CashfreeController = CashfreeController;
