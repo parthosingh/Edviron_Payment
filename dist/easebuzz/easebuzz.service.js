@@ -304,7 +304,13 @@ let EasebuzzService = class EasebuzzService {
                 let student_id = studentDetail?.student_details?.student_id || 'NA';
                 let student_phone_no = studentDetail?.student_details?.student_phone_no || '0000000000';
                 const additionalData = studentDetail.additional_fields || {};
-                const topFiveData = Object.entries(additionalData).slice(0, 5);
+                let topFiveData = [];
+                if (request.additionalDataToggle) {
+                    topFiveData = Object.entries(additionalData).slice(0, 5);
+                }
+                else {
+                    topFiveData = Object.entries(additionalData).slice(0, 0);
+                }
                 const topFiveObject = Object.fromEntries(topFiveData);
                 const udfValues = [
                     student_id,
@@ -444,7 +450,13 @@ let EasebuzzService = class EasebuzzService {
             let student_id = studentDetail?.student_details?.student_id || 'NA';
             let student_phone_no = studentDetail?.student_details?.student_phone_no || '0000000000';
             const additionalData = studentDetail.additional_fields || {};
-            const topFiveData = Object.entries(additionalData).slice(0, 5);
+            let topFiveData = [];
+            if (request.additionalDataToggle) {
+                topFiveData = Object.entries(additionalData).slice(0, 5);
+            }
+            else {
+                topFiveData = Object.entries(additionalData).slice(0, 0);
+            }
             const topFiveObject = Object.fromEntries(topFiveData);
             const udfValues = [
                 student_id,
@@ -564,7 +576,13 @@ let EasebuzzService = class EasebuzzService {
             let student_id = studentDetail?.student_details?.student_id || 'NA';
             let student_phone_no = studentDetail?.student_details?.student_phone_no || '0000000000';
             const additionalData = studentDetail.additional_fields || {};
-            const topFiveData = Object.entries(additionalData).slice(0, 5);
+            let topFiveData = [];
+            if (request.additionalDataToggle) {
+                topFiveData = Object.entries(additionalData).slice(0, 5);
+            }
+            else {
+                topFiveData = Object.entries(additionalData).slice(0, 0);
+            }
             const topFiveObject = Object.fromEntries(topFiveData);
             const udfValues = [
                 student_id,
@@ -662,7 +680,13 @@ let EasebuzzService = class EasebuzzService {
             let student_id = studentDetail?.student_details?.student_id || 'NA';
             let student_phone_no = studentDetail?.student_details?.student_phone_no || '0000000000';
             const additionalData = studentDetail.additional_fields || {};
-            const topFiveData = Object.entries(additionalData).slice(0, 5);
+            let topFiveData = [];
+            if (request.additionalDataToggle) {
+                topFiveData = Object.entries(additionalData).slice(0, 5);
+            }
+            else {
+                topFiveData = Object.entries(additionalData).slice(0, 0);
+            }
             const topFiveObject = Object.fromEntries(topFiveData);
             const udfValues = [
                 student_id,
@@ -721,6 +745,7 @@ let EasebuzzService = class EasebuzzService {
                 ezb_split_payments[request.easebuzz_split_label] = request.amount;
                 encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
             }
+            console.log(options, 'Ezboptionsqrcode');
             const { data: easebuzzRes } = await axios_1.default.request(options);
             console.log(easebuzzRes, 'UPI');
             const access_key = easebuzzRes.data;
@@ -886,6 +911,7 @@ let EasebuzzService = class EasebuzzService {
             }
             const { additional_data } = collectReq;
             const studentDetail = JSON.parse(additional_data);
+            console.log('heree');
             if (request.isSplitPayments) {
                 if (!request.easebuzz_split_label) {
                     throw new common_1.BadRequestException(`Split Information Not Configure Please contact tarun.k@edviron.com`);
@@ -899,14 +925,22 @@ let EasebuzzService = class EasebuzzService {
                 let student_id = studentDetail?.student_details?.student_id || 'N/A';
                 let student_phone_no = studentDetail?.student_details?.student_phone_no || 'N/A';
                 const additionalData = studentDetail.additional_fields || {};
+                let topFiveData = [];
+                if (request.additionalDataToggle) {
+                    topFiveData = Object.entries(additionalData).slice(0, 5);
+                }
+                else {
+                    topFiveData = Object.entries(additionalData).slice(0, 0);
+                }
+                const topFiveObject = Object.fromEntries(topFiveData);
                 const udfValues = [
                     student_id,
                     student_phone_no,
-                    ...Object.values(additionalData),
+                    ...Object.values(topFiveObject),
                 ];
                 const udfPadded = [
                     ...udfValues,
-                    ...new Array(10 - udfValues.length).fill(''),
+                    ...new Array(Math.max(0, 10 - udfValues.length)).fill(''),
                 ].slice(0, 10);
                 const hashData = [
                     easebuzz_key,
@@ -989,6 +1023,7 @@ let EasebuzzService = class EasebuzzService {
                     .map((mode) => `${mode}=false`)
                     .join('&');
                 const encodedPlatformCharges = encodeURIComponent(JSON.stringify(platform_charges));
+                console.log(Ezboptions, "EzboptionsEzboptions");
                 const { data: easebuzzRes } = await axios_1.default.request(Ezboptions);
                 const easebuzzPaymentId = easebuzzRes.data;
                 collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
@@ -1023,18 +1058,26 @@ let EasebuzzService = class EasebuzzService {
             let student_id = studentDetail?.student_details?.student_id || 'NA';
             let student_phone_no = studentDetail?.student_details?.student_phone_no || '0000000000';
             const additionalData = studentDetail.additional_fields || {};
+            let topFiveData = [];
+            if (request.additionalDataToggle) {
+                topFiveData = Object.entries(additionalData).slice(0, 5);
+            }
+            else {
+                topFiveData = Object.entries(additionalData).slice(0, 0);
+            }
+            const topFiveObject = Object.fromEntries(topFiveData);
             const udfValues = [
                 student_id,
                 student_phone_no,
-                ...Object.values(additionalData),
+                ...Object.values(topFiveObject),
             ];
             const udfPadded = [
                 ...udfValues,
-                ...new Array(10 - udfValues.length).fill(''),
+                ...new Array(Math.max(0, 10 - udfValues.length)).fill(''),
             ].slice(0, 10);
             const hashData = [
                 easebuzz_key,
-                request._id.toString(),
+                request._id,
                 parseFloat(request.amount.toFixed(2)),
                 productinfo,
                 firstname,

@@ -78,6 +78,7 @@ export declare class EasebuzzController {
             easebuzz_merchant_email: string;
             easebuzz_submerchant_id: string;
         };
+        additionalDataToggle: boolean;
     }): Promise<any>;
     createOrderNonSeamless(body: {
         amount: Number;
@@ -109,6 +110,7 @@ export declare class EasebuzzController {
             easebuzz_merchant_email: string;
             easebuzz_submerchant_id: string;
         };
+        additionalDataToggle: boolean;
     }): Promise<any>;
     easebuzzWebhook(body: any, res: any): Promise<any>;
     handleEasebuzzCallback(req: any, res: any): Promise<any>;

@@ -500,6 +500,7 @@ export class EasebuzzController {
         easebuzz_merchant_email: string;
         easebuzz_submerchant_id: string;
       };
+      additionalDataToggle : boolean;
     },
   ) {
     // console.log(body);
@@ -522,6 +523,7 @@ export class EasebuzzController {
       easebuzzVendors,
       easebuzz_school_label,
       easebuzz_non_partner_cred,
+      additionalDataToggle
     } = body;
     try {
       // CHECK FOR DUPLICATE CUSTOM ID
@@ -568,6 +570,7 @@ export class EasebuzzController {
         easebuzz_non_partner_cred,
         isSplitPayments: split_payments,
         easebuzz_split_label: easebuzz_school_label,
+        additionalDataToggle : additionalDataToggle
       }).save();
 
       await new this.databaseService.CollectRequestStatusModel({
@@ -639,6 +642,7 @@ export class EasebuzzController {
         easebuzz_merchant_email: string;
         easebuzz_submerchant_id: string;
       };
+      additionalDataToggle : boolean;
     },
   ) {
     // console.log(body);
@@ -661,6 +665,7 @@ export class EasebuzzController {
       easebuzzVendors,
       easebuzz_school_label,
       easebuzz_non_partner_cred,
+      additionalDataToggle
     } = body;
     try {
       // CHECK FOR DUPLICATE CUSTOM ID
@@ -707,6 +712,7 @@ export class EasebuzzController {
         easebuzz_non_partner_cred,
         isSplitPayments: split_payments,
         easebuzz_split_label: easebuzz_school_label,
+        additionalDataToggle : additionalDataToggle || false
       }).save();
 
       await new this.databaseService.CollectRequestStatusModel({

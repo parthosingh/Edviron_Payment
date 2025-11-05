@@ -324,7 +324,7 @@ let EasebuzzController = class EasebuzzController {
         }
     }
     async createOrderV2(body) {
-        const { amount, callbackUrl, jwt, webHook, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, split_payments, easebuzzVendors, easebuzz_school_label, easebuzz_non_partner_cred, } = body;
+        const { amount, callbackUrl, jwt, webHook, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, split_payments, easebuzzVendors, easebuzz_school_label, easebuzz_non_partner_cred, additionalDataToggle } = body;
         try {
             if (custom_order_id) {
                 const count = await this.databaseService.CollectRequestModel.countDocuments({
@@ -363,6 +363,7 @@ let EasebuzzController = class EasebuzzController {
                 easebuzz_non_partner_cred,
                 isSplitPayments: split_payments,
                 easebuzz_split_label: easebuzz_school_label,
+                additionalDataToggle: additionalDataToggle
             }).save();
             await new this.databaseService.CollectRequestStatusModel({
                 collect_id: request._id,
@@ -385,7 +386,7 @@ let EasebuzzController = class EasebuzzController {
         }
     }
     async createOrderNonSeamless(body) {
-        const { amount, callbackUrl, jwt, webHook, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, split_payments, easebuzzVendors, easebuzz_school_label, easebuzz_non_partner_cred, } = body;
+        const { amount, callbackUrl, jwt, webHook, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, split_payments, easebuzzVendors, easebuzz_school_label, easebuzz_non_partner_cred, additionalDataToggle } = body;
         try {
             if (custom_order_id) {
                 const count = await this.databaseService.CollectRequestModel.countDocuments({
@@ -424,6 +425,7 @@ let EasebuzzController = class EasebuzzController {
                 easebuzz_non_partner_cred,
                 isSplitPayments: split_payments,
                 easebuzz_split_label: easebuzz_school_label,
+                additionalDataToggle: additionalDataToggle || false
             }).save();
             await new this.databaseService.CollectRequestStatusModel({
                 collect_id: request._id,

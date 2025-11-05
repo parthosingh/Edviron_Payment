@@ -570,6 +570,9 @@ export class CollectRequest {
    @Prop({ required: false, default: false })
   isMasterGateway: boolean;
 
+   @Prop({ required: false, default: false })
+  additionalDataToggle: boolean;
+
   @Prop({ required: false, default: false })
   razorpay_partner: boolean;
 

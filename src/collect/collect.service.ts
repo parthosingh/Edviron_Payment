@@ -169,7 +169,7 @@ export class CollectService {
       easebuzz_submerchant_id: string;
     },
     razorpay_partner?: boolean,
-
+    additionalDataToggle?: boolean,
   ): Promise<{ url: string; request: CollectRequest }> {
     console.log(vendor, 'vendor to save in db');
 
@@ -207,6 +207,7 @@ export class CollectService {
       ccavenue_access_code: ccavenue_access_code || null,
       ccavenue_working_key: ccavenue_working_key || null,
       pay_u_key: pay_u_key || null,
+      additionalDataToggle :  additionalDataToggle,
       pay_u_salt: pay_u_salt || null,
       ntt_data: {
         nttdata_id,

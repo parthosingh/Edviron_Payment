@@ -101,7 +101,7 @@ export declare class CollectService {
         easebuzz_key: string;
         easebuzz_merchant_email: string;
         easebuzz_submerchant_id: string;
-    }, razorpay_partner?: boolean): Promise<{
+    }, razorpay_partner?: boolean, additionalDataToggle?: boolean): Promise<{
         url: string;
         request: CollectRequest;
     }>;
