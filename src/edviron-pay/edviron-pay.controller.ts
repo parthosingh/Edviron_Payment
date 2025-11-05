@@ -155,9 +155,22 @@ export class EdvironPayController {
       if(!checkStudent){
         throw new BadRequestException('Student not found');
       }
-      const url= `${process.env.PG_FRONTEND}/collect-fee?student_id=${student_id}&school_id=${checkStudent?.school_id}&trustee_id=${checkStudent?.trustee_id}`;
+
+      const config={
+        method:'get',
+        url:`${process.env.VANILLA_SERVICE}/erp/installment-sign?school_id=${checkStudent?.school_id}&trustee_id=${checkStudent?.trustee_id}&student_id=${student_id}`,
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-api-version': '2023-08-01',
+        }
+      };
+      const {data} = await axios.request(config);
+      const url= `${process.env.PG_FRONTEND}/collect-fee?student_id=${student_id}&school_id=${checkStudent?.school_id}&trustee_id=${checkStudent?.trustee_id}&token=${data.sign}`;
       return {url}
     }catch(e){
+      console.log(e);
+      
       throw new BadRequestException(e.message);
     }
   }
