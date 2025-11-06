@@ -393,6 +393,13 @@ let EdvironPgController = class EdvironPgController {
         const pendingCollectReq = await this.databaseService.CollectRequestStatusModel.findOne({
             collect_id: collectIdObject,
         });
+        if (pendingCollectReq &&
+            (pendingCollectReq.status === collect_req_status_schema_1.PaymentStatus.SUCCESS ||
+                pendingCollectReq.status === 'success')) {
+            console.log('No pending request found for', collect_id);
+            res.status(200).send('OK');
+            return;
+        }
         collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
         await collectReq.save();
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);

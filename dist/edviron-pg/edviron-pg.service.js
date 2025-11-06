@@ -2103,7 +2103,6 @@ let EdvironPgService = class EdvironPgService {
                     },
                     data: getTransactionInfo[0],
                 };
-                console.log(config, "config");
                 await axios_1.default.request(config);
             }
             catch (error) {

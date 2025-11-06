@@ -558,15 +558,15 @@ export class EdvironPgController {
       await this.databaseService.CollectRequestStatusModel.findOne({
         collect_id: collectIdObject,
       });
-    // if (
-    //   pendingCollectReq &&
-    //   (pendingCollectReq.status === PaymentStatus.SUCCESS ||
-    //     pendingCollectReq.status === 'success')
-    // ) {
-    //   console.log('No pending request found for', collect_id);
-    //   res.status(200).send('OK');
-    //   return;
-    // }
+    if (
+      pendingCollectReq &&
+      (pendingCollectReq.status === PaymentStatus.SUCCESS ||
+        pendingCollectReq.status === 'success')
+    ) {
+      console.log('No pending request found for', collect_id);
+      res.status(200).send('OK');
+      return;
+    }
     collectReq.gateway = Gateway.EDVIRON_PG;
     // collectReq.payment_id = body.payment.cf_payment_id.toString() ?? '';
     await collectReq.save();
