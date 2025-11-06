@@ -208,7 +208,7 @@ let EasebuzzController = class EasebuzzController {
     }
     async settlementReconV2(body) {
         try {
-            const { submerchant_id, start_date, end_date, page_size, token, easebuzz_key, easebuzz_salt, utr } = body;
+            const { submerchant_id, start_date, end_date, page_size, token, easebuzz_key, easebuzz_salt, utr, } = body;
             if (!token)
                 throw new common_1.BadRequestException('Token is required');
             const data = jwt.verify(token, process.env.PAYMENTS_SERVICE_SECRET);
@@ -238,8 +238,8 @@ let EasebuzzController = class EasebuzzController {
             const { data: resData } = await axios_1.default.request(config);
             const record = resData.data.find((item) => item.bank_transaction_id === utr);
             const orderIds = record.peb_transactions.map((tx) => {
-                if (tx?.txnid?.startsWith("upi_")) {
-                    return tx.txnid.replace("upi_", "");
+                if (tx?.txnid?.startsWith('upi_')) {
+                    return tx.txnid.replace('upi_', '');
                 }
                 return tx?.txnid;
             });
@@ -257,15 +257,15 @@ let EasebuzzController = class EasebuzzController {
                 let additionalData = {};
                 let collect_id = order.txnid;
                 let query = { custom_order_id: order.txnid };
-                if (collect_id.startsWith("upi_")) {
-                    collect_id = collect_id.replace("upi_", "");
+                if (collect_id.startsWith('upi_')) {
+                    collect_id = collect_id.replace('upi_', '');
                 }
                 if (mongoose_1.Types.ObjectId.isValid(collect_id)) {
                     query = {
                         $or: [
                             { _id: new mongoose_1.Types.ObjectId(collect_id) },
-                            { custom_order_id: collect_id }
-                        ]
+                            { custom_order_id: collect_id },
+                        ],
                     };
                 }
                 const collectReq = await this.databaseService.CollectRequestModel.findOne(query);
@@ -275,7 +275,9 @@ let EasebuzzController = class EasebuzzController {
                 if (collect_id) {
                     additionalData = JSON.parse(collectReq?.additional_data);
                 }
-                const collectStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: collectReq._id });
+                const collectStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                    collect_id: collectReq._id,
+                });
                 return {
                     ...order,
                     payment_id: order.peb_transaction_id,
@@ -324,7 +326,7 @@ let EasebuzzController = class EasebuzzController {
         }
     }
     async createOrderV2(body) {
-        const { amount, callbackUrl, jwt, webHook, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, split_payments, easebuzzVendors, easebuzz_school_label, easebuzz_non_partner_cred, additionalDataToggle } = body;
+        const { amount, callbackUrl, jwt, webHook, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, split_payments, easebuzzVendors, easebuzz_school_label, easebuzz_non_partner_cred, additionalDataToggle, } = body;
         try {
             if (custom_order_id) {
                 const count = await this.databaseService.CollectRequestModel.countDocuments({
@@ -363,7 +365,7 @@ let EasebuzzController = class EasebuzzController {
                 easebuzz_non_partner_cred,
                 isSplitPayments: split_payments,
                 easebuzz_split_label: easebuzz_school_label,
-                additionalDataToggle: additionalDataToggle
+                additionalDataToggle: additionalDataToggle,
             }).save();
             await new this.databaseService.CollectRequestStatusModel({
                 collect_id: request._id,
@@ -373,6 +375,14 @@ let EasebuzzController = class EasebuzzController {
                 payment_method: null,
             }).save();
             const schoolName = school_name || '';
+            const studentDetail = JSON.parse(request.additional_data);
+            const additionalData = studentDetail.additional_fields || {};
+            const additionalinfoset = Object.fromEntries(Object.entries(additionalData).map(([key, value]) => {
+                if (typeof value === 'string' && value.includes('|')) {
+                    throw new Error(`Invalid character "|" found in key: ${key}`);
+                }
+                return [key, value];
+            }));
             if (split_payments) {
                 console.log(split_payments);
                 return (0, sign_1.sign)(await this.easebuzzService.createOrderV2(request, platform_charges, schoolName));
@@ -386,7 +396,7 @@ let EasebuzzController = class EasebuzzController {
         }
     }
     async createOrderNonSeamless(body) {
-        const { amount, callbackUrl, jwt, webHook, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, split_payments, easebuzzVendors, easebuzz_school_label, easebuzz_non_partner_cred, additionalDataToggle } = body;
+        const { amount, callbackUrl, jwt, webHook, disabled_modes, platform_charges, additional_data, school_id, trustee_id, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, split_payments, easebuzzVendors, easebuzz_school_label, easebuzz_non_partner_cred, additionalDataToggle, } = body;
         try {
             if (custom_order_id) {
                 const count = await this.databaseService.CollectRequestModel.countDocuments({
@@ -425,7 +435,7 @@ let EasebuzzController = class EasebuzzController {
                 easebuzz_non_partner_cred,
                 isSplitPayments: split_payments,
                 easebuzz_split_label: easebuzz_school_label,
-                additionalDataToggle: additionalDataToggle || false
+                additionalDataToggle: additionalDataToggle || false,
             }).save();
             await new this.databaseService.CollectRequestStatusModel({
                 collect_id: request._id,
