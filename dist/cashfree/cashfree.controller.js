@@ -264,6 +264,7 @@ let CashfreeController = class CashfreeController {
                 throw new common_1.BadRequestException('this order is not paid by cashfree');
             }
             let client_id = request.clientId.toString();
+            console.log(action, "action");
             if (action === 'accept') {
                 return this.cashfreeService.submitDisputeEvidence(dispute_id, documents, client_id);
             }

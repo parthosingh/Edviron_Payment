@@ -761,6 +761,7 @@ export class CashfreeService {
     };
     try {
       const response = await axios.request(config);
+      console.log(response, "response")
       return response.data;
     } catch (error) {
       console.log(error.response.data.message, 'here errorr');

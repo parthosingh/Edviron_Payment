@@ -2645,6 +2645,7 @@ export class EdvironPgService implements GatewayService {
           },
           data: getTransactionInfo[0],
         };
+        console.log(config, "config")
         await axios.request(config);
       } catch (error) {
         console.error('Error sending email:', error.message);

@@ -605,6 +605,7 @@ let CashfreeService = class CashfreeService {
         };
         try {
             const response = await axios_1.default.request(config);
+            console.log(response, "response");
             return response.data;
         }
         catch (error) {
