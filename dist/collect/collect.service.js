@@ -180,6 +180,7 @@ let CollectService = class CollectService {
             }
             let collect_id = request._id.toString();
             if (razorpay_partner) {
+                console.log('heree');
                 const { url, collect_req } = await this.razorpayNonseamlessService.createOrderV2(request);
                 this.scheduleUpdate(15 * 60 * 1000, collect_id);
                 this.scheduleUpdate(20 * 60 * 1000, collect_id);

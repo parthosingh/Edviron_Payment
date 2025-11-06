@@ -332,6 +332,7 @@ export class CollectService {
       }
       let collect_id = request._id.toString();
       if (razorpay_partner) {
+        console.log('heree')
         const { url, collect_req } =
           await this.razorpayNonseamlessService.createOrderV2(request);
 
