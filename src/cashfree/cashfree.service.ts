@@ -1981,6 +1981,9 @@ export class CashfreeService {
       const qrBase64 = qrCodeUrl.split(',')[1];
       return { intentUrl: intent, qrCodeBase64: qrBase64, collect_id };
     } catch (e) {
+      if(e.response?.data){
+        throw new BadRequestException(e.response?.data?.message || "gateway error");
+      }
       throw new BadRequestException(e.message);
     }
   }

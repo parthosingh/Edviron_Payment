@@ -1456,6 +1456,9 @@ let CashfreeService = class CashfreeService {
             return { intentUrl: intent, qrCodeBase64: qrBase64, collect_id };
         }
         catch (e) {
+            if (e.response?.data) {
+                throw new common_1.BadRequestException(e.response?.data?.message || "gateway error");
+            }
             throw new common_1.BadRequestException(e.message);
         }
     }
