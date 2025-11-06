@@ -53,13 +53,15 @@ export declare class CashfreeController {
     disputeEvidence(body: {
         dispute_id: string;
         action: string;
-        documents: Array<{
-            file: string;
-            doc_type: string;
-            note: string;
-        }>;
-        client_id: string;
+        documents: [
+            {
+                document_type: string;
+                file_url: string;
+                name: string;
+            }
+        ];
         sign: string;
+        collect_id: string;
     }): Promise<any>;
     testSecureWebhook(req: any, res: any): Promise<any>;
     testUpload(body: {
