@@ -393,13 +393,6 @@ let EdvironPgController = class EdvironPgController {
         const pendingCollectReq = await this.databaseService.CollectRequestStatusModel.findOne({
             collect_id: collectIdObject,
         });
-        if (pendingCollectReq &&
-            (pendingCollectReq.status === collect_req_status_schema_1.PaymentStatus.SUCCESS ||
-                pendingCollectReq.status === 'success')) {
-            console.log('No pending request found for', collect_id);
-            res.status(200).send('OK');
-            return;
-        }
         collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_PG;
         await collectReq.save();
         const reqToCheck = await this.edvironPgService.checkStatus(collect_id, collectReq);
@@ -556,40 +549,39 @@ let EdvironPgController = class EdvironPgController {
             payment_method: collectRequestStatus.payment_method,
             payment_details: collectRequestStatus.details,
             formattedDate: `${payment_time.getFullYear()}-${String(payment_time.getMonth() + 1).padStart(2, '0')}-${String(payment_time.getDate()).padStart(2, '0')}`,
+            installments: [],
         };
-        console.log(collectReq?.isCollectNow, "collectReq?.isCollectNow");
+        console.log(collectReq?.isCollectNow, 'collectReq?.isCollectNow');
         if (collectReq?.isCollectNow) {
             let status = webhookStatus === 'SUCCESS' ? 'paid' : 'unpaid';
-            const installments = await this.databaseService.InstallmentsModel.find({
+            const installmentss = await this.databaseService.InstallmentsModel.find({
                 collect_id: collectIdObject,
             });
-            let basicDetail = installments[0];
-            let lable = [];
-            for (let installment of installments) {
+            let basicDetail = installmentss[0];
+            for (let installment of installmentss) {
                 await this.databaseService.InstallmentsModel.findOneAndUpdate({ _id: installment._id }, { $set: { status: status } }, { new: true });
                 const feeHeads = installment.fee_heads.map((e) => ({
-                    month: installment.label,
-                    year: installment.year,
-                    label: e.label,
-                    amount: e.amount,
-                    net_amount: e.net_amount,
-                    discount: e.discount,
+                    fee_head: {
+                        label: e.label,
+                        amount: e.amount,
+                        net_amount: e.net_amount,
+                        discount: e.discount,
+                    },
                 }));
-                lable = [...lable, ...feeHeads];
+                const data = {
+                    month: installment.month,
+                    year: installment.year,
+                    label: installment.label,
+                    installment_id: installment._id.toString(),
+                    status: installment.status,
+                    amount: installment.amount,
+                    net_amount: installment.net_amount,
+                    discount: installment.discount,
+                    fee_head: feeHeads,
+                };
+                webHookDataInfo.installments.push(data);
             }
-            let data = {
-                student_name: basicDetail.student_name,
-                student_id: basicDetail.student_id,
-                student_number: basicDetail.student_number,
-                student_email: basicDetail.student_email,
-                lable: lable,
-            };
-            webHookDataInfo = {
-                ...webHookDataInfo,
-                ...data,
-            };
         }
-        console.log(webHookDataInfo, "webHookDataInfo");
         if (webHookUrl !== null) {
             console.log('calling webhook');
             let webhook_key = null;
@@ -623,7 +615,7 @@ let EdvironPgController = class EdvironPgController {
             }
             else {
                 console.log('Webhook called for other schools');
-                console.log(webHookDataInfo);
+                console.log(webHookDataInfo, 'here');
                 try {
                     await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key);
                 }

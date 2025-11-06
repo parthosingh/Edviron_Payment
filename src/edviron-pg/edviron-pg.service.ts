@@ -907,6 +907,7 @@ export class EdvironPgService implements GatewayService {
         bank_reference: webhookData?.bank_reference,
         payment_method: webhookData?.payment_method,
         payment_details: webhookData?.payment_details,
+        installments : webhookData?.installments
       });
       let base64Header = '';
       if (webhook_key) {
