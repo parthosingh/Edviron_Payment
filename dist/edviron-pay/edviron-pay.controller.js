@@ -681,6 +681,29 @@ let EdvironPayController = class EdvironPayController {
             throw new common_1.BadRequestException(error);
         }
     }
+    async getErpDqr(req) {
+        try {
+            const { collect_id, sign } = req.query;
+            const res = await this.edvironPay.erpDynamicQrRedirect(collect_id);
+            return res;
+        }
+        catch (e) {
+            console.log(e.response);
+            if (e.response?.data?.message) {
+                throw new common_1.BadRequestException(e.response.data.message);
+            }
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async checkDqrStatus(collect_id) {
+        try {
+            const status = await this.edvironPay.checkStatusDQR(collect_id);
+            return status;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPayController = EdvironPayController;
 __decorate([
@@ -745,6 +768,20 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EdvironPayController.prototype, "orderDetail", null);
+__decorate([
+    (0, common_1.Get)('/get-erp-dqr'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPayController.prototype, "getErpDqr", null);
+__decorate([
+    (0, common_1.Get)('/dqr/check-status'),
+    __param(0, (0, common_1.Query)('collect_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EdvironPayController.prototype, "checkDqrStatus", null);
 exports.EdvironPayController = EdvironPayController = __decorate([
     (0, common_1.Controller)('edviron-pay'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

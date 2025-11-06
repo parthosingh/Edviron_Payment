@@ -28,12 +28,14 @@ import { CollectRequest } from 'src/database/schemas/collect_request.schema';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
+import { CheckStatusService } from 'src/check-status/check-status.service';
 export declare class EdvironPayService {
     private readonly databaseService;
     private readonly cashfreeService;
     private readonly easebuzzService;
     private readonly edvironPgService;
-    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService, easebuzzService: EasebuzzService, edvironPgService: EdvironPgService);
+    private readonly checkStatusService;
+    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService, easebuzzService: EasebuzzService, edvironPgService: EdvironPgService, checkStatusService: CheckStatusService);
     createOrder(request: CollectRequest, school_name: string, gatewat: {
         cashfree: boolean;
         easebuzz: boolean;
@@ -65,7 +67,28 @@ export declare class EdvironPayService {
     }>;
     nonEdvironInstallments(collect_id: string): Promise<"installments update successfull" | "no installment found for this collect id">;
     erpDynamicQrRedirect(collect_id: string): Promise<{
-        url: string | undefined;
+        upiIntent: {
+            intentUrl: any;
+            qrCodeBase64: any;
+            collect_id: string;
+        };
+        url: string;
         collect_id: string;
+        gateway: string;
+    } | {
+        url: string;
+        collect_id: string;
+        upiIntent?: undefined;
+        gateway?: undefined;
+    }>;
+    checkStatusDQR(collect_id: string): Promise<{
+        status: string;
+        returnUrl: null;
+    } | {
+        status: any;
+        returnUrl: string;
+    } | {
+        status: null;
+        returnUrl: null;
     }>;
 }
