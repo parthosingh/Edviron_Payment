@@ -564,6 +564,7 @@ let RazorpayService = class RazorpayService {
                     },
                     maxBodyLength: Infinity,
                 });
+                console.log(response, "response");
                 uploadedDocuments.push({
                     document_id: response.data.id,
                     document_type: doc.document_type,

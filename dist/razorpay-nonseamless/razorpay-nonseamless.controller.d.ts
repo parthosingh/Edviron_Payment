@@ -1,11 +1,13 @@
 import { DatabaseService } from 'src/database/database.service';
 import { RazorpayNonseamlessService } from './razorpay-nonseamless.service';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
+import { RazorpayService } from 'src/razorpay/razorpay.service';
 export declare class RazorpayNonseamlessController {
     private readonly databaseService;
     private readonly razorpayServiceModel;
+    private readonly razorpayService;
     private readonly edvironPgService;
-    constructor(databaseService: DatabaseService, razorpayServiceModel: RazorpayNonseamlessService, edvironPgService: EdvironPgService);
+    constructor(databaseService: DatabaseService, razorpayServiceModel: RazorpayNonseamlessService, razorpayService: RazorpayService, edvironPgService: EdvironPgService);
     razorpayRedirect(req: any, res: any): Promise<any>;
     razorpayRedirectV2(req: any, res: any): Promise<any>;
     handleCallback(req: any, res: any): Promise<any>;
@@ -31,4 +33,29 @@ export declare class RazorpayNonseamlessController {
         refundAmount: number;
         refund_id: string;
     }): Promise<any>;
+    disputeEvidence(body: {
+        dispute_id: string;
+        action: string;
+        documents: [
+            {
+                document_type: string;
+                file_url: string;
+                name: string;
+            }
+        ];
+        sign: string;
+        collect_id: string;
+    }): Promise<{
+        dispute_id: string;
+        uploadedDocuments: {
+            document_id: any;
+            document_type: string;
+            name: string;
+            file_url: string;
+        }[];
+    } | {
+        message: string;
+        dispute_id: string;
+        razorpay_response: any;
+    }>;
 }

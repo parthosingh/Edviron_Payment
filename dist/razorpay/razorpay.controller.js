@@ -907,8 +907,8 @@ let RazorpayController = class RazorpayController {
             if (!request) {
                 throw new common_1.BadRequestException('collect request not found');
             }
-            if (request.gateway !== collect_request_schema_1.Gateway.EDVIRON_PG) {
-                throw new common_1.BadRequestException('this order is not paid by cashfree');
+            if (request.gateway !== collect_request_schema_1.Gateway.EDVIRON_RAZORPAY) {
+                throw new common_1.BadRequestException('this order is not paid by razorpay');
             }
             let crediantials = request.razorpay_seamless;
             if (action === 'accept') {
