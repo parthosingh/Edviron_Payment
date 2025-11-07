@@ -22,6 +22,7 @@ const collect_req_status_schema_1 = require("../database/schemas/collect_req_sta
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const mongoose_1 = require("mongoose");
 const axios_1 = require("axios");
+const jwt = require("jsonwebtoken");
 const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
 let RazorpayController = class RazorpayController {
     constructor(razorpayService, databaseService, edvironPgService, razorpayNonSeamless) {
@@ -893,6 +894,34 @@ let RazorpayController = class RazorpayController {
             throw new common_1.BadRequestException(error.message);
         }
     }
+    async disputeEvidence(body) {
+        try {
+            const { dispute_id, documents, action, sign, collect_id } = body;
+            const decodedToken = jwt.verify(sign, process.env.KEY);
+            if (!decodedToken)
+                throw new common_1.BadRequestException('Request Forged');
+            if (decodedToken.action !== action ||
+                decodedToken.dispute_id !== dispute_id)
+                throw new common_1.BadRequestException('Request Forged');
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request) {
+                throw new common_1.BadRequestException('collect request not found');
+            }
+            if (request.gateway !== collect_request_schema_1.Gateway.EDVIRON_PG) {
+                throw new common_1.BadRequestException('this order is not paid by cashfree');
+            }
+            let crediantials = request.razorpay_seamless;
+            if (action === 'accept') {
+                return this.razorpayService.submitDisputeEvidence(dispute_id, documents, crediantials);
+            }
+            else {
+                return this.razorpayService.acceptDispute(dispute_id, crediantials);
+            }
+        }
+        catch (error) {
+            throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
+        }
+    }
 };
 exports.RazorpayController = RazorpayController;
 __decorate([
@@ -960,6 +989,13 @@ __decorate([
     __metadata("design:paramtypes", [String, Number, String]),
     __metadata("design:returntype", Promise)
 ], RazorpayController.prototype, "initiateRefund", null);
+__decorate([
+    (0, common_1.Post)('/update-dispute'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], RazorpayController.prototype, "disputeEvidence", null);
 exports.RazorpayController = RazorpayController = __decorate([
     (0, common_1.Controller)('razorpay'),
     __metadata("design:paramtypes", [razorpay_service_1.RazorpayService,

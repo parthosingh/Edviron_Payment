@@ -22,4 +22,29 @@ export declare class RazorpayController {
         googlePe: string;
     }>;
     initiateRefund(collect_id: string, refundAmount: number, refund_id: string): Promise<any>;
+    disputeEvidence(body: {
+        dispute_id: string;
+        action: string;
+        documents: [
+            {
+                document_type: string;
+                file_url: string;
+                name: string;
+            }
+        ];
+        sign: string;
+        collect_id: string;
+    }): Promise<{
+        dispute_id: string;
+        uploadedDocuments: {
+            document_id: any;
+            document_type: string;
+            name: string;
+            file_url: string;
+        }[];
+    } | {
+        message: string;
+        dispute_id: string;
+        razorpay_response: any;
+    }>;
 }
