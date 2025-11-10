@@ -59,7 +59,7 @@ export class EdvironPgController {
     private readonly worldlineService: WorldlineService,
     private readonly razorpayNonseamless: RazorpayNonseamlessService,
     private readonly razorpaySeamless: RazorpayService,
-  ) { }
+  ) {}
   @Get('/redirect')
   async handleRedirect(@Req() req: any, @Res() res: any) {
     const wallet = req.query.wallet;
@@ -94,12 +94,15 @@ export class EdvironPgController {
       res.send(
         `<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://pg.edviron.com/payments?session_id=${req.query.session_id
-        }&collect_request_id=${req.query.collect_request_id
-        }&amount=${req.query.amount
-        }${disable_modes}&platform_charges=${encodeURIComponent(
-          req.query.platform_charges,
-        )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&gateway=${gateway}";
+                    location.href = "https://pg.edviron.com/payments?session_id=${
+                      req.query.session_id
+                    }&collect_request_id=${
+                      req.query.collect_request_id
+                    }&amount=${
+                      req.query.amount
+                    }${disable_modes}&platform_charges=${encodeURIComponent(
+                      req.query.platform_charges,
+                    )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&gateway=${gateway}";
 
                 }
             </script>`,
@@ -108,12 +111,15 @@ export class EdvironPgController {
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id
-      }&collect_request_id=${req.query.collect_request_id
-      }&amount=${req.query.amount
-      }${disable_modes}&platform_charges=${encodeURIComponent(
-        req.query.platform_charges,
-      )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&currency=${currency}";
+                    location.href = "https://pg.edviron.com?session_id=${
+                      req.query.session_id
+                    }&collect_request_id=${
+                      req.query.collect_request_id
+                    }&amount=${
+                      req.query.amount
+                    }${disable_modes}&platform_charges=${encodeURIComponent(
+                      req.query.platform_charges,
+                    )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&currency=${currency}";
 
                 }
             </script>`,
@@ -274,12 +280,15 @@ export class EdvironPgController {
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "${process.env.PG_FRONTEND
-      }?session_id=${sessionId}&collect_request_id=${req.query.collect_id
-      }&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(
-        platform_charges,
-      )}&is_blank=${isBlank}&amount=${amount}&school_name=${info.school_name
-      }&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}";
+                    location.href = "${
+                      process.env.PG_FRONTEND
+                    }?session_id=${sessionId}&collect_request_id=${
+                      req.query.collect_id
+                    }&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(
+                      platform_charges,
+                    )}&is_blank=${isBlank}&amount=${amount}&school_name=${
+                      info.school_name
+                    }&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}";
                 }
             </script>`,
     );
@@ -798,21 +807,6 @@ export class EdvironPgController {
         },
       );
 
-    if (collectReq?.isCollectNow) {
-      let status = webhookStatus === 'SUCCESS' ? 'paid' : 'unpaid';
-
-      const installments = await this.databaseService.InstallmentsModel.find({
-        collect_id: collectIdObject,
-      });
-
-      for (let installment of installments) {
-        await this.databaseService.InstallmentsModel.findOneAndUpdate(
-          { _id: installment._id },
-          { $set: { status: status } },
-          { new: true },
-        );
-      }
-    }
     const webHookUrl = collectReq?.req_webhook_urls;
 
     const collectRequest =
@@ -833,7 +827,41 @@ export class EdvironPgController {
     const amount = reqToCheck?.amount;
     const custom_order_id = collectRequest?.custom_order_id || '';
     const additional_data = collectRequest?.additional_data || '';
-    const webHookDataInfo = {
+    let webHookDataInfo: {
+      collect_id: any;
+      amount: number;
+      status: any;
+      trustee_id: string;
+      school_id: string;
+      req_webhook_urls: string[];
+      custom_order_id: string;
+      createdAt: Date | undefined;
+      transaction_time: Date;
+      additional_data: any;
+      details: any;
+      transaction_amount: Number;
+      bank_reference: string;
+      payment_method: String;
+      payment_details: any;
+      formattedDate: string;
+      installments: {
+        month: string;
+        year: string;
+        installment_id: string;
+        status: string;
+        amount: number;
+        net_amount: number;
+        discount: number;
+        fee_head: {
+          fee_head: {
+            label: string;
+            amount: number;
+            net_amount: number;
+            discount: number;
+          };
+        }[];
+      }[];
+    } = {
       collect_id,
       amount,
       status,
@@ -849,11 +877,49 @@ export class EdvironPgController {
       bank_reference: collectRequestStatus.bank_reference,
       payment_method: collectRequestStatus.payment_method,
       payment_details: collectRequestStatus.details,
-      // formattedTransaction_time: transactionTime.toLocaleDateString('en-GB') || null,
       formattedDate: `${payment_time.getFullYear()}-${String(
         payment_time.getMonth() + 1,
       ).padStart(2, '0')}-${String(payment_time.getDate()).padStart(2, '0')}`,
+      installments: [], // now correctly typed
     };
+
+    console.log(collectReq?.isCollectNow, 'collectReq?.isCollectNow');
+    if (collectReq?.isCollectNow) {
+      let status = webhookStatus === 'SUCCESS' ? 'paid' : 'unpaid';
+
+      const installmentss = await this.databaseService.InstallmentsModel.find({
+        collect_id: collectIdObject,
+      });
+      let basicDetail = installmentss[0];
+      for (let installment of installmentss) {
+        await this.databaseService.InstallmentsModel.findOneAndUpdate(
+          { _id: installment._id },
+          { $set: { status: status } },
+          { new: true },
+        );
+
+        const feeHeads = installment.fee_heads.map((e) => ({
+          fee_head: {
+            label: e.label,
+            amount: e.amount,
+            net_amount: e.net_amount,
+            discount: e.discount,
+          },
+        }));
+        const data = {
+          month: installment.month,
+          year: installment.year,
+          label: installment.label,
+          installment_id: installment._id.toString(),
+          status: installment.status,
+          amount: installment.amount,
+          net_amount: installment.net_amount,
+          discount: installment.discount,
+          fee_head: feeHeads,
+        };
+        webHookDataInfo.installments.push(data);
+      }
+    }
 
     if (webHookUrl !== null) {
       console.log('calling webhook');
@@ -866,8 +932,9 @@ export class EdvironPgController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+          url: `${
+            process.env.VANILLA_SERVICE_ENDPOINT
+          }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
@@ -896,7 +963,7 @@ export class EdvironPgController {
         }, 60000);
       } else {
         console.log('Webhook called for other schools');
-        console.log(webHookDataInfo);
+        console.log(webHookDataInfo, 'here');
         try {
           await this.edvironPgService.sendErpWebhook(
             webHookUrl,
@@ -2693,7 +2760,7 @@ export class EdvironPgController {
 
   // https://payements.edviron.com/edviron-pg/easebuzz/settlement
   @Post('easebuzz/settlement')
-  async easebuzzSettlement(@Body() body: any) { }
+  async easebuzzSettlement(@Body() body: any) {}
 
   // @Get('/payments-info')
   // async getpaymentsInfo(@Query('collect_id') collect_id: string) {
@@ -3170,11 +3237,11 @@ export class EdvironPgController {
         ...(gateway && { gateway: { $in: gateway } }),
         ...(start_date &&
           end_date && {
-          updatedAt: {
-            $gte: new Date(start_date),
-            $lte: new Date(new Date(end_date).setHours(23, 59, 59, 999)),
-          },
-        }),
+            updatedAt: {
+              $gte: new Date(start_date),
+              $lte: new Date(new Date(end_date).setHours(23, 59, 59, 999)),
+            },
+          }),
       };
 
       return await this.edvironPgService.getVendorTransactions(
@@ -3269,7 +3336,10 @@ export class EdvironPgController {
   ) {
     const SchoolIds =
       school_id && typeof school_id === 'string'
-        ? school_id.split(',').map((id) => id.trim()).filter(Boolean)
+        ? school_id
+            .split(',')
+            .map((id) => id.trim())
+            .filter(Boolean)
         : [];
 
     return await this.edvironPgService.getTransactionReportBatched(
@@ -3356,8 +3426,6 @@ export class EdvironPgController {
       gateway,
     );
   }
-
-
 
   @Post('/erp-webhook-logs')
   async getErpWebhookLogs(
@@ -3545,7 +3613,7 @@ export class EdvironPgController {
           year,
         );
       return response;
-    } catch (e) { }
+    } catch (e) {}
   }
 
   @Get('/get-merchant-batch-transactions')
@@ -3846,7 +3914,7 @@ export class EdvironPgController {
       //     note,
       //   )
       // }
-    } catch (e) { }
+    } catch (e) {}
   }
 
   @Get('get-order-payment-link')
@@ -4053,9 +4121,9 @@ export class EdvironPgController {
       let selectedCharge = schoolMdr.platform_charges.find(
         (charge) =>
           charge.payment_mode.toLocaleLowerCase() ===
-          payment_mode.toLocaleLowerCase() &&
+            payment_mode.toLocaleLowerCase() &&
           charge.platform_type.toLocaleLowerCase() ===
-          platform_type.toLocaleLowerCase(),
+            platform_type.toLocaleLowerCase(),
       );
 
       if (!selectedCharge) {
@@ -4117,7 +4185,7 @@ export class EdvironPgController {
     platformCharges.platform_charges.forEach((platformCharge) => {
       if (
         platformCharge.platform_type.toLowerCase() ===
-        platform_type.toLowerCase() &&
+          platform_type.toLowerCase() &&
         platformCharge.payment_mode.toLowerCase() === payment_mode.toLowerCase()
       ) {
         throw new BadRequestException('MDR already present');
@@ -4315,8 +4383,9 @@ export class EdvironPgController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${'65d43e124174f07e3e3f8966'}`,
+          url: `${
+            process.env.VANILLA_SERVICE_ENDPOINT
+          }/main-backend/get-webhook-key?token=${token}&trustee_id=${'65d43e124174f07e3e3f8966'}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
@@ -4564,7 +4633,7 @@ export class EdvironPgController {
 
       isQRCode,
       gateway,
-      school_id
+      school_id,
     } = body;
     let { payment_modes } = body;
     if (!token) throw new Error('Token not provided');
@@ -4609,7 +4678,6 @@ export class EdvironPgController {
       }
 
       if (school_id && school_id.length > 0) {
-
         collectQuery = {
           ...collectQuery,
           school_id: { $in: school_id },
@@ -4789,7 +4857,6 @@ export class EdvironPgController {
             collect_id: requestInfo._id,
           };
         } else if (seachFilter === 'student_info') {
-
           const studentRegex = {
             $regex: searchParams,
             $options: 'i',
@@ -5110,7 +5177,7 @@ export class EdvironPgController {
           cutomer_no: '',
           customer_email: '',
           customer_id: '',
-          isSplit:false
+          isSplit: false,
         };
       }
       if (!request.additional_data) {
@@ -5128,7 +5195,7 @@ export class EdvironPgController {
           cutomer_no: '',
           customer_email: '',
           customer_id: '',
-          isSplit: request.isSplitPayments || false
+          isSplit: request.isSplitPayments || false,
         };
       }
       const student_info = JSON.parse(request.additional_data);
@@ -5149,7 +5216,7 @@ export class EdvironPgController {
           cutomer_no: '',
           customer_email: '',
           customer_id: '',
-          isSplit: request.isSplitPayments || false
+          isSplit: request.isSplitPayments || false,
         };
       }
       const payload = { vba_account_number: request.vba_account_number };
@@ -5181,7 +5248,7 @@ export class EdvironPgController {
         cutomer_no: '',
         customer_email: '',
         customer_id: '',
-        isSplit:false
+        isSplit: false,
       };
     }
   }
@@ -5234,7 +5301,8 @@ export class EdvironPgController {
       if (axios.isAxiosError(error)) {
         console.error('Axios Error:', error.response?.data || error.message);
         throw new BadRequestException(
-          `External API error: ${error.response?.data?.message || error.message
+          `External API error: ${
+            error.response?.data?.message || error.message
           }`,
         );
       }
@@ -5463,7 +5531,7 @@ export class EdvironPgController {
       const { data } = await axios.request(config);
       console.log(data);
       return data;
-    } catch (error) { }
+    } catch (error) {}
   }
 
   @Post('set-mdr-zero')
@@ -5478,7 +5546,7 @@ export class EdvironPgController {
       );
 
       return reset;
-    } catch (e) { }
+    } catch (e) {}
   }
 
   @Post('sub-trustee-transactions-sum')
@@ -5728,57 +5796,57 @@ export class EdvironPgController {
     }
   }
 
-
   @Post('update-cashfree2')
   async updateCashfreeWebhook2() {
     try {
       const startDate = new Date(
         await this.edvironPgService.convertISTStartToUTC('2025-10-17'),
       );
-      const endDate = new Date()
+      const endDate = new Date();
 
-      const collectRequests = await this.databaseService.CollectRequestModel.aggregate([
-        {
-          $match: {
-            gateway: 'EDVIRON_PG',
-            createdAt: { $gte: startDate, $lte: endDate },
+      const collectRequests =
+        await this.databaseService.CollectRequestModel.aggregate([
+          {
+            $match: {
+              gateway: 'EDVIRON_PG',
+              createdAt: { $gte: startDate, $lte: endDate },
+            },
           },
-        },
-        {
-          $lookup: {
-            from: 'collectrequeststatuses',
-            let: { collectId: '$_id' },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ['$collect_id', '$$collectId'] },
-                      { $in: ['$status', ['PENDING', 'USER_DROPPED']] },
-                    ],
+          {
+            $lookup: {
+              from: 'collectrequeststatuses',
+              let: { collectId: '$_id' },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ['$collect_id', '$$collectId'] },
+                        { $in: ['$status', ['PENDING', 'USER_DROPPED']] },
+                      ],
+                    },
                   },
                 },
-              },
-            ],
-            as: 'statuses',
+              ],
+              as: 'statuses',
+            },
           },
-        },
-        { $unwind: { path: '$statuses', preserveNullAndEmptyArrays: false } },
-        {
-          $project: {
-            _id: 1,
-            gateway: 1,
-            createdAt: 1,
-            payment_id: 1,
-            'statuses.status': 1,
-            'statuses.updatedAt': 1,
-            'statuses.payment_time': 1,
+          { $unwind: { path: '$statuses', preserveNullAndEmptyArrays: false } },
+          {
+            $project: {
+              _id: 1,
+              gateway: 1,
+              createdAt: 1,
+              payment_id: 1,
+              'statuses.status': 1,
+              'statuses.updatedAt': 1,
+              'statuses.payment_time': 1,
+            },
           },
-        },
-      ]);
+        ]);
 
       // Run requests in parallel batches (to avoid blocking)
-      const concurrencyLimit = 10
+      const concurrencyLimit = 10;
       const chunks = [];
       for (let i = 0; i < collectRequests.length; i += concurrencyLimit) {
         chunks.push(collectRequests.slice(i, i + concurrencyLimit));
@@ -5808,7 +5876,9 @@ export class EdvironPgController {
                       transaction_amount: statusData.transaction_amount,
                       updatedAt: new Date(statusData.details.transaction_time),
                       payment_method: statusData.details.payment_mode,
-                      details: JSON.stringify(statusData.details.payment_methods),
+                      details: JSON.stringify(
+                        statusData.details.payment_methods,
+                      ),
                       bank_reference: statusData.details.bank_ref,
                       payment_time: statusData.details.transaction_time,
                       reason: statusData.payment_message || 'NA',
@@ -5824,7 +5894,9 @@ export class EdvironPgController {
                 );
 
               const collectReq =
-                await this.databaseService.CollectRequestModel.findById(collectRequestId);
+                await this.databaseService.CollectRequestModel.findById(
+                  collectRequestId,
+                );
               if (!collectReq) return;
 
               const payment_time = collectRequestStatus.payment_time;
@@ -5847,7 +5919,10 @@ export class EdvironPgController {
                 payment_details: collectRequestStatus.details,
                 formattedDate: `${payment_time.getFullYear()}-${String(
                   payment_time.getMonth() + 1,
-                ).padStart(2, '0')}-${String(payment_time.getDate()).padStart(2, '0')}`,
+                ).padStart(2, '0')}-${String(payment_time.getDate()).padStart(
+                  2,
+                  '0',
+                )}`,
               };
 
               // Fetch webhook key (if needed)
@@ -5873,19 +5948,32 @@ export class EdvironPgController {
               }
 
               // Send webhook (delayed only for specific trustee)
-              if (collectReq.trustee_id.toString() === '66505181ca3e97e19f142075') {
-                setTimeout(() =>
-                  this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key)
-                    .catch(() => { }), 60000);
+              if (
+                collectReq.trustee_id.toString() === '66505181ca3e97e19f142075'
+              ) {
+                setTimeout(
+                  () =>
+                    this.edvironPgService
+                      .sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key)
+                      .catch(() => {}),
+                  60000,
+                );
               } else {
-                await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key);
+                await this.edvironPgService.sendErpWebhook(
+                  webHookUrl,
+                  webHookDataInfo,
+                  webhook_key,
+                );
               }
 
               // Commission calculation
               try {
-                const pgData = JSON.parse(collectRequestStatus.details as string);
+                const pgData = JSON.parse(
+                  collectRequestStatus.details as string,
+                );
                 const platformMap: Record<string, string> = {
-                  net_banking: pgData?.netbanking?.netbanking_bank_name || 'Others',
+                  net_banking:
+                    pgData?.netbanking?.netbanking_bank_name || 'Others',
                   debit_card: pgData?.card?.card_network || 'Others',
                   credit_card: pgData?.card?.card_network || 'Others',
                   upi: 'Others',
@@ -5904,8 +5992,10 @@ export class EdvironPgController {
                   corporate_card: 'CORPORATE CARDS',
                 };
 
-                const meth = platformMap[collectRequestStatus.payment_method as string];
-                const mode = methodMap[collectRequestStatus.payment_method as string];
+                const meth =
+                  platformMap[collectRequestStatus.payment_method as string];
+                const mode =
+                  methodMap[collectRequestStatus.payment_method as string];
 
                 const tokenData = {
                   school_id: collectReq.school_id,
@@ -5917,7 +6007,9 @@ export class EdvironPgController {
                   collect_id: collectReq._id,
                 };
 
-                const commissionToken = jwt.sign(tokenData, process.env.KEY!, { noTimestamp: true });
+                const commissionToken = jwt.sign(tokenData, process.env.KEY!, {
+                  noTimestamp: true,
+                });
 
                 await axios.post(
                   `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,
@@ -5951,56 +6043,57 @@ export class EdvironPgController {
     }
   }
 
-  // @Cron('*/2 * * * *') 
+  // @Cron('*/2 * * * *')
   async updateCashfreeWebhook2Cron() {
     try {
       const startDate = new Date(
         await this.edvironPgService.convertISTStartToUTC('2025-10-17'),
       );
-      const endDate = new Date()
+      const endDate = new Date();
 
-      const collectRequests = await this.databaseService.CollectRequestModel.aggregate([
-        {
-          $match: {
-            gateway: 'EDVIRON_PG',
-            createdAt: { $gte: startDate, $lte: endDate },
+      const collectRequests =
+        await this.databaseService.CollectRequestModel.aggregate([
+          {
+            $match: {
+              gateway: 'EDVIRON_PG',
+              createdAt: { $gte: startDate, $lte: endDate },
+            },
           },
-        },
-        {
-          $lookup: {
-            from: 'collectrequeststatuses',
-            let: { collectId: '$_id' },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ['$collect_id', '$$collectId'] },
-                      { $in: ['$status', ['PENDING', 'USER_DROPPED']] },
-                    ],
+          {
+            $lookup: {
+              from: 'collectrequeststatuses',
+              let: { collectId: '$_id' },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ['$collect_id', '$$collectId'] },
+                        { $in: ['$status', ['PENDING', 'USER_DROPPED']] },
+                      ],
+                    },
                   },
                 },
-              },
-            ],
-            as: 'statuses',
+              ],
+              as: 'statuses',
+            },
           },
-        },
-        { $unwind: { path: '$statuses', preserveNullAndEmptyArrays: false } },
-        {
-          $project: {
-            _id: 1,
-            gateway: 1,
-            createdAt: 1,
-            payment_id: 1,
-            'statuses.status': 1,
-            'statuses.updatedAt': 1,
-            'statuses.payment_time': 1,
+          { $unwind: { path: '$statuses', preserveNullAndEmptyArrays: false } },
+          {
+            $project: {
+              _id: 1,
+              gateway: 1,
+              createdAt: 1,
+              payment_id: 1,
+              'statuses.status': 1,
+              'statuses.updatedAt': 1,
+              'statuses.payment_time': 1,
+            },
           },
-        },
-      ]);
+        ]);
 
       // Run requests in parallel batches (to avoid blocking)
-      const concurrencyLimit = 10
+      const concurrencyLimit = 10;
       const chunks = [];
       for (let i = 0; i < collectRequests.length; i += concurrencyLimit) {
         chunks.push(collectRequests.slice(i, i + concurrencyLimit));
@@ -6030,7 +6123,9 @@ export class EdvironPgController {
                       transaction_amount: statusData.transaction_amount,
                       updatedAt: new Date(statusData.details.transaction_time),
                       payment_method: statusData.details.payment_mode,
-                      details: JSON.stringify(statusData.details.payment_methods),
+                      details: JSON.stringify(
+                        statusData.details.payment_methods,
+                      ),
                       bank_reference: statusData.details.bank_ref,
                       payment_time: statusData.details.transaction_time,
                       reason: statusData.payment_message || 'NA',
@@ -6046,7 +6141,9 @@ export class EdvironPgController {
                 );
 
               const collectReq =
-                await this.databaseService.CollectRequestModel.findById(collectRequestId);
+                await this.databaseService.CollectRequestModel.findById(
+                  collectRequestId,
+                );
               if (!collectReq) return;
 
               const payment_time = collectRequestStatus.payment_time;
@@ -6069,7 +6166,10 @@ export class EdvironPgController {
                 payment_details: collectRequestStatus.details,
                 formattedDate: `${payment_time.getFullYear()}-${String(
                   payment_time.getMonth() + 1,
-                ).padStart(2, '0')}-${String(payment_time.getDate()).padStart(2, '0')}`,
+                ).padStart(2, '0')}-${String(payment_time.getDate()).padStart(
+                  2,
+                  '0',
+                )}`,
               };
 
               // Fetch webhook key (if needed)
@@ -6095,19 +6195,32 @@ export class EdvironPgController {
               }
 
               // Send webhook (delayed only for specific trustee)
-              if (collectReq.trustee_id.toString() === '66505181ca3e97e19f142075') {
-                setTimeout(() =>
-                  this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key)
-                    .catch(() => { }), 60000);
+              if (
+                collectReq.trustee_id.toString() === '66505181ca3e97e19f142075'
+              ) {
+                setTimeout(
+                  () =>
+                    this.edvironPgService
+                      .sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key)
+                      .catch(() => {}),
+                  60000,
+                );
               } else {
-                await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key);
+                await this.edvironPgService.sendErpWebhook(
+                  webHookUrl,
+                  webHookDataInfo,
+                  webhook_key,
+                );
               }
 
               // Commission calculation
               try {
-                const pgData = JSON.parse(collectRequestStatus.details as string);
+                const pgData = JSON.parse(
+                  collectRequestStatus.details as string,
+                );
                 const platformMap: Record<string, string> = {
-                  net_banking: pgData?.netbanking?.netbanking_bank_name || 'Others',
+                  net_banking:
+                    pgData?.netbanking?.netbanking_bank_name || 'Others',
                   debit_card: pgData?.card?.card_network || 'Others',
                   credit_card: pgData?.card?.card_network || 'Others',
                   upi: 'Others',
@@ -6126,8 +6239,10 @@ export class EdvironPgController {
                   corporate_card: 'CORPORATE CARDS',
                 };
 
-                const meth = platformMap[collectRequestStatus.payment_method as string];
-                const mode = methodMap[collectRequestStatus.payment_method as string];
+                const meth =
+                  platformMap[collectRequestStatus.payment_method as string];
+                const mode =
+                  methodMap[collectRequestStatus.payment_method as string];
 
                 const tokenData = {
                   school_id: collectReq.school_id,
@@ -6139,7 +6254,9 @@ export class EdvironPgController {
                   collect_id: collectReq._id,
                 };
 
-                const commissionToken = jwt.sign(tokenData, process.env.KEY!, { noTimestamp: true });
+                const commissionToken = jwt.sign(tokenData, process.env.KEY!, {
+                  noTimestamp: true,
+                });
 
                 await axios.post(
                   `${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`,

@@ -526,15 +526,6 @@ let EdvironPgController = class EdvironPgController {
             upsert: true,
             new: true,
         });
-        if (collectReq?.isCollectNow) {
-            let status = webhookStatus === 'SUCCESS' ? 'paid' : 'unpaid';
-            const installments = await this.databaseService.InstallmentsModel.find({
-                collect_id: collectIdObject,
-            });
-            for (let installment of installments) {
-                await this.databaseService.InstallmentsModel.findOneAndUpdate({ _id: installment._id }, { $set: { status: status } }, { new: true });
-            }
-        }
         const webHookUrl = collectReq?.req_webhook_urls;
         const collectRequest = await this.databaseService.CollectRequestModel.findById(collect_id);
         const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
@@ -550,7 +541,7 @@ let EdvironPgController = class EdvironPgController {
         const amount = reqToCheck?.amount;
         const custom_order_id = collectRequest?.custom_order_id || '';
         const additional_data = collectRequest?.additional_data || '';
-        const webHookDataInfo = {
+        let webHookDataInfo = {
             collect_id,
             amount,
             status,
@@ -567,7 +558,39 @@ let EdvironPgController = class EdvironPgController {
             payment_method: collectRequestStatus.payment_method,
             payment_details: collectRequestStatus.details,
             formattedDate: `${payment_time.getFullYear()}-${String(payment_time.getMonth() + 1).padStart(2, '0')}-${String(payment_time.getDate()).padStart(2, '0')}`,
+            installments: [],
         };
+        console.log(collectReq?.isCollectNow, 'collectReq?.isCollectNow');
+        if (collectReq?.isCollectNow) {
+            let status = webhookStatus === 'SUCCESS' ? 'paid' : 'unpaid';
+            const installmentss = await this.databaseService.InstallmentsModel.find({
+                collect_id: collectIdObject,
+            });
+            let basicDetail = installmentss[0];
+            for (let installment of installmentss) {
+                await this.databaseService.InstallmentsModel.findOneAndUpdate({ _id: installment._id }, { $set: { status: status } }, { new: true });
+                const feeHeads = installment.fee_heads.map((e) => ({
+                    fee_head: {
+                        label: e.label,
+                        amount: e.amount,
+                        net_amount: e.net_amount,
+                        discount: e.discount,
+                    },
+                }));
+                const data = {
+                    month: installment.month,
+                    year: installment.year,
+                    label: installment.label,
+                    installment_id: installment._id.toString(),
+                    status: installment.status,
+                    amount: installment.amount,
+                    net_amount: installment.net_amount,
+                    discount: installment.discount,
+                    fee_head: feeHeads,
+                };
+                webHookDataInfo.installments.push(data);
+            }
+        }
         if (webHookUrl !== null) {
             console.log('calling webhook');
             let webhook_key = null;
@@ -601,7 +624,7 @@ let EdvironPgController = class EdvironPgController {
             }
             else {
                 console.log('Webhook called for other schools');
-                console.log(webHookDataInfo);
+                console.log(webHookDataInfo, 'here');
                 try {
                     await this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key);
                 }
@@ -2332,7 +2355,10 @@ let EdvironPgController = class EdvironPgController {
     }
     async getTransactionReportBatched(start_date, end_date, trustee_id, school_id, status) {
         const SchoolIds = school_id && typeof school_id === 'string'
-            ? school_id.split(',').map((id) => id.trim()).filter(Boolean)
+            ? school_id
+                .split(',')
+                .map((id) => id.trim())
+                .filter(Boolean)
             : [];
         return await this.edvironPgService.getTransactionReportBatched(trustee_id, start_date, end_date, status, SchoolIds);
     }
@@ -3146,7 +3172,7 @@ let EdvironPgController = class EdvironPgController {
     }
     async bulkTransactionsSubtrustee(body, res, req) {
         console.time('bulk-transactions-report');
-        const { trustee_id, token, searchParams, isCustomSearch, seachFilter, isQRCode, gateway, school_id } = body;
+        const { trustee_id, token, searchParams, isCustomSearch, seachFilter, isQRCode, gateway, school_id, } = body;
         let { payment_modes } = body;
         if (!token)
             throw new Error('Token not provided');
@@ -3590,7 +3616,7 @@ let EdvironPgController = class EdvironPgController {
                     cutomer_no: '',
                     customer_email: '',
                     customer_id: '',
-                    isSplit: false
+                    isSplit: false,
                 };
             }
             if (!request.additional_data) {
@@ -3608,7 +3634,7 @@ let EdvironPgController = class EdvironPgController {
                     cutomer_no: '',
                     customer_email: '',
                     customer_id: '',
-                    isSplit: request.isSplitPayments || false
+                    isSplit: request.isSplitPayments || false,
                 };
             }
             const student_info = JSON.parse(request.additional_data);
@@ -3629,7 +3655,7 @@ let EdvironPgController = class EdvironPgController {
                     cutomer_no: '',
                     customer_email: '',
                     customer_id: '',
-                    isSplit: request.isSplitPayments || false
+                    isSplit: request.isSplitPayments || false,
                 };
             }
             const payload = { vba_account_number: request.vba_account_number };
@@ -3661,7 +3687,7 @@ let EdvironPgController = class EdvironPgController {
                 cutomer_no: '',
                 customer_email: '',
                 customer_id: '',
-                isSplit: false
+                isSplit: false,
             };
         }
     }
@@ -4176,7 +4202,8 @@ let EdvironPgController = class EdvironPgController {
                             webhook_key = data?.webhook_key;
                         }
                         if (collectReq.trustee_id.toString() === '66505181ca3e97e19f142075') {
-                            setTimeout(() => this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key)
+                            setTimeout(() => this.edvironPgService
+                                .sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key)
                                 .catch(() => { }), 60000);
                         }
                         else {
@@ -4214,7 +4241,9 @@ let EdvironPgController = class EdvironPgController {
                                 payment_mode: mode,
                                 collect_id: collectReq._id,
                             };
-                            const commissionToken = jwt.sign(tokenData, process.env.KEY, { noTimestamp: true });
+                            const commissionToken = jwt.sign(tokenData, process.env.KEY, {
+                                noTimestamp: true,
+                            });
                             await axios_1.default.post(`${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`, {
                                 token: commissionToken,
                                 ...tokenData,
@@ -4354,7 +4383,8 @@ let EdvironPgController = class EdvironPgController {
                             webhook_key = data?.webhook_key;
                         }
                         if (collectReq.trustee_id.toString() === '66505181ca3e97e19f142075') {
-                            setTimeout(() => this.edvironPgService.sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key)
+                            setTimeout(() => this.edvironPgService
+                                .sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key)
                                 .catch(() => { }), 60000);
                         }
                         else {
@@ -4392,7 +4422,9 @@ let EdvironPgController = class EdvironPgController {
                                 payment_mode: mode,
                                 collect_id: collectReq._id,
                             };
-                            const commissionToken = jwt.sign(tokenData, process.env.KEY, { noTimestamp: true });
+                            const commissionToken = jwt.sign(tokenData, process.env.KEY, {
+                                noTimestamp: true,
+                            });
                             await axios_1.default.post(`${process.env.VANILLA_SERVICE_ENDPOINT}/erp/add-commission`, {
                                 token: commissionToken,
                                 ...tokenData,
