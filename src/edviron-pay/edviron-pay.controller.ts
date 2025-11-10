@@ -1074,4 +1074,35 @@ export class EdvironPayController {
       throw new BadRequestException(error);
     }
   }
+
+  @Get('/get-erp-dqr')
+  async getErpDqr(
+    @Req() req: any,
+  ) {
+    try {
+      const { collect_id, sign } = req.query;
+      // verify sign
+      const res = await this.edvironPay.erpDynamicQrRedirect(collect_id)
+      return res;
+    } catch (e) {
+      console.log(e.response);
+
+      if (e.response?.data?.message) {
+        throw new BadRequestException(e.response.data.message);
+      }
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Get('/dqr/check-status')
+  async checkDqrStatus(
+    @Query('collect_id') collect_id: string,
+  ){
+    try{
+      const status=await this.edvironPay.checkStatusDQR(collect_id)
+      return status;
+    }catch(e){
+      throw new BadRequestException(e.message);
+    }
+  }
 }

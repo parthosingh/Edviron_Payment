@@ -143,6 +143,8 @@ export class EdvironPgController {
     const masterGateway = collectRequest?.isMasterGateway || false;
     if (masterGateway) {
       // change later to prod url
+      collectRequest.sdkPayment=true
+      await collectRequest.save()
       const url = `${process.env.PG_FRONTEND}/select-gateway?collect_id=${collectRequest._id}`;
       return res.redirect(url);
     }

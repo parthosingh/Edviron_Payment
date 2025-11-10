@@ -7,11 +7,12 @@ import {
 import { TransactionStatus } from '../types/transactionStatus';
 import * as crypto from 'crypto';
 import axios from 'axios';
-import { CollectRequest } from '../database/schemas/collect_request.schema';
+import { CollectRequest, Gateway } from '../database/schemas/collect_request.schema';
 import { DatabaseService } from '../database/database.service';
 import * as _jwt from 'jsonwebtoken';
 import { createCanvas, loadImage } from 'canvas';
-import jsQR from 'jsqr';
+import jsQR from "jsqr";
+import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 
 export const formatRazorpayPaymentStatus = (
   status: string,
@@ -95,7 +96,13 @@ export class RazorpayService {
           }
 
           computed += amtPaise;
-
+          setTimeout(
+            () => {
+              this.terminateNotInitiatedOrder(collectRequest._id.toString())
+            },
+            25 * 60 * 1000,
+          )
+          
           return {
             account: v.account,
             amount: amtPaise,
@@ -126,6 +133,7 @@ export class RazorpayService {
         }
       } else {
         if (collectRequest.razorpay_seamless.razorpay_account) {
+
           console.log(collectRequest.razorpay_seamless, 'test');
 
           const nonSplitConfig = {
@@ -191,6 +199,8 @@ export class RazorpayService {
         },
       };
       const { data: orderStatus } = await axios.request(config);
+      console.log({ orderStatus });
+
       const items = orderStatus.items || [];
       const capturedItem = items.find(
         (item: any) => item.status === 'captured',
@@ -654,4 +664,64 @@ export class RazorpayService {
       }
     } catch (e) {}
   }
+
+  async terminateNotInitiatedOrder(
+    collect_id: string
+  ) {
+    try {
+      const request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!request || !request.createdAt) {
+        throw new Error('Collect Request not found');
+      }
+      const requestStatus =
+        await this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: request._id,
+        });
+      if (!requestStatus) {
+        throw new Error('Collect Request Status not found');
+      }
+      if (requestStatus.status !== 'PENDING') {
+        return
+      }
+      if (request.gateway !== 'PENDING') {
+        const config = {
+          method: 'get',
+          url: `${process.env.URL}/check-status?transactionId=${collect_id}`,
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+            'x-api-version': '2023-08-01',
+          }
+        }
+        const { data: status } = await axios.request(config)
+        // const status = await this.checkStatusService.checkStatus(request._id.toString())
+        if (status.status.toUpperCase() !== 'SUCCESS') {
+          requestStatus.status = PaymentStatus.USER_DROPPED
+          await requestStatus.save()
+        }
+        return true
+
+      }
+      const createdAt = request.createdAt; // Convert createdAt to a Date object
+      const currentTime = new Date();
+      const timeDifference = currentTime.getTime() - createdAt.getTime();
+      const differenceInMinutes = timeDifference / (1000 * 60);
+
+
+      if (differenceInMinutes > 25) {
+        request.gateway = Gateway.EXPIRED
+        requestStatus.status = PaymentStatus.USER_DROPPED
+        await request.save()
+        await requestStatus.save()
+        return true
+      }
+
+    } catch (e) {
+      throw new BadRequestException(e.message)
+    }
+
+    return true
+  }
+
 }

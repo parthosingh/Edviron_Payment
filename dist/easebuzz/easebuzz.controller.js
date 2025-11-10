@@ -310,6 +310,118 @@ let EasebuzzController = class EasebuzzController {
             throw new common_1.BadRequestException(error.message || 'Something Went Wrong');
         }
     }
+    async settlementReconV3(body) {
+        try {
+            const { submerchant_id, start_date, end_date, page_size, token, utr } = body;
+            if (!token)
+                throw new common_1.BadRequestException('Token is required');
+            const data = jwt.verify(token, process.env.PAYMENTS_SERVICE_SECRET);
+            if (!data)
+                throw new common_1.BadRequestException('Request Forged');
+            if (data.submerchant_id !== submerchant_id)
+                throw new common_1.BadRequestException('Request Forged');
+            const hashString = `${process.env.EASEBUZZ_KEY}|${start_date}|${end_date}|${process.env.EASEBUZZ_SALT}`;
+            const hash = await (0, sign_1.calculateSHA512Hash)(hashString);
+            const payload = {
+                merchant_key: process.env.EASEBUZZ_KEY,
+                payout_date: {
+                    start_date,
+                    end_date,
+                },
+                hash,
+                submerchant_id,
+            };
+            const config = {
+                method: 'post',
+                url: `https://dashboard.easebuzz.in/settlements/v1/retrieve`,
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                },
+                data: payload,
+            };
+            const { data: resData } = await axios_1.default.request(config);
+            console.log(resData.data[0], ';res2');
+            const record = resData.data.find((item) => {
+                if (item.bank_transaction_id === 'SPLIT') {
+                    console.log(item.split_payouts, 'item');
+                    return item.split_payouts[0].bank_transaction_id === utr;
+                }
+                else {
+                    return item.bank_transaction_id === utr;
+                }
+            });
+            const orderIds = record.peb_transactions.map((tx) => {
+                if (tx?.txnid?.startsWith("upi_")) {
+                    return tx.txnid.replace("upi_", "");
+                }
+                return tx?.txnid;
+            });
+            const objectIds = [];
+            const customIds = [];
+            orderIds.forEach((id) => {
+                if (mongoose_1.Types.ObjectId.isValid(id)) {
+                    objectIds.push(new mongoose_1.Types.ObjectId(id));
+                }
+                else {
+                    customIds.push(id);
+                }
+            });
+            const enrichedOrders = await Promise.all(record.peb_transactions.map(async (order) => {
+                let additionalData = {};
+                let collect_id = order.txnid;
+                let query = { custom_order_id: order.txnid };
+                if (collect_id.startsWith("upi_")) {
+                    collect_id = collect_id.replace("upi_", "");
+                }
+                if (mongoose_1.Types.ObjectId.isValid(collect_id)) {
+                    query = {
+                        $or: [
+                            { _id: new mongoose_1.Types.ObjectId(collect_id) },
+                            { custom_order_id: collect_id }
+                        ]
+                    };
+                }
+                const collectReq = await this.databaseService.CollectRequestModel.findOne(query);
+                if (!collectReq) {
+                    throw new common_1.BadRequestException('transaction not found in edviron DB');
+                }
+                if (collect_id) {
+                    additionalData = JSON.parse(collectReq?.additional_data);
+                }
+                const collectStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: collectReq._id });
+                return {
+                    ...order,
+                    payment_id: order.peb_transaction_id,
+                    payment_details: collectStatus?.details,
+                    custom_order_id: collectReq.custom_order_id || null,
+                    order_id: collectReq?._id || null,
+                    event_status: order?.status || null,
+                    event_settlement_amount: order.peb_settlement_amount || null,
+                    order_amount: collectStatus?.order_amount || null,
+                    event_amount: order?.amount || null,
+                    event_time: collectStatus?.payment_time || collectStatus?.updatedAt || null,
+                    payment_group: collectStatus?.payment_method || order?.transaction_type || null,
+                    settlement_utr: utr || null,
+                    school_id: collectReq.school_id || null,
+                    student_id: additionalData?.student_details?.student_id || null,
+                    student_name: additionalData.student_details?.student_name || null,
+                    student_email: additionalData.student_details?.student_email || null,
+                    student_phone_no: additionalData.student_details?.student_phone_no || null,
+                };
+            }));
+            return {
+                transactions: enrichedOrders,
+                split_payouts: resData?.data[0]?.split_payouts,
+                peb_refunds: record.peb_refunds,
+            };
+        }
+        catch (error) {
+            console.log(error.response?.data);
+            console.log(error);
+            throw new common_1.BadRequestException(error.message || 'Something Went Wrong');
+        }
+    }
     async updateEasebuzzDispute(body) {
         try {
             const { case_id, action, reason, documents, sign } = body;
@@ -1599,6 +1711,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EasebuzzController.prototype, "settlementReconV2", null);
+__decorate([
+    (0, common_1.Post)('/settlement-recon/v3'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EasebuzzController.prototype, "settlementReconV3", null);
 __decorate([
     (0, common_1.Post)('/update-dispute'),
     __param(0, (0, common_1.Body)()),

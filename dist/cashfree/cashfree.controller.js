@@ -249,15 +249,23 @@ let CashfreeController = class CashfreeController {
     }
     async disputeEvidence(body) {
         try {
-            const { dispute_id, documents, action, client_id, sign } = body;
+            const { dispute_id, documents, action, sign, collect_id } = body;
             const decodedToken = jwt.verify(sign, process.env.KEY);
             if (!decodedToken)
                 throw new common_1.BadRequestException('Request Forged');
             if (decodedToken.action !== action ||
-                decodedToken.client_id !== client_id ||
                 decodedToken.dispute_id !== dispute_id)
                 throw new common_1.BadRequestException('Request Forged');
-            if (action === 'deny') {
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request) {
+                throw new common_1.BadRequestException('collect request not found');
+            }
+            if (request.gateway !== collect_request_schema_1.Gateway.EDVIRON_PG) {
+                throw new common_1.BadRequestException('this order is not paid by cashfree');
+            }
+            let client_id = request.clientId.toString();
+            console.log(action, "action");
+            if (action === 'accept') {
                 return this.cashfreeService.submitDisputeEvidence(dispute_id, documents, client_id);
             }
             else {
@@ -877,8 +885,7 @@ let CashfreeController = class CashfreeController {
     async testFix() {
         try {
         }
-        catch (e) {
-        }
+        catch (e) { }
     }
 };
 exports.CashfreeController = CashfreeController;

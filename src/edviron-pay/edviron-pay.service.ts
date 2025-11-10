@@ -8,6 +8,7 @@ import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import * as jwt from 'jsonwebtoken';
+import { CheckStatusService } from 'src/check-status/check-status.service';
 const axios = require('axios');
 @Injectable()
 export class EdvironPayService {
@@ -16,6 +17,7 @@ export class EdvironPayService {
     private readonly cashfreeService: CashfreeService,
     private readonly easebuzzService: EasebuzzService,
     private readonly edvironPgService: EdvironPgService,
+    private readonly checkStatusService: CheckStatusService,
   ) { }
 
   async createOrder(
@@ -115,6 +117,13 @@ export class EdvironPayService {
     }
   }
 
+  async checkStatus(collect_id:string){
+    try{
+      return await this.checkStatusService.checkStatus(collect_id)
+    }catch(e){
+      throw new BadRequestException(e.message)
+    }
+  }
   // async handelCashfreecallback(collectRequest: CollectRequest) {
   //     try {
   //         const collect_request_id = collectRequest._id.toString()
@@ -288,6 +297,8 @@ export class EdvironPayService {
     }
   }
 
+ 
+
   async erpDynamicQrRedirect(collect_id: string) {
     try {
       const collectReq =
@@ -296,13 +307,18 @@ export class EdvironPayService {
 
       const payload = { school_id: collectReq.school_id };
       let gateway: string | null = null;
-      let url = process.env.SPARKIT_DQR_URL;
+      let url = process.env.SPARKIT_DQR_URL
       if (collectReq.paymentIds?.cashfree_id) {
         gateway = 'EDVIRON_PG'
         const upiIntent = await this.cashfreeService.getUpiIntent(collectReq.paymentIds.cashfree_id, collect_id);
-        url = url?.replace('["intentUrl"]', encodeURIComponent(upiIntent.intentUrl));
-        url = url?.replace('[orderid]', collect_id);
-        url = url?.replace('[totalamount]', collectReq.amount.toFixed(2));
+        url = `${process.env.SPARKIT_DQR_URL}/displayqrcode?showmsg=false&upiurl=${encodeURIComponent(upiIntent.intentUrl)}&orderid=${collect_id}&amount=${collectReq.amount.toFixed(2)}&shopnm=SparkIT&companyname=SparkIT`
+        return { upiIntent, url, collect_id, gateway }
+      } else if (collectReq.paymentIds?.easebuzz_id) {
+        const upiIntent: any = await this.easebuzzService.getQrBase64(collect_id);
+
+        url = `${process.env.SPARKIT_DQR_URL}/displayqrcode?showmsg=false&upiurl=${encodeURIComponent(upiIntent.intentUrl)}&orderid=${collect_id}&amount=${collectReq.amount.toFixed(2)}&shopnm=SparkIT&companyname=SparkIT`
+      }else{
+        throw new BadRequestException('No UPI payment method found for this collect request');
       }
 
       return {
@@ -311,8 +327,66 @@ export class EdvironPayService {
       }
 
     } catch (e) {
-      console.log(e);
+      if (e.response?.data?.message) {
+        throw new BadRequestException(e.response.data.message);
+      }
+      throw new BadRequestException(e.message);
+    }
+  }
 
+  async checkStatusDQR(
+    collect_id: string
+  ) {
+    try {
+      const collectReq =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collectReq) throw new Error('Collect request not found');
+      const gateway = collectReq.gateway
+      if (gateway === "PENDING") {
+        return {
+          status: 'NOT INITIAT',
+          returnUrl: null
+        }
+      }
+      const collectReqStatus =
+        await this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: collectReq._id,
+        });
+
+      if (!collectReqStatus) throw new Error('Collect request status not found');
+      if (collectReqStatus.status.toUpperCase() === 'SUCCESS') {
+        // Handle success case
+        return {
+          status: 'SUCCESS',
+          returnUrl: `${process.env.SPARKIT_DQR_URL}/displayqrcodesucessstatus?showmsg=false&amount=${collectReq.amount}&orderid=${collect_id}&bankrrn=3123123`
+        }
+      } else {
+        const statusResponse = await this.checkStatusService.checkStatus(
+          collect_id
+        );
+        if (statusResponse.status.toLocaleUpperCase() === 'SUCCESS') {
+          return {
+            status: 'SUCCESS',
+            returnUrl: `${process.env.SPARKIT_DQR_URL}/displayqrcodesucessstatus?showmsg=false&amount=${collectReq.amount}&orderid=${collect_id}&bankrrn=3123123`
+          }
+        } else if (statusResponse.status === 'NOT INITIATE') {
+          return {
+            status: 'NOT INITIATE',
+            returnUrl: null
+          }
+        } else {
+
+          return {
+            status: statusResponse.status,
+            returnUrl: `${process.env.SPARKIT_DQR_URL}/displayqrcodesucessstatus?showmsg=false&amount=${collectReq.amount}&orderid=${collect_id}&bankrrn=3123123`
+          }
+        }
+        return {
+          status: null,
+          returnUrl: null
+        }
+      }
+    } catch (e) {
       throw new BadRequestException(e.message);
     }
   }
