@@ -47,8 +47,13 @@ let RazorpayService = class RazorpayService {
         try {
             const { _id, amount: totalRupees, razorpay, razorpay_vendors_info, additional_data, } = collectRequest;
             const studentDetail = JSON.parse(additional_data);
-            const additionalData = studentDetail.additional_fields || {};
-            let additional_fields = Object.entries(additionalData);
+            let additionalData;
+            if (collectRequest.additionalDataToggle) {
+                additionalData = studentDetail.additional_fields || {};
+            }
+            else {
+                additionalData = {};
+            }
             const totalPaise = Math.round(totalRupees * 100);
             const data = {
                 amount: totalPaise,
@@ -59,7 +64,7 @@ let RazorpayService = class RazorpayService {
                     student_email: studentDetail?.student_details?.student_email || 'N/A',
                     student_id: studentDetail?.student_details?.student_id || 'N/A',
                     student_phone_no: studentDetail?.student_details?.student_phone_no || 'N/A',
-                    ...Object.values(additional_fields),
+                    ...Object.fromEntries(Object.entries(additionalData)),
                 },
             };
             if (razorpay_vendors_info?.length) {

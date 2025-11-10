@@ -55,9 +55,13 @@ export class RazorpayService {
       } = collectRequest;
 
       const studentDetail = JSON.parse(additional_data);
-      const additionalData = studentDetail.additional_fields || {};
-      let additional_fields = Object.entries(additionalData);
+      let additionalData;
 
+      if (collectRequest.additionalDataToggle) {
+        additionalData = studentDetail.additional_fields || {};
+      } else {
+        additionalData = {};
+      }
       const totalPaise = Math.round(totalRupees * 100);
 
       const data: any = {
@@ -70,7 +74,7 @@ export class RazorpayService {
           student_id: studentDetail?.student_details?.student_id || 'N/A',
           student_phone_no:
             studentDetail?.student_details?.student_phone_no || 'N/A',
-          ...Object.values(additional_fields),
+          ...Object.fromEntries(Object.entries(additionalData)),
         },
       };
 
