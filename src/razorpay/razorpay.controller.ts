@@ -9,6 +9,7 @@ import {
   Param, 
   NotFoundException,
   Req,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { RazorpayService } from './razorpay.service';
 import { DatabaseService } from '../database/database.service';
@@ -20,6 +21,7 @@ import { Types } from 'mongoose';
 import axios from 'axios';
 import { createCanvas, loadImage } from 'canvas';
 import jsQR from "jsqr";
+import * as jwt from 'jsonwebtoken';
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 
 @Controller('razorpay')
@@ -1083,5 +1085,60 @@ export class RazorpayController {
       throw new BadRequestException(error.message)
     }
   }
+
+  @Post('/update-dispute')
+    async disputeEvidence(
+      @Body()
+      body: {
+        dispute_id: string;
+        action: string;
+        documents: [
+          {
+            document_type: string;
+            file_url: string;
+            name: string;
+          },
+        ];
+        sign: string;
+        collect_id: string;
+      },
+    ) {
+      try {
+        const { dispute_id, documents, action, sign, collect_id } = body;
+        const decodedToken = jwt.verify(sign, process.env.KEY!) as {
+          dispute_id: string;
+          action: string;
+        };
+        if (!decodedToken) throw new BadRequestException('Request Forged');
+        if (
+          decodedToken.action !== action ||
+          decodedToken.dispute_id !== dispute_id
+        )
+          throw new BadRequestException('Request Forged');
+        const request =
+          await this.databaseService.CollectRequestModel.findById(collect_id);
+        if (!request) {
+          throw new BadRequestException('collect request not found');
+        }
+        if (request.gateway !== Gateway.EDVIRON_RAZORPAY) {
+          throw new BadRequestException('this order is not paid by razorpay');
+        }
+        let crediantials = request.razorpay_seamless;
+        if (action === 'accept') {
+          return this.razorpayService.submitDisputeEvidence(
+            dispute_id,
+            documents,
+            crediantials
+          )
+        } 
+        else {
+          return this.razorpayService.acceptDispute(dispute_id, crediantials);
+        }
+      } catch (error) {
+        throw new InternalServerErrorException(
+          error.message || 'Something went wrong',
+        );
+      }
+    }
 
 }
