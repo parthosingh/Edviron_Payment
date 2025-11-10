@@ -57,7 +57,7 @@ let RazorpayNonseamlessService = class RazorpayNonseamlessService {
                     computed += amtPaise;
                     setTimeout(() => {
                         this.terminateNotInitiatedOrder(collectRequest._id.toString());
-                    }, 25 * 60 * 1000);
+                    }, 1 * 60 * 1000);
                     return {
                         account: v.account,
                         amount: amtPaise,

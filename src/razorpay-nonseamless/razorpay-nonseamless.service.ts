@@ -70,7 +70,7 @@ export class RazorpayNonseamlessService {
             () => {
               this.terminateNotInitiatedOrder(collectRequest._id.toString())
             },
-            25 * 60 * 1000,
+            1* 60 * 1000,
           )
           
           return {
