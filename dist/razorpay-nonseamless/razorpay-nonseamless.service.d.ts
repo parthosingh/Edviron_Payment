@@ -26,4 +26,5 @@ export declare class RazorpayNonseamlessService {
         settlements_transactions: any[];
     }>;
     updateOrder(collect_id: string): Promise<true | undefined>;
+    terminateNotInitiatedOrder(collect_id: string): Promise<true | undefined>;
 }

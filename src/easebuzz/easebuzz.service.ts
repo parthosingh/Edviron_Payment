@@ -14,11 +14,13 @@ import axios from 'axios';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import { platformChange } from 'src/collect/collect.controller';
 import e from 'express';
-const crypto = require('crypto');
+import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
+import { CheckStatusService } from 'src/check-status/check-status.service';
+import { EdvironPayService } from 'src/edviron-pay/edviron-pay.service';
 
 @Injectable()
 export class EasebuzzService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) { }
 
   async easebuzzCheckStatus(
     collect_request_id: String,
@@ -70,7 +72,7 @@ export class EasebuzzService {
 
   async statusResponse(requestId: string, collectReq: CollectRequest) {
     let statusResponse = await this.easebuzzCheckStatus(requestId, collectReq);
-     if (statusResponse.msg.mode === 'NA' || statusResponse.status === false) {
+    if (statusResponse.msg.mode === 'NA' || statusResponse.status === false) {
       console.log(`Status 0 for ${requestId}, retrying with 'upi_' suffix`);
       statusResponse = await this.easebuzzCheckStatus(
         `upi_${requestId}`,
@@ -125,11 +127,9 @@ export class EasebuzzService {
     }
 
     // key|merchant_refund_id|easebuzz_id|refund_amount|salt
-    const hashStringV2 = `${
-      process.env.EASEBUZZ_KEY
-    }|${refund_id}|${order_id}|${refund_amount.toFixed(1)}|${
-      process.env.EASEBUZZ_SALT
-    }`;
+    const hashStringV2 = `${process.env.EASEBUZZ_KEY
+      }|${refund_id}|${order_id}|${refund_amount.toFixed(1)}|${process.env.EASEBUZZ_SALT
+      }`;
 
     let hash2 = await calculateSHA512Hash(hashStringV2);
     const data2 = {
@@ -758,7 +758,12 @@ export class EasebuzzService {
       //   collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
       // };
       const schoolName = school_name.replace(/ /g, '_');
-
+      setTimeout(
+        () => {
+          this.terminateNotInitiatedOrder(request._id.toString())
+        },
+        25 * 60 * 1000,
+      )
       return {
         collect_request_id: request._id,
         collect_request_url:
@@ -784,6 +789,65 @@ export class EasebuzzService {
 
       throw new BadRequestException(e.message);
     }
+  }
+
+  async terminateNotInitiatedOrder(
+    collect_id: string
+  ) {
+    try {
+      const request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!request || !request.createdAt) {
+        throw new Error('Collect Request not found');
+      }
+      const requestStatus =
+        await this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: request._id,
+        });
+      if (!requestStatus) {
+        throw new Error('Collect Request Status not found');
+      }
+      if (requestStatus.status !== 'PENDING') {
+        return
+      }
+      if (request.gateway !== 'PENDING') {
+        const config = {
+          method: 'get',
+          url: `${process.env.URL}/check-status?transactionId=${collect_id}`,
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+            'x-api-version': '2023-08-01',
+          }
+        }
+        const { data: status } = await axios.request(config)
+        // const status = await this.checkStatusService.checkStatus(request._id.toString())
+        if (status.status.toUpperCase() !== 'SUCCESS') {
+          requestStatus.status = PaymentStatus.USER_DROPPED
+          await requestStatus.save()
+        }
+        return true
+
+      }
+      const createdAt = request.createdAt; // Convert createdAt to a Date object
+      const currentTime = new Date();
+      const timeDifference = currentTime.getTime() - createdAt.getTime();
+      const differenceInMinutes = timeDifference / (1000 * 60);
+
+
+      if (differenceInMinutes > 25) {
+        request.gateway = Gateway.EXPIRED
+        requestStatus.status = PaymentStatus.USER_DROPPED
+        await request.save()
+        await requestStatus.save()
+        return true
+      }
+
+    } catch (e) {
+      throw new BadRequestException(e.message)
+    }
+
+    return true
   }
 
   async getQr(
@@ -1408,6 +1472,12 @@ export class EasebuzzService {
         collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
         await collectReq.save();
         await this.getQr(request._id.toString(), request, ezb_split_payments); // uncomment after fixing easebuzz QR code issue
+        setTimeout(
+          () => {
+            this.terminateNotInitiatedOrder(request._id.toString())
+          },
+          25 * 60 * 1000,
+        )
         return {
           collect_request_id: request._id,
           collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
@@ -1531,6 +1601,12 @@ export class EasebuzzService {
       collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
       await collectReq.save();
       await this.getQrNonSplit(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
+      setTimeout(
+        () => {
+          this.terminateNotInitiatedOrder(request._id.toString())
+        },
+        25 * 60 * 1000,
+      )
       return {
         collect_request_id: request._id,
         collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
@@ -1609,6 +1685,12 @@ export class EasebuzzService {
       const { data: easebuzzRes } = await axios.request(Ezboptions);
       const easebuzzPaymentId = easebuzzRes.data;
       await this.getQrNonSplit(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
+      setTimeout(
+        () => {
+          this.terminateNotInitiatedOrder(request._id.toString())
+        },
+        25 * 60 * 1000,
+      )
       return easebuzzPaymentId;
     } catch (e) {
       throw new BadRequestException(e.message);
@@ -1718,7 +1800,7 @@ export class EasebuzzService {
     card_expiry_date: string,
   ) {
     try {
-    } catch (e) {}
+    } catch (e) { }
   }
 
   async createOrderSeamlessSplit(
@@ -2010,6 +2092,12 @@ export class EasebuzzService {
         console.log({ easebuzzRes });
 
         const easebuzzPaymentId = easebuzzRes.data;
+        setTimeout(
+          () => {
+            this.terminateNotInitiatedOrder(request._id.toString())
+          },
+          25 * 60 * 1000,
+        )
         await this.getQr(request._id.toString(), request, ezb_split_payments); // uncomment after fixing easebuzz QR code issue
         return easebuzzPaymentId;
       }
@@ -2128,11 +2216,17 @@ export class EasebuzzService {
       };
 
       const { data: easebuzzRes } = await axios.request(Ezboptions);
-
+        
       const easebuzzPaymentId = easebuzzRes.data;
       await this.getQrNonSplit(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
       const schoolName = school_name.replace(/ /g, '_');
 
+      setTimeout(
+        () => {
+          this.terminateNotInitiatedOrder(request._id.toString())
+        },
+        25 * 60 * 1000,
+      )
       return easebuzzPaymentId;
     } catch (e) {
       console.log(e);
@@ -2140,4 +2234,5 @@ export class EasebuzzService {
       throw new BadRequestException(e.message);
     }
   }
+
 }

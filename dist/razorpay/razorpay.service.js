@@ -14,10 +14,12 @@ const common_1 = require("@nestjs/common");
 const transactionStatus_1 = require("../types/transactionStatus");
 const crypto = require("crypto");
 const axios_1 = require("axios");
+const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const database_service_1 = require("../database/database.service");
 const _jwt = require("jsonwebtoken");
 const canvas_1 = require("canvas");
 const jsqr_1 = require("jsqr");
+const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const formatRazorpayPaymentStatus = (status) => {
     const statusMap = {
         created: transactionStatus_1.TransactionStatus.PENDING,
@@ -74,6 +76,9 @@ let RazorpayService = class RazorpayService {
                         throw new Error(`Vendor at index ${idx} must have amount or percentage`);
                     }
                     computed += amtPaise;
+                    setTimeout(() => {
+                        this.terminateNotInitiatedOrder(collectRequest._id.toString());
+                    }, 25 * 60 * 1000);
                     return {
                         account: v.account,
                         amount: amtPaise,
@@ -162,6 +167,7 @@ let RazorpayService = class RazorpayService {
                 },
             };
             const { data: orderStatus } = await axios_1.default.request(config);
+            console.log({ orderStatus });
             const items = orderStatus.items || [];
             const capturedItem = items.find((item) => item.status === 'captured');
             if (capturedItem) {
@@ -538,6 +544,55 @@ let RazorpayService = class RazorpayService {
         }
         catch (e) {
         }
+    }
+    async terminateNotInitiatedOrder(collect_id) {
+        try {
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request || !request.createdAt) {
+                throw new Error('Collect Request not found');
+            }
+            const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: request._id,
+            });
+            if (!requestStatus) {
+                throw new Error('Collect Request Status not found');
+            }
+            if (requestStatus.status !== 'PENDING') {
+                return;
+            }
+            if (request.gateway !== 'PENDING') {
+                const config = {
+                    method: 'get',
+                    url: `${process.env.URL}/check-status?transactionId=${collect_id}`,
+                    headers: {
+                        accept: 'application/json',
+                        'content-type': 'application/json',
+                        'x-api-version': '2023-08-01',
+                    }
+                };
+                const { data: status } = await axios_1.default.request(config);
+                if (status.status.toUpperCase() !== 'SUCCESS') {
+                    requestStatus.status = collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
+                    await requestStatus.save();
+                }
+                return true;
+            }
+            const createdAt = request.createdAt;
+            const currentTime = new Date();
+            const timeDifference = currentTime.getTime() - createdAt.getTime();
+            const differenceInMinutes = timeDifference / (1000 * 60);
+            if (differenceInMinutes > 25) {
+                request.gateway = collect_request_schema_1.Gateway.EXPIRED;
+                requestStatus.status = collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
+                await request.save();
+                await requestStatus.save();
+                return true;
+            }
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+        return true;
     }
 };
 exports.RazorpayService = RazorpayService;

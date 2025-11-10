@@ -33,4 +33,5 @@ export declare class RazorpayService {
         googlePe: string;
     }>;
     saveRazorpayCommission(collectReq: CollectRequest, platform_type: string): Promise<void>;
+    terminateNotInitiatedOrder(collect_id: string): Promise<true | undefined>;
 }

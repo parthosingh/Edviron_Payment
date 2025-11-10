@@ -94,6 +94,14 @@ let EdvironPayService = class EdvironPayService {
             throw new common_1.BadRequestException(err.message);
         }
     }
+    async checkStatus(collect_id) {
+        try {
+            return await this.checkStatusService.checkStatus(collect_id);
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
     async createStudent(student_detail, school_id, trustee_id) {
         const { student_id, student_number, student_name, student_email, section, gender, additional_info, student_class, } = student_detail;
         try {
