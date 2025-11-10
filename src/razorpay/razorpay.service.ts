@@ -33,7 +33,7 @@ export class RazorpayService {
   private readonly CLIENT_SECRET = process.env.RAZORPAY_PARTNER_KEY_SECRET;
   private readonly API_URL = process.env.RAZORPAY_URL;
 
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) { }
 
   async verifySignature(orderId: string, paymentId: string, signature: string) {
     const body = `${orderId}|${paymentId}`;
@@ -103,7 +103,7 @@ export class RazorpayService {
             },
             25 * 60 * 1000,
           )
-          
+
           return {
             account: v.account,
             amount: amtPaise,
@@ -324,8 +324,8 @@ export class RazorpayService {
         status === TransactionStatus.SUCCESS
           ? 200
           : status === TransactionStatus.FAILURE
-          ? 400
-          : 202;
+            ? 400
+            : 202;
 
       const formattedResponse: any = {
         status: status,
@@ -663,7 +663,7 @@ export class RazorpayService {
       } catch (error) {
         console.error('Error calculating commission:', error.message);
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   async submitDisputeEvidence(
@@ -724,9 +724,10 @@ export class RazorpayService {
       );
       throw new BadRequestException(
         error.response?.data?.error?.description ||
-          'Error uploading dispute evidence',
+        'Error uploading dispute evidence',
       );
-
+    }
+  }
   async terminateNotInitiatedOrder(
     collect_id: string
   ) {
@@ -787,44 +788,44 @@ export class RazorpayService {
   }
 
   async acceptDispute(
-  dispute_id: string,
-  credentials: {
-    razorpay_id: string;
-    razorpay_secret: string;
-    razorpay_mid: string;
-    order_id: string;
-    payment_id?: string;
-    razorpay_signature?: string;
-    razorpay_account?: string;
-  },
-) {
-  try {
-    const response = await axios.post(
-      `${process.env.RAZORPAY_URL}/v1/disputes/${dispute_id}/accept`,
-      {}, 
-      {
-        auth: {
-          username: credentials.razorpay_id,
-          password: credentials.razorpay_secret,
+    dispute_id: string,
+    credentials: {
+      razorpay_id: string;
+      razorpay_secret: string;
+      razorpay_mid: string;
+      order_id: string;
+      payment_id?: string;
+      razorpay_signature?: string;
+      razorpay_account?: string;
+    },
+  ) {
+    try {
+      const response = await axios.post(
+        `${process.env.RAZORPAY_URL}/v1/disputes/${dispute_id}/accept`,
+        {},
+        {
+          auth: {
+            username: credentials.razorpay_id,
+            password: credentials.razorpay_secret,
+          },
+          headers: {
+            'Content-Type': 'application/json'
+          },
         },
-        headers: {
-          'Content-Type': 'application/json'
-        },
-      },
-    );
+      );
 
-    return {
-      message: 'Dispute accepted successfully',
-      dispute_id,
-      razorpay_response: response.data,
-    };
-  } catch (error: any) {
-    console.error('❌ Razorpay Accept Dispute Error:', error.response?.data || error.message);
-    throw new BadRequestException(
-      error.response?.data?.error?.description || 'Failed to accept dispute',
-    );
+      return {
+        message: 'Dispute accepted successfully',
+        dispute_id,
+        razorpay_response: response.data,
+      };
+    } catch (error: any) {
+      console.error('❌ Razorpay Accept Dispute Error:', error.response?.data || error.message);
+      throw new BadRequestException(
+        error.response?.data?.error?.description || 'Failed to accept dispute',
+      );
+    }
   }
-}
 
 
 }

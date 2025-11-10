@@ -18,6 +18,7 @@ const collect_request_schema_1 = require("../database/schemas/collect_request.sc
 const database_service_1 = require("../database/database.service");
 const _jwt = require("jsonwebtoken");
 const canvas_1 = require("canvas");
+const FormData = require("form-data");
 const jsqr_1 = require("jsqr");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const formatRazorpayPaymentStatus = (status) => {
@@ -557,6 +558,45 @@ let RazorpayService = class RazorpayService {
         }
         catch (e) { }
     }
+    async submitDisputeEvidence(dispute_id, documents, credentials) {
+        try {
+            const uploadedDocuments = [];
+            for (const doc of documents) {
+                const fileResponse = await axios_1.default.get(doc.file_url, {
+                    responseType: 'stream',
+                });
+                const formData = new FormData();
+                formData.append('purpose', 'dispute_evidence');
+                formData.append('file', fileResponse.data, doc.name);
+                const response = await axios_1.default.post(`${process.env.RAZORPAY_URL}/v1/documents`, formData, {
+                    auth: {
+                        username: credentials.razorpay_id,
+                        password: credentials.razorpay_secret,
+                    },
+                    headers: {
+                        ...formData.getHeaders(),
+                    },
+                    maxBodyLength: Infinity,
+                });
+                console.log(response, "response");
+                uploadedDocuments.push({
+                    document_id: response.data.id,
+                    document_type: doc.document_type,
+                    name: doc.name,
+                    file_url: doc.file_url,
+                });
+            }
+            return {
+                dispute_id,
+                uploadedDocuments,
+            };
+        }
+        catch (error) {
+            console.error('❌ Razorpay Evidence Upload Error:', error.response?.data || error.message);
+            throw new common_1.BadRequestException(error.response?.data?.error?.description ||
+                'Error uploading dispute evidence');
+        }
+    }
     async terminateNotInitiatedOrder(collect_id) {
         try {
             const request = await this.databaseService.CollectRequestModel.findById(collect_id);
@@ -605,6 +645,28 @@ let RazorpayService = class RazorpayService {
             throw new common_1.BadRequestException(e.message);
         }
         return true;
+    }
+    async acceptDispute(dispute_id, credentials) {
+        try {
+            const response = await axios_1.default.post(`${process.env.RAZORPAY_URL}/v1/disputes/${dispute_id}/accept`, {}, {
+                auth: {
+                    username: credentials.razorpay_id,
+                    password: credentials.razorpay_secret,
+                },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            });
+            return {
+                message: 'Dispute accepted successfully',
+                dispute_id,
+                razorpay_response: response.data,
+            };
+        }
+        catch (error) {
+            console.error('❌ Razorpay Accept Dispute Error:', error.response?.data || error.message);
+            throw new common_1.BadRequestException(error.response?.data?.error?.description || 'Failed to accept dispute');
+        }
     }
 };
 exports.RazorpayService = RazorpayService;
