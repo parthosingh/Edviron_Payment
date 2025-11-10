@@ -44,6 +44,7 @@ export declare class EdvironPayService {
         collect_request_id: import("mongoose").Schema.Types.ObjectId;
         url: string;
     }>;
+    checkStatus(collect_id: string): Promise<any>;
     createStudent(student_detail: {
         student_id: string;
         student_name: string;

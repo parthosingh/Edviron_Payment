@@ -16,7 +16,7 @@ const collect_request_schema_1 = require("../database/schemas/collect_request.sc
 const sign_1 = require("../utils/sign");
 const axios_1 = require("axios");
 const transactionStatus_1 = require("../types/transactionStatus");
-const crypto = require('crypto');
+const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 let EasebuzzService = class EasebuzzService {
     constructor(databaseService) {
         this.databaseService = databaseService;
@@ -522,6 +522,9 @@ let EasebuzzService = class EasebuzzService {
             await collectReq.save();
             await this.getQrNonSplit(request._id.toString(), request);
             const schoolName = school_name.replace(/ /g, '_');
+            setTimeout(() => {
+                this.terminateNotInitiatedOrder(request._id.toString());
+            }, 25 * 60 * 1000);
             return {
                 collect_request_id: request._id,
                 collect_request_url: process.env.URL +
@@ -546,6 +549,55 @@ let EasebuzzService = class EasebuzzService {
             console.log(e);
             throw new common_1.BadRequestException(e.message);
         }
+    }
+    async terminateNotInitiatedOrder(collect_id) {
+        try {
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request || !request.createdAt) {
+                throw new Error('Collect Request not found');
+            }
+            const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: request._id,
+            });
+            if (!requestStatus) {
+                throw new Error('Collect Request Status not found');
+            }
+            if (requestStatus.status !== 'PENDING') {
+                return;
+            }
+            if (request.gateway !== 'PENDING') {
+                const config = {
+                    method: 'get',
+                    url: `${process.env.URL}/check-status?transactionId=${collect_id}`,
+                    headers: {
+                        accept: 'application/json',
+                        'content-type': 'application/json',
+                        'x-api-version': '2023-08-01',
+                    }
+                };
+                const { data: status } = await axios_1.default.request(config);
+                if (status.status.toUpperCase() !== 'SUCCESS') {
+                    requestStatus.status = collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
+                    await requestStatus.save();
+                }
+                return true;
+            }
+            const createdAt = request.createdAt;
+            const currentTime = new Date();
+            const timeDifference = currentTime.getTime() - createdAt.getTime();
+            const differenceInMinutes = timeDifference / (1000 * 60);
+            if (differenceInMinutes > 25) {
+                request.gateway = collect_request_schema_1.Gateway.EXPIRED;
+                requestStatus.status = collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
+                await request.save();
+                await requestStatus.save();
+                return true;
+            }
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+        return true;
     }
     async getQr(collect_id, request, ezb_split_payments) {
         try {
@@ -994,6 +1046,9 @@ let EasebuzzService = class EasebuzzService {
                 collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
                 await collectReq.save();
                 await this.getQr(request._id.toString(), request, ezb_split_payments);
+                setTimeout(() => {
+                    this.terminateNotInitiatedOrder(request._id.toString());
+                }, 25 * 60 * 1000);
                 return {
                     collect_request_id: request._id,
                     collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
@@ -1085,6 +1140,9 @@ let EasebuzzService = class EasebuzzService {
             collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
             await collectReq.save();
             await this.getQrNonSplit(request._id.toString(), request);
+            setTimeout(() => {
+                this.terminateNotInitiatedOrder(request._id.toString());
+            }, 25 * 60 * 1000);
             return {
                 collect_request_id: request._id,
                 collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
@@ -1151,6 +1209,9 @@ let EasebuzzService = class EasebuzzService {
             const { data: easebuzzRes } = await axios_1.default.request(Ezboptions);
             const easebuzzPaymentId = easebuzzRes.data;
             await this.getQrNonSplit(request._id.toString(), request);
+            setTimeout(() => {
+                this.terminateNotInitiatedOrder(request._id.toString());
+            }, 25 * 60 * 1000);
             return easebuzzPaymentId;
         }
         catch (e) {
@@ -1452,6 +1513,9 @@ let EasebuzzService = class EasebuzzService {
                 const { data: easebuzzRes } = await axios_1.default.request(Ezboptions);
                 console.log({ easebuzzRes });
                 const easebuzzPaymentId = easebuzzRes.data;
+                setTimeout(() => {
+                    this.terminateNotInitiatedOrder(request._id.toString());
+                }, 25 * 60 * 1000);
                 await this.getQr(request._id.toString(), request, ezb_split_payments);
                 return easebuzzPaymentId;
             }
@@ -1541,6 +1605,9 @@ let EasebuzzService = class EasebuzzService {
             const easebuzzPaymentId = easebuzzRes.data;
             await this.getQrNonSplit(request._id.toString(), request);
             const schoolName = school_name.replace(/ /g, '_');
+            setTimeout(() => {
+                this.terminateNotInitiatedOrder(request._id.toString());
+            }, 25 * 60 * 1000);
             return easebuzzPaymentId;
         }
         catch (e) {
