@@ -21,6 +21,7 @@ const error_logs_schema_1 = require("./schemas/error.logs.schema");
 const platform_charges_schema_1 = require("./schemas/platform.charges.schema");
 const installments_schema_1 = require("./schemas/installments.schema");
 const student_detail_schema_1 = require("./schemas/student_detail.schema");
+const cron_management_schema_1 = require("./schemas/cron.management.schema");
 dotenv.config();
 let DatabaseModule = class DatabaseModule {
 };
@@ -59,6 +60,9 @@ exports.DatabaseModule = DatabaseModule = __decorate([
             mongoose_1.MongooseModule.forFeature([
                 { name: student_detail_schema_1.StudentDetail.name, schema: student_detail_schema_1.StudentDetailSchema },
             ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: cron_management_schema_1.CronManagement.name, schema: cron_management_schema_1.CronManagementSchema },
+            ]),
         ],
         providers: [database_service_1.DatabaseService],
         exports: [
@@ -93,6 +97,9 @@ exports.DatabaseModule = DatabaseModule = __decorate([
             ]),
             mongoose_1.MongooseModule.forFeature([
                 { name: student_detail_schema_1.StudentDetail.name, schema: student_detail_schema_1.StudentDetailSchema },
+            ]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: cron_management_schema_1.CronManagement.name, schema: cron_management_schema_1.CronManagementSchema },
             ]),
         ],
     })

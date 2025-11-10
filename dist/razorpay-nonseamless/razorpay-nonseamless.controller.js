@@ -768,7 +768,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                 }
                 const orderPaymentDetail = {
                     bank: bank,
-                    transaction_id: acquirer_data.bank_transaction_id,
+                    transaction_id: acquirer_data.rrn,
                     method: method,
                 };
                 const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
@@ -780,7 +780,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                         transaction_amount,
                         payment_method,
                         details: JSON.stringify(detail),
-                        bank_reference: acquirer_data.bank_transaction_id,
+                        bank_reference: acquirer_data.rrn,
                         reason: error_reason,
                         payment_message: error_reason,
                     },

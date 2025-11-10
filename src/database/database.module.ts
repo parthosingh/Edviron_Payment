@@ -27,6 +27,7 @@ import { ErrorLogs, ErrorLogsSchema } from './schemas/error.logs.schema';
 import { SchoolMdr, SchoolMdrSchema } from './schemas/platform.charges.schema';
 import { Installments, InstallmentsSchema } from './schemas/installments.schema';
 import { StudentDetail, StudentDetailSchema } from './schemas/student_detail.schema';
+import { CronManagement, CronManagementSchema } from './schemas/cron.management.schema';
 dotenv.config();
 
 @Module({
@@ -63,6 +64,9 @@ dotenv.config();
     MongooseModule.forFeature([
       { name: StudentDetail.name, schema: StudentDetailSchema },
     ]),
+    MongooseModule.forFeature([
+      { name: CronManagement.name, schema: CronManagementSchema },
+    ]),
   ],
   providers: [DatabaseService],
   exports: [
@@ -92,12 +96,15 @@ dotenv.config();
     MongooseModule.forFeature([
       { name: SchoolMdr.name, schema: SchoolMdrSchema },
     ]),
-     MongooseModule.forFeature([
+    MongooseModule.forFeature([
       { name: Installments.name, schema: InstallmentsSchema },
     ]),
     MongooseModule.forFeature([
       { name: StudentDetail.name, schema: StudentDetailSchema },
     ]),
+    MongooseModule.forFeature([
+      { name: CronManagement.name, schema: CronManagementSchema },
+    ]),
   ],
 })
-export class DatabaseModule {}
+export class DatabaseModule { }

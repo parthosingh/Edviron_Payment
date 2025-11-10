@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const collect_module_1 = require("./collect/collect.module");
+const schedule_1 = require("@nestjs/schedule");
 const database_module_1 = require("./database/database.module");
 const phonepe_module_1 = require("./phonepe/phonepe.module");
 const check_status_module_1 = require("./check-status/check-status.module");
@@ -57,6 +58,7 @@ exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            schedule_1.ScheduleModule.forRoot(),
             collect_module_1.CollectModule,
             database_module_1.DatabaseModule,
             phonepe_module_1.PhonepeModule,
