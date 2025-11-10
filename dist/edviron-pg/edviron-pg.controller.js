@@ -105,6 +105,8 @@ let EdvironPgController = class EdvironPgController {
         if (!collectRequest) {
             res.redirect(`${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`);
         }
+        collectRequest.sdkPayment = true;
+        await collectRequest.save();
         const masterGateway = collectRequest?.isMasterGateway || false;
         if (masterGateway) {
             collectRequest.sdkPayment = true;

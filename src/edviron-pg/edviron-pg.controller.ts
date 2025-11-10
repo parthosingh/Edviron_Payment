@@ -145,7 +145,8 @@ export class EdvironPgController {
         `${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`,
       );
     }
-
+    collectRequest.sdkPayment=true
+      await collectRequest.save()
     const masterGateway = collectRequest?.isMasterGateway || false;
     if (masterGateway) {
       // change later to prod url
