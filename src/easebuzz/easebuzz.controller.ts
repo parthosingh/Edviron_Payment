@@ -35,7 +35,7 @@ export class EasebuzzController {
     private readonly easebuzzService: EasebuzzService,
     private readonly databaseService: DatabaseService,
     private readonly edvironPgService: EdvironPgService,
-  ) { }
+  ) {}
 
   @Get('/redirect')
   async redirect(
@@ -138,10 +138,11 @@ export class EasebuzzController {
     const { collect_id, refund_amount, refund_id } = req.query;
 
     // key|merchant_refund_id|easebuzz_id|refund_amount|salt
-    const hashStringV2 = `${process.env.EASEBUZZ_KEY
-      }|${refund_id}|${collect_id}|${parseFloat(refund_amount)
-        .toFixed(1)
-        .toString()}|${process.env.EASEBUZZ_SALT}`;
+    const hashStringV2 = `${
+      process.env.EASEBUZZ_KEY
+    }|${refund_id}|${collect_id}|${parseFloat(refund_amount)
+      .toFixed(1)
+      .toString()}|${process.env.EASEBUZZ_SALT}`;
 
     let hash2 = await calculateSHA512Hash(hashStringV2);
     const data2 = {
@@ -286,7 +287,6 @@ export class EasebuzzController {
     }
   }
 
-
   @Post('/settlement-recon/v2')
   async settlementReconV2(
     @Body()
@@ -303,7 +303,16 @@ export class EasebuzzController {
     },
   ) {
     try {
-      const { submerchant_id, start_date, end_date, page_size, token, easebuzz_key, easebuzz_salt, utr } = body;
+      const {
+        submerchant_id,
+        start_date,
+        end_date,
+        page_size,
+        token,
+        easebuzz_key,
+        easebuzz_salt,
+        utr,
+      } = body;
 
       if (!token) throw new BadRequestException('Token is required');
       const data = jwt.verify(token, process.env.PAYMENTS_SERVICE_SECRET!) as {
@@ -342,14 +351,15 @@ export class EasebuzzController {
       };
       // console.log(config);
 
-
       const { data: resData } = await axios.request(config);
       // console.log(utr, 'utrnumb');
-      const record = resData.data.find((item: any) => item.bank_transaction_id === utr);
+      const record = resData.data.find(
+        (item: any) => item.bank_transaction_id === utr,
+      );
 
       const orderIds = record.peb_transactions.map((tx: any) => {
-        if (tx?.txnid?.startsWith("upi_")) {
-          return tx.txnid.replace("upi_", ""); // remove only the prefix
+        if (tx?.txnid?.startsWith('upi_')) {
+          return tx.txnid.replace('upi_', ''); // remove only the prefix
         }
         return tx?.txnid; // keep as is
       });
@@ -372,21 +382,24 @@ export class EasebuzzController {
           let additionalData: any = {};
           let collect_id = order.txnid;
           let query: any = { custom_order_id: order.txnid };
-          if (collect_id.startsWith("upi_")) {
-            collect_id = collect_id.replace("upi_", "");
+          if (collect_id.startsWith('upi_')) {
+            collect_id = collect_id.replace('upi_', '');
           }
           if (Types.ObjectId.isValid(collect_id)) {
             query = {
               $or: [
                 { _id: new Types.ObjectId(collect_id) },
-                { custom_order_id: collect_id }
-              ]
+                { custom_order_id: collect_id },
+              ],
             };
           }
 
-          const collectReq = await this.databaseService.CollectRequestModel.findOne(query);
+          const collectReq =
+            await this.databaseService.CollectRequestModel.findOne(query);
           if (!collectReq) {
-            throw new BadRequestException('transaction not found in edviron DB')
+            throw new BadRequestException(
+              'transaction not found in edviron DB',
+            );
           }
           if (collect_id) {
             // customData = customOrderMap.get(collect_id) || {};
@@ -394,7 +407,10 @@ export class EasebuzzController {
 
             additionalData = JSON.parse(collectReq?.additional_data);
           }
-          const collectStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: collectReq._id });
+          const collectStatus =
+            await this.databaseService.CollectRequestStatusModel.findOne({
+              collect_id: collectReq._id,
+            });
           // console.log(order);
 
           return {
@@ -407,8 +423,10 @@ export class EasebuzzController {
             event_settlement_amount: order.peb_settlement_amount || null,
             order_amount: collectStatus?.order_amount || null,
             event_amount: order?.amount || null,
-            event_time: collectStatus?.payment_time || collectStatus?.updatedAt || null,
-            payment_group: collectStatus?.payment_method || order?.transaction_type || null,
+            event_time:
+              collectStatus?.payment_time || collectStatus?.updatedAt || null,
+            payment_group:
+              collectStatus?.payment_method || order?.transaction_type || null,
             settlement_utr: utr || null,
             school_id: collectReq.school_id || null,
             student_id: additionalData?.student_details?.student_id || null,
@@ -418,9 +436,8 @@ export class EasebuzzController {
             student_phone_no:
               additionalData.student_details?.student_phone_no || null,
           };
-        })
+        }),
       );
-
 
       return {
         transactions: enrichedOrders,
@@ -659,6 +676,7 @@ export class EasebuzzController {
         easebuzz_merchant_email: string;
         easebuzz_submerchant_id: string;
       };
+      additionalDataToggle: boolean;
     },
   ) {
     // console.log(body);
@@ -681,6 +699,7 @@ export class EasebuzzController {
       easebuzzVendors,
       easebuzz_school_label,
       easebuzz_non_partner_cred,
+      additionalDataToggle,
     } = body;
     try {
       // CHECK FOR DUPLICATE CUSTOM ID
@@ -727,6 +746,7 @@ export class EasebuzzController {
         easebuzz_non_partner_cred,
         isSplitPayments: split_payments,
         easebuzz_split_label: easebuzz_school_label,
+        additionalDataToggle: additionalDataToggle,
       }).save();
 
       await new this.databaseService.CollectRequestStatusModel({
@@ -737,6 +757,17 @@ export class EasebuzzController {
         payment_method: null,
       }).save();
       const schoolName = school_name || '';
+      const studentDetail = JSON.parse(request.additional_data);
+      const additionalData = studentDetail.additional_fields || {};
+      // const additionalinfoset = Object.fromEntries(
+      //   Object.entries(additionalData).map(([key, value]) => {
+      //     if (typeof value === 'string' && value.includes('|')) {
+      //       throw new Error(`Invalid character "|" found in key: ${key}`);
+      //     }
+      //     return [key, value];
+      //   }),
+      // );
+
       if (split_payments) {
         console.log(split_payments);
 
@@ -763,7 +794,6 @@ export class EasebuzzController {
       throw new BadRequestException(e.message);
     }
   }
-
 
   @Post('/create-order-nonseamless')
   async createOrderNonSeamless(
@@ -798,6 +828,7 @@ export class EasebuzzController {
         easebuzz_merchant_email: string;
         easebuzz_submerchant_id: string;
       };
+      additionalDataToggle: boolean;
     },
   ) {
     // console.log(body);
@@ -820,6 +851,7 @@ export class EasebuzzController {
       easebuzzVendors,
       easebuzz_school_label,
       easebuzz_non_partner_cred,
+      additionalDataToggle,
     } = body;
     try {
       // CHECK FOR DUPLICATE CUSTOM ID
@@ -866,6 +898,7 @@ export class EasebuzzController {
         easebuzz_non_partner_cred,
         isSplitPayments: split_payments,
         easebuzz_split_label: easebuzz_school_label,
+        additionalDataToggle: additionalDataToggle || false,
       }).save();
 
       await new this.databaseService.CollectRequestStatusModel({
@@ -1431,8 +1464,14 @@ export class EasebuzzController {
     ) {
       console.log('No pending request found for', collect_request_id);
       const callbackUrl = new URL(collectRequest?.callbackUrl);
-      callbackUrl.searchParams.set('EdvironCollectRequestId', collect_request_id);
-      callbackUrl.searchParams.set('status', pendingCollectReq.status.toString());
+      callbackUrl.searchParams.set(
+        'EdvironCollectRequestId',
+        collect_request_id,
+      );
+      callbackUrl.searchParams.set(
+        'status',
+        pendingCollectReq.status.toString(),
+      );
       return res.redirect(callbackUrl.toString());
     }
 
@@ -2252,31 +2291,48 @@ export class EasebuzzController {
 
   @Post('/enc-card')
   async encCardData(
-    @Body() body: {
-      merchant_id: string,
-      pg_key: string,
+    @Body()
+    body: {
+      merchant_id: string;
+      pg_key: string;
       data: {
-        card_number: string,
-        card_holder_name: string,
-        card_cvv: string,
-        card_expiry_date: string,
-      }
-    }
+        card_number: string;
+        card_holder_name: string;
+        card_cvv: string;
+        card_expiry_date: string;
+      };
+    },
   ) {
-    const { merchant_id, pg_key, data } = body
+    const { merchant_id, pg_key, data } = body;
     try {
-      const enc_card_number = await this.easebuzzService.encCard(merchant_id, pg_key, data.card_number)
-      const enc_card_holder_name = await this.easebuzzService.encCard(merchant_id, pg_key, data.card_holder_name)
-      const enc_card_cvv = await this.easebuzzService.encCard(merchant_id, pg_key, data.card_cvv)
-      const enc_card_expiry_date = await this.easebuzzService.encCard(merchant_id, pg_key, data.card_expiry_date)
+      const enc_card_number = await this.easebuzzService.encCard(
+        merchant_id,
+        pg_key,
+        data.card_number,
+      );
+      const enc_card_holder_name = await this.easebuzzService.encCard(
+        merchant_id,
+        pg_key,
+        data.card_holder_name,
+      );
+      const enc_card_cvv = await this.easebuzzService.encCard(
+        merchant_id,
+        pg_key,
+        data.card_cvv,
+      );
+      const enc_card_expiry_date = await this.easebuzzService.encCard(
+        merchant_id,
+        pg_key,
+        data.card_expiry_date,
+      );
       return {
         enc_card_number,
         enc_card_holder_name,
         enc_card_cvv,
         enc_card_expiry_date,
-      }
+      };
     } catch (e) {
-      throw new BadRequestException(e.message)
+      throw new BadRequestException(e.message);
     }
   }
 }

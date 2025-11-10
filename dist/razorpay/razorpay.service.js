@@ -49,6 +49,13 @@ let RazorpayService = class RazorpayService {
         try {
             const { _id, amount: totalRupees, razorpay, razorpay_vendors_info, additional_data, } = collectRequest;
             const studentDetail = JSON.parse(additional_data);
+            let additionalData;
+            if (collectRequest.additionalDataToggle) {
+                additionalData = studentDetail.additional_fields || {};
+            }
+            else {
+                additionalData = {};
+            }
             const totalPaise = Math.round(totalRupees * 100);
             const data = {
                 amount: totalPaise,
@@ -59,6 +66,7 @@ let RazorpayService = class RazorpayService {
                     student_email: studentDetail?.student_details?.student_email || 'N/A',
                     student_id: studentDetail?.student_details?.student_id || 'N/A',
                     student_phone_no: studentDetail?.student_details?.student_phone_no || 'N/A',
+                    ...Object.fromEntries(Object.entries(additionalData)),
                 },
             };
             if (razorpay_vendors_info?.length) {
@@ -102,7 +110,7 @@ let RazorpayService = class RazorpayService {
                         notes: {},
                         linked_account_notes: undefined,
                         on_hold: undefined,
-                        on_hold_until: undefined
+                        on_hold_until: undefined,
                     };
                     data.transfers.push(mainAccount);
                 }
@@ -117,11 +125,10 @@ let RazorpayService = class RazorpayService {
                         notes: {},
                         linked_account_notes: undefined,
                         on_hold: undefined,
-                        on_hold_until: undefined
+                        on_hold_until: undefined,
                     };
                     data.transfers = [nonSplitConfig];
                 }
-                ;
             }
             const createOrderConfig = {
                 method: 'post',
@@ -264,8 +271,12 @@ let RazorpayService = class RazorpayService {
                     : 202;
             const formattedResponse = {
                 status: status,
-                amount: response?.amount ? response?.amount / 100 : collectRequest.amount,
-                transaction_amount: response?.amount ? response?.amount / 100 : collectRequest.amount,
+                amount: response?.amount
+                    ? response?.amount / 100
+                    : collectRequest.amount,
+                transaction_amount: response?.amount
+                    ? response?.amount / 100
+                    : collectRequest.amount,
                 status_code: statusCode,
                 custom_order_id: collectRequest?.custom_order_id,
                 details: {
@@ -391,10 +402,10 @@ let RazorpayService = class RazorpayService {
                     order_id: order_id,
                 },
             };
-            console.log(createQrConfig, "createQrConfig");
+            console.log(createQrConfig, 'createQrConfig');
             const { data: razorpayRes } = await axios_1.default.request(createQrConfig);
-            console.log(razorpayRes, "");
-            console.log(razorpayRes, "response");
+            console.log(razorpayRes, '');
+            console.log(razorpayRes, 'response');
             return await this.getbase64(razorpayRes.image_url);
         }
         catch (error) {
@@ -416,7 +427,7 @@ let RazorpayService = class RazorpayService {
                 throw new common_1.BadRequestException('Payment not captured yet.');
             }
             const payload = {
-                refund_id
+                refund_id,
             };
             const token = _jwt.sign(payload, process.env.JWT_SECRET_FOR_INTRANET);
             const refundConfig = {
@@ -446,14 +457,14 @@ let RazorpayService = class RazorpayService {
                 },
                 data: {
                     amount: totalPaise,
-                    reverse_all: isSplit || false
+                    reverse_all: isSplit || false,
                 },
             };
             const response = await axios_1.default.request(config);
             return response.data;
         }
         catch (error) {
-            console.log(error, "error");
+            console.log(error, 'error');
             if (axios_1.default.isAxiosError(error)) {
                 console.error('Razorpay Refund Error:', {
                     message: error.message,
@@ -477,7 +488,7 @@ let RazorpayService = class RazorpayService {
             const qrCode = (0, jsqr_1.default)(imageData.data, imageData.width, imageData.height);
             const qrData = qrCode.data || 'p';
             var QRCode = require('qrcode');
-            const base64Image = await QRCode.toDataURL(qrData, { type: "image/png" });
+            const base64Image = await QRCode.toDataURL(qrData, { type: 'image/png' });
             const phonePe = qrCode.data.replace('upi:', 'phonepe:');
             const paytm = qrCode.data.replace('upi:', 'paytmmp:');
             const gpay = qrCode.data.replace('upi://', 'upi:/');
@@ -488,7 +499,7 @@ let RazorpayService = class RazorpayService {
                 intent: qrCode.data,
                 phonePe,
                 paytm,
-                googlePe
+                googlePe,
             };
         }
         catch (e) {
@@ -497,7 +508,9 @@ let RazorpayService = class RazorpayService {
     }
     async saveRazorpayCommission(collectReq, platform_type) {
         try {
-            const collecRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: collectReq._id });
+            const collecRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: collectReq._id,
+            });
             if (!collecRequestStatus) {
                 throw new common_1.BadRequestException('Invalid Request');
             }
@@ -519,7 +532,7 @@ let RazorpayService = class RazorpayService {
                 trustee_id: collectReq?.trustee_id,
                 order_amount: collectReq?.amount,
                 transaction_amount: collecRequestStatus.transaction_amount,
-                platform_type: "mappedPaymentMethod",
+                platform_type: 'mappedPaymentMethod',
                 payment_mode: collecRequestStatus.payment_method,
                 collect_id: collectReq._id,
             });
@@ -542,8 +555,7 @@ let RazorpayService = class RazorpayService {
                 console.error('Error calculating commission:', error.message);
             }
         }
-        catch (e) {
-        }
+        catch (e) { }
     }
     async terminateNotInitiatedOrder(collect_id) {
         try {
