@@ -18,12 +18,15 @@ import { RazorpayNonseamlessService } from './razorpay-nonseamless.service';
 import * as _jwt from 'jsonwebtoken';
 import axios from 'axios';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
+import { RazorpayService } from 'src/razorpay/razorpay.service';
+import * as jwt from 'jsonwebtoken';
 
 @Controller('razorpay-nonseamless')
 export class RazorpayNonseamlessController {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly razorpayServiceModel: RazorpayNonseamlessService,
+    private readonly razorpayService: RazorpayService,
     private readonly edvironPgService: EdvironPgService,
   ) {}
 
@@ -809,8 +812,8 @@ export class RazorpayNonseamlessController {
         );
       if (!collectReq) throw new Error('Collect request not found');
       const isSeamless = collectReq.razorpay_seamless.razorpay_id;
-        collectReq.gateway=  Gateway.EDVIRON_RAZORPAY
-      await collectReq.save()
+      collectReq.gateway = Gateway.EDVIRON_RAZORPAY;
+      await collectReq.save();
       if (isSeamless) {
         // return 'this is seamless transaction'
         await this.databaseService.WebhooksModel.findOneAndUpdate(
@@ -922,7 +925,7 @@ export class RazorpayNonseamlessController {
         }
         const orderPaymentDetail = {
           bank: bank,
-          transaction_id: acquirer_data.bank_transaction_id,
+          transaction_id: acquirer_data.rrn,
           method: method,
         };
 
@@ -938,7 +941,7 @@ export class RazorpayNonseamlessController {
                 transaction_amount,
                 payment_method,
                 details: JSON.stringify(detail),
-                bank_reference: acquirer_data.bank_transaction_id,
+                bank_reference: acquirer_data.rrn,
                 reason: error_reason,
                 payment_message: error_reason,
               },
@@ -1141,15 +1144,16 @@ export class RazorpayNonseamlessController {
         method: method,
       };
 
-      const updateReqq = await this.databaseService.CollectRequestModel.updateOne(
-        { _id: collectIdObject },
-        {
-          $set: {
-            payment_id: id,
-            'razorpay.payment_id': id
+      const updateReqq =
+        await this.databaseService.CollectRequestModel.updateOne(
+          { _id: collectIdObject },
+          {
+            $set: {
+              payment_id: id,
+              'razorpay.payment_id': id,
+            },
           },
-        },
-      );
+        );
 
       const updateReq =
         await this.databaseService.CollectRequestStatusModel.updateOne(
@@ -1300,8 +1304,8 @@ export class RazorpayNonseamlessController {
       if (isSeamless) {
         return 'this is seamless transaction';
       }
-      collectReq.gateway=  Gateway.EDVIRON_RAZORPAY
-      await collectReq.save()
+      collectReq.gateway = Gateway.EDVIRON_RAZORPAY;
+      await collectReq.save();
       const collectRequestStatus =
         await this.databaseService.CollectRequestStatusModel.findOne({
           collect_id: collectIdObject,
@@ -1365,7 +1369,6 @@ export class RazorpayNonseamlessController {
             };
           }
           break;
-
 
         case 'netbanking':
           detail = {
@@ -1641,6 +1644,61 @@ export class RazorpayNonseamlessController {
       console.log();
 
       throw new BadRequestException(e.message);
+    }
+  }
+
+  @Post('/update-dispute')
+  async disputeEvidence(
+    @Body()
+    body: {
+      dispute_id: string;
+      action: string;
+      documents: [
+        {
+          document_type: string;
+          file_url: string;
+          name: string;
+        },
+      ];
+      sign: string;
+      collect_id: string;
+    },
+  ) {
+    try {
+      const { dispute_id, documents, action, sign, collect_id } = body;
+      const decodedToken = jwt.verify(sign, process.env.KEY!) as {
+        dispute_id: string;
+        action: string;
+      };
+      if (!decodedToken) throw new BadRequestException('Request Forged');
+      if (
+        decodedToken.action !== action ||
+        decodedToken.dispute_id !== dispute_id
+      ) {
+        throw new BadRequestException('Request Forged');
+      }
+      const request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!request) {
+        throw new BadRequestException('collect request not found');
+      }
+      if (request.gateway !== Gateway.EDVIRON_RAZORPAY) {
+        throw new BadRequestException('this order is not paid by razorpay');
+      }
+      let crediantials = request.razorpay;
+      if (action === 'accept') {
+        return this.razorpayService.submitDisputeEvidence(
+          dispute_id,
+          documents,
+          crediantials,
+        );
+      } else {
+        return this.razorpayService.acceptDispute(dispute_id, crediantials);
+      }
+    } catch (error) {
+      throw new InternalServerErrorException(
+        error.message || 'Something went wrong',
+      );
     }
   }
 }

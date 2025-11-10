@@ -69,9 +69,9 @@ export declare class CashfreeService {
     vendorSettlementRecon(client_id: string, start_date: string, end_date: string, utrNumber: string[], cursor?: string): Promise<any>;
     getPaymentStatus(order_id: string, client_id: string): Promise<any>;
     submitDisputeEvidence(dispute_id: string, documents: Array<{
-        file: string;
-        doc_type: string;
-        note: string;
+        document_type: string;
+        file_url: string;
+        name: string;
     }>, client_id: string): Promise<any>;
     acceptDispute(disputeId: string, client_id: string): Promise<any>;
     createMerchant(merchant_id: string, merchant_email: string, merchant_name: string, poc_phone: string, merchant_site_url: string, business_details: {

@@ -117,6 +117,13 @@ export class EdvironPayService {
     }
   }
 
+  async checkStatus(collect_id:string){
+    try{
+      return await this.checkStatusService.checkStatus(collect_id)
+    }catch(e){
+      throw new BadRequestException(e.message)
+    }
+  }
   // async handelCashfreecallback(collectRequest: CollectRequest) {
   //     try {
   //         const collect_request_id = collectRequest._id.toString()
