@@ -759,14 +759,14 @@ export class EasebuzzController {
       const schoolName = school_name || '';
       const studentDetail = JSON.parse(request.additional_data);
       const additionalData = studentDetail.additional_fields || {};
-      const additionalinfoset = Object.fromEntries(
-        Object.entries(additionalData).map(([key, value]) => {
-          if (typeof value === 'string' && value.includes('|')) {
-            throw new Error(`Invalid character "|" found in key: ${key}`);
-          }
-          return [key, value];
-        }),
-      );
+      // const additionalinfoset = Object.fromEntries(
+      //   Object.entries(additionalData).map(([key, value]) => {
+      //     if (typeof value === 'string' && value.includes('|')) {
+      //       throw new Error(`Invalid character "|" found in key: ${key}`);
+      //     }
+      //     return [key, value];
+      //   }),
+      // );
 
       if (split_payments) {
         console.log(split_payments);

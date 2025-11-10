@@ -86,7 +86,7 @@ let RazorpayService = class RazorpayService {
                     computed += amtPaise;
                     setTimeout(() => {
                         this.terminateNotInitiatedOrder(collectRequest._id.toString());
-                    }, 1 * 60 * 1000);
+                    }, 25 * 60 * 1000);
                     return {
                         account: v.account,
                         amount: amtPaise,
