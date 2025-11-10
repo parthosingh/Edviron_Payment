@@ -27,6 +27,7 @@ import {
 } from './schemas/platform.charges.schema';
 import { Installments, InstallmentsDocument } from './schemas/installments.schema';
 import { StudentDetail, StudentDetails } from './schemas/student_detail.schema';
+import { CronManagement } from './schemas/cron.management.schema';
 
 @Injectable()
 export class DatabaseService {
@@ -51,5 +52,7 @@ export class DatabaseService {
     public InstallmentsModel: Model<InstallmentsDocument>,
     @InjectModel(StudentDetail.name)
     public StudentDetailModel: Model<StudentDetails>,
-  ) {}
+    @InjectModel(CronManagement.name)
+    public cronManagement: Model<CronManagement>,
+  ) { }
 }

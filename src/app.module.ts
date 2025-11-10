@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CollectModule } from './collect/collect.module';
 import { PhonepeService } from './phonepe/phonepe.service';
+import { ScheduleModule } from '@nestjs/schedule';
 import { DatabaseModule } from './database/database.module';
 import { PhonepeModule } from './phonepe/phonepe.module';
 import { CheckStatusModule } from './check-status/check-status.module';
@@ -47,6 +48,7 @@ import { ReconcilationModule } from './reconcilation/reconcilation.module';
 
 @Module({
   imports: [
+        ScheduleModule.forRoot(),
     CollectModule,
     DatabaseModule,
     PhonepeModule,
