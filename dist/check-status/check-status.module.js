@@ -15,7 +15,6 @@ const phonepe_module_1 = require("../phonepe/phonepe.module");
 const hdfc_module_1 = require("../hdfc/hdfc.module");
 const edviron_pg_module_1 = require("../edviron-pg/edviron-pg.module");
 const ccavenue_service_1 = require("../ccavenue/ccavenue.service");
-const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 const cashfree_module_1 = require("../cashfree/cashfree.module");
 const pay_u_service_1 = require("../pay-u/pay-u.service");
 const hdfc_razorpay_service_1 = require("../hdfc_razporpay/hdfc_razorpay.service");
@@ -26,6 +25,8 @@ const worldline_service_1 = require("../worldline/worldline.service");
 const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
 const gatepay_service_1 = require("../gatepay/gatepay.service");
 const razorpay_service_1 = require("../razorpay/razorpay.service");
+const easebuzz_module_1 = require("../easebuzz/easebuzz.module");
+const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 let CheckStatusModule = class CheckStatusModule {
 };
 exports.CheckStatusModule = CheckStatusModule;
@@ -35,7 +36,6 @@ exports.CheckStatusModule = CheckStatusModule = __decorate([
         providers: [
             check_status_service_1.CheckStatusService,
             ccavenue_service_1.CcavenueService,
-            easebuzz_service_1.EasebuzzService,
             smartgateway_service_1.SmartgatewayService,
             pay_u_service_1.PayUService,
             hdfc_razorpay_service_1.HdfcRazorpayService,
@@ -45,7 +45,7 @@ exports.CheckStatusModule = CheckStatusModule = __decorate([
             razorpay_nonseamless_service_1.RazorpayNonseamlessService,
             gatepay_service_1.GatepayService,
             razorpay_service_1.RazorpayService,
-            check_status_service_1.CheckStatusService
+            easebuzz_service_1.EasebuzzService
         ],
         imports: [
             database_module_1.DatabaseModule,
@@ -53,6 +53,7 @@ exports.CheckStatusModule = CheckStatusModule = __decorate([
             cashfree_module_1.CashfreeModule,
             hdfc_module_1.HdfcModule,
             edviron_pg_module_1.EdvironPgModule,
+            (0, common_1.forwardRef)(() => easebuzz_module_1.EasebuzzModule),
         ],
         exports: [check_status_service_1.CheckStatusService],
     })

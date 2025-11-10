@@ -33,38 +33,5 @@ export declare class RazorpayService {
         googlePe: string;
     }>;
     saveRazorpayCommission(collectReq: CollectRequest, platform_type: string): Promise<void>;
-    submitDisputeEvidence(dispute_id: string, documents: Array<{
-        document_type: string;
-        file_url: string;
-        name: string;
-    }>, credentials: {
-        razorpay_id: string;
-        razorpay_secret: string;
-        razorpay_mid: string;
-        order_id: string;
-        payment_id?: string;
-        razorpay_signature?: string;
-        razorpay_account?: string;
-    }): Promise<{
-        dispute_id: string;
-        uploadedDocuments: {
-            document_id: any;
-            document_type: string;
-            name: string;
-            file_url: string;
-        }[];
-    }>;
-    acceptDispute(dispute_id: string, credentials: {
-        razorpay_id: string;
-        razorpay_secret: string;
-        razorpay_mid: string;
-        order_id: string;
-        payment_id?: string;
-        razorpay_signature?: string;
-        razorpay_account?: string;
-    }): Promise<{
-        message: string;
-        dispute_id: string;
-        razorpay_response: any;
-    }>;
+    terminateNotInitiatedOrder(collect_id: string): Promise<true | undefined>;
 }

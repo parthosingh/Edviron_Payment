@@ -52,6 +52,7 @@ export declare class EasebuzzService {
         collect_request_id: import("mongoose").Schema.Types.ObjectId;
         collect_request_url: string;
     }>;
+    terminateNotInitiatedOrder(collect_id: string): Promise<true | undefined>;
     getQr(collect_id: string, request: CollectRequest, ezb_split_payments: {
         [key: string]: number;
     }): Promise<void>;
