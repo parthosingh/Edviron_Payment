@@ -372,7 +372,7 @@ export class GatepayService {
     try {
 
       const collect = await this.databaseService.CollectRequestModel.findById(collect_id);
-      
+
       if (!collect) throw new BadRequestException('Collect request not found');
 
       const { gatepay } = collect;
@@ -394,7 +394,7 @@ export class GatepayService {
         description: 'Refund Initiated',
       };
 
-      const encryptedPayload = this.encryptEas(JSON.stringify(payload), key, iv)
+      const encryptedPayload = await this.encryptEas(JSON.stringify(payload), key, iv)
 
       const config = {
         url: `${process.env.GET_E_PAY_URL}/getepayPortal/pg/refundRequest `,
@@ -402,7 +402,11 @@ export class GatepayService {
         headers: {
           'Content-Type': 'application/json',
         },
-        data: encryptedPayload,
+        data:{
+          mid,
+          req:encryptedPayload,
+          terminalId
+        },
 
       };
 
