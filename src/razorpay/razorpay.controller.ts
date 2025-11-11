@@ -6,7 +6,7 @@ import {
   Post,
   Query,
   Res,
-  Param, 
+  Param,
   NotFoundException,
   Req,
   InternalServerErrorException,
@@ -20,7 +20,7 @@ import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import { Types } from 'mongoose';
 import axios from 'axios';
 import { createCanvas, loadImage } from 'canvas';
-import jsQR from "jsqr";
+import jsQR from "jsqr";
 import * as jwt from 'jsonwebtoken';
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 
@@ -31,7 +31,7 @@ export class RazorpayController {
     private readonly databaseService: DatabaseService,
     private readonly edvironPgService: EdvironPgService,
     private readonly razorpayNonSeamless: RazorpayNonseamlessService,
-  ) {}
+  ) { }
 
   @Get('/callback')
   async handleCallback(@Req() req: any, @Res() res: any) {
@@ -392,7 +392,7 @@ export class RazorpayController {
     }
   }
 
-    @Post('/callback')
+  @Post('/callback')
   async handleCallbackPost(@Req() req: any, @Res() res: any) {
     try {
       const { order_id } = req.query;
@@ -794,7 +794,7 @@ export class RazorpayController {
       error_reason,
       card,
       card_id,
-      wallet, 
+      wallet,
     } = payload.payment.entity;
     let { status } = payload.payment.entity;
     const { created_at } = payload.payment.entity;
@@ -820,11 +820,11 @@ export class RazorpayController {
           collectIdObject,
         );
       if (!collectReq) throw new Error('Collect request not found');
-       const isSeamless = collectReq.razorpay.razorpay_id
-        if(isSeamless){
-          return 'this is non-seamless transaction'
-        }
-        collectReq.gateway=  Gateway.EDVIRON_RAZORPAY
+      const isSeamless = collectReq.razorpay.razorpay_id
+      if (isSeamless) {
+        return 'this is non-seamless transaction'
+      }
+      collectReq.gateway = Gateway.EDVIRON_RAZORPAY
       await collectReq.save()
       const collectRequestStatus =
         await this.databaseService.CollectRequestStatusModel.findOne({
@@ -839,7 +839,7 @@ export class RazorpayController {
         payment_method = 'net_banking';
       }
       let detail;
-      let platform_type="Others"
+      let platform_type = "Others"
       switch (payment_method) {
         case 'upi':
           detail = {
@@ -852,9 +852,9 @@ export class RazorpayController {
 
         //seprate cc and DD 
         case 'card':
-          platform_type=card.network
-          if(card.type==='debit'){
-            payment_method='debit_card'
+          platform_type = card.network
+          if (card.type === 'debit') {
+            payment_method = 'debit_card'
             detail = {
               card: {
                 card_bank_name: card.type || null,
@@ -862,8 +862,8 @@ export class RazorpayController {
                   card.international === false
                     ? 'IN'
                     : card.international === true
-                    ? 'OI'
-                    : null,
+                      ? 'OI'
+                      : null,
                 card_network: card.network || null,
                 card_number: card_id || null,
                 card_sub_type: card.sub_type || null,
@@ -871,8 +871,8 @@ export class RazorpayController {
                 channel: null,
               },
             };
-          }else if(card.type==='credit'){
-            payment_method='credit_card'
+          } else if (card.type === 'credit') {
+            payment_method = 'credit_card'
             detail = {
               card: {
                 card_bank_name: card.type || null,
@@ -880,8 +880,8 @@ export class RazorpayController {
                   card.international === false
                     ? 'IN'
                     : card.international === true
-                    ? 'OI'
-                    : null,
+                      ? 'OI'
+                      : null,
                 card_network: card.network || null,
                 card_number: card_id || null,
                 card_sub_type: card.sub_type || null,
@@ -893,7 +893,7 @@ export class RazorpayController {
           break;
 
         case 'net_banking':
-          platform_type=bank
+          platform_type = bank
           detail = {
             netbanking: {
               channel: null,
@@ -945,7 +945,7 @@ export class RazorpayController {
           },
           {
             $set: {
-              gateway : Gateway.EDVIRON_RAZORPAY_SEAMLESS
+              gateway: Gateway.EDVIRON_RAZORPAY_SEAMLESS
             },
           },
         );
@@ -1000,9 +1000,9 @@ export class RazorpayController {
       };
 
       // Commission 
-      try{
-        await this.razorpayService.saveRazorpayCommission(collectReq,platform_type)
-      }catch(e){
+      try {
+        await this.razorpayService.saveRazorpayCommission(collectReq, platform_type)
+      } catch (e) {
         // throw erro Mail
       }
       if (webhookUrl !== null) {
@@ -1015,9 +1015,8 @@ export class RazorpayController {
           const config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: `${
-              process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT
+              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
             headers: {
               accept: 'application/json',
               'content-type': 'application/json',
@@ -1061,12 +1060,12 @@ export class RazorpayController {
   @Get('get-qr')
   async getQr(@Query('collect_id') collect_id: string) {
     try {
-        const collect_request =
-      await this.databaseService.CollectRequestModel.findById(collect_id);
-    if (!collect_request) {
-      throw new BadRequestException('Order not found');
-    }
-    return this.razorpayService.getQr(collect_request);
+      const collect_request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collect_request) {
+        throw new BadRequestException('Order not found');
+      }
+      return this.razorpayService.getQr(collect_request);
     } catch (error) {
       throw new BadRequestException(error.message)
     }
@@ -1074,10 +1073,10 @@ export class RazorpayController {
 
   @Post('test-refund')
   async initiateRefund(
-    @Query('collect_id') collect_id:string,
-    @Query('refundAmount') refundAmount:number,
-    @Query('refund_id') refund_id:string,
-  ){
+    @Query('collect_id') collect_id: string,
+    @Query('refundAmount') refundAmount: number,
+    @Query('refund_id') refund_id: string,
+  ) {
     try {
       return this.razorpayService.refund(collect_id, refundAmount, refund_id)
     } catch (error) {
@@ -1087,58 +1086,59 @@ export class RazorpayController {
   }
 
   @Post('/update-dispute')
-    async disputeEvidence(
-      @Body()
-      body: {
+  async disputeEvidence(
+    @Body()
+    body: {
+      dispute_id: string;
+      action: string;
+      documents: [
+        {
+          document_type: string;
+          file_url: string;
+          name: string;
+        },
+      ];
+      sign: string;
+      collect_id: string;
+    },
+  ) {
+    try {
+      const { dispute_id, documents, action, sign, collect_id } = body;
+      const decodedToken = jwt.verify(sign, process.env.KEY!) as {
         dispute_id: string;
         action: string;
-        documents: [
-          {
-            document_type: string;
-            file_url: string;
-            name: string;
-          },
-        ];
-        sign: string;
-        collect_id: string;
-      },
-    ) {
-      try {
-        const { dispute_id, documents, action, sign, collect_id } = body;
-        const decodedToken = jwt.verify(sign, process.env.KEY!) as {
-          dispute_id: string;
-          action: string;
-        };
-        if (!decodedToken) throw new BadRequestException('Request Forged');
-        if (
-          decodedToken.action !== action ||
-          decodedToken.dispute_id !== dispute_id
-        )
-          throw new BadRequestException('Request Forged');
-        const request =
-          await this.databaseService.CollectRequestModel.findById(collect_id);
-        if (!request) {
-          throw new BadRequestException('collect request not found');
-        }
-        if (request.gateway !== Gateway.EDVIRON_RAZORPAY) {
-          throw new BadRequestException('this order is not paid by razorpay');
-        }
-        let crediantials = request.razorpay_seamless;
-        if (action === 'accept') {
-          return this.razorpayService.submitDisputeEvidence(
-            dispute_id,
-            documents,
-            crediantials
-          )
-        } 
-        else {
-          return this.razorpayService.acceptDispute(dispute_id, crediantials);
-        }
-      } catch (error) {
-        throw new InternalServerErrorException(
-          error.message || 'Something went wrong',
-        );
+      };
+      if (!decodedToken) throw new BadRequestException('Request Forged');
+      if (
+        decodedToken.action !== action ||
+        decodedToken.dispute_id !== dispute_id
+      )
+        throw new BadRequestException('Request Forged');
+      const request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!request) {
+        throw new BadRequestException('collect request not found');
       }
+      if (request.gateway !== Gateway.EDVIRON_RAZORPAY) {
+        throw new BadRequestException('this order is not paid by razorpay');
+      }
+      let crediantials = request.razorpay_seamless;
+      if (action === 'accept') {
+        return this.razorpayService.submitDisputeEvidence(
+          dispute_id,
+          documents,
+          crediantials
+        )
+      }
+      else {
+        return this.razorpayService.acceptDispute(dispute_id, crediantials);
+      }
+    } catch (error) {
+      throw new InternalServerErrorException(
+        error.message || 'Something went wrong',
+      );
     }
+  }
+
 
 }

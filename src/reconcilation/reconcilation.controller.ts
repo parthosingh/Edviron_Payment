@@ -113,4 +113,30 @@ export class ReconcilationController {
             throw new BadRequestException(e.message)
         }
     }
+
+
+  @Post('/get-school-mdr')
+  async getSchoolMdr(@Body() body: {
+    school_id: string
+  }) {
+    try{
+      console.log('here');
+      
+      const {school_id}=body
+      const mdr=await this.databaseService.PlatformChargeModel.findOne({school_id})
+      if(mdr){
+        return{
+          status:true,
+          mdr:mdr.platform_charges
+        }
+      }
+
+      return {
+        sattus:false,
+        mdr:null
+      }
+    }catch(e){
+      throw new BadRequestException(e.message)
+    }
+  }
 }

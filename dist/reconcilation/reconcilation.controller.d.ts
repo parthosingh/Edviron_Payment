@@ -13,4 +13,15 @@ export declare class ReconcilationController {
     createCronEvent(body: {
         event: string;
     }): Promise<void>;
+    getSchoolMdr(body: {
+        school_id: string;
+    }): Promise<{
+        status: boolean;
+        mdr: import("../database/schemas/platform.charges.schema").PlatformCharge[];
+        sattus?: undefined;
+    } | {
+        sattus: boolean;
+        mdr: null;
+        status?: undefined;
+    }>;
 }
