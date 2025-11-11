@@ -70,7 +70,7 @@ let ReconcilationService = class ReconcilationService {
     async reconStatus() {
         try {
             const cronManagement = await this.databaseService.cronManagement.findOne({
-                event: 'TERMINATE_GATEWAY'
+                event: 'TERMINATE_PAYMENT'
             });
             if (!cronManagement)
                 return;

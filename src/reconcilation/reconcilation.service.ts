@@ -67,7 +67,7 @@ export class ReconcilationService {
     async reconStatus() {
         try {
             const cronManagement = await this.databaseService.cronManagement.findOne({
-                event: 'TERMINATE_GATEWAY'
+                event: 'TERMINATE_PAYMENT'
             });
 
             if (!cronManagement) return;
@@ -113,11 +113,6 @@ export class ReconcilationService {
                 }
 
                 const gatewayStatus = statusResp?.status?.toUpperCase();
-
-                // if (gatewayStatus === 'SUCCESS') {
-                //     continue; // skip successful ones
-                // }
-
                 if (gatewayStatus === 'PENDING') {
                     requestStatus.status = PaymentStatus.USER_DROPPED;
                 } else {
