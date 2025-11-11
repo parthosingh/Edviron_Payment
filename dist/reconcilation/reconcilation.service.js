@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReconcilationService = void 0;
 const common_1 = require("@nestjs/common");
+const schedule_1 = require("@nestjs/schedule");
 const axios_1 = require("axios");
 const database_service_1 = require("../database/database.service");
 const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
@@ -48,6 +49,9 @@ let ReconcilationService = class ReconcilationService {
             }
             await Promise.all(updates);
             console.log(`✅ Updated ${updates.length / 2} records to EXPIRED / USER_DROPPED`);
+            cronManagement.startDate = new Date(cronManagement.startDate.getTime() + 25 * 60 * 1000);
+            cronManagement.endDate = new Date(cronManagement.endDate.getTime() + 25 * 60 * 1000);
+            await cronManagement.save();
         }
         catch (e) {
             try {
@@ -63,7 +67,7 @@ let ReconcilationService = class ReconcilationService {
             throw new common_1.BadRequestException(e.message);
         }
     }
-    async reconTerminateOrder() {
+    async reconStatus() {
         try {
             const cronManagement = await this.databaseService.cronManagement.findOne({
                 event: 'TERMINATE_GATEWAY'
@@ -83,16 +87,42 @@ let ReconcilationService = class ReconcilationService {
                 return;
             const updates = [];
             for (const req of collectReqs) {
-                const reqStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: req._id });
-                if (!reqStatus)
+                const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                    collect_id: req._id,
+                });
+                if (!requestStatus)
                     continue;
-                reqStatus.status = collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
-                updates.push(req.save(), reqStatus.save());
+                const config = {
+                    method: 'get',
+                    url: `${process.env.URL}/check-status?transactionId=${req._id.toString()}`,
+                    headers: {
+                        accept: 'application/json',
+                        'content-type': 'application/json',
+                        'x-api-version': '2023-08-01',
+                    },
+                };
+                let statusResp;
+                try {
+                    const { data } = await axios_1.default.request(config);
+                    statusResp = data;
+                }
+                catch (err) {
+                    console.error(`Error fetching status for ${req._id}:`, err.message);
+                    continue;
+                }
+                const gatewayStatus = statusResp?.status?.toUpperCase();
+                if (gatewayStatus === 'PENDING') {
+                    requestStatus.status = collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
+                }
+                else {
+                    requestStatus.status = gatewayStatus || collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
+                }
+                updates.push(requestStatus.save());
             }
             await Promise.all(updates);
-            let oldEndDate = cronManagement.endDate;
-            cronManagement.startDate = oldEndDate;
-            cronManagement.endDate = new Date(Date.now());
+            cronManagement.startDate = new Date(cronManagement.startDate.getTime() + 25 * 60 * 1000);
+            cronManagement.endDate = new Date(cronManagement.endDate.getTime() + 25 * 60 * 1000);
+            await cronManagement.save();
         }
         catch (e) {
             throw new common_1.BadRequestException(e.message);
@@ -125,8 +155,14 @@ let ReconcilationService = class ReconcilationService {
                 };
                 const { data: status } = await axios_1.default.request(config);
                 if (status.status.toUpperCase() !== 'SUCCESS') {
-                    requestStatus.status = collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
-                    await requestStatus.save();
+                    if (status.status !== 'PENDING') {
+                        requestStatus.status = status;
+                        await requestStatus.save();
+                    }
+                    else {
+                        requestStatus.status = collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
+                        await requestStatus.save();
+                    }
                 }
                 return true;
             }
@@ -147,8 +183,34 @@ let ReconcilationService = class ReconcilationService {
         }
         return true;
     }
+    async createCronEvent(event) {
+        try {
+            const date = new Date();
+            await this.databaseService.cronManagement.create({
+                event,
+                startDate: new Date(date.getTime() - 50 * 60 * 1000),
+                endDate: new Date(date.getTime() - 25 * 60 * 1000)
+            });
+            return;
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.ReconcilationService = ReconcilationService;
+__decorate([
+    (0, schedule_1.Cron)('*/30 * * * *'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ReconcilationService.prototype, "reconPendingGateway", null);
+__decorate([
+    (0, schedule_1.Cron)('*/30 * * * *'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ReconcilationService.prototype, "reconStatus", null);
 exports.ReconcilationService = ReconcilationService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [database_service_1.DatabaseService])

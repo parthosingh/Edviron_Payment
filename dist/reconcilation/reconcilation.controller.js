@@ -25,11 +25,6 @@ let ReconcilationController = class ReconcilationController {
         const { sign, utr, collect_ids, school_name } = body;
         try {
             if (!sign || !utr || !collect_ids || collect_ids.length === 0) {
-                console.log({
-                    sign,
-                    utr,
-                    collect_ids
-                });
                 throw new common_1.BadRequestException(`Required Field Missing`);
             }
             const decoded = jwt.verify(sign, process.env.KEY);
