@@ -41,7 +41,6 @@ import { EdvironSeamlessController } from './edviron-seamless/edviron-seamless.c
 import { EdvironSeamlessService } from './edviron-seamless/edviron-seamless.service';
 import { CanteenModule } from './canteen/canteen.module';
 
-
 @Module({
   imports: [
     CollectModule,
@@ -66,6 +65,7 @@ import { CanteenModule } from './canteen/canteen.module';
     EdvironPayModule,
     GatewayModule,
     CanteenModule,
+    
   ],
   controllers: [
     AppController,

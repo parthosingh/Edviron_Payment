@@ -34,6 +34,7 @@ import { PosPaytmService } from 'src/pos-paytm/pos-paytm.service';
 import { WorldlineService } from 'src/worldline/worldline.service';
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 import { RazorpayService } from 'src/razorpay/razorpay.service';
+import { GatepayService } from 'src/gatepay/gatepay.service';
 export declare class EdvironPgController {
     private readonly edvironPgService;
     private readonly databaseService;
@@ -44,7 +45,8 @@ export declare class EdvironPgController {
     private readonly worldlineService;
     private readonly razorpayNonseamless;
     private readonly razorpaySeamless;
-    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, nttDataService: NttdataService, posPaytmService: PosPaytmService, worldlineService: WorldlineService, razorpayNonseamless: RazorpayNonseamlessService, razorpaySeamless: RazorpayService);
+    private readonly gatepayService;
+    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, nttDataService: NttdataService, posPaytmService: PosPaytmService, worldlineService: WorldlineService, razorpayNonseamless: RazorpayNonseamlessService, razorpaySeamless: RazorpayService, gatepayService: GatepayService);
     handleRedirect(req: any, res: any): Promise<void>;
     handleSdkRedirect(req: any, res: any): Promise<any>;
     handleCallback(req: any, res: any): Promise<any>;
@@ -119,6 +121,12 @@ export declare class EdvironPgController {
         refund_id: string;
         token: string;
     }): Promise<any>;
+    gatewayRefund(body: {
+        collect_id: string;
+        amount: number;
+        refund_id: string;
+        token: string;
+    }): Promise<void>;
     getRefundStatus(req: any): Promise<any>;
     sentMail(req: any): Promise<void>;
     terminate(req: any): Promise<any>;

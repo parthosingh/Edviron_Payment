@@ -46,6 +46,7 @@ import { stat } from 'fs';
 import { start } from 'repl';
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 import { RazorpayService } from 'src/razorpay/razorpay.service';
+import { GatepayService } from 'src/gatepay/gatepay.service';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -59,6 +60,7 @@ export class EdvironPgController {
     private readonly worldlineService: WorldlineService,
     private readonly razorpayNonseamless: RazorpayNonseamlessService,
     private readonly razorpaySeamless: RazorpayService,
+    private readonly gatepayService: GatepayService
   ) {}
   @Get('/redirect')
   async handleRedirect(@Req() req: any, @Res() res: any) {
@@ -2929,6 +2931,7 @@ export class EdvironPgController {
         };
         return response;
       }
+
       if (gateway === Gateway.EDVIRON_EASEBUZZ) {
         console.log('init refund from easebuzz');
         if (request.easebuzz_non_partner) {
@@ -2959,9 +2962,39 @@ export class EdvironPgController {
 
         return refund;
       }
+
+      if(gateway === Gateway.EDVIRON_GATEPAY){
+        const refund = await this.gatepayService.initiateRefund(
+          collect_id,
+          amount,
+          refund_id,
+        );
+
+        return refund;
+      }
     } catch (e) {
       throw new BadRequestException(e.message);
     }
+  }
+
+  @Post('/gatepay-refund')
+  async gatewayRefund(
+    @Body()
+    body: {
+      collect_id: string;
+      amount: number;
+      refund_id: string;
+      token: string;
+    }
+  ){
+    const { collect_id, amount, refund_id, token } = body;
+
+    let decrypted = jwt.verify(token, process.env.KEY!) as any;
+
+    
+
+
+
   }
 
   @Get('/refund-status')

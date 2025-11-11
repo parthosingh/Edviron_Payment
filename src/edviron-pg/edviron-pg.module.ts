@@ -12,6 +12,7 @@ import { RazorpayService } from '../razorpay/razorpay.service';
 
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 
+import { GatepayService } from 'src/gatepay/gatepay.service';
 
 @Module({
   controllers: [EdvironPgController],
@@ -22,7 +23,8 @@ import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-no
     WorldlineService,
     PosPaytmService,
     RazorpayService,
-    RazorpayNonseamlessService
+    RazorpayNonseamlessService,
+    GatepayService
   ],
   imports: [
     DatabaseModule,

@@ -330,6 +330,51 @@ let GatepayService = class GatepayService {
             throw new common_1.BadRequestException(error.message);
         }
     }
+    async initiateRefund(collect_id, amount, refund_id) {
+        try {
+            const collect = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collect)
+                throw new common_1.BadRequestException('Collect request not found');
+            const { gatepay } = collect;
+            const { gatepay_mid, gatepay_key, gatepay_iv, gatepay_terminal_id } = gatepay;
+            const transactionId = collect._id.toString();
+            const key = gatepay_key;
+            const iv = gatepay_iv;
+            const mid = gatepay_mid;
+            const terminalId = gatepay_terminal_id;
+            const payload = {
+                mid,
+                transactionId,
+                refundRefNo: refund_id,
+                terminalId,
+                amount,
+                description: 'Refund Initiated',
+            };
+            const encryptedPayload = this.encryptEas(JSON.stringify(payload), key, iv);
+            const config = {
+                url: `${process.env.GET_E_PAY_URL}/getepayPortal/pg/refundRequest `,
+                method: 'post',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                data: encryptedPayload,
+            };
+            const response = await axios_1.default.request(config);
+            const decrypted = await this.decryptEas(response.data.response, gatepay_key, gatepay_iv);
+            const parsedData = JSON.parse(decrypted);
+            return {
+                collect_id,
+                refund_id,
+                amount,
+                gateway: 'GETEPAY',
+                response: parsedData,
+            };
+        }
+        catch (err) {
+            console.error('❌ Error initiating refund:', err.message);
+            throw new common_1.BadRequestException(err.message);
+        }
+    }
 };
 exports.GatepayService = GatepayService;
 exports.GatepayService = GatepayService = __decorate([
