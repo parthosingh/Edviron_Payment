@@ -28,94 +28,370 @@ let EdvironPayController = class EdvironPayController {
         this.edvironPay = edvironPay;
     }
     async upsertInstallments(body) {
-        const { school_id, trustee_id, student_detail, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, allvendors, cashfreeVedors, easebuzzVendors, callback_url, webhook_url, } = body;
-        const { student_id, student_number, student_name, student_email } = student_detail;
-        await this.edvironPay.createStudent(student_detail, school_id, trustee_id);
-        if (isInstallement && installments && installments.length > 0) {
-            await Promise.all(installments.map(async (installment) => {
-                const filter = {
-                    school_id,
-                    trustee_id,
-                    student_id,
-                    month: installment.month || month,
-                    year: installment.year || year,
-                };
-                const { split_payments, vendors_info } = installment;
-                const existing = await this.databaseService.InstallmentsModel.findOne(filter);
-                const vendorsBlock = split_payments
-                    ? {
-                        vendors_info: allvendors,
-                        cashfreeVedors: cashfreeVedors,
-                        easebuzzVendors: easebuzzVendors,
+        try {
+            const { school_id, trustee_id, student_detail, additional_data, amount, net_amount, discount, year, month, gateway, isInstallement, installments, allvendors, cashfreeVedors, easebuzzVendors, callback_url, webhook_url, sign } = body;
+            const { student_id, student_number, student_name, student_email } = student_detail;
+            await this.edvironPay.createStudent(student_detail, school_id, trustee_id);
+            if (isInstallement && installments && Array.isArray(installments)) {
+                const validateSequentialTrue = (key) => {
+                    let foundFalse = false;
+                    for (let i = 0; i < installments.length; i++) {
+                        const val = installments[i][key];
+                        if (val === true && foundFalse) {
+                            throw new common_1.BadRequestException(`Invalid sequence: '${key}: true' found at index ${i} after a 'false'. '${key}' values must be sequential from start.`);
+                        }
+                        if (val === false || val === undefined) {
+                            foundFalse = true;
+                        }
                     }
-                    : {};
-                if (!existing) {
-                    return this.databaseService.InstallmentsModel.create({
+                };
+                validateSequentialTrue('preSelected');
+                validateSequentialTrue('isPaid');
+            }
+            if (isInstallement && installments && installments.length > 0) {
+                await Promise.all(installments.map(async (installment) => {
+                    const filter = {
                         school_id,
                         trustee_id,
                         student_id,
-                        student_number,
-                        student_name,
-                        student_email,
-                        additional_data,
-                        callback_url,
-                        webhook_url,
-                        amount: installment.amount,
-                        net_amount: installment.net_amount,
-                        discount: installment.discount,
-                        year: installment.year || year,
                         month: installment.month || month,
-                        gateway,
-                        fee_heads: installment.fee_heads,
-                        status: 'unpaid',
-                        label: installment.label,
-                        preSelected: installment.preSelected || false,
-                        body: installment.body,
-                        isSplitPayments: split_payments,
-                        ...vendorsBlock,
-                    });
-                }
-                if (existing.status === 'paid') {
-                    return existing;
-                }
-                return this.databaseService.InstallmentsModel.updateOne(filter, {
-                    $set: {
-                        amount: installment.amount,
-                        net_amount: installment.net_amount,
-                        discount: installment.discount,
-                        fee_head: installment.fee_head,
-                        label: installment.label,
-                        preSelected: installment.preSelected || false,
-                        body: installment.body,
-                        gateway,
-                        callback_url,
-                        webhook_url,
-                        additional_data,
-                        student_number,
-                        student_name,
-                        student_email,
-                        fee_heads: installment.fee_heads,
-                        isSplitPayments: split_payments,
-                        ...vendorsBlock,
-                    },
-                });
-            }));
+                        year: installment.year || year,
+                    };
+                    const { split_payments, vendors_info } = installment;
+                    const existing = await this.databaseService.InstallmentsModel.findOne(filter);
+                    const vendorsBlock = split_payments
+                        ? {
+                            vendors_info: allvendors,
+                            cashfreeVedors: cashfreeVedors,
+                            easebuzzVendors: easebuzzVendors,
+                        }
+                        : {};
+                    if (!existing) {
+                        let newinstallment;
+                        if (installment.isPaid) {
+                            let mode = installment.payment_mode;
+                            let detail;
+                            if (!mode) {
+                                throw new common_1.BadRequestException('payment mode required');
+                            }
+                            switch (mode) {
+                                case 'upi':
+                                    if (!installment?.payment_detail?.upi?.upi_id) {
+                                        throw new common_1.BadRequestException('upi id is required');
+                                    }
+                                    detail = {
+                                        upi: {
+                                            channel: null,
+                                            upi_id: installment?.payment_detail?.upi?.upi_id,
+                                        },
+                                    };
+                                    break;
+                                case 'credit_card':
+                                    if (!installment?.payment_detail?.card?.card_bank_name ||
+                                        !installment?.payment_detail?.card?.card_network ||
+                                        !installment?.payment_detail?.card?.card_number ||
+                                        !installment?.payment_detail?.card?.card_type) {
+                                        throw new common_1.BadRequestException('All credit card details are required');
+                                    }
+                                    detail = {
+                                        card: {
+                                            card_bank_name: installment.payment_detail.card.card_bank_name,
+                                            card_network: installment.payment_detail.card.card_network,
+                                            card_number: installment.payment_detail.card.card_number,
+                                            card_type: installment.payment_detail.card.card_type,
+                                        },
+                                    };
+                                    break;
+                                case 'debit_card':
+                                    if (!installment?.payment_detail?.card?.card_bank_name ||
+                                        !installment?.payment_detail?.card?.card_network ||
+                                        !installment?.payment_detail?.card?.card_number ||
+                                        !installment?.payment_detail?.card?.card_type) {
+                                        throw new common_1.BadRequestException('All debit card details are required');
+                                    }
+                                    detail = {
+                                        card: {
+                                            card_bank_name: installment.payment_detail.card.card_bank_name,
+                                            card_network: installment.payment_detail.card.card_network,
+                                            card_number: installment.payment_detail.card.card_number,
+                                            card_type: installment.payment_detail.card.card_type,
+                                        },
+                                    };
+                                    break;
+                                case 'net_banking':
+                                    if (!installment?.payment_detail?.net_banking
+                                        ?.netbanking_bank_code ||
+                                        !installment?.payment_detail?.net_banking
+                                            ?.netbanking_bank_name) {
+                                        throw new common_1.BadRequestException('Net banking bank code and name are required');
+                                    }
+                                    detail = {
+                                        netbanking: {
+                                            channel: null,
+                                            netbanking_bank_code: installment.payment_detail.net_banking
+                                                .netbanking_bank_code,
+                                            netbanking_bank_name: installment.payment_detail.net_banking
+                                                .netbanking_bank_name,
+                                        },
+                                    };
+                                    break;
+                                case 'wallet':
+                                    if (!installment?.payment_detail?.wallet?.provider) {
+                                        throw new common_1.BadRequestException('Wallet provider is required');
+                                    }
+                                    detail = {
+                                        wallet: {
+                                            channel: null,
+                                            provider: installment.payment_detail.wallet.provider,
+                                        },
+                                    };
+                                    break;
+                                default: {
+                                }
+                            }
+                            const request = await this.databaseService.CollectRequestModel.create({
+                                amount: installment.net_amount,
+                                callbackUrl: callback_url,
+                                gateway: collect_request_schema_1.Gateway.EDVIRON_PAY,
+                                isCollectNow: true,
+                                school_id,
+                                trustee_id,
+                                additional_data: JSON.stringify(additional_data || {}),
+                                req_webhook_urls: [webhook_url],
+                                easebuzzVendors: easebuzzVendors || [],
+                                cashfreeVedors: cashfreeVedors || [],
+                            });
+                            const requestStatus = await new this.databaseService.CollectRequestStatusModel({
+                                collect_id: request._id,
+                                status: collect_req_status_schema_1.PaymentStatus.SUCCESS,
+                                order_amount: request.amount,
+                                transaction_amount: request.amount,
+                                payment_method: null,
+                                details: JSON.stringify(detail),
+                                bank_reference: installment.payment_detail.bank_reference_number || '',
+                            }).save();
+                            newinstallment =
+                                await this.databaseService.InstallmentsModel.create({
+                                    school_id,
+                                    trustee_id,
+                                    student_id,
+                                    student_number,
+                                    student_name,
+                                    student_email,
+                                    additional_data,
+                                    callback_url,
+                                    webhook_url,
+                                    amount: installment.amount,
+                                    net_amount: installment.net_amount,
+                                    discount: installment.discount,
+                                    year: installment.year || year,
+                                    month: installment.month || month,
+                                    gateway,
+                                    fee_heads: installment.fee_heads,
+                                    status: 'paid',
+                                    label: installment.label,
+                                    preSelected: installment.preSelected || false,
+                                    body: installment.body,
+                                    isSplitPayments: split_payments,
+                                    collect_id: request._id,
+                                    ...vendorsBlock,
+                                });
+                        }
+                        else {
+                            newinstallment =
+                                await this.databaseService.InstallmentsModel.create({
+                                    school_id,
+                                    trustee_id,
+                                    student_id,
+                                    student_number,
+                                    student_name,
+                                    student_email,
+                                    additional_data,
+                                    callback_url,
+                                    webhook_url,
+                                    amount: installment.amount,
+                                    net_amount: installment.net_amount,
+                                    discount: installment.discount,
+                                    year: installment.year || year,
+                                    month: installment.month || month,
+                                    gateway,
+                                    fee_heads: installment.fee_heads,
+                                    status: 'unpaid',
+                                    label: installment.label,
+                                    preSelected: installment.preSelected || false,
+                                    body: installment.body,
+                                    isSplitPayments: split_payments,
+                                    ...vendorsBlock,
+                                });
+                        }
+                        return newinstallment;
+                    }
+                    if (existing.status === 'paid') {
+                        return existing;
+                    }
+                    let updateExisting;
+                    if (installment.isPaid) {
+                        let mode = installment.payment_mode;
+                        console.log(mode, 'dsfdsaf');
+                        if (!mode) {
+                            throw new common_1.BadRequestException('payment mode required');
+                        }
+                        let detail;
+                        switch (mode) {
+                            case 'upi':
+                                if (!installment?.payment_detail?.upi?.upi_id) {
+                                    throw new common_1.BadRequestException('upi id is required');
+                                }
+                                detail = {
+                                    upi: {
+                                        channel: null,
+                                        upi_id: installment?.payment_detail?.upi?.upi_id,
+                                    },
+                                };
+                                break;
+                            case 'credit_card':
+                                if (!installment?.payment_detail?.card?.card_bank_name ||
+                                    !installment?.payment_detail?.card?.card_network ||
+                                    !installment?.payment_detail?.card?.card_number ||
+                                    !installment?.payment_detail?.card?.card_type) {
+                                    throw new common_1.BadRequestException('All credit card details are required');
+                                }
+                                detail = {
+                                    card: {
+                                        card_bank_name: installment.payment_detail.card.card_bank_name,
+                                        card_network: installment.payment_detail.card.card_network,
+                                        card_number: installment.payment_detail.card.card_number,
+                                        card_type: installment.payment_detail.card.card_type,
+                                    },
+                                };
+                                break;
+                            case 'debit_card':
+                                if (!installment?.payment_detail?.card?.card_bank_name ||
+                                    !installment?.payment_detail?.card?.card_network ||
+                                    !installment?.payment_detail?.card?.card_number ||
+                                    !installment?.payment_detail?.card?.card_type) {
+                                    throw new common_1.BadRequestException('All debit card details are required');
+                                }
+                                detail = {
+                                    card: {
+                                        card_bank_name: installment.payment_detail.card.card_bank_name,
+                                        card_network: installment.payment_detail.card.card_network,
+                                        card_number: installment.payment_detail.card.card_number,
+                                        card_type: installment.payment_detail.card.card_type,
+                                    },
+                                };
+                                break;
+                            case 'net_banking':
+                                if (!installment?.payment_detail?.net_banking
+                                    ?.netbanking_bank_code ||
+                                    !installment?.payment_detail?.net_banking
+                                        ?.netbanking_bank_name) {
+                                    throw new common_1.BadRequestException('Net banking bank code and name are required');
+                                }
+                                detail = {
+                                    netbanking: {
+                                        channel: null,
+                                        netbanking_bank_code: installment.payment_detail.net_banking
+                                            .netbanking_bank_code,
+                                        netbanking_bank_name: installment.payment_detail.net_banking
+                                            .netbanking_bank_name,
+                                    },
+                                };
+                                break;
+                            case 'wallet':
+                                if (!installment?.payment_detail?.wallet?.provider) {
+                                    throw new common_1.BadRequestException('Wallet provider is required');
+                                }
+                                detail = {
+                                    wallet: {
+                                        channel: null,
+                                        provider: installment.payment_detail.wallet.provider,
+                                    },
+                                };
+                                break;
+                            default: {
+                            }
+                        }
+                        const request = await this.databaseService.CollectRequestModel.create({
+                            amount: installment.net_amount,
+                            callbackUrl: callback_url,
+                            gateway: collect_request_schema_1.Gateway.EDVIRON_PAY,
+                            isCollectNow: true,
+                            school_id,
+                            trustee_id,
+                            additional_data: JSON.stringify(additional_data || {}),
+                            req_webhook_urls: [webhook_url],
+                            easebuzzVendors: easebuzzVendors || [],
+                            cashfreeVedors: cashfreeVedors || [],
+                        });
+                        const requestStatus = await new this.databaseService.CollectRequestStatusModel({
+                            collect_id: request._id,
+                            status: collect_req_status_schema_1.PaymentStatus.SUCCESS,
+                            order_amount: request.amount,
+                            transaction_amount: request.amount,
+                            payment_method: null,
+                            details: JSON.stringify(detail),
+                            bank_reference: installment.payment_detail.bank_reference_number || '',
+                        }).save();
+                        updateExisting =
+                            await this.databaseService.InstallmentsModel.findOneAndUpdate(filter, {
+                                $set: {
+                                    collect_id: request._id,
+                                    status: 'paid',
+                                },
+                            });
+                    }
+                    else {
+                        updateExisting =
+                            await this.databaseService.InstallmentsModel.updateOne(filter, {
+                                $set: {
+                                    amount: installment.amount,
+                                    net_amount: installment.net_amount,
+                                    discount: installment.discount,
+                                    fee_head: installment.fee_head,
+                                    label: installment.label,
+                                    preSelected: installment.preSelected || false,
+                                    body: installment.body,
+                                    gateway,
+                                    callback_url,
+                                    webhook_url,
+                                    additional_data,
+                                    student_number,
+                                    student_name,
+                                    student_email,
+                                    fee_heads: installment.fee_heads,
+                                    status: 'unpaid',
+                                    isSplitPayments: split_payments,
+                                    ...vendorsBlock,
+                                },
+                            });
+                    }
+                    return updateExisting;
+                }));
+            }
+            else {
+                throw new Error('No installments found or isInstallement is false');
+            }
+            console.log('Installments upserted successfully');
+            return {
+                status: 'installment updated successfully for student_id: ' + student_id,
+                student_id: student_id,
+                school_id: school_id,
+                url: `${process.env.PG_FRONTEND}/collect-fee?student_id=${student_id}&school_id=${school_id}&trustee_id=${trustee_id}`,
+            };
         }
-        else {
-            throw new Error('No installments found or isInstallement is false');
+        catch (error) {
+            console.log(error, 'error');
+            throw new common_1.BadRequestException(error.response);
         }
-        console.log('Installments upserted successfully');
-        return {
-            status: 'installment updated successfully for student_id: ' + student_id,
-            student_id: student_id,
-            school_id: school_id,
-            url: `${process.env.PG_FRONTEND}/collect-fee?student_id=${student_id}&school_id=${school_id}&trustee_id=${trustee_id}`,
-        };
     }
     async getInstallmentPayments(req) {
         try {
             const { student_id, school_id } = req.query;
-            const checkStudent = await this.databaseService.StudentDetailModel.findOne({ student_id, school_id: new mongoose_1.Types.ObjectId(school_id) });
+            const checkStudent = await this.databaseService.StudentDetailModel.findOne({
+                student_id,
+                school_id: new mongoose_1.Types.ObjectId(school_id),
+            });
             if (!checkStudent) {
                 throw new common_1.BadRequestException('Student not found');
             }
@@ -126,7 +402,7 @@ let EdvironPayController = class EdvironPayController {
                     accept: 'application/json',
                     'content-type': 'application/json',
                     'x-api-version': '2023-08-01',
-                }
+                },
             };
             const { data } = await axios_1.default.request(config);
             const url = `${process.env.PG_FRONTEND}/collect-fee?student_id=${student_id}&school_id=${checkStudent?.school_id}&trustee_id=${checkStudent?.trustee_id}&token=${data.sign}`;
@@ -537,7 +813,7 @@ let EdvironPayController = class EdvironPayController {
             if (!request) {
                 throw new common_1.BadRequestException('Collect request not found');
             }
-            if (collect_status?.payment_method !== "cheque") {
+            if (collect_status?.payment_method !== 'cheque') {
                 throw new common_1.BadRequestException('payment is not paid through cheque');
             }
             const decrypt = _jwt.verify(token, process.env.KEY);
@@ -594,7 +870,7 @@ let EdvironPayController = class EdvironPayController {
             }
             studentDetail = {
                 ...studentDetail,
-                ...data
+                ...data,
             };
             let installments = await this.databaseService.InstallmentsModel.find({
                 student_id,
