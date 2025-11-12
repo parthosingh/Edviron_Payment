@@ -379,7 +379,7 @@ export class GatepayService {
 
       const { gatepay_mid, gatepay_key, gatepay_iv, gatepay_terminal_id } = gatepay;
 
-      const transactionId = collect._id.toString();
+      const transactionId = gatepay.txnId;
       const key = gatepay_key; 
       const iv = gatepay_iv;
       const mid = gatepay_mid;
