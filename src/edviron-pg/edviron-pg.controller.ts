@@ -2977,25 +2977,7 @@ export class EdvironPgController {
     }
   }
 
-  @Post('/gatepay-refund')
-  async gatewayRefund(
-    @Body()
-    body: {
-      collect_id: string;
-      amount: number;
-      refund_id: string;
-      token: string;
-    }
-  ){
-    const { collect_id, amount, refund_id, token } = body;
-
-    let decrypted = jwt.verify(token, process.env.KEY!) as any;
-
-    
-
-
-
-  }
+  
 
   @Get('/refund-status')
   async getRefundStatus(@Req() req: any) {

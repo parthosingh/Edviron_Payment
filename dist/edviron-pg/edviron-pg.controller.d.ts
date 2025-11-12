@@ -121,12 +121,6 @@ export declare class EdvironPgController {
         refund_id: string;
         token: string;
     }): Promise<any>;
-    gatewayRefund(body: {
-        collect_id: string;
-        amount: number;
-        refund_id: string;
-        token: string;
-    }): Promise<void>;
     getRefundStatus(req: any): Promise<any>;
     sentMail(req: any): Promise<void>;
     terminate(req: any): Promise<any>;

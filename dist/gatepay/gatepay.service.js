@@ -337,7 +337,7 @@ let GatepayService = class GatepayService {
                 throw new common_1.BadRequestException('Collect request not found');
             const { gatepay } = collect;
             const { gatepay_mid, gatepay_key, gatepay_iv, gatepay_terminal_id } = gatepay;
-            const transactionId = collect._id.toString();
+            const transactionId = gatepay.txnId;
             const key = gatepay_key;
             const iv = gatepay_iv;
             const mid = gatepay_mid;
@@ -350,14 +350,18 @@ let GatepayService = class GatepayService {
                 amount,
                 description: 'Refund Initiated',
             };
-            const encryptedPayload = this.encryptEas(JSON.stringify(payload), key, iv);
+            const encryptedPayload = await this.encryptEas(JSON.stringify(payload), key, iv);
             const config = {
                 url: `${process.env.GET_E_PAY_URL}/getepayPortal/pg/refundRequest `,
                 method: 'post',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                data: encryptedPayload,
+                data: {
+                    mid,
+                    req: encryptedPayload,
+                    terminalId
+                },
             };
             const response = await axios_1.default.request(config);
             const decrypted = await this.decryptEas(response.data.response, gatepay_key, gatepay_iv);

@@ -2180,10 +2180,6 @@ let EdvironPgController = class EdvironPgController {
             throw new common_1.BadRequestException(e.message);
         }
     }
-    async gatewayRefund(body) {
-        const { collect_id, amount, refund_id, token } = body;
-        let decrypted = jwt.verify(token, process.env.KEY);
-    }
     async getRefundStatus(req) {
         const collect_id = req.query.collect_id;
         return await this.easebuzzService.checkRefundSttaus(collect_id);
@@ -4572,13 +4568,6 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPgController.prototype, "initiaterefund", null);
-__decorate([
-    (0, common_1.Post)('/gatepay-refund'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], EdvironPgController.prototype, "gatewayRefund", null);
 __decorate([
     (0, common_1.Get)('/refund-status'),
     __param(0, (0, common_1.Req)()),
