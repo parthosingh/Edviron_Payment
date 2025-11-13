@@ -53,7 +53,7 @@ export class EdvironPayController {
         easebuzzVendors,
         callback_url,
         webhook_url,
-        sign
+        sign,
       } = body;
 
       const { student_id, student_number, student_name, student_email } =
@@ -81,6 +81,55 @@ export class EdvironPayController {
         };
         validateSequentialTrue('preSelected');
         validateSequentialTrue('isPaid');
+        const studentId = student_id; // ensure this is available in scope
+
+        // Fetch all installments of that student once
+        const allInstallments =
+          await this.databaseService.InstallmentsModel.find({
+            student_id: studentId,
+          }).lean();
+
+        for (const installment of installments) {
+          const currentMonth = Number(installment.month);
+          const currentYear = Number(installment.year);
+
+          // Filter only previous installments (before current month/year)
+          const previousInstallments = allInstallments.filter(
+            (inst) =>
+              Number(inst.year) < currentYear ||
+              (Number(inst.year) === currentYear &&
+                Number(inst.month) < currentMonth),
+          );
+
+          if (previousInstallments && previousInstallments.length > 0) {
+            // Only check if the current installment isPaid = true
+            if (installment.isPaid === true) {
+              const unpaid = previousInstallments.find(
+                (inst) => inst.isPaid === false || inst.isPaid === undefined,
+              );
+
+              if (unpaid) {
+                throw new BadRequestException(
+                  `Cannot mark installment for ${installment.month}/${installment.year} as paid because a previous installment (${unpaid.month}/${unpaid.year}) is still unpaid.`,
+                );
+              }
+            }
+
+            // Similarly, only check preSelected if current one is true
+            if (installment.preSelected === true) {
+              const preselect = previousInstallments.find(
+                (inst) =>
+                  inst.preSelected === false || inst.preSelected === undefined,
+              );
+
+              if (preselect) {
+                throw new BadRequestException(
+                  `Cannot mark installment for ${installment.month}/${installment.year} as preSelected because a previous installment (${preselect.month}/${preselect.year}) is not preSelected.`,
+                );
+              }
+            }
+          }
+        }
       }
 
       if (isInstallement && installments && installments.length > 0) {
@@ -110,16 +159,112 @@ export class EdvironPayController {
               let newinstallment;
               if (installment.isPaid) {
                 let mode = installment.payment_mode;
-                let detail;
                 if (!mode) {
                   throw new BadRequestException('payment mode required');
                 }
+                let detail;
+                let payment_method;
 
                 switch (mode) {
+                  case 'demand_draft':
+                    payment_method = 'demand_draft';
+                    detail = {
+                      demand_draft: {
+                        dd_number:
+                          installment?.payment_detail?.dd_detail?.dd_number ||
+                          'N/A',
+                        bank_name:
+                          installment?.payment_detail?.dd_detail?.bank_name ||
+                          'N/A',
+                        branch_name:
+                          installment?.payment_detail?.dd_detail?.branch_name ||
+                          'N/A',
+                        depositor_name:
+                          installment?.payment_detail?.dd_detail
+                            ?.depositor_name || 'N/A',
+                        remarks:
+                          installment?.payment_detail?.dd_detail?.remark ||
+                          'N/A',
+                      },
+                    };
+                    break;
+
+                  case 'CASH':
+                    payment_method = 'cash';
+                    detail = {
+                      cash: {
+                        amount,
+                        notes:
+                          installment?.payment_detail?.cash_detail?.note || {},
+                        depositor_name:
+                          installment?.payment_detail?.cash_detail
+                            ?.depositor_name || 'N/A',
+                        collector_name:
+                          installment?.payment_detail?.cash_detail
+                            ?.collector_name || 'N/A',
+                        remark:
+                          installment?.payment_detail?.cash_detail?.remark ||
+                          'N/A',
+                        date:
+                          installment?.payment_detail?.cash_detail?.date ||
+                          'N/A',
+                        total_cash_amount:
+                          installment?.payment_detail?.cash_detail
+                            ?.total_cash_amount || 'N/A',
+                      },
+                    };
+                    break;
+
+                  case 'STATIC_QR':
+                    payment_method = 'upi';
+                    detail = {
+                      upi: {
+                        amount,
+                        upi_id:
+                          installment?.payment_detail?.static_qr?.upiId || {},
+                        transaction_amount:
+                          installment?.payment_detail?.static_qr
+                            ?.transactionAmount || 'N/A',
+                        bank_ref:
+                          installment?.payment_detail?.static_qr
+                            ?.bankReferenceNo || 'N/A',
+                        app_name:
+                          installment?.payment_detail?.static_qr?.appName ||
+                          'N/A',
+                      },
+                    };
+                    break;
+
+                  case 'cheque':
+                    payment_method = 'cheque';
+                    detail = {
+                      cheque: {
+                        cheque_no:
+                          installment?.payment_detail?.cheque_detail?.chequeNo,
+                        date_on_cheque:
+                          installment?.payment_detail?.cheque_detail
+                            ?.dateOnCheque,
+                        amount,
+                        remarks:
+                          installment?.payment_detail?.cheque_detail?.remarks ||
+                          'N/A',
+                        payer: {
+                          account_holder_name:
+                            installment?.payment_detail?.cheque_detail
+                              ?.accountHolderName || 'N/A',
+                          bank_name:
+                            installment?.payment_detail?.cheque_detail
+                              ?.bankName || 'N/A',
+                        },
+                      },
+                    };
+                    break;
+
                   case 'upi':
                     if (!installment?.payment_detail?.upi?.upi_id) {
                       throw new BadRequestException('upi id is required');
                     }
+                    payment_method = 'upi';
                     detail = {
                       upi: {
                         channel: null,
@@ -139,6 +284,7 @@ export class EdvironPayController {
                         'All credit card details are required',
                       );
                     }
+                    payment_method = 'credit_card';
                     detail = {
                       card: {
                         card_bank_name:
@@ -163,6 +309,7 @@ export class EdvironPayController {
                         'All debit card details are required',
                       );
                     }
+                    payment_method = 'debit_card';
                     detail = {
                       card: {
                         card_bank_name:
@@ -187,6 +334,7 @@ export class EdvironPayController {
                         'Net banking bank code and name are required',
                       );
                     }
+                    payment_method = 'net_banking';
                     detail = {
                       netbanking: {
                         channel: null,
@@ -206,6 +354,7 @@ export class EdvironPayController {
                         'Wallet provider is required',
                       );
                     }
+                    payment_method = 'wallet';
                     detail = {
                       wallet: {
                         channel: null,
@@ -239,7 +388,7 @@ export class EdvironPayController {
                     status: PaymentStatus.SUCCESS,
                     order_amount: request.amount,
                     transaction_amount: request.amount,
-                    payment_method: null,
+                    payment_method: payment_method,
                     details: JSON.stringify(detail),
                     bank_reference:
                       installment.payment_detail.bank_reference_number || '',
@@ -307,17 +456,40 @@ export class EdvironPayController {
             let updateExisting;
             if (installment.isPaid) {
               let mode = installment.payment_mode;
-              console.log(mode, 'dsfdsaf');
               if (!mode) {
                 throw new BadRequestException('payment mode required');
               }
               let detail;
+              let payment_method;
 
               switch (mode) {
+                case 'demand_draft':
+                  payment_method = 'demand_draft';
+                  detail = {
+                    demand_draft: {
+                      dd_number:
+                        installment?.payment_detail?.dd_detail?.dd_number ||
+                        'N/A',
+                      bank_name:
+                        installment?.payment_detail?.dd_detail?.bank_name ||
+                        'N/A',
+                      branch_name:
+                        installment?.payment_detail?.dd_detail?.branch_name ||
+                        'N/A',
+                      depositor_name:
+                        installment?.payment_detail?.dd_detail
+                          ?.depositor_name || 'N/A',
+                      remarks:
+                        installment?.payment_detail?.dd_detail?.remark || 'N/A',
+                    },
+                  };
+                  break;
+
                 case 'upi':
                   if (!installment?.payment_detail?.upi?.upi_id) {
                     throw new BadRequestException('upi id is required');
                   }
+                  payment_method = 'upi';
                   detail = {
                     upi: {
                       channel: null,
@@ -337,6 +509,7 @@ export class EdvironPayController {
                       'All credit card details are required',
                     );
                   }
+                  payment_method = 'credit_card';
                   detail = {
                     card: {
                       card_bank_name:
@@ -360,6 +533,7 @@ export class EdvironPayController {
                       'All debit card details are required',
                     );
                   }
+                  payment_method = 'debit_card';
                   detail = {
                     card: {
                       card_bank_name:
@@ -383,6 +557,7 @@ export class EdvironPayController {
                       'Net banking bank code and name are required',
                     );
                   }
+                  payment_method = 'net_banking';
                   detail = {
                     netbanking: {
                       channel: null,
@@ -402,6 +577,7 @@ export class EdvironPayController {
                       'Wallet provider is required',
                     );
                   }
+                  payment_method = 'wallet';
                   detail = {
                     wallet: {
                       channel: null,
@@ -435,7 +611,7 @@ export class EdvironPayController {
                   status: PaymentStatus.SUCCESS,
                   order_amount: request.amount,
                   transaction_amount: request.amount,
-                  payment_method: null,
+                  payment_method: payment_method,
                   details: JSON.stringify(detail),
                   bank_reference:
                     installment.payment_detail.bank_reference_number || '',
