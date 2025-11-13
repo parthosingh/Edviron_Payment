@@ -30,7 +30,12 @@ export class ReconcilationService {
                 }
             });
 
-            if (!collectReqs.length) return;
+            if (!collectReqs.length) {
+                cronManagement.startDate = new Date(cronManagement.startDate.getTime() + 25 * 60 * 1000)
+                cronManagement.endDate = new Date(cronManagement.endDate.getTime() + 25 * 60 * 1000)
+                await cronManagement.save()
+                return
+            };
 
             const updates = [];
 
@@ -70,7 +75,10 @@ export class ReconcilationService {
                 event: 'TERMINATE_PAYMENT'
             });
 
-            if (!cronManagement) return;
+            if (!cronManagement) {
+
+                return
+            };
             if (!cronManagement.startDate || !cronManagement.endDate) return;
 
             const collectReqs = await this.databaseService.CollectRequestStatusModel.find({
@@ -80,7 +88,12 @@ export class ReconcilationService {
                     $lte: cronManagement.endDate
                 }
             });
-            if (!collectReqs.length) return;
+            if (!collectReqs.length) {
+                cronManagement.startDate = new Date(cronManagement.startDate.getTime() + 25 * 60 * 1000)
+                cronManagement.endDate = new Date(cronManagement.endDate.getTime() + 25 * 60 * 1000)
+                await cronManagement.save()
+                return
+            };
 
 
             const updates = [];

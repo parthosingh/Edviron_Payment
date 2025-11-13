@@ -36,8 +36,13 @@ let ReconcilationService = class ReconcilationService {
                     $lte: cronManagement.endDate
                 }
             });
-            if (!collectReqs.length)
+            if (!collectReqs.length) {
+                cronManagement.startDate = new Date(cronManagement.startDate.getTime() + 25 * 60 * 1000);
+                cronManagement.endDate = new Date(cronManagement.endDate.getTime() + 25 * 60 * 1000);
+                await cronManagement.save();
                 return;
+            }
+            ;
             const updates = [];
             for (const req of collectReqs) {
                 const reqStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: req._id });
@@ -72,8 +77,10 @@ let ReconcilationService = class ReconcilationService {
             const cronManagement = await this.databaseService.cronManagement.findOne({
                 event: 'TERMINATE_PAYMENT'
             });
-            if (!cronManagement)
+            if (!cronManagement) {
                 return;
+            }
+            ;
             if (!cronManagement.startDate || !cronManagement.endDate)
                 return;
             const collectReqs = await this.databaseService.CollectRequestStatusModel.find({
@@ -83,8 +90,13 @@ let ReconcilationService = class ReconcilationService {
                     $lte: cronManagement.endDate
                 }
             });
-            if (!collectReqs.length)
+            if (!collectReqs.length) {
+                cronManagement.startDate = new Date(cronManagement.startDate.getTime() + 25 * 60 * 1000);
+                cronManagement.endDate = new Date(cronManagement.endDate.getTime() + 25 * 60 * 1000);
+                await cronManagement.save();
                 return;
+            }
+            ;
             const updates = [];
             for (const req of collectReqs) {
                 const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
