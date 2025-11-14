@@ -61,7 +61,7 @@ let EdvironPayController = class EdvironPayController {
                             Number(inst.month) < currentMonth));
                     if (previousInstallments && previousInstallments.length > 0) {
                         if (installment.isPaid === true) {
-                            const unpaid = previousInstallments.find((inst) => inst.isPaid === false || inst.isPaid === undefined);
+                            const unpaid = previousInstallments.find((inst) => inst.status === 'unpaid');
                             if (unpaid) {
                                 throw new common_1.BadRequestException(`Cannot mark installment for ${installment.month}/${installment.year} as paid because a previous installment (${unpaid.month}/${unpaid.year}) is still unpaid.`);
                             }

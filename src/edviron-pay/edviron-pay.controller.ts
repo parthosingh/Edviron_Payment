@@ -107,7 +107,7 @@ export class EdvironPayController {
             // Only check if the current installment isPaid = true
             if (installment.isPaid === true) {
               const unpaid = previousInstallments.find(
-                (inst) => inst.isPaid === false || inst.isPaid === undefined,
+                (inst) => inst.status === 'unpaid',
               );
 
               if (unpaid) {
