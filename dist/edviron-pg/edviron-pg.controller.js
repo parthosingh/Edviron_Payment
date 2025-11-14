@@ -1375,7 +1375,7 @@ let EdvironPgController = class EdvironPgController {
     }
     async bulkTransactions(body, res, req) {
         console.time('bulk-transactions-report');
-        const { trustee_id, token, searchParams, isCustomSearch, seachFilter, isQRCode, gateway, } = body;
+        const { trustee_id, token, searchParams, isCustomSearch, seachFilter, isQRCode, gateway, isCollectNow } = body;
         let { payment_modes } = body;
         if (!token)
             throw new Error('Token not provided');
@@ -1406,6 +1406,12 @@ let EdvironPgController = class EdvironPgController {
                 collectQuery = {
                     trustee_id: trustee_id,
                     additional_data: { $regex: searchParams, $options: 'i' },
+                };
+            }
+            if (isCollectNow) {
+                collectQuery = {
+                    ...collectQuery,
+                    isCollectNow: isCollectNow,
                 };
             }
             if (school_id !== null && school_id !== 'null') {

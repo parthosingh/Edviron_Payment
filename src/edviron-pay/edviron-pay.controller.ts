@@ -24,12 +24,14 @@ import { PlatformCharge } from 'src/database/schemas/platform.charges.schema';
 import axios from 'axios';
 import * as _jwt from 'jsonwebtoken';
 import { Types } from 'mongoose';
+import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 
 @Controller('edviron-pay')
 export class EdvironPayController {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly edvironPay: EdvironPayService,
+    private readonly edvironPgService: EdvironPgService,
   ) {}
 
   @Post('installments')
@@ -159,6 +161,7 @@ export class EdvironPayController {
               let newinstallment;
               if (installment.isPaid) {
                 let mode = installment.payment_mode;
+                console.log(mode, "mode", installment?.payment_detail, "test")
                 if (!mode) {
                   throw new BadRequestException('payment mode required');
                 }
@@ -195,7 +198,7 @@ export class EdvironPayController {
                       cash: {
                         amount,
                         notes:
-                          installment?.payment_detail?.cash_detail?.note || {},
+                          installment?.payment_detail?.cash_detail?.notes || {},
                         depositor_name:
                           installment?.payment_detail?.cash_detail
                             ?.depositor_name || 'N/A',
@@ -1496,6 +1499,7 @@ export class EdvironPayController {
         school_id,
         trustee_id,
       );
+      console.log(studentDetail, 'studentDetail');
 
       const config = {
         method: 'get',
@@ -1516,13 +1520,17 @@ export class EdvironPayController {
       };
       let installments = await this.databaseService.InstallmentsModel.find({
         student_id,
-      }).lean();
-
-      if (installments.length === 1) {
-        installments[0] = {
-          ...installments[0],
-          preSelected: true,
-        };
+      })
+        .sort({ year: 1, month: 1 }) // ensure sorted order (Jan → Dec)
+        .lean();
+      const firstUnpaidIndex = installments.findIndex((i) => i.status == "paid");
+      if (firstUnpaidIndex !== -1) {
+        installments = installments.map((installment, index) => ({
+          ...installment,
+          preSelected: index === firstUnpaidIndex, 
+        }));
+      } else {
+        installments = installments.map((i) => ({ ...i, preSelected: false }));
       }
 
       installments.sort((a, b) => Number(a.month) - Number(b.month));
@@ -1631,6 +1639,104 @@ export class EdvironPayController {
       return status;
     } catch (e) {
       throw new BadRequestException(e.message);
+    }
+  }
+
+  @Get('/get-fee-heads')
+  async getFeeHeads(
+    @Body()
+    body: {
+      startDate: string;
+      endDate: string;
+      school_id: string;
+      trustee_id?: string;
+      page: string;
+      limit: string;
+      isCustomSearch?: boolean;
+      searchFilter?: string;
+      searchParams?: string;
+    },
+  ) {
+    const {
+      startDate,
+      endDate,
+      trustee_id,
+      school_id,
+      page,
+      limit,
+      isCustomSearch,
+      searchFilter,
+      searchParams,
+    } = body;
+    try {
+      const startOfDayUTC = new Date(
+        await this.edvironPgService.convertISTStartToUTC(startDate),
+      ); // Start of December 6 in IST
+      const endOfDayUTC = new Date(
+        await this.edvironPgService.convertISTEndToUTC(endDate),
+      );
+      if (!school_id) {
+        throw new BadRequestException('School id required');
+      }
+      // Set hours, minutes, seconds, and milliseconds to the last moment of the day
+      // endOfDay.setHours(23, 59, 59, 999);
+      const pageNum = parseInt(page) || 1;
+      const limitNum = parseInt(limit) || 10;
+      const skip = (pageNum - 1) * limitNum;
+
+      const endOfDay = new Date(endDate);
+      // Set hours, minutes, seconds, and milliseconds to the last moment of the day
+      endOfDay.setHours(23, 59, 59, 999);
+      let collectQuery: any = {
+        // trustee_id: trustee_id,
+        school_id: school_id,
+        isCanteenTransaction: { $ne: true },
+        createdAt: {
+          $gte: startOfDayUTC,
+          $lt: endOfDayUTC,
+        },
+      };
+
+      if (startDate && endDate) {
+        collectQuery = {
+          ...collectQuery,
+          createdAt: {
+            $gte: startOfDayUTC,
+            $lt: endOfDayUTC,
+          },
+        };
+      }
+
+      const installments =
+        await this.databaseService.InstallmentsModel.aggregate([
+          { $match: collectQuery },
+          {
+            $sort: { createdAt: -1 },
+          },
+          {
+            $skip: (pageNum - 1) * limitNum,
+          },
+          { $limit: limitNum },
+          {
+            $project: {
+              _id: 0,
+              fee_heads: 1,
+            },
+          },
+        ]);
+      const tnxCount =
+        await this.databaseService.InstallmentsModel.countDocuments(
+          collectQuery,
+        );
+      const totalPages = Math.ceil(tnxCount / limitNum);
+      return {
+        totalCount: tnxCount,
+        transactionReport: installments || [],
+        current_page: pageNum,
+        total_pages: totalPages,
+      };
+    } catch (error) {
+      console.log(error);
     }
   }
 }

@@ -71,6 +71,7 @@ export declare class EdvironPgController {
         token: string;
         searchParams?: string;
         isCustomSearch?: boolean;
+        isCollectNow?: boolean;
         seachFilter?: string;
         payment_modes?: string[];
         isQRCode?: boolean;

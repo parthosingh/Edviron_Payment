@@ -22,10 +22,12 @@ const platform_charges_schema_1 = require("../database/schemas/platform.charges.
 const axios_1 = require("axios");
 const _jwt = require("jsonwebtoken");
 const mongoose_1 = require("mongoose");
+const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 let EdvironPayController = class EdvironPayController {
-    constructor(databaseService, edvironPay) {
+    constructor(databaseService, edvironPay, edvironPgService) {
         this.databaseService = databaseService;
         this.edvironPay = edvironPay;
+        this.edvironPgService = edvironPgService;
     }
     async upsertInstallments(body) {
         try {
@@ -95,6 +97,7 @@ let EdvironPayController = class EdvironPayController {
                         let newinstallment;
                         if (installment.isPaid) {
                             let mode = installment.payment_mode;
+                            console.log(mode, "mode", installment?.payment_detail, "test");
                             if (!mode) {
                                 throw new common_1.BadRequestException('payment mode required');
                             }
@@ -123,7 +126,7 @@ let EdvironPayController = class EdvironPayController {
                                     detail = {
                                         cash: {
                                             amount,
-                                            notes: installment?.payment_detail?.cash_detail?.note || {},
+                                            notes: installment?.payment_detail?.cash_detail?.notes || {},
                                             depositor_name: installment?.payment_detail?.cash_detail
                                                 ?.depositor_name || 'N/A',
                                             collector_name: installment?.payment_detail?.cash_detail
@@ -978,6 +981,7 @@ let EdvironPayController = class EdvironPayController {
     async getStudentInstallments(student_id, school_id, trustee_id) {
         try {
             let studentDetail = await this.edvironPay.studentFind(student_id, school_id, trustee_id);
+            console.log(studentDetail, 'studentDetail');
             const config = {
                 method: 'get',
                 url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-trustee-school-logo?school_id=${school_id}&trustee_id=${trustee_id}`,
@@ -996,12 +1000,18 @@ let EdvironPayController = class EdvironPayController {
             };
             let installments = await this.databaseService.InstallmentsModel.find({
                 student_id,
-            }).lean();
-            if (installments.length === 1) {
-                installments[0] = {
-                    ...installments[0],
-                    preSelected: true,
-                };
+            })
+                .sort({ year: 1, month: 1 })
+                .lean();
+            const firstUnpaidIndex = installments.findIndex((i) => i.status == "paid");
+            if (firstUnpaidIndex !== -1) {
+                installments = installments.map((installment, index) => ({
+                    ...installment,
+                    preSelected: index === firstUnpaidIndex,
+                }));
+            }
+            else {
+                installments = installments.map((i) => ({ ...i, preSelected: false }));
             }
             installments.sort((a, b) => Number(a.month) - Number(b.month));
             return {
@@ -1102,6 +1112,65 @@ let EdvironPayController = class EdvironPayController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async getFeeHeads(body) {
+        const { startDate, endDate, trustee_id, school_id, page, limit, isCustomSearch, searchFilter, searchParams, } = body;
+        try {
+            const startOfDayUTC = new Date(await this.edvironPgService.convertISTStartToUTC(startDate));
+            const endOfDayUTC = new Date(await this.edvironPgService.convertISTEndToUTC(endDate));
+            if (!school_id) {
+                throw new common_1.BadRequestException('School id required');
+            }
+            const pageNum = parseInt(page) || 1;
+            const limitNum = parseInt(limit) || 10;
+            const skip = (pageNum - 1) * limitNum;
+            const endOfDay = new Date(endDate);
+            endOfDay.setHours(23, 59, 59, 999);
+            let collectQuery = {
+                school_id: school_id,
+                isCanteenTransaction: { $ne: true },
+                createdAt: {
+                    $gte: startOfDayUTC,
+                    $lt: endOfDayUTC,
+                },
+            };
+            if (startDate && endDate) {
+                collectQuery = {
+                    ...collectQuery,
+                    createdAt: {
+                        $gte: startOfDayUTC,
+                        $lt: endOfDayUTC,
+                    },
+                };
+            }
+            const installments = await this.databaseService.InstallmentsModel.aggregate([
+                { $match: collectQuery },
+                {
+                    $sort: { createdAt: -1 },
+                },
+                {
+                    $skip: (pageNum - 1) * limitNum,
+                },
+                { $limit: limitNum },
+                {
+                    $project: {
+                        _id: 0,
+                        fee_heads: 1,
+                    },
+                },
+            ]);
+            const tnxCount = await this.databaseService.InstallmentsModel.countDocuments(collectQuery);
+            const totalPages = Math.ceil(tnxCount / limitNum);
+            return {
+                totalCount: tnxCount,
+                transactionReport: installments || [],
+                current_page: pageNum,
+                total_pages: totalPages,
+            };
+        }
+        catch (error) {
+            console.log(error);
+        }
+    }
 };
 exports.EdvironPayController = EdvironPayController;
 __decorate([
@@ -1180,9 +1249,17 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EdvironPayController.prototype, "checkDqrStatus", null);
+__decorate([
+    (0, common_1.Get)('/get-fee-heads'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPayController.prototype, "getFeeHeads", null);
 exports.EdvironPayController = EdvironPayController = __decorate([
     (0, common_1.Controller)('edviron-pay'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
-        edviron_pay_service_1.EdvironPayService])
+        edviron_pay_service_1.EdvironPayService,
+        edviron_pg_service_1.EdvironPgService])
 ], EdvironPayController);
 //# sourceMappingURL=edviron-pay.controller.js.map

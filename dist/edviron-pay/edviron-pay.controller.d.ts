@@ -27,10 +27,12 @@ import { EdvironPayPaymentStatus } from 'src/database/schemas/collect_req_status
 import { PaymentIds } from 'src/database/schemas/collect_request.schema';
 import { EdvironPayService } from './edviron-pay.service';
 import { Types } from 'mongoose';
+import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 export declare class EdvironPayController {
     private readonly databaseService;
     private readonly edvironPay;
-    constructor(databaseService: DatabaseService, edvironPay: EdvironPayService);
+    private readonly edvironPgService;
+    constructor(databaseService: DatabaseService, edvironPay: EdvironPayService, edvironPgService: EdvironPgService);
     upsertInstallments(body: any): Promise<{
         status: string;
         student_id: any;
@@ -218,6 +220,9 @@ export declare class EdvironPayController {
             school_id: string;
             student_email: string;
             student_number: string;
+            student_class: string;
+            student_section: string;
+            student_gender: string;
         };
     }>;
     getInstallCallbackCashfree(collect_id: string): Promise<void>;
@@ -251,4 +256,20 @@ export declare class EdvironPayController {
         status: null;
         returnUrl: null;
     }>;
+    getFeeHeads(body: {
+        startDate: string;
+        endDate: string;
+        school_id: string;
+        trustee_id?: string;
+        page: string;
+        limit: string;
+        isCustomSearch?: boolean;
+        searchFilter?: string;
+        searchParams?: string;
+    }): Promise<{
+        totalCount: number;
+        transactionReport: any[];
+        current_page: number;
+        total_pages: number;
+    } | undefined>;
 }
