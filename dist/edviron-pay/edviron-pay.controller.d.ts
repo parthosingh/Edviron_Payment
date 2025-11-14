@@ -272,4 +272,13 @@ export declare class EdvironPayController {
         current_page: number;
         total_pages: number;
     } | undefined>;
+    getStudentDetail(school_id: string, trustee_id: string, student_id?: string, skip?: number, limit?: number): Promise<{
+        success: boolean;
+        totalCount: any;
+        total_pages: number;
+        current_page: number;
+        skip: number;
+        limit: number;
+        data: any[];
+    }>;
 }

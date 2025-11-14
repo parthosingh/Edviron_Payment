@@ -97,7 +97,7 @@ let EdvironPayController = class EdvironPayController {
                         let newinstallment;
                         if (installment.isPaid) {
                             let mode = installment.payment_mode;
-                            console.log(mode, "mode", installment?.payment_detail, "test");
+                            console.log(mode, 'mode', installment?.payment_detail, 'test');
                             if (!mode) {
                                 throw new common_1.BadRequestException('payment mode required');
                             }
@@ -1003,7 +1003,7 @@ let EdvironPayController = class EdvironPayController {
             })
                 .sort({ year: 1, month: 1 })
                 .lean();
-            const firstUnpaidIndex = installments.findIndex((i) => i.status == "paid");
+            const firstUnpaidIndex = installments.findIndex((i) => i.status == 'paid');
             if (firstUnpaidIndex !== -1) {
                 installments = installments.map((installment, index) => ({
                     ...installment,
@@ -1171,6 +1171,50 @@ let EdvironPayController = class EdvironPayController {
             console.log(error);
         }
     }
+    async getStudentDetail(school_id, trustee_id, student_id, skip = 0, limit = 10) {
+        try {
+            const skipNum = Number(skip) || 0;
+            const limitNum = Number(limit) || 10;
+            const pipeline = [
+                {
+                    $match: {
+                        school_id,
+                        trustee_id,
+                        ...(student_id && { student_id }),
+                    },
+                },
+                { $skip: skipNum },
+                { $limit: limitNum },
+            ];
+            const studentDetail = await this.databaseService.StudentDetailModel.aggregate(pipeline);
+            const totalCountPipeline = [
+                {
+                    $match: {
+                        school_id,
+                        trustee_id,
+                        ...(student_id && { student_id }),
+                    },
+                },
+                { $count: 'total' },
+            ];
+            const totalResult = await this.databaseService.StudentDetailModel.aggregate(totalCountPipeline);
+            const totalCount = totalResult[0]?.total || 0;
+            const total_pages = limitNum > 0 ? Math.ceil(totalCount / limitNum) : 1;
+            const current_page = limitNum > 0 ? Math.floor(skipNum / limitNum) + 1 : 1;
+            return {
+                success: true,
+                totalCount,
+                total_pages,
+                current_page,
+                skip: skipNum,
+                limit: limitNum,
+                data: studentDetail,
+            };
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
 };
 exports.EdvironPayController = EdvironPayController;
 __decorate([
@@ -1256,6 +1300,17 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPayController.prototype, "getFeeHeads", null);
+__decorate([
+    (0, common_1.Get)('/get-student-detail'),
+    __param(0, (0, common_1.Query)('school_id')),
+    __param(1, (0, common_1.Query)('trustee_id')),
+    __param(2, (0, common_1.Query)('student_id')),
+    __param(3, (0, common_1.Query)('skip')),
+    __param(4, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPayController.prototype, "getStudentDetail", null);
 exports.EdvironPayController = EdvironPayController = __decorate([
     (0, common_1.Controller)('edviron-pay'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

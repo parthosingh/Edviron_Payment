@@ -161,7 +161,7 @@ export class EdvironPayController {
               let newinstallment;
               if (installment.isPaid) {
                 let mode = installment.payment_mode;
-                console.log(mode, "mode", installment?.payment_detail, "test")
+                console.log(mode, 'mode', installment?.payment_detail, 'test');
                 if (!mode) {
                   throw new BadRequestException('payment mode required');
                 }
@@ -1523,11 +1523,13 @@ export class EdvironPayController {
       })
         .sort({ year: 1, month: 1 }) // ensure sorted order (Jan → Dec)
         .lean();
-      const firstUnpaidIndex = installments.findIndex((i) => i.status == "paid");
+      const firstUnpaidIndex = installments.findIndex(
+        (i) => i.status == 'paid',
+      );
       if (firstUnpaidIndex !== -1) {
         installments = installments.map((installment, index) => ({
           ...installment,
-          preSelected: index === firstUnpaidIndex, 
+          preSelected: index === firstUnpaidIndex,
         }));
       } else {
         installments = installments.map((i) => ({ ...i, preSelected: false }));
@@ -1739,4 +1741,68 @@ export class EdvironPayController {
       console.log(error);
     }
   }
+
+@Get('/get-student-detail')
+async getStudentDetail(
+  @Query('school_id') school_id: string,
+  @Query('trustee_id') trustee_id: string,
+  @Query('student_id') student_id?: string,
+  @Query('skip') skip = 0,
+  @Query('limit') limit = 10,
+) {
+  try {
+    const skipNum = Number(skip) || 0;
+    const limitNum = Number(limit) || 10;
+    const pipeline: any[] = [
+      {
+        $match: {
+          school_id,
+          trustee_id,
+          ...(student_id && { student_id }),
+        },
+      },
+      { $skip: skipNum },
+      { $limit: limitNum },
+    ];
+    const studentDetail =
+      await this.databaseService.StudentDetailModel.aggregate(pipeline);
+
+    const totalCountPipeline = [
+      {
+        $match: {
+          school_id,
+          trustee_id,
+          ...(student_id && { student_id }),
+        },
+      },
+      { $count: 'total' },
+    ];
+
+    const totalResult =
+      await this.databaseService.StudentDetailModel.aggregate(
+        totalCountPipeline,
+      );
+
+    const totalCount = totalResult[0]?.total || 0;
+
+    const total_pages =
+      limitNum > 0 ? Math.ceil(totalCount / limitNum) : 1;
+
+    const current_page =
+      limitNum > 0 ? Math.floor(skipNum / limitNum) + 1 : 1;
+
+    return {
+      success: true,
+      totalCount,
+      total_pages,
+      current_page,
+      skip: skipNum,
+      limit: limitNum,
+      data: studentDetail,
+    };
+  } catch (error) {
+    throw new BadRequestException(error.message);
+  }
+}
+
 }
