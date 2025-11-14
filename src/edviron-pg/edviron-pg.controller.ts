@@ -1895,6 +1895,7 @@ export class EdvironPgController {
       token: string;
       searchParams?: string;
       isCustomSearch?: boolean;
+      isCollectNow?: boolean;
       seachFilter?: string;
       payment_modes?: string[];
       isQRCode?: boolean;
@@ -1913,6 +1914,7 @@ export class EdvironPgController {
 
       isQRCode,
       gateway,
+      isCollectNow
     } = body;
     let { payment_modes } = body;
     if (!token) throw new Error('Token not provided');
@@ -1959,6 +1961,12 @@ export class EdvironPgController {
         };
       }
 
+      if (isCollectNow) {
+        collectQuery = {
+          ...collectQuery,
+          isCollectNow: isCollectNow,
+        };
+      }
       if (school_id !== null && school_id !== 'null') {
         console.log(school_id, 'school_id');
         collectQuery = {

@@ -27,6 +27,7 @@ export declare class Installments {
     webhook_url: string;
     isSplitPayments: boolean;
     preSelected: boolean;
+    isPaid: boolean;
     vendors_info?: [{
         vendor_id: string;
         amount: number;

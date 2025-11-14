@@ -103,7 +103,7 @@ let EdvironPayService = class EdvironPayService {
         }
     }
     async createStudent(student_detail, school_id, trustee_id) {
-        const { student_id, student_number, student_name, student_email, section, gender, additional_info, student_class, } = student_detail;
+        const { student_id, student_number, student_name, student_email, student_class, student_section, student_gender, } = student_detail;
         try {
             const studentDetail = await this.databaseService.StudentDetailModel.findOne({
                 student_id: student_id,
@@ -113,14 +113,14 @@ let EdvironPayService = class EdvironPayService {
             if (!studentDetail) {
                 await this.databaseService.StudentDetailModel.create({
                     student_id,
-                    student_email,
+                    student_number,
                     student_name,
-                    trustee_id,
-                    school_id,
+                    student_email,
                     student_class,
-                    section,
-                    gender,
-                    additional_info,
+                    student_section,
+                    student_gender,
+                    school_id: school_id,
+                    trustee_id: trustee_id,
                 });
             }
             return studentDetail;
@@ -136,6 +136,9 @@ let EdvironPayService = class EdvironPayService {
                 school_id: school_id,
                 trustee_id: trustee_id,
             });
+            console.log(studentDetail, "studentDetail", { student_id: student_id,
+                school_id: school_id,
+                trustee_id: trustee_id, });
             if (!studentDetail) {
                 throw new common_1.BadRequestException('student not found');
             }
@@ -164,6 +167,9 @@ let EdvironPayService = class EdvironPayService {
                 school_id: studentDetail.school_id,
                 student_email: studentDetail.student_email,
                 student_number: studentDetail.student_number,
+                student_class: studentDetail?.student_class?.toUpperCase() || 'N/A',
+                student_section: studentDetail?.student_section || 'N/A',
+                student_gender: studentDetail?.student_gender
             };
         }
         catch (error) {
@@ -236,10 +242,10 @@ let EdvironPayService = class EdvironPayService {
             if (!collectReq)
                 throw new Error('Collect request not found');
             const gateway = collectReq.gateway;
-            if (gateway === "PENDING") {
+            if (gateway === 'PENDING') {
                 return {
                     status: 'NOT INITIAT',
-                    returnUrl: null
+                    returnUrl: null,
                 };
             }
             const collectReqStatus = await this.databaseService.CollectRequestStatusModel.findOne({
@@ -250,7 +256,7 @@ let EdvironPayService = class EdvironPayService {
             if (collectReqStatus.status.toUpperCase() === 'SUCCESS') {
                 return {
                     status: 'SUCCESS',
-                    returnUrl: `${process.env.SPARKIT_DQR_URL}/displayqrcodesucessstatus?showmsg=false&amount=${collectReq.amount}&orderid=${collect_id}&bankrrn=3123123`
+                    returnUrl: `${process.env.SPARKIT_DQR_URL}/displayqrcodesucessstatus?showmsg=false&amount=${collectReq.amount}&orderid=${collect_id}&bankrrn=3123123`,
                 };
             }
             else {
@@ -258,24 +264,24 @@ let EdvironPayService = class EdvironPayService {
                 if (statusResponse.status.toLocaleUpperCase() === 'SUCCESS') {
                     return {
                         status: 'SUCCESS',
-                        returnUrl: `${process.env.SPARKIT_DQR_URL}/displayqrcodesucessstatus?showmsg=false&amount=${collectReq.amount}&orderid=${collect_id}&bankrrn=3123123`
+                        returnUrl: `${process.env.SPARKIT_DQR_URL}/displayqrcodesucessstatus?showmsg=false&amount=${collectReq.amount}&orderid=${collect_id}&bankrrn=3123123`,
                     };
                 }
                 else if (statusResponse.status === 'NOT INITIATE') {
                     return {
                         status: 'NOT INITIATE',
-                        returnUrl: null
+                        returnUrl: null,
                     };
                 }
                 else {
                     return {
                         status: statusResponse.status,
-                        returnUrl: `${process.env.SPARKIT_DQR_URL}/displayqrcodesucessstatus?showmsg=false&amount=${collectReq.amount}&orderid=${collect_id}&bankrrn=3123123`
+                        returnUrl: `${process.env.SPARKIT_DQR_URL}/displayqrcodesucessstatus?showmsg=false&amount=${collectReq.amount}&orderid=${collect_id}&bankrrn=3123123`,
                     };
                 }
                 return {
                     status: null,
-                    returnUrl: null
+                    returnUrl: null,
                 };
             }
         }

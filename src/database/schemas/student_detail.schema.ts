@@ -26,13 +26,10 @@ export class StudentDetail {
   student_class: string;
     
   @Prop({required : false})
-  section: string;
+  student_section: string;
     
   @Prop({required : false})
-  gender: string;
-    
-  @Prop({required : false})
-  additional_info: string;
+  student_gender: string;
 }
 
 export type StudentDetails = StudentDetail & Document;

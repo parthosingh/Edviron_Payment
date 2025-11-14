@@ -47,13 +47,12 @@ export declare class EdvironPayService {
     checkStatus(collect_id: string): Promise<any>;
     createStudent(student_detail: {
         student_id: string;
+        student_number: string;
         student_name: string;
         student_email: string;
-        student_number: string;
-        student_class?: string;
-        section?: string;
-        gender?: string;
-        additional_info?: string;
+        student_class: string;
+        student_section: string;
+        student_gender: string;
     }, school_id: string, trustee_id: string): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/student_detail.schema").StudentDetails> & import("../database/schemas/student_detail.schema").StudentDetail & Document & {
         _id: import("mongoose").Types.ObjectId;
     }) | null>;
@@ -65,6 +64,9 @@ export declare class EdvironPayService {
         school_id: string;
         student_email: string;
         student_number: string;
+        student_class: string;
+        student_section: string;
+        student_gender: string;
     }>;
     nonEdvironInstallments(collect_id: string): Promise<"installments update successfull" | "no installment found for this collect id">;
     erpDynamicQrRedirect(collect_id: string): Promise<{
