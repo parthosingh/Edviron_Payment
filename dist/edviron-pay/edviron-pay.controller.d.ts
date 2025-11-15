@@ -25,6 +25,7 @@
 import { DatabaseService } from 'src/database/database.service';
 import { EdvironPayPaymentStatus } from 'src/database/schemas/collect_req_status.schema';
 import { PaymentIds } from 'src/database/schemas/collect_request.schema';
+import { Installments } from 'src/database/schemas/installments.schema';
 import { EdvironPayService } from './edviron-pay.service';
 import { Types } from 'mongoose';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
@@ -281,4 +282,14 @@ export declare class EdvironPayController {
         limit: number;
         data: any[];
     }>;
+    getStudentInstallment(body: {
+        school_id: string;
+        trustee_id: string;
+        student_id: string;
+    }): Promise<{
+        message: string;
+        installments: (import("mongoose").Document<unknown, {}, import("src/database/schemas/installments.schema").InstallmentsDocument> & Installments & Document & {
+            _id: Types.ObjectId;
+        })[];
+    } | undefined>;
 }

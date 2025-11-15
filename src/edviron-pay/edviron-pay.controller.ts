@@ -1805,4 +1805,31 @@ async getStudentDetail(
   }
 }
 
+  @Get('get-student-installment')
+  async getStudentInstallment(
+    @Body()
+    body: {
+      school_id: string;
+      trustee_id: string;
+      student_id: string;
+    },
+  ) {
+    try {
+      const { school_id, trustee_id, student_id } = body;
+      const installments = await this.databaseService.InstallmentsModel.find({
+        school_id, trustee_id, student_id
+      })
+      if(!installments){
+        return {
+          message : "no installment found of this student",
+          installments : []
+        }
+      }
+      return {
+        message : "success",
+        installments
+      }
+    } catch (error) {}
+  }
+
 }

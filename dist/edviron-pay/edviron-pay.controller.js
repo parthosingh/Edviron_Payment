@@ -1215,6 +1215,25 @@ let EdvironPayController = class EdvironPayController {
             throw new common_1.BadRequestException(error.message);
         }
     }
+    async getStudentInstallment(body) {
+        try {
+            const { school_id, trustee_id, student_id } = body;
+            const installments = await this.databaseService.InstallmentsModel.find({
+                school_id, trustee_id, student_id
+            });
+            if (!installments) {
+                return {
+                    message: "no installment found of this student",
+                    installments: []
+                };
+            }
+            return {
+                message: "success",
+                installments
+            };
+        }
+        catch (error) { }
+    }
 };
 exports.EdvironPayController = EdvironPayController;
 __decorate([
@@ -1311,6 +1330,13 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPayController.prototype, "getStudentDetail", null);
+__decorate([
+    (0, common_1.Get)('get-student-installment'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EdvironPayController.prototype, "getStudentInstallment", null);
 exports.EdvironPayController = EdvironPayController = __decorate([
     (0, common_1.Controller)('edviron-pay'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
