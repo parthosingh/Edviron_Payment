@@ -1825,6 +1825,7 @@ async getStudentDetail(
           installments : []
         }
       }
+      
       return {
         message : "success",
         installments
