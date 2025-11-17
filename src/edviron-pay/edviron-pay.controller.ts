@@ -67,22 +67,6 @@ export class EdvironPayController {
       );
 
       if (isInstallement && installments && Array.isArray(installments)) {
-        const validateSequentialTrue = (key: string) => {
-          let foundFalse = false;
-          for (let i = 0; i < installments.length; i++) {
-            const val = installments[i][key];
-            if (val === true && foundFalse) {
-              throw new BadRequestException(
-                `Invalid sequence: '${key}: true' found at index ${i} after a 'false'. '${key}' values must be sequential from start.`,
-              );
-            }
-            if (val === false || val === undefined) {
-              foundFalse = true;
-            }
-          }
-        };
-        validateSequentialTrue('preSelected');
-        validateSequentialTrue('isPaid');
         const studentId = student_id; // ensure this is available in scope
 
         // Fetch all installments of that student once
@@ -121,7 +105,9 @@ export class EdvironPayController {
             if (installment.preSelected === true) {
               const preselect = previousInstallments.find(
                 (inst) =>
-                  inst.preSelected === false || inst.preSelected === undefined,
+                  inst.status !== 'paid' && // ignore paid installments
+                  (inst.preSelected === false ||
+                    inst.preSelected === undefined),
               );
 
               if (preselect) {
@@ -1742,67 +1728,65 @@ export class EdvironPayController {
     }
   }
 
-@Get('/get-student-detail')
-async getStudentDetail(
-  @Query('school_id') school_id: string,
-  @Query('trustee_id') trustee_id: string,
-  @Query('student_id') student_id?: string,
-  @Query('skip') skip = 0,
-  @Query('limit') limit = 10,
-) {
-  try {
-    const skipNum = Number(skip) || 0;
-    const limitNum = Number(limit) || 10;
-    const pipeline: any[] = [
-      {
-        $match: {
-          school_id,
-          trustee_id,
-          ...(student_id && { student_id }),
+  @Get('/get-student-detail')
+  async getStudentDetail(
+    @Query('school_id') school_id: string,
+    @Query('trustee_id') trustee_id: string,
+    @Query('student_id') student_id?: string,
+    @Query('skip') skip = 0,
+    @Query('limit') limit = 10,
+  ) {
+    try {
+      const skipNum = Number(skip) || 0;
+      const limitNum = Number(limit) || 10;
+      const pipeline: any[] = [
+        {
+          $match: {
+            school_id,
+            trustee_id,
+            ...(student_id && { student_id }),
+          },
         },
-      },
-      { $skip: skipNum },
-      { $limit: limitNum },
-    ];
-    const studentDetail =
-      await this.databaseService.StudentDetailModel.aggregate(pipeline);
+        { $skip: skipNum },
+        { $limit: limitNum },
+      ];
+      const studentDetail =
+        await this.databaseService.StudentDetailModel.aggregate(pipeline);
 
-    const totalCountPipeline = [
-      {
-        $match: {
-          school_id,
-          trustee_id,
-          ...(student_id && { student_id }),
+      const totalCountPipeline = [
+        {
+          $match: {
+            school_id,
+            trustee_id,
+            ...(student_id && { student_id }),
+          },
         },
-      },
-      { $count: 'total' },
-    ];
+        { $count: 'total' },
+      ];
 
-    const totalResult =
-      await this.databaseService.StudentDetailModel.aggregate(
-        totalCountPipeline,
-      );
+      const totalResult =
+        await this.databaseService.StudentDetailModel.aggregate(
+          totalCountPipeline,
+        );
 
-    const totalCount = totalResult[0]?.total || 0;
+      const totalCount = totalResult[0]?.total || 0;
 
-    const total_pages =
-      limitNum > 0 ? Math.ceil(totalCount / limitNum) : 1;
+      const total_pages = limitNum > 0 ? Math.ceil(totalCount / limitNum) : 1;
 
-    const current_page =
-      limitNum > 0 ? Math.floor(skipNum / limitNum) + 1 : 1;
+      const current_page =
+        limitNum > 0 ? Math.floor(skipNum / limitNum) + 1 : 1;
 
-    return {
-      success: true,
-      totalCount,
-      total_pages,
-      current_page,
-      skip: skipNum,
-      limit: limitNum,
-      data: studentDetail,
-    };
-  } catch (error) {
-    throw new BadRequestException(error.message);
+      return {
+        success: true,
+        totalCount,
+        total_pages,
+        current_page,
+        skip: skipNum,
+        limit: limitNum,
+        data: studentDetail,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
-}
-
 }
