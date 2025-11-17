@@ -205,6 +205,7 @@ export declare class EdvironPgService implements GatewayService {
             webhook_url: string;
             isSplitPayments: boolean;
             preSelected: boolean;
+            isPaid: boolean;
             vendors_info?: [import("mongoose").FlattenMaps<{
                 vendor_id: string;
                 amount: number;
