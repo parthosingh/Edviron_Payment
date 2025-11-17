@@ -1893,25 +1893,18 @@ export class EdvironPayController {
         },
       },
     },
-
     {
       $group: {
         _id: "$_id.month",
         createdAt: { $first: "$createdAt" },
-
         total_amount: { $sum: "$total_amount" },
         total_amount_paid: { $sum: "$total_paid_amount" },
-
         total_students: { $addToSet: "$_id.student" },
-
-        // count fully paid
         paid_students_completely: {
           $sum: {
             $cond: [{ $eq: ["$allPaid", 1] }, 1, 0],
           },
         },
-
-        // collect the student IDs that are fully paid
         paid_student_ids: {
           $addToSet: {
             $cond: [
