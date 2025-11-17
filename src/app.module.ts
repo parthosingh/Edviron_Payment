@@ -45,7 +45,6 @@ import { ReconcilationService } from './reconcilation/reconcilation.service';
 import { ReconcilationController } from './reconcilation/reconcilation.controller';
 import { ReconcilationModule } from './reconcilation/reconcilation.module';
 
-
 @Module({
   imports: [
         ScheduleModule.forRoot(),
@@ -70,7 +69,7 @@ import { ReconcilationModule } from './reconcilation/reconcilation.module';
     AwsS3ServiceModule,
     EdvironPayModule,
     GatewayModule,
-    CanteenModule,
+    CanteenModule,    
     ReconcilationModule,
   ],
   controllers: [

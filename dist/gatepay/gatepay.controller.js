@@ -173,6 +173,12 @@ let GatepayController = class GatepayController {
             throw new common_1.BadRequestException(error.message || 'Something went wrong');
         }
     }
+    async initiateRefund(body) {
+        const { collect_id, amount, refund_id } = body;
+        const refund = await this.gatepayService.initiateRefund(collect_id, amount, refund_id);
+        console.log(refund);
+        return refund;
+    }
 };
 exports.GatepayController = GatepayController;
 __decorate([
@@ -191,6 +197,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], GatepayController.prototype, "handleCallback", null);
+__decorate([
+    (0, common_1.Post)('refund'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], GatepayController.prototype, "initiateRefund", null);
 exports.GatepayController = GatepayController = __decorate([
     (0, common_1.Controller)('gatepay'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

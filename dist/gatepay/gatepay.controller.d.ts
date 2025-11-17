@@ -6,4 +6,15 @@ export declare class GatepayController {
     constructor(databaseService: DatabaseService, gatepayService: GatepayService);
     redirect(collect_id: string, res: any): Promise<void>;
     handleCallback(req: any, res: any): Promise<any>;
+    initiateRefund(body: {
+        collect_id: string;
+        amount: number;
+        refund_id: string;
+    }): Promise<{
+        collect_id: string;
+        refund_id: string;
+        amount: number;
+        gateway: string;
+        response: any;
+    }>;
 }

@@ -33,8 +33,9 @@ const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 const worldline_service_1 = require("../worldline/worldline.service");
 const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
 const razorpay_service_1 = require("../razorpay/razorpay.service");
+const gatepay_service_1 = require("../gatepay/gatepay.service");
 let EdvironPgController = class EdvironPgController {
-    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService, posPaytmService, worldlineService, razorpayNonseamless, razorpaySeamless) {
+    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService, posPaytmService, worldlineService, razorpayNonseamless, razorpaySeamless, gatepayService) {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
         this.easebuzzService = easebuzzService;
@@ -44,6 +45,7 @@ let EdvironPgController = class EdvironPgController {
         this.worldlineService = worldlineService;
         this.razorpayNonseamless = razorpayNonseamless;
         this.razorpaySeamless = razorpaySeamless;
+        this.gatepayService = gatepayService;
     }
     async handleRedirect(req, res) {
         const wallet = req.query.wallet;
@@ -2200,6 +2202,10 @@ let EdvironPgController = class EdvironPgController {
             if (gateway === collect_request_schema_1.Gateway.PAYTM_POS) {
                 console.log('init refund from paytm pos');
                 const refund = await this.posPaytmService.refund(collect_id, amount, refund_id);
+                return refund;
+            }
+            if (gateway === collect_request_schema_1.Gateway.EDVIRON_GATEPAY) {
+                const refund = await this.gatepayService.initiateRefund(collect_id, amount, refund_id);
                 return refund;
             }
         }
@@ -4995,6 +5001,7 @@ exports.EdvironPgController = EdvironPgController = __decorate([
         pos_paytm_service_1.PosPaytmService,
         worldline_service_1.WorldlineService,
         razorpay_nonseamless_service_1.RazorpayNonseamlessService,
-        razorpay_service_1.RazorpayService])
+        razorpay_service_1.RazorpayService,
+        gatepay_service_1.GatepayService])
 ], EdvironPgController);
 //# sourceMappingURL=edviron-pg.controller.js.map

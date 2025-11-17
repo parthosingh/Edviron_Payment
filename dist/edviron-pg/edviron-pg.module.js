@@ -18,6 +18,7 @@ const pos_paytm_service_1 = require("../pos-paytm/pos-paytm.service");
 const worldline_service_1 = require("../worldline/worldline.service");
 const razorpay_service_1 = require("../razorpay/razorpay.service");
 const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay-nonseamless.service");
+const gatepay_service_1 = require("../gatepay/gatepay.service");
 let EdvironPgModule = class EdvironPgModule {
 };
 exports.EdvironPgModule = EdvironPgModule;
@@ -31,7 +32,8 @@ exports.EdvironPgModule = EdvironPgModule = __decorate([
             worldline_service_1.WorldlineService,
             pos_paytm_service_1.PosPaytmService,
             razorpay_service_1.RazorpayService,
-            razorpay_nonseamless_service_1.RazorpayNonseamlessService
+            razorpay_nonseamless_service_1.RazorpayNonseamlessService,
+            gatepay_service_1.GatepayService
         ],
         imports: [
             database_module_1.DatabaseModule,

@@ -11,4 +11,11 @@ export declare class GatepayService {
     }>;
     getPaymentStatus(collect_id: string, collect_req: any): Promise<any>;
     getPaymentFromDb(collect_id: string, collect_req: any): Promise<any>;
+    initiateRefund(collect_id: string, amount: number, refund_id: string): Promise<{
+        collect_id: string;
+        refund_id: string;
+        amount: number;
+        gateway: string;
+        response: any;
+    }>;
 }

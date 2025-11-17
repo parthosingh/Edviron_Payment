@@ -7,7 +7,7 @@ const crypto = require('crypto');
 
 @Injectable()
 export class GatepayService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) { }
 
   async encryptEas(data: any, keyBase64: string, ivBase64: string) {
     const key = Buffer.from(keyBase64, 'base64');
@@ -366,4 +366,73 @@ export class GatepayService {
       throw new BadRequestException(error.message);
     }
   }
+
+
+  async initiateRefund(collect_id: string, amount: number, refund_id: string) {
+    try {
+
+      const collect = await this.databaseService.CollectRequestModel.findById(collect_id);
+
+      if (!collect) throw new BadRequestException('Collect request not found');
+
+      const { gatepay } = collect;
+
+      const { gatepay_mid, gatepay_key, gatepay_iv, gatepay_terminal_id } = gatepay;
+
+      const transactionId = gatepay.txnId;
+      const key = gatepay_key; 
+      const iv = gatepay_iv;
+      const mid = gatepay_mid;
+      const terminalId = gatepay_terminal_id;
+
+      const payload = {
+        mid,
+        transactionId,
+        refundRefNo: refund_id,
+        terminalId,
+        amount,
+        description: 'Refund Initiated',
+      };
+
+      const encryptedPayload = await this.encryptEas(JSON.stringify(payload), key, iv)
+
+      const config = {
+        url: `${process.env.GET_E_PAY_URL}/getepayPortal/pg/refundRequest `,
+        method: 'post',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        data:{
+          mid,
+          req:encryptedPayload,
+          terminalId
+        },
+
+      };
+
+      const response = await axios.request(config);
+
+      const decrypted = await this.decryptEas(
+        response.data.response,
+        gatepay_key,
+        gatepay_iv,
+      );
+
+      const parsedData = JSON.parse(decrypted);
+
+
+      return {
+        collect_id,
+        refund_id,
+        amount,
+        gateway: 'GETEPAY',
+        response:parsedData,
+      };
+    } catch (err: any) {
+      console.error('❌ Error initiating refund:', err.message);
+      throw new BadRequestException(err.message);
+    }
+  }
+
+
 }
