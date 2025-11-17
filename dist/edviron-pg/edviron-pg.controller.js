@@ -35,7 +35,7 @@ const razorpay_nonseamless_service_1 = require("../razorpay-nonseamless/razorpay
 const razorpay_service_1 = require("../razorpay/razorpay.service");
 const gatepay_service_1 = require("../gatepay/gatepay.service");
 let EdvironPgController = class EdvironPgController {
-    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService, posPaytmService, worldlineService, razorpayNonseamless, razorpaySeamless, gatepayService) {
+    constructor(edvironPgService, databaseService, easebuzzService, cashfreeService, nttDataService, posPaytmService, worldlineService, razorpayNonseamless, razorpaySeamless, getepayService) {
         this.edvironPgService = edvironPgService;
         this.databaseService = databaseService;
         this.easebuzzService = easebuzzService;
@@ -45,7 +45,7 @@ let EdvironPgController = class EdvironPgController {
         this.worldlineService = worldlineService;
         this.razorpayNonseamless = razorpayNonseamless;
         this.razorpaySeamless = razorpaySeamless;
-        this.gatepayService = gatepayService;
+        this.getepayService = getepayService;
     }
     async handleRedirect(req, res) {
         const wallet = req.query.wallet;
@@ -2205,8 +2205,7 @@ let EdvironPgController = class EdvironPgController {
                 return refund;
             }
             if (gateway === collect_request_schema_1.Gateway.EDVIRON_GATEPAY) {
-                const refund = await this.gatepayService.initiateRefund(collect_id, amount, refund_id);
-                return refund;
+                await this.getepayService.initiateRefund(collect_id, amount, refund_id);
             }
         }
         catch (e) {

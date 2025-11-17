@@ -45,8 +45,8 @@ export declare class EdvironPgController {
     private readonly worldlineService;
     private readonly razorpayNonseamless;
     private readonly razorpaySeamless;
-    private readonly gatepayService;
-    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, nttDataService: NttdataService, posPaytmService: PosPaytmService, worldlineService: WorldlineService, razorpayNonseamless: RazorpayNonseamlessService, razorpaySeamless: RazorpayService, gatepayService: GatepayService);
+    private readonly getepayService;
+    constructor(edvironPgService: EdvironPgService, databaseService: DatabaseService, easebuzzService: EasebuzzService, cashfreeService: CashfreeService, nttDataService: NttdataService, posPaytmService: PosPaytmService, worldlineService: WorldlineService, razorpayNonseamless: RazorpayNonseamlessService, razorpaySeamless: RazorpayService, getepayService: GatepayService);
     handleRedirect(req: any, res: any): Promise<void>;
     handleSdkRedirect(req: any, res: any): Promise<any>;
     handleCallback(req: any, res: any): Promise<any>;
