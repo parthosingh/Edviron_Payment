@@ -175,6 +175,21 @@ let CheckStatusService = class CheckStatusService {
                 else {
                     edvironPgResponse = await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
                 }
+                if (collectRequest.isCollectNow) {
+                    const installments = await this.databaseService.InstallmentsModel.find({
+                        collect_id: collect_request_id,
+                    })
+                        .select('_id student_id student_name status fee_heads')
+                        .lean();
+                    const renamedInstallments = installments.map((i) => ({
+                        installment_id: i._id,
+                        ...i,
+                    }));
+                    edvironPgResponse = {
+                        ...edvironPgResponse,
+                        installments: renamedInstallments
+                    };
+                }
                 return {
                     ...edvironPgResponse,
                     custom_order_id: collectRequest.custom_order_id || null,
