@@ -8,7 +8,8 @@ import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 import * as jwt from 'jsonwebtoken';
-    const axios = require('axios');
+import { CheckStatusService } from 'src/check-status/check-status.service';
+const axios = require('axios');
 @Injectable()
 export class EdvironPayService {
   constructor(
@@ -16,6 +17,7 @@ export class EdvironPayService {
     private readonly cashfreeService: CashfreeService,
     private readonly easebuzzService: EasebuzzService,
     private readonly edvironPgService: EdvironPgService,
+    private readonly checkStatusService: CheckStatusService,
   ) {}
 
   async createOrder(
@@ -115,6 +117,13 @@ export class EdvironPayService {
     }
   }
 
+  async checkStatus(collect_id: string) {
+    try {
+      return await this.checkStatusService.checkStatus(collect_id);
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
   // async handelCashfreecallback(collectRequest: CollectRequest) {
   //     try {
   //         const collect_request_id = collectRequest._id.toString()
@@ -161,13 +170,12 @@ export class EdvironPayService {
   async createStudent(
     student_detail: {
       student_id: string;
+      student_number: string;
       student_name: string;
       student_email: string;
-      student_number: string;
-      student_class?: string;
-      section?: string;
-      gender?: string;
-      additional_info?: string;
+      student_class: string;
+      student_section: string;
+      student_gender: string;
     },
     school_id: string,
     trustee_id: string,
@@ -177,10 +185,9 @@ export class EdvironPayService {
       student_number,
       student_name,
       student_email,
-      section,
-      gender,
-      additional_info,
       student_class,
+      student_section,
+      student_gender,
     } = student_detail;
     try {
       const studentDetail =
@@ -192,14 +199,14 @@ export class EdvironPayService {
       if (!studentDetail) {
         await this.databaseService.StudentDetailModel.create({
           student_id,
-          student_email,
+          student_number,
           student_name,
-          trustee_id,
-          school_id,
+          student_email,
           student_class,
-          section,
-          gender,
-          additional_info,
+          student_section,
+          student_gender,
+          school_id: school_id,
+          trustee_id: trustee_id,
         });
       }
       return studentDetail;
@@ -216,6 +223,9 @@ export class EdvironPayService {
           school_id: school_id,
           trustee_id: trustee_id,
         });
+        console.log(studentDetail, "studentDetail", {student_id: student_id,
+          school_id: school_id,
+          trustee_id: trustee_id,})
       if (!studentDetail) {
         throw new BadRequestException('student not found');
       }
@@ -238,16 +248,19 @@ export class EdvironPayService {
         data: data,
       };
 
-      const {data : schoolData} = await axios.request(config)
+      const { data: schoolData } = await axios.request(config);
 
       return {
-        school_name : schoolData.school_name,
+        school_name: schoolData.school_name,
         student_id: studentDetail.student_id,
         student_name: studentDetail.student_name,
         trustee_id: studentDetail.trustee_id,
         school_id: studentDetail.school_id,
         student_email: studentDetail.student_email,
         student_number: studentDetail.student_number,
+        student_class: studentDetail?.student_class?.toUpperCase() || 'N/A',
+        student_section: studentDetail?.student_section || 'N/A',
+        student_gender: studentDetail?.student_gender
       };
     } catch (error) {
       throw new BadRequestException(error.message);
@@ -285,6 +298,112 @@ export class EdvironPayService {
       return 'no installment found for this collect id';
     } catch (error) {
       throw new BadRequestException(error.message);
+    }
+  }
+
+  async erpDynamicQrRedirect(collect_id: string) {
+    try {
+      const collectReq =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collectReq) throw new Error('Collect request not found');
+
+      const payload = { school_id: collectReq.school_id };
+      let gateway: string | null = null;
+      let url = process.env.SPARKIT_DQR_URL;
+      if (collectReq.paymentIds?.cashfree_id) {
+        gateway = 'EDVIRON_PG';
+        const upiIntent = await this.cashfreeService.getUpiIntent(
+          collectReq.paymentIds.cashfree_id,
+          collect_id,
+        );
+        url = `${
+          process.env.SPARKIT_DQR_URL
+        }/displayqrcode?showmsg=false&upiurl=${encodeURIComponent(
+          upiIntent.intentUrl,
+        )}&orderid=${collect_id}&amount=${collectReq.amount.toFixed(
+          2,
+        )}&shopnm=SparkIT&companyname=SparkIT`;
+        return { upiIntent, url, collect_id, gateway };
+      } else if (collectReq.paymentIds?.easebuzz_id) {
+        const upiIntent: any =
+          await this.easebuzzService.getQrBase64(collect_id);
+
+        url = `${
+          process.env.SPARKIT_DQR_URL
+        }/displayqrcode?showmsg=false&upiurl=${encodeURIComponent(
+          upiIntent.intentUrl,
+        )}&orderid=${collect_id}&amount=${collectReq.amount.toFixed(
+          2,
+        )}&shopnm=SparkIT&companyname=SparkIT`;
+      } else {
+        throw new BadRequestException(
+          'No UPI payment method found for this collect request',
+        );
+      }
+
+      return {
+        url: url,
+        collect_id: collect_id,
+      };
+    } catch (e) {
+      if (e.response?.data?.message) {
+        throw new BadRequestException(e.response.data.message);
+      }
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  async checkStatusDQR(collect_id: string) {
+    try {
+      const collectReq =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!collectReq) throw new Error('Collect request not found');
+      const gateway = collectReq.gateway;
+      if (gateway === 'PENDING') {
+        return {
+          status: 'NOT INITIAT',
+          returnUrl: null,
+        };
+      }
+      const collectReqStatus =
+        await this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: collectReq._id,
+        });
+
+      if (!collectReqStatus)
+        throw new Error('Collect request status not found');
+      if (collectReqStatus.status.toUpperCase() === 'SUCCESS') {
+        // Handle success case
+        return {
+          status: 'SUCCESS',
+          returnUrl: `${process.env.SPARKIT_DQR_URL}/displayqrcodesucessstatus?showmsg=false&amount=${collectReq.amount}&orderid=${collect_id}&bankrrn=3123123`,
+        };
+      } else {
+        const statusResponse =
+          await this.checkStatusService.checkStatus(collect_id);
+        if (statusResponse.status.toLocaleUpperCase() === 'SUCCESS') {
+          return {
+            status: 'SUCCESS',
+            returnUrl: `${process.env.SPARKIT_DQR_URL}/displayqrcodesucessstatus?showmsg=false&amount=${collectReq.amount}&orderid=${collect_id}&bankrrn=3123123`,
+          };
+        } else if (statusResponse.status === 'NOT INITIATE') {
+          return {
+            status: 'NOT INITIATE',
+            returnUrl: null,
+          };
+        } else {
+          return {
+            status: statusResponse.status,
+            returnUrl: `${process.env.SPARKIT_DQR_URL}/displayqrcodesucessstatus?showmsg=false&amount=${collectReq.amount}&orderid=${collect_id}&bankrrn=3123123`,
+          };
+        }
+        return {
+          status: null,
+          returnUrl: null,
+        };
+      }
+    } catch (e) {
+      throw new BadRequestException(e.message);
     }
   }
 }

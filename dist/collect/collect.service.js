@@ -48,7 +48,7 @@ let CollectService = class CollectService {
         this.cashfreeService = cashfreeService;
         this.easebuzzService = easebuzzService;
     }
-    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, nttdata_hash_req_key, nttdata_hash_res_key, nttdata_res_salt, nttdata_req_salt, worldline_merchant_id, worldline_encryption_key, worldline_encryption_iV, worldline_scheme_code, currency, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, isVBAPayment, vba_account_number, worldLine_vendors, easebuzz_school_label, razorpay_vendors, razorpay_credentials, gatepay_credentials, isCFNonSeamless, razorpay_seamless_credentials, isSelectGateway, isEasebuzzNonpartner, easebuzz_non_partner_cred, razorpay_partner) {
+    async collect(amount, callbackUrl, school_id, trustee_id, disabled_modes = [], platform_charges, clientId, clientSecret, webHook, additional_data, custom_order_id, req_webhook_urls, school_name, easebuzz_sub_merchant_id, ccavenue_merchant_id, ccavenue_access_code, ccavenue_working_key, smartgateway_customer_id, smartgateway_merchant_id, smart_gateway_api_key, splitPayments, pay_u_key, pay_u_salt, hdfc_razorpay_id, hdfc_razorpay_secret, hdfc_razorpay_mid, nttdata_id, nttdata_secret, nttdata_hash_req_key, nttdata_hash_res_key, nttdata_res_salt, nttdata_req_salt, worldline_merchant_id, worldline_encryption_key, worldline_encryption_iV, worldline_scheme_code, currency, vendor, vendorgateway, easebuzzVendors, cashfreeVedors, isVBAPayment, vba_account_number, worldLine_vendors, easebuzz_school_label, razorpay_vendors, razorpay_credentials, gatepay_credentials, isCFNonSeamless, razorpay_seamless_credentials, isSelectGateway, isEasebuzzNonpartner, easebuzz_non_partner_cred, razorpay_partner, additionalDataToggle) {
         console.log(vendor, 'vendor to save in db');
         if (custom_order_id) {
             const count = await this.databaseService.CollectRequestModel.countDocuments({
@@ -81,6 +81,7 @@ let CollectService = class CollectService {
             ccavenue_access_code: ccavenue_access_code || null,
             ccavenue_working_key: ccavenue_working_key || null,
             pay_u_key: pay_u_key || null,
+            additionalDataToggle: additionalDataToggle,
             pay_u_salt: pay_u_salt || null,
             ntt_data: {
                 nttdata_id,
@@ -179,6 +180,7 @@ let CollectService = class CollectService {
             }
             let collect_id = request._id.toString();
             if (razorpay_partner) {
+                console.log('heree');
                 const { url, collect_req } = await this.razorpayNonseamlessService.createOrderV2(request);
                 this.scheduleUpdate(15 * 60 * 1000, collect_id);
                 this.scheduleUpdate(20 * 60 * 1000, collect_id);
@@ -362,7 +364,7 @@ let CollectService = class CollectService {
                 return { url: data?.url, request: data?.request };
             }
         }
-        if (isSelectGateway) {
+        if (isSelectGateway && !request.isSplitPayments) {
             console.log({ isEasebuzzNonpartner }, easebuzz_non_partner_cred);
             if (isEasebuzzNonpartner &&
                 easebuzz_non_partner_cred &&

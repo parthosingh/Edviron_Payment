@@ -42,7 +42,7 @@ export class CheckStatusService {
     private readonly razorpayServiceModel: RazorpayNonseamlessService,
     private readonly razorpay_seamless: RazorpayService,
     private readonly gatepayService: GatepayService,
-  ) { }
+  ) {}
   async checkStatus(collect_request_id: String) {
     console.log('checking status for', collect_request_id);
     const collectRequest =
@@ -140,6 +140,7 @@ export class CheckStatusService {
           collect_request_id.toString(),
           collectRequest,
         );
+        console.log({ easebuzzStatus });
 
         let status_code;
         if (easebuzzStatus.msg.status.toUpperCase() === 'SUCCESS') {
@@ -173,10 +174,10 @@ export class CheckStatusService {
         };
         return ezb_status_response;
       }
-      return await this.checkExpiry(collectRequest);
+      // return await this.checkExpiry(collectRequest);
     }
-    console.log('here end fist')
-    console.log(collectRequest?.gateway)
+    console.log('here end fist');
+    console.log(collectRequest?.gateway);
     switch (collectRequest?.gateway) {
       case Gateway.HDFC:
         return await this.hdfcService.checkStatus(collect_request_id);
@@ -193,6 +194,22 @@ export class CheckStatusService {
             collect_request_id,
             collectRequest,
           );
+        }
+        if (collectRequest.isCollectNow) {
+          const installments =
+            await this.databaseService.InstallmentsModel.find({
+              collect_id: collect_request_id,
+            })
+              .select('_id student_id student_name status fee_heads')
+              .lean();
+          const renamedInstallments = installments.map((i) => ({
+            installment_id: i._id,
+            ...i,
+          }));
+          edvironPgResponse = {
+            ...edvironPgResponse,
+            installments : renamedInstallments
+          }
         }
         return {
           ...edvironPgResponse,
@@ -212,7 +229,7 @@ export class CheckStatusService {
           await this.edvironPgService.getNonpartnerStatus(
             collectRequest._id.toString(),
           );
-        return edviron_pay_response
+        return edviron_pay_response;
 
       case Gateway.EDVIRON_GATEPAY:
         const gatepay_data = await this.gatepayService.getPaymentStatus(
@@ -470,7 +487,7 @@ export class CheckStatusService {
           status_code,
           custom_order_id: collectRequest.custom_order_id || null,
           amount: parseInt(easebuzzStatus.msg.amount),
-          edviron_order_id:collectRequest._id,
+          edviron_order_id: collectRequest._id,
           details: {
             payment_mode: collect_req_status.payment_time,
             bank_ref: easebuzzStatus.msg.bank_ref_num,
@@ -520,7 +537,7 @@ export class CheckStatusService {
           collectRequest.razorpay.order_id.toString(),
           collectRequest,
         );
-        return {...razorpayData,edviron_order_id:collectRequest._id};
+        return { ...razorpayData, edviron_order_id: collectRequest._id };
 
       case Gateway.SMART_GATEWAY:
         const data = await this.hdfcSmartgatewayService.checkStatus(

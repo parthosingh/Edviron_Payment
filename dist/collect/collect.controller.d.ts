@@ -137,6 +137,7 @@ export declare class CollectController {
         };
         isSelectGateway?: boolean;
         razorpay_partner?: boolean;
+        additionalDataToggle?: boolean;
     }): Promise<any>;
     posCollect(body: {
         amount: Number;

@@ -54,6 +54,12 @@ let EdvironPgService = class EdvironPgService {
             const currentTime = new Date();
             const expiryTime = new Date(currentTime.getTime() + 20 * 60000);
             const isoExpiryTime = expiryTime.toISOString();
+            let additionalFieldsEntries = {};
+            if (request.additionalDataToggle) {
+                const additionalData = JSON.parse(request.additional_data);
+                const additional_fields = additionalData.additional_fields || {};
+                additionalFieldsEntries = additional_fields;
+            }
             let data = JSON.stringify({
                 customer_details: {
                     customer_id: '7112AAA812234',
@@ -68,7 +74,9 @@ let EdvironPgService = class EdvironPgService {
                         request._id,
                 },
                 order_expiry_time: isoExpiryTime,
+                order_tags: additionalFieldsEntries,
             });
+            console.log(data, 'datadatadata');
             if (splitPayments && cashfreeVedors && cashfreeVedors.length > 0) {
                 const vendor_data = cashfreeVedors
                     .filter(({ amount, percentage }) => {
@@ -93,6 +101,7 @@ let EdvironPgService = class EdvironPgService {
                             request._id,
                     },
                     order_splits: vendor_data,
+                    order_tags: additionalFieldsEntries,
                 });
                 collectReq.isSplitPayments = true;
                 collectReq.vendors_info = vendor;
@@ -710,6 +719,7 @@ let EdvironPgService = class EdvironPgService {
                 bank_reference: webhookData?.bank_reference,
                 payment_method: webhookData?.payment_method,
                 payment_details: webhookData?.payment_details,
+                installments: webhookData?.installments
             });
             let base64Header = '';
             if (webhook_key) {
@@ -1382,6 +1392,160 @@ let EdvironPgService = class EdvironPgService {
             throw new Error(e.message);
         }
     }
+    async getTransactionReportBatchedFilterdV2(trustee_id, start_date, end_date, status, school_id, mode, isQRPayment, gateway) {
+        try {
+            const endOfDay = new Date(end_date);
+            const startDates = new Date(start_date);
+            const startOfDayUTC = new Date(await this.convertISTStartToUTC(start_date));
+            const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
+            endOfDay.setHours(23, 59, 59, 999);
+            let collectQuery = {
+                trustee_id: trustee_id,
+                createdAt: {
+                    $gte: new Date(startDates.getTime() - 24 * 60 * 60 * 1000),
+                    $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
+                },
+            };
+            if (!school_id || school_id.length === 0) {
+                try {
+                    const payload = { trustee_id };
+                    const token = jwt.sign(payload, process.env.PAYMENTS_SERVICE_SECRET, {
+                        noTimestamp: true,
+                    });
+                    const config = {
+                        method: 'get',
+                        maxBodyLength: Infinity,
+                        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-all-schools?token=${token}`,
+                        headers: {
+                            accept: 'application/json',
+                            'content-type': 'application/json',
+                        },
+                    };
+                    const { data: schoolsData } = await axios_1.default.request(config);
+                    school_id = schoolsData.schools.map((school) => school.school_id.toString());
+                }
+                catch (error) {
+                    console.error('Error fetching schools:', error.message);
+                    throw new common_1.BadRequestException('Failed to fetch schools');
+                }
+            }
+            if (school_id && school_id.length > 0) {
+                collectQuery = {
+                    ...collectQuery,
+                    school_id: { $in: school_id },
+                };
+            }
+            if (isQRPayment) {
+                collectQuery = {
+                    ...collectQuery,
+                    isQRPayment: true,
+                };
+            }
+            if (gateway) {
+                collectQuery = {
+                    ...collectQuery,
+                    gateway: { $in: gateway },
+                };
+            }
+            const orders = await this.databaseService.CollectRequestModel.find(collectQuery).select('_id');
+            let transactions = [];
+            const orderIds = orders.map((order) => order._id);
+            let query = {
+                collect_id: { $in: orderIds },
+            };
+            const startDate = new Date(start_date);
+            const endDate = end_date;
+            if (startDate && endDate) {
+                query = {
+                    ...query,
+                    $or: [
+                        {
+                            payment_time: {
+                                $ne: null,
+                                $gte: startOfDayUTC,
+                                $lt: endOfDayUTC,
+                            },
+                        },
+                        {
+                            $and: [
+                                { payment_time: { $eq: null } },
+                                {
+                                    updatedAt: {
+                                        $gte: startOfDayUTC,
+                                        $lt: endOfDayUTC,
+                                    },
+                                },
+                            ],
+                        },
+                    ],
+                };
+            }
+            if ((status && status === 'SUCCESS') || status === 'PENDING') {
+                query = {
+                    ...query,
+                    status: { $in: [status.toUpperCase(), status.toLowerCase()] },
+                };
+            }
+            if (school_id) {
+            }
+            if (mode) {
+                query = {
+                    ...query,
+                    payment_method: { $in: mode },
+                };
+            }
+            transactions =
+                await this.databaseService.CollectRequestStatusModel.aggregate([
+                    {
+                        $match: query,
+                    },
+                    {
+                        $project: {
+                            collect_id: 1,
+                            transaction_amount: 1,
+                            order_amount: 1,
+                            status: 1,
+                            createdAt: 1,
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: 'collectrequests',
+                            localField: 'collect_id',
+                            foreignField: '_id',
+                            as: 'collect_request',
+                        },
+                    },
+                    {
+                        $unwind: '$collect_request',
+                    },
+                    {
+                        $group: {
+                            _id: '$collect_request.trustee_id',
+                            totalTransactionAmount: { $sum: '$transaction_amount' },
+                            totalOrderAmount: { $sum: '$order_amount' },
+                            totalTransactions: { $sum: 1 },
+                        },
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            totalTransactionAmount: 1,
+                            totalOrderAmount: 1,
+                            totalTransactions: 1,
+                        },
+                    },
+                ]);
+            console.timeEnd('transactionsCount');
+            return {
+                length: transactions.length,
+                transactions,
+            };
+        }
+        catch (error) {
+            throw new Error(error.message);
+        }
+    }
     async getTransactionReportBatchedFilterd(trustee_id, start_date, end_date, status, school_id, mode, isQRPayment, gateway) {
         try {
             const endOfDay = new Date(end_date);
@@ -2003,6 +2167,13 @@ let EdvironPgService = class EdvironPgService {
             const istDate = date.toLocaleDateString('en-CA', {
                 timeZone: 'Asia/Kolkata',
             });
+            const installments = await this.databaseService.InstallmentsModel.find({
+                collect_id: request._id
+            }).select('_id student_id student_name status fee_heads').lean();
+            const renamedInstallments = installments.map(i => ({
+                installment_id: i._id,
+                ...i,
+            }));
             const transformedResponse = {
                 status: collect_req_status?.status,
                 status_code: 200,
@@ -2024,6 +2195,7 @@ let EdvironPgService = class EdvironPgService {
                     service_charge: null,
                 },
                 capture_status: collect_req_status?.status,
+                installments: renamedInstallments || null
             };
             return transformedResponse;
         }

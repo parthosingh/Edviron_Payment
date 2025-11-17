@@ -27,13 +27,19 @@ import { EdvironPayPaymentStatus } from 'src/database/schemas/collect_req_status
 import { PaymentIds } from 'src/database/schemas/collect_request.schema';
 import { EdvironPayService } from './edviron-pay.service';
 import { Types } from 'mongoose';
+import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
 export declare class EdvironPayController {
     private readonly databaseService;
     private readonly edvironPay;
-    constructor(databaseService: DatabaseService, edvironPay: EdvironPayService);
+    private readonly edvironPgService;
+    constructor(databaseService: DatabaseService, edvironPay: EdvironPayService, edvironPgService: EdvironPgService);
     upsertInstallments(body: any): Promise<{
         status: string;
         student_id: any;
+        school_id: any;
+        url: string;
+    }>;
+    getInstallmentPayments(req: any): Promise<{
         url: string;
     }>;
     collect(body: {
@@ -214,12 +220,65 @@ export declare class EdvironPayController {
             school_id: string;
             student_email: string;
             student_number: string;
+            student_class: string;
+            student_section: string;
+            student_gender: string;
         };
-    } | undefined>;
+    }>;
     getInstallCallbackCashfree(collect_id: string): Promise<void>;
     getVendorsForSchool(school_id: string): Promise<any>;
     orderDetail(collect_id: string): Promise<{
         paymentIds: PaymentIds;
         gateway: string;
+    }>;
+    getErpDqr(req: any): Promise<{
+        upiIntent: {
+            intentUrl: any;
+            qrCodeBase64: any;
+            collect_id: string;
+        };
+        url: string;
+        collect_id: string;
+        gateway: string;
+    } | {
+        url: string;
+        collect_id: string;
+        upiIntent?: undefined;
+        gateway?: undefined;
+    }>;
+    checkDqrStatus(collect_id: string): Promise<{
+        status: string;
+        returnUrl: null;
+    } | {
+        status: any;
+        returnUrl: string;
+    } | {
+        status: null;
+        returnUrl: null;
+    }>;
+    getFeeHeads(body: {
+        startDate: string;
+        endDate: string;
+        school_id: string;
+        trustee_id?: string;
+        page: string;
+        limit: string;
+        isCustomSearch?: boolean;
+        searchFilter?: string;
+        searchParams?: string;
+    }): Promise<{
+        totalCount: number;
+        transactionReport: any[];
+        current_page: number;
+        total_pages: number;
+    } | undefined>;
+    getStudentDetail(school_id: string, trustee_id: string, student_id?: string, skip?: number, limit?: number): Promise<{
+        success: boolean;
+        totalCount: any;
+        total_pages: number;
+        current_page: number;
+        skip: number;
+        limit: number;
+        data: any[];
     }>;
 }

@@ -14,10 +14,13 @@ const common_1 = require("@nestjs/common");
 const transactionStatus_1 = require("../types/transactionStatus");
 const crypto = require("crypto");
 const axios_1 = require("axios");
+const collect_request_schema_1 = require("../database/schemas/collect_request.schema");
 const database_service_1 = require("../database/database.service");
 const _jwt = require("jsonwebtoken");
 const canvas_1 = require("canvas");
+const FormData = require("form-data");
 const jsqr_1 = require("jsqr");
+const collect_req_status_schema_1 = require("../database/schemas/collect_req_status.schema");
 const formatRazorpayPaymentStatus = (status) => {
     const statusMap = {
         created: transactionStatus_1.TransactionStatus.PENDING,
@@ -47,6 +50,13 @@ let RazorpayService = class RazorpayService {
         try {
             const { _id, amount: totalRupees, razorpay, razorpay_vendors_info, additional_data, } = collectRequest;
             const studentDetail = JSON.parse(additional_data);
+            let additionalData;
+            if (collectRequest.additionalDataToggle) {
+                additionalData = studentDetail.additional_fields || {};
+            }
+            else {
+                additionalData = {};
+            }
             const totalPaise = Math.round(totalRupees * 100);
             const data = {
                 amount: totalPaise,
@@ -57,6 +67,7 @@ let RazorpayService = class RazorpayService {
                     student_email: studentDetail?.student_details?.student_email || 'N/A',
                     student_id: studentDetail?.student_details?.student_id || 'N/A',
                     student_phone_no: studentDetail?.student_details?.student_phone_no || 'N/A',
+                    ...Object.fromEntries(Object.entries(additionalData)),
                 },
             };
             if (razorpay_vendors_info?.length) {
@@ -74,6 +85,9 @@ let RazorpayService = class RazorpayService {
                         throw new Error(`Vendor at index ${idx} must have amount or percentage`);
                     }
                     computed += amtPaise;
+                    setTimeout(() => {
+                        this.terminateNotInitiatedOrder(collectRequest._id.toString());
+                    }, 25 * 60 * 1000);
                     return {
                         account: v.account,
                         amount: amtPaise,
@@ -97,7 +111,7 @@ let RazorpayService = class RazorpayService {
                         notes: {},
                         linked_account_notes: undefined,
                         on_hold: undefined,
-                        on_hold_until: undefined
+                        on_hold_until: undefined,
                     };
                     data.transfers.push(mainAccount);
                 }
@@ -112,11 +126,10 @@ let RazorpayService = class RazorpayService {
                         notes: {},
                         linked_account_notes: undefined,
                         on_hold: undefined,
-                        on_hold_until: undefined
+                        on_hold_until: undefined,
                     };
                     data.transfers = [nonSplitConfig];
                 }
-                ;
             }
             const createOrderConfig = {
                 method: 'post',
@@ -162,6 +175,7 @@ let RazorpayService = class RazorpayService {
                 },
             };
             const { data: orderStatus } = await axios_1.default.request(config);
+            console.log({ orderStatus });
             const items = orderStatus.items || [];
             const capturedItem = items.find((item) => item.status === 'captured');
             if (capturedItem) {
@@ -258,8 +272,12 @@ let RazorpayService = class RazorpayService {
                     : 202;
             const formattedResponse = {
                 status: status,
-                amount: response?.amount ? response?.amount / 100 : collectRequest.amount,
-                transaction_amount: response?.amount ? response?.amount / 100 : collectRequest.amount,
+                amount: response?.amount
+                    ? response?.amount / 100
+                    : collectRequest.amount,
+                transaction_amount: response?.amount
+                    ? response?.amount / 100
+                    : collectRequest.amount,
                 status_code: statusCode,
                 custom_order_id: collectRequest?.custom_order_id,
                 details: {
@@ -385,10 +403,10 @@ let RazorpayService = class RazorpayService {
                     order_id: order_id,
                 },
             };
-            console.log(createQrConfig, "createQrConfig");
+            console.log(createQrConfig, 'createQrConfig');
             const { data: razorpayRes } = await axios_1.default.request(createQrConfig);
-            console.log(razorpayRes, "");
-            console.log(razorpayRes, "response");
+            console.log(razorpayRes, '');
+            console.log(razorpayRes, 'response');
             return await this.getbase64(razorpayRes.image_url);
         }
         catch (error) {
@@ -410,7 +428,7 @@ let RazorpayService = class RazorpayService {
                 throw new common_1.BadRequestException('Payment not captured yet.');
             }
             const payload = {
-                refund_id
+                refund_id,
             };
             const token = _jwt.sign(payload, process.env.JWT_SECRET_FOR_INTRANET);
             const refundConfig = {
@@ -440,14 +458,14 @@ let RazorpayService = class RazorpayService {
                 },
                 data: {
                     amount: totalPaise,
-                    reverse_all: isSplit || false
+                    reverse_all: isSplit || false,
                 },
             };
             const response = await axios_1.default.request(config);
             return response.data;
         }
         catch (error) {
-            console.log(error, "error");
+            console.log(error, 'error');
             if (axios_1.default.isAxiosError(error)) {
                 console.error('Razorpay Refund Error:', {
                     message: error.message,
@@ -471,7 +489,7 @@ let RazorpayService = class RazorpayService {
             const qrCode = (0, jsqr_1.default)(imageData.data, imageData.width, imageData.height);
             const qrData = qrCode.data || 'p';
             var QRCode = require('qrcode');
-            const base64Image = await QRCode.toDataURL(qrData, { type: "image/png" });
+            const base64Image = await QRCode.toDataURL(qrData, { type: 'image/png' });
             const phonePe = qrCode.data.replace('upi:', 'phonepe:');
             const paytm = qrCode.data.replace('upi:', 'paytmmp:');
             const gpay = qrCode.data.replace('upi://', 'upi:/');
@@ -482,7 +500,7 @@ let RazorpayService = class RazorpayService {
                 intent: qrCode.data,
                 phonePe,
                 paytm,
-                googlePe
+                googlePe,
             };
         }
         catch (e) {
@@ -491,7 +509,9 @@ let RazorpayService = class RazorpayService {
     }
     async saveRazorpayCommission(collectReq, platform_type) {
         try {
-            const collecRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({ collect_id: collectReq._id });
+            const collecRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: collectReq._id,
+            });
             if (!collecRequestStatus) {
                 throw new common_1.BadRequestException('Invalid Request');
             }
@@ -513,7 +533,7 @@ let RazorpayService = class RazorpayService {
                 trustee_id: collectReq?.trustee_id,
                 order_amount: collectReq?.amount,
                 transaction_amount: collecRequestStatus.transaction_amount,
-                platform_type: "mappedPaymentMethod",
+                platform_type: 'mappedPaymentMethod',
                 payment_mode: collecRequestStatus.payment_method,
                 collect_id: collectReq._id,
             });
@@ -536,7 +556,116 @@ let RazorpayService = class RazorpayService {
                 console.error('Error calculating commission:', error.message);
             }
         }
+        catch (e) { }
+    }
+    async submitDisputeEvidence(dispute_id, documents, credentials) {
+        try {
+            const uploadedDocuments = [];
+            for (const doc of documents) {
+                const fileResponse = await axios_1.default.get(doc.file_url, {
+                    responseType: 'stream',
+                });
+                const formData = new FormData();
+                formData.append('purpose', 'dispute_evidence');
+                formData.append('file', fileResponse.data, doc.name);
+                const response = await axios_1.default.post(`${process.env.RAZORPAY_URL}/v1/documents`, formData, {
+                    auth: {
+                        username: credentials.razorpay_id,
+                        password: credentials.razorpay_secret,
+                    },
+                    headers: {
+                        ...formData.getHeaders(),
+                    },
+                    maxBodyLength: Infinity,
+                });
+                console.log(response, "response");
+                uploadedDocuments.push({
+                    document_id: response.data.id,
+                    document_type: doc.document_type,
+                    name: doc.name,
+                    file_url: doc.file_url,
+                });
+            }
+            return {
+                dispute_id,
+                uploadedDocuments,
+            };
+        }
+        catch (error) {
+            console.error('❌ Razorpay Evidence Upload Error:', error.response?.data || error.message);
+            throw new common_1.BadRequestException(error.response?.data?.error?.description ||
+                'Error uploading dispute evidence');
+        }
+    }
+    async terminateNotInitiatedOrder(collect_id) {
+        try {
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request || !request.createdAt) {
+                throw new Error('Collect Request not found');
+            }
+            const requestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: request._id,
+            });
+            if (!requestStatus) {
+                throw new Error('Collect Request Status not found');
+            }
+            if (requestStatus.status !== 'PENDING') {
+                return;
+            }
+            if (request.gateway !== 'PENDING') {
+                const config = {
+                    method: 'get',
+                    url: `${process.env.URL}/check-status?transactionId=${collect_id}`,
+                    headers: {
+                        accept: 'application/json',
+                        'content-type': 'application/json',
+                        'x-api-version': '2023-08-01',
+                    }
+                };
+                const { data: status } = await axios_1.default.request(config);
+                if (status.status.toUpperCase() !== 'SUCCESS') {
+                    requestStatus.status = collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
+                    await requestStatus.save();
+                }
+                return true;
+            }
+            const createdAt = request.createdAt;
+            const currentTime = new Date();
+            const timeDifference = currentTime.getTime() - createdAt.getTime();
+            const differenceInMinutes = timeDifference / (1000 * 60);
+            if (differenceInMinutes > 25) {
+                request.gateway = collect_request_schema_1.Gateway.EXPIRED;
+                requestStatus.status = collect_req_status_schema_1.PaymentStatus.USER_DROPPED;
+                await request.save();
+                await requestStatus.save();
+                return true;
+            }
+        }
         catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+        return true;
+    }
+    async acceptDispute(dispute_id, credentials) {
+        try {
+            const response = await axios_1.default.post(`${process.env.RAZORPAY_URL}/v1/disputes/${dispute_id}/accept`, {}, {
+                auth: {
+                    username: credentials.razorpay_id,
+                    password: credentials.razorpay_secret,
+                },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            });
+            return {
+                message: 'Dispute accepted successfully',
+                dispute_id,
+                razorpay_response: response.data,
+            };
+        }
+        catch (error) {
+            console.error('❌ Razorpay Accept Dispute Error:', error.response?.data || error.message);
+            throw new common_1.BadRequestException(error.response?.data?.error?.description || 'Failed to accept dispute');
         }
     }
 };

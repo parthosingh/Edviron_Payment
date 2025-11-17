@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const collect_module_1 = require("./collect/collect.module");
+const schedule_1 = require("@nestjs/schedule");
 const database_module_1 = require("./database/database.module");
 const phonepe_module_1 = require("./phonepe/phonepe.module");
 const check_status_module_1 = require("./check-status/check-status.module");
@@ -48,12 +49,16 @@ const razorpay_service_1 = require("./razorpay/razorpay.service");
 const edviron_seamless_controller_1 = require("./edviron-seamless/edviron-seamless.controller");
 const edviron_seamless_service_1 = require("./edviron-seamless/edviron-seamless.service");
 const canteen_module_1 = require("./canteen/canteen.module");
+const reconcilation_service_1 = require("./reconcilation/reconcilation.service");
+const reconcilation_controller_1 = require("./reconcilation/reconcilation.controller");
+const reconcilation_module_1 = require("./reconcilation/reconcilation.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            schedule_1.ScheduleModule.forRoot(),
             collect_module_1.CollectModule,
             database_module_1.DatabaseModule,
             phonepe_module_1.PhonepeModule,
@@ -76,6 +81,7 @@ exports.AppModule = AppModule = __decorate([
             edviron_pay_module_1.EdvironPayModule,
             gateway_module_1.GatewayModule,
             canteen_module_1.CanteenModule,
+            reconcilation_module_1.ReconcilationModule,
         ],
         controllers: [
             app_controller_1.AppController,
@@ -87,6 +93,7 @@ exports.AppModule = AppModule = __decorate([
             edviron_pay_controller_1.EdvironPayController,
             gateway_controller_1.GatewayController,
             edviron_seamless_controller_1.EdvironSeamlessController,
+            reconcilation_controller_1.ReconcilationController,
         ],
         providers: [
             app_service_1.AppService,
@@ -99,6 +106,7 @@ exports.AppModule = AppModule = __decorate([
             razorpay_nonseamless_service_1.RazorpayNonseamlessService,
             edviron_seamless_service_1.EdvironSeamlessService,
             edviron_pay_service_1.EdvironPayService,
+            reconcilation_service_1.ReconcilationService,
         ],
     })
 ], AppModule);

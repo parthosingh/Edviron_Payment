@@ -117,6 +117,10 @@ __decorate([
     __metadata("design:type", Boolean)
 ], Installments.prototype, "preSelected", void 0);
 __decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
+], Installments.prototype, "isPaid", void 0);
+__decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", Array)
 ], Installments.prototype, "vendors_info", void 0);

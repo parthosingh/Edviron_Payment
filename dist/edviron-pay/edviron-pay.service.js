@@ -16,13 +16,15 @@ const cashfree_service_1 = require("../cashfree/cashfree.service");
 const easebuzz_service_1 = require("../easebuzz/easebuzz.service");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
 const jwt = require("jsonwebtoken");
+const check_status_service_1 = require("../check-status/check-status.service");
 const axios = require('axios');
 let EdvironPayService = class EdvironPayService {
-    constructor(databaseService, cashfreeService, easebuzzService, edvironPgService) {
+    constructor(databaseService, cashfreeService, easebuzzService, edvironPgService, checkStatusService) {
         this.databaseService = databaseService;
         this.cashfreeService = cashfreeService;
         this.easebuzzService = easebuzzService;
         this.edvironPgService = edvironPgService;
+        this.checkStatusService = checkStatusService;
     }
     async createOrder(request, school_name, gatewat, platform_charges) {
         try {
@@ -92,8 +94,16 @@ let EdvironPayService = class EdvironPayService {
             throw new common_1.BadRequestException(err.message);
         }
     }
+    async checkStatus(collect_id) {
+        try {
+            return await this.checkStatusService.checkStatus(collect_id);
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
     async createStudent(student_detail, school_id, trustee_id) {
-        const { student_id, student_number, student_name, student_email, section, gender, additional_info, student_class, } = student_detail;
+        const { student_id, student_number, student_name, student_email, student_class, student_section, student_gender, } = student_detail;
         try {
             const studentDetail = await this.databaseService.StudentDetailModel.findOne({
                 student_id: student_id,
@@ -103,14 +113,14 @@ let EdvironPayService = class EdvironPayService {
             if (!studentDetail) {
                 await this.databaseService.StudentDetailModel.create({
                     student_id,
-                    student_email,
+                    student_number,
                     student_name,
-                    trustee_id,
-                    school_id,
+                    student_email,
                     student_class,
-                    section,
-                    gender,
-                    additional_info,
+                    student_section,
+                    student_gender,
+                    school_id: school_id,
+                    trustee_id: trustee_id,
                 });
             }
             return studentDetail;
@@ -126,6 +136,9 @@ let EdvironPayService = class EdvironPayService {
                 school_id: school_id,
                 trustee_id: trustee_id,
             });
+            console.log(studentDetail, "studentDetail", { student_id: student_id,
+                school_id: school_id,
+                trustee_id: trustee_id, });
             if (!studentDetail) {
                 throw new common_1.BadRequestException('student not found');
             }
@@ -154,6 +167,9 @@ let EdvironPayService = class EdvironPayService {
                 school_id: studentDetail.school_id,
                 student_email: studentDetail.student_email,
                 student_number: studentDetail.student_number,
+                student_class: studentDetail?.student_class?.toUpperCase() || 'N/A',
+                student_section: studentDetail?.student_section || 'N/A',
+                student_gender: studentDetail?.student_gender
             };
         }
         catch (error) {
@@ -187,6 +203,92 @@ let EdvironPayService = class EdvironPayService {
             throw new common_1.BadRequestException(error.message);
         }
     }
+    async erpDynamicQrRedirect(collect_id) {
+        try {
+            const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectReq)
+                throw new Error('Collect request not found');
+            const payload = { school_id: collectReq.school_id };
+            let gateway = null;
+            let url = process.env.SPARKIT_DQR_URL;
+            if (collectReq.paymentIds?.cashfree_id) {
+                gateway = 'EDVIRON_PG';
+                const upiIntent = await this.cashfreeService.getUpiIntent(collectReq.paymentIds.cashfree_id, collect_id);
+                url = `${process.env.SPARKIT_DQR_URL}/displayqrcode?showmsg=false&upiurl=${encodeURIComponent(upiIntent.intentUrl)}&orderid=${collect_id}&amount=${collectReq.amount.toFixed(2)}&shopnm=SparkIT&companyname=SparkIT`;
+                return { upiIntent, url, collect_id, gateway };
+            }
+            else if (collectReq.paymentIds?.easebuzz_id) {
+                const upiIntent = await this.easebuzzService.getQrBase64(collect_id);
+                url = `${process.env.SPARKIT_DQR_URL}/displayqrcode?showmsg=false&upiurl=${encodeURIComponent(upiIntent.intentUrl)}&orderid=${collect_id}&amount=${collectReq.amount.toFixed(2)}&shopnm=SparkIT&companyname=SparkIT`;
+            }
+            else {
+                throw new common_1.BadRequestException('No UPI payment method found for this collect request');
+            }
+            return {
+                url: url,
+                collect_id: collect_id,
+            };
+        }
+        catch (e) {
+            if (e.response?.data?.message) {
+                throw new common_1.BadRequestException(e.response.data.message);
+            }
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async checkStatusDQR(collect_id) {
+        try {
+            const collectReq = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!collectReq)
+                throw new Error('Collect request not found');
+            const gateway = collectReq.gateway;
+            if (gateway === 'PENDING') {
+                return {
+                    status: 'NOT INITIAT',
+                    returnUrl: null,
+                };
+            }
+            const collectReqStatus = await this.databaseService.CollectRequestStatusModel.findOne({
+                collect_id: collectReq._id,
+            });
+            if (!collectReqStatus)
+                throw new Error('Collect request status not found');
+            if (collectReqStatus.status.toUpperCase() === 'SUCCESS') {
+                return {
+                    status: 'SUCCESS',
+                    returnUrl: `${process.env.SPARKIT_DQR_URL}/displayqrcodesucessstatus?showmsg=false&amount=${collectReq.amount}&orderid=${collect_id}&bankrrn=3123123`,
+                };
+            }
+            else {
+                const statusResponse = await this.checkStatusService.checkStatus(collect_id);
+                if (statusResponse.status.toLocaleUpperCase() === 'SUCCESS') {
+                    return {
+                        status: 'SUCCESS',
+                        returnUrl: `${process.env.SPARKIT_DQR_URL}/displayqrcodesucessstatus?showmsg=false&amount=${collectReq.amount}&orderid=${collect_id}&bankrrn=3123123`,
+                    };
+                }
+                else if (statusResponse.status === 'NOT INITIATE') {
+                    return {
+                        status: 'NOT INITIATE',
+                        returnUrl: null,
+                    };
+                }
+                else {
+                    return {
+                        status: statusResponse.status,
+                        returnUrl: `${process.env.SPARKIT_DQR_URL}/displayqrcodesucessstatus?showmsg=false&amount=${collectReq.amount}&orderid=${collect_id}&bankrrn=3123123`,
+                    };
+                }
+                return {
+                    status: null,
+                    returnUrl: null,
+                };
+            }
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.EdvironPayService = EdvironPayService;
 exports.EdvironPayService = EdvironPayService = __decorate([
@@ -194,6 +296,7 @@ exports.EdvironPayService = EdvironPayService = __decorate([
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
         cashfree_service_1.CashfreeService,
         easebuzz_service_1.EasebuzzService,
-        edviron_pg_service_1.EdvironPgService])
+        edviron_pg_service_1.EdvironPgService,
+        check_status_service_1.CheckStatusService])
 ], EdvironPayService);
 //# sourceMappingURL=edviron-pay.service.js.map

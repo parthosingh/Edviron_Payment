@@ -22,10 +22,13 @@ const razorpay_nonseamless_service_1 = require("./razorpay-nonseamless.service")
 const _jwt = require("jsonwebtoken");
 const axios_1 = require("axios");
 const edviron_pg_service_1 = require("../edviron-pg/edviron-pg.service");
+const razorpay_service_1 = require("../razorpay/razorpay.service");
+const jwt = require("jsonwebtoken");
 let RazorpayNonseamlessController = class RazorpayNonseamlessController {
-    constructor(databaseService, razorpayServiceModel, edvironPgService) {
+    constructor(databaseService, razorpayServiceModel, razorpayService, edvironPgService) {
         this.databaseService = databaseService;
         this.razorpayServiceModel = razorpayServiceModel;
+        this.razorpayService = razorpayService;
         this.edvironPgService = edvironPgService;
     }
     async razorpayRedirect(req, res) {
@@ -677,6 +680,8 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             if (!collectReq)
                 throw new Error('Collect request not found');
             const isSeamless = collectReq.razorpay_seamless.razorpay_id;
+            collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_RAZORPAY;
+            await collectReq.save();
             if (isSeamless) {
                 await this.databaseService.WebhooksModel.findOneAndUpdate({ collect_id: new mongoose_1.Types.ObjectId(collect_id) }, {
                     $set: {
@@ -766,7 +771,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                 }
                 const orderPaymentDetail = {
                     bank: bank,
-                    transaction_id: acquirer_data.bank_transaction_id,
+                    transaction_id: acquirer_data.rrn,
                     method: method,
                 };
                 const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
@@ -778,7 +783,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                         transaction_amount,
                         payment_method,
                         details: JSON.stringify(detail),
-                        bank_reference: acquirer_data.bank_transaction_id,
+                        bank_reference: acquirer_data.rrn,
                         reason: error_reason,
                         payment_message: error_reason,
                     },
@@ -947,7 +952,7 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             const updateReqq = await this.databaseService.CollectRequestModel.updateOne({ _id: collectIdObject }, {
                 $set: {
                     payment_id: id,
-                    'razorpay.payment_id': id
+                    'razorpay.payment_id': id,
                 },
             });
             const updateReq = await this.databaseService.CollectRequestStatusModel.updateOne({
@@ -1068,6 +1073,8 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             if (isSeamless) {
                 return 'this is seamless transaction';
             }
+            collectReq.gateway = collect_request_schema_1.Gateway.EDVIRON_RAZORPAY;
+            await collectReq.save();
             const collectRequestStatus = await this.databaseService.CollectRequestStatusModel.findOne({
                 collect_id: collectIdObject,
             });
@@ -1311,6 +1318,35 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async disputeEvidence(body) {
+        try {
+            const { dispute_id, documents, action, sign, collect_id } = body;
+            const decodedToken = jwt.verify(sign, process.env.KEY);
+            if (!decodedToken)
+                throw new common_1.BadRequestException('Request Forged');
+            if (decodedToken.action !== action ||
+                decodedToken.dispute_id !== dispute_id) {
+                throw new common_1.BadRequestException('Request Forged');
+            }
+            const request = await this.databaseService.CollectRequestModel.findById(collect_id);
+            if (!request) {
+                throw new common_1.BadRequestException('collect request not found');
+            }
+            if (request.gateway !== collect_request_schema_1.Gateway.EDVIRON_RAZORPAY) {
+                throw new common_1.BadRequestException('this order is not paid by razorpay');
+            }
+            let crediantials = request.razorpay;
+            if (action === 'accept') {
+                return this.razorpayService.submitDisputeEvidence(dispute_id, documents, crediantials);
+            }
+            else {
+                return this.razorpayService.acceptDispute(dispute_id, crediantials);
+            }
+        }
+        catch (error) {
+            throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
+        }
+    }
 };
 exports.RazorpayNonseamlessController = RazorpayNonseamlessController;
 __decorate([
@@ -1398,10 +1434,18 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], RazorpayNonseamlessController.prototype, "initRefund", null);
+__decorate([
+    (0, common_1.Post)('/update-dispute'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], RazorpayNonseamlessController.prototype, "disputeEvidence", null);
 exports.RazorpayNonseamlessController = RazorpayNonseamlessController = __decorate([
     (0, common_1.Controller)('razorpay-nonseamless'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
         razorpay_nonseamless_service_1.RazorpayNonseamlessService,
+        razorpay_service_1.RazorpayService,
         edviron_pg_service_1.EdvironPgService])
 ], RazorpayNonseamlessController);
 //# sourceMappingURL=razorpay-nonseamless.controller.js.map

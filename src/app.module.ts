@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CollectModule } from './collect/collect.module';
 import { PhonepeService } from './phonepe/phonepe.service';
+import { ScheduleModule } from '@nestjs/schedule';
 import { DatabaseModule } from './database/database.module';
 import { PhonepeModule } from './phonepe/phonepe.module';
 import { CheckStatusModule } from './check-status/check-status.module';
@@ -40,9 +41,13 @@ import { RazorpayService } from './razorpay/razorpay.service';
 import { EdvironSeamlessController } from './edviron-seamless/edviron-seamless.controller';
 import { EdvironSeamlessService } from './edviron-seamless/edviron-seamless.service';
 import { CanteenModule } from './canteen/canteen.module';
+import { ReconcilationService } from './reconcilation/reconcilation.service';
+import { ReconcilationController } from './reconcilation/reconcilation.controller';
+import { ReconcilationModule } from './reconcilation/reconcilation.module';
 
 @Module({
   imports: [
+        ScheduleModule.forRoot(),
     CollectModule,
     DatabaseModule,
     PhonepeModule,
@@ -64,8 +69,8 @@ import { CanteenModule } from './canteen/canteen.module';
     AwsS3ServiceModule,
     EdvironPayModule,
     GatewayModule,
-    CanteenModule,
-    
+    CanteenModule,    
+    ReconcilationModule,
   ],
   controllers: [
     AppController,
@@ -77,6 +82,7 @@ import { CanteenModule } from './canteen/canteen.module';
     EdvironPayController,
     GatewayController,
     EdvironSeamlessController,
+    ReconcilationController,
   ],
   providers: [
     AppService,
@@ -89,6 +95,7 @@ import { CanteenModule } from './canteen/canteen.module';
     RazorpayNonseamlessService,
     EdvironSeamlessService,
     EdvironPayService,
+    ReconcilationService,
   ],
 })
 export class AppModule {}

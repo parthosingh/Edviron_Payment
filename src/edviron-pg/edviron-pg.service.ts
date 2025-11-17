@@ -97,6 +97,13 @@ export class EdvironPgService implements GatewayService {
 
       // Format the expiry time in ISO 8601 format with the timezone offset
       const isoExpiryTime = expiryTime.toISOString();
+      let additionalFieldsEntries = {};
+
+      if (request.additionalDataToggle) {
+        const additionalData = JSON.parse(request.additional_data);
+        const additional_fields = additionalData.additional_fields || {};
+        additionalFieldsEntries = additional_fields;
+      }
 
       let data = JSON.stringify({
         customer_details: {
@@ -113,7 +120,10 @@ export class EdvironPgService implements GatewayService {
             request._id,
         },
         order_expiry_time: isoExpiryTime,
+        order_tags: additionalFieldsEntries,
       });
+
+      console.log(data, 'datadatadata');
 
       if (splitPayments && cashfreeVedors && cashfreeVedors.length > 0) {
         const vendor_data = cashfreeVedors
@@ -142,6 +152,7 @@ export class EdvironPgService implements GatewayService {
               request._id,
           },
           order_splits: vendor_data,
+          order_tags: additionalFieldsEntries,
         });
 
         collectReq.isSplitPayments = true;
@@ -907,6 +918,7 @@ export class EdvironPgService implements GatewayService {
         bank_reference: webhookData?.bank_reference,
         payment_method: webhookData?.payment_method,
         payment_details: webhookData?.payment_details,
+        installments : webhookData?.installments
       });
       let base64Header = '';
       if (webhook_key) {
@@ -1721,6 +1733,209 @@ export class EdvironPgService implements GatewayService {
     }
   }
 
+  async getTransactionReportBatchedFilterdV2(
+    trustee_id: string,
+    start_date: string,
+    end_date: string,
+    status?: string | null,
+    school_id?: string[] | null,
+    mode?: string[] | null,
+    isQRPayment?: boolean | null,
+    gateway?: string[] | null,
+  ) {
+    try {
+      const endOfDay = new Date(end_date);
+      const startDates = new Date(start_date);
+      const startOfDayUTC = new Date(
+        await this.convertISTStartToUTC(start_date),
+      ); // Start of December 6 in IST
+      const endOfDayUTC = new Date(await this.convertISTEndToUTC(end_date));
+      // Set hours, minutes, seconds, and milliseconds to the last moment of the day
+      endOfDay.setHours(23, 59, 59, 999);
+      let collectQuery: any = {
+        trustee_id: trustee_id,
+        createdAt: {
+          // $gte: new Date(start_date),
+          // $lt: endOfDay,
+          $gte: new Date(startDates.getTime() - 24 * 60 * 60 * 1000),
+          $lt: new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000),
+        },
+      };
+
+      if (!school_id || school_id.length === 0) {
+        try {
+          const payload = { trustee_id };
+          const token = jwt.sign(
+            payload,
+            process.env.PAYMENTS_SERVICE_SECRET!,
+            {
+              noTimestamp: true,
+            },
+          );
+
+          const config = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT}/main-backend/get-all-schools?token=${token}`,
+            headers: {
+              accept: 'application/json',
+              'content-type': 'application/json',
+            },
+          };
+
+          const { data: schoolsData } = await axios.request(config);
+          school_id = schoolsData.schools.map((school: any) =>
+            school.school_id.toString(),
+          );
+        } catch (error) {
+          console.error('Error fetching schools:', error.message);
+          throw new BadRequestException('Failed to fetch schools');
+        }
+      }
+
+      if (school_id && school_id.length > 0) {
+        collectQuery = {
+          ...collectQuery,
+          school_id: { $in: school_id },
+        };
+      }
+
+      if (isQRPayment) {
+        collectQuery = {
+          ...collectQuery,
+          isQRPayment: true,
+        };
+      }
+      if (gateway) {
+        collectQuery = {
+          ...collectQuery,
+          gateway: { $in: gateway },
+        };
+      }
+
+      const orders =
+        await this.databaseService.CollectRequestModel.find(
+          collectQuery,
+        ).select('_id');
+
+      let transactions: any[] = [];
+
+      const orderIds = orders.map((order: any) => order._id);
+
+      let query: any = {
+        collect_id: { $in: orderIds },
+        // status: { $regex: new RegExp(`^${status}$`, 'i') }
+      };
+
+      const startDate = new Date(start_date);
+      const endDate = end_date;
+
+      if (startDate && endDate) {
+        query = {
+          ...query,
+          $or: [
+            {
+              payment_time: {
+                $ne: null, // Matches documents where payment_time exists and is not null
+                $gte: startOfDayUTC,
+                $lt: endOfDayUTC,
+              },
+            },
+            {
+              $and: [
+                { payment_time: { $eq: null } }, // Matches documents where payment_time is null or doesn't exist
+                {
+                  updatedAt: {
+                    $gte: startOfDayUTC,
+                    $lt: endOfDayUTC,
+                  },
+                },
+              ],
+            },
+          ],
+        };
+      }
+
+      if ((status && status === 'SUCCESS') || status === 'PENDING') {
+        query = {
+          ...query,
+          status: { $in: [status.toUpperCase(), status.toLowerCase()] },
+        };
+      }
+      if (school_id) {
+      }
+
+      if (mode) {
+        query = {
+          ...query,
+          payment_method: { $in: mode },
+        };
+      }
+
+      transactions =
+        await this.databaseService.CollectRequestStatusModel.aggregate([
+          {
+            $match: query, // Apply your filters
+          },
+          {
+            $project: {
+              collect_id: 1,
+              transaction_amount: 1,
+              order_amount: 1,
+              status: 1,
+              createdAt: 1,
+            },
+          },
+          {
+            $lookup: {
+              from: 'collectrequests',
+              localField: 'collect_id',
+              foreignField: '_id',
+              as: 'collect_request',
+            },
+          },
+          {
+            $unwind: '$collect_request', // Flatten the joined data
+          },
+          // {
+          //   $project:{
+          //     collect_id:'$collect_id',
+          //     transaction_amount: 1,
+          //     order_amount: 1,
+          //     custom_id:'$collect_request.custom_order_id'
+
+          //   }
+          // },
+          {
+            $group: {
+              _id: '$collect_request.trustee_id', // Group by `trustee_id`
+              totalTransactionAmount: { $sum: '$transaction_amount' },
+              totalOrderAmount: { $sum: '$order_amount' },
+              totalTransactions: { $sum: 1 }, // Count total transactions
+            },
+          },
+          {
+            $project: {
+              _id: 0, // Remove the `_id` field
+              // trustee_id: '$_id', // Rename `_id` to `trustee_id`
+              totalTransactionAmount: 1,
+              totalOrderAmount: 1,
+              totalTransactions: 1,
+            },
+          },
+        ]);
+
+      console.timeEnd('transactionsCount');
+
+      return {
+        length: transactions.length,
+        transactions,
+      };
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
   async getTransactionReportBatchedFilterd(
     trustee_id: string,
     start_date: string,
@@ -2498,6 +2713,14 @@ export class EdvironPgService implements GatewayService {
       const istDate = date.toLocaleDateString('en-CA', {
         timeZone: 'Asia/Kolkata',
       });
+
+      const installments = await this.databaseService.InstallmentsModel.find({
+        collect_id : request._id
+      }).select('_id student_id student_name status fee_heads').lean();
+      const renamedInstallments = installments.map(i => ({
+        installment_id: i._id,
+  ...i,
+}));
       const transformedResponse = {
         status: collect_req_status?.status,
         status_code: 200,
@@ -2522,10 +2745,11 @@ export class EdvironPgService implements GatewayService {
           service_charge: null,
         },
         capture_status: collect_req_status?.status,
+        installments : renamedInstallments || null
       };
-      return transformedResponse
+      return transformedResponse;
     } catch (error) {
-      throw new BadRequestException(error.message)
+      throw new BadRequestException(error.message);
     }
   }
 }

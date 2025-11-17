@@ -73,6 +73,7 @@ export declare class EdvironPgController {
         token: string;
         searchParams?: string;
         isCustomSearch?: boolean;
+        isCollectNow?: boolean;
         seachFilter?: string;
         payment_modes?: string[];
         isQRCode?: boolean;
@@ -211,6 +212,19 @@ export declare class EdvironPgController {
         trustee_id: string;
         status: string;
         school_id?: string | null;
+        mode?: string[] | null;
+        isQRPayment?: boolean | null;
+        gateway?: string[] | null;
+    }): Promise<{
+        length: number;
+        transactions: any[];
+    }>;
+    getTransactionReportBatchedFilteredV2(body: {
+        start_date: string;
+        end_date: string;
+        trustee_id: string;
+        status: string;
+        school_id?: string[] | null;
         mode?: string[] | null;
         isQRPayment?: boolean | null;
         gateway?: string[] | null;

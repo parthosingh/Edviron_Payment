@@ -127,6 +127,7 @@ let CheckStatusService = class CheckStatusService {
             if (collectRequest.gateway === collect_request_schema_1.Gateway.EDVIRON_EASEBUZZ) {
                 console.log('testing easebuzz status response v2');
                 const easebuzzStatus = await this.easebuzzService.statusResponsev2(collect_request_id.toString(), collectRequest);
+                console.log({ easebuzzStatus });
                 let status_code;
                 if (easebuzzStatus.msg.status.toUpperCase() === 'SUCCESS') {
                     status_code = 200;
@@ -158,7 +159,6 @@ let CheckStatusService = class CheckStatusService {
                 };
                 return ezb_status_response;
             }
-            return await this.checkExpiry(collectRequest);
         }
         console.log('here end fist');
         console.log(collectRequest?.gateway);
@@ -174,6 +174,21 @@ let CheckStatusService = class CheckStatusService {
                 }
                 else {
                     edvironPgResponse = await this.edvironPgService.checkStatus(collect_request_id, collectRequest);
+                }
+                if (collectRequest.isCollectNow) {
+                    const installments = await this.databaseService.InstallmentsModel.find({
+                        collect_id: collect_request_id,
+                    })
+                        .select('_id student_id student_name status fee_heads')
+                        .lean();
+                    const renamedInstallments = installments.map((i) => ({
+                        installment_id: i._id,
+                        ...i,
+                    }));
+                    edvironPgResponse = {
+                        ...edvironPgResponse,
+                        installments: renamedInstallments
+                    };
                 }
                 return {
                     ...edvironPgResponse,
