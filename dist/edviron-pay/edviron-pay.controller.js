@@ -1219,20 +1219,116 @@ let EdvironPayController = class EdvironPayController {
         try {
             const { school_id, trustee_id, student_id } = body;
             const installments = await this.databaseService.InstallmentsModel.find({
-                school_id, trustee_id, student_id
+                school_id,
+                trustee_id,
+                student_id,
             });
             if (!installments) {
                 return {
-                    message: "no installment found of this student",
-                    installments: []
+                    message: 'no installment found of this student',
+                    installments: [],
                 };
             }
             return {
-                message: "success",
-                installments
+                message: 'success',
+                installments,
             };
         }
-        catch (error) { }
+        catch (e) {
+            let message = e?.response?.data?.message ||
+                e?.response?.message ||
+                e?.message ||
+                'Something went wrong';
+            throw new common_1.BadRequestException(message);
+        }
+    }
+    async getSchoolData(school_id, trustee_id) {
+        try {
+            let query = {
+                trustee_id: trustee_id,
+                school_id: school_id,
+            };
+            const students = await this.databaseService.StudentDetailModel.find(query).lean();
+            const studentIds = students.map((s) => s.student_id);
+            const studentsection = students.map((s) => s.student_section);
+            const number_of_section = new Set(studentsection).size;
+            const number_of_students = new Set(studentIds).size;
+            const installmentReport = await this.databaseService.InstallmentsModel.aggregate([
+                { $match: { student_id: { $in: studentIds } } },
+                {
+                    $addFields: {
+                        yearMonth: {
+                            $dateToString: { format: "%Y-%m", date: "$createdAt" },
+                        },
+                    },
+                },
+                {
+                    $group: {
+                        _id: { month: "$yearMonth", student: "$student_id" },
+                        createdAt: { $first: "$createdAt" },
+                        installments: { $push: "$$ROOT" },
+                        total_amount: { $sum: "$amount" },
+                        total_paid_amount: {
+                            $sum: {
+                                $cond: [{ $eq: ["$status", "paid"] }, "$amount", 0],
+                            },
+                        },
+                        allPaid: {
+                            $min: {
+                                $cond: [{ $eq: ["$status", "paid"] }, 1, 0],
+                            },
+                        },
+                    },
+                },
+                {
+                    $group: {
+                        _id: "$_id.month",
+                        createdAt: { $first: "$createdAt" },
+                        total_amount: { $sum: "$total_amount" },
+                        total_amount_paid: { $sum: "$total_paid_amount" },
+                        total_students: { $addToSet: "$_id.student" },
+                        paid_students_completely: {
+                            $sum: {
+                                $cond: [{ $eq: ["$allPaid", 1] }, 1, 0],
+                            },
+                        },
+                        paid_student_ids: {
+                            $addToSet: {
+                                $cond: [
+                                    { $eq: ["$allPaid", 1] },
+                                    "$_id.student",
+                                    "$$REMOVE",
+                                ],
+                            },
+                        },
+                    },
+                },
+                {
+                    $project: {
+                        month: "$_id",
+                        createdAt: 1,
+                        total_amount: 1,
+                        total_amount_paid: 1,
+                        total_students: { $size: "$total_students" },
+                        total_students_paid: "$paid_students_completely",
+                        _id: 0,
+                    },
+                },
+                { $sort: { month: 1 } },
+            ]);
+            return {
+                number_of_students,
+                number_of_section,
+                installmentReport,
+            };
+        }
+        catch (e) {
+            let message = e?.response?.data?.message ||
+                e?.response?.message ||
+                e?.message ||
+                'Something went wrong';
+            throw new common_1.BadRequestException(message);
+        }
     }
 };
 exports.EdvironPayController = EdvironPayController;
@@ -1337,6 +1433,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EdvironPayController.prototype, "getStudentInstallment", null);
+__decorate([
+    (0, common_1.Get)('get-school-data'),
+    __param(0, (0, common_1.Query)('school_id')),
+    __param(1, (0, common_1.Query)('trustee_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], EdvironPayController.prototype, "getSchoolData", null);
 exports.EdvironPayController = EdvironPayController = __decorate([
     (0, common_1.Controller)('edviron-pay'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,

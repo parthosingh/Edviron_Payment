@@ -1742,68 +1742,67 @@ export class EdvironPayController {
     }
   }
 
-@Get('/get-student-detail')
-async getStudentDetail(
-  @Query('school_id') school_id: string,
-  @Query('trustee_id') trustee_id: string,
-  @Query('student_id') student_id?: string,
-  @Query('skip') skip = 0,
-  @Query('limit') limit = 10,
-) {
-  try {
-    const skipNum = Number(skip) || 0;
-    const limitNum = Number(limit) || 10;
-    const pipeline: any[] = [
-      {
-        $match: {
-          school_id,
-          trustee_id,
-          ...(student_id && { student_id }),
+  @Get('/get-student-detail')
+  async getStudentDetail(
+    @Query('school_id') school_id: string,
+    @Query('trustee_id') trustee_id: string,
+    @Query('student_id') student_id?: string,
+    @Query('skip') skip = 0,
+    @Query('limit') limit = 10,
+  ) {
+    try {
+      const skipNum = Number(skip) || 0;
+      const limitNum = Number(limit) || 10;
+      const pipeline: any[] = [
+        {
+          $match: {
+            school_id,
+            trustee_id,
+            ...(student_id && { student_id }),
+          },
         },
-      },
-      { $skip: skipNum },
-      { $limit: limitNum },
-    ];
-    const studentDetail =
-      await this.databaseService.StudentDetailModel.aggregate(pipeline);
+        { $skip: skipNum },
+        { $limit: limitNum },
+      ];
+      const studentDetail =
+        await this.databaseService.StudentDetailModel.aggregate(pipeline);
 
-    const totalCountPipeline = [
-      {
-        $match: {
-          school_id,
-          trustee_id,
-          ...(student_id && { student_id }),
+      const totalCountPipeline = [
+        {
+          $match: {
+            school_id,
+            trustee_id,
+            ...(student_id && { student_id }),
+          },
         },
-      },
-      { $count: 'total' },
-    ];
+        { $count: 'total' },
+      ];
 
-    const totalResult =
-      await this.databaseService.StudentDetailModel.aggregate(
-        totalCountPipeline,
-      );
+      const totalResult =
+        await this.databaseService.StudentDetailModel.aggregate(
+          totalCountPipeline,
+        );
 
-    const totalCount = totalResult[0]?.total || 0;
+      const totalCount = totalResult[0]?.total || 0;
 
-    const total_pages =
-      limitNum > 0 ? Math.ceil(totalCount / limitNum) : 1;
+      const total_pages = limitNum > 0 ? Math.ceil(totalCount / limitNum) : 1;
 
-    const current_page =
-      limitNum > 0 ? Math.floor(skipNum / limitNum) + 1 : 1;
+      const current_page =
+        limitNum > 0 ? Math.floor(skipNum / limitNum) + 1 : 1;
 
-    return {
-      success: true,
-      totalCount,
-      total_pages,
-      current_page,
-      skip: skipNum,
-      limit: limitNum,
-      data: studentDetail,
-    };
-  } catch (error) {
-    throw new BadRequestException(error.message);
+      return {
+        success: true,
+        totalCount,
+        total_pages,
+        current_page,
+        skip: skipNum,
+        limit: limitNum,
+        data: studentDetail,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
-}
 
   @Get('get-student-installment')
   async getStudentInstallment(
@@ -1817,20 +1816,143 @@ async getStudentDetail(
     try {
       const { school_id, trustee_id, student_id } = body;
       const installments = await this.databaseService.InstallmentsModel.find({
-        school_id, trustee_id, student_id
-      })
-      if(!installments){
+        school_id,
+        trustee_id,
+        student_id,
+      });
+      if (!installments) {
         return {
-          message : "no installment found of this student",
-          installments : []
-        }
+          message: 'no installment found of this student',
+          installments: [],
+        };
       }
-      
-      return {
-        message : "success",
-        installments
-      }
-    } catch (error) {}
-  }
 
+      return {
+        message: 'success',
+        installments,
+      };
+    } catch (e) {
+      let message =
+        e?.response?.data?.message ||
+        e?.response?.message ||
+        e?.message ||
+        'Something went wrong';
+      throw new BadRequestException(message);
+    }
+  }
+  @Get('get-school-data')
+  async getSchoolData(
+    @Query('school_id') school_id: string,
+    @Query('trustee_id') trustee_id: string,
+  ) {
+    try {
+      let query: any = {
+        trustee_id: trustee_id,
+        school_id: school_id,
+      };
+
+      const students =
+        await this.databaseService.StudentDetailModel.find(query).lean();
+
+      const studentIds = students.map((s) => s.student_id);
+      const studentsection = students.map((s) => s.student_section);
+
+      const number_of_section = new Set(studentsection).size;
+      const number_of_students = new Set(studentIds).size;
+
+     const installmentReport =
+  await this.databaseService.InstallmentsModel.aggregate([
+    { $match: { student_id: { $in: studentIds } } },
+
+    // Extract year-month
+    {
+      $addFields: {
+        yearMonth: {
+          $dateToString: { format: "%Y-%m", date: "$createdAt" },
+        },
+      },
+    },
+    {
+      $group: {
+        _id: { month: "$yearMonth", student: "$student_id" },
+        createdAt: { $first: "$createdAt" },
+        installments: { $push: "$$ROOT" },
+
+        total_amount: { $sum: "$amount" },
+
+        total_paid_amount: {
+          $sum: {
+            $cond: [{ $eq: ["$status", "paid"] }, "$amount", 0],
+          },
+        },
+
+        allPaid: {
+          $min: {
+            $cond: [{ $eq: ["$status", "paid"] }, 1, 0],
+          },
+        },
+      },
+    },
+
+    {
+      $group: {
+        _id: "$_id.month",
+        createdAt: { $first: "$createdAt" },
+
+        total_amount: { $sum: "$total_amount" },
+        total_amount_paid: { $sum: "$total_paid_amount" },
+
+        total_students: { $addToSet: "$_id.student" },
+
+        // count fully paid
+        paid_students_completely: {
+          $sum: {
+            $cond: [{ $eq: ["$allPaid", 1] }, 1, 0],
+          },
+        },
+
+        // collect the student IDs that are fully paid
+        paid_student_ids: {
+          $addToSet: {
+            $cond: [
+              { $eq: ["$allPaid", 1] },
+              "$_id.student",
+              "$$REMOVE",
+            ],
+          },
+        },
+      },
+    },
+
+    // Final projection
+    {
+      $project: {
+        month: "$_id",
+        createdAt: 1,
+        total_amount: 1,
+        total_amount_paid: 1,
+        total_students: { $size: "$total_students" },
+        total_students_paid: "$paid_students_completely",
+        // paid_student_ids: 1,
+        _id: 0,
+      },
+    },
+
+    { $sort: { month: 1 } },
+  ]);
+
+      return {
+        number_of_students,
+        number_of_section,
+        installmentReport,
+      };
+    } catch (e) {
+      let message =
+        e?.response?.data?.message ||
+        e?.response?.message ||
+        e?.message ||
+        'Something went wrong';
+      throw new BadRequestException(message);
+    }
+  }
 }

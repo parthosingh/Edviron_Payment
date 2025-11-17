@@ -291,5 +291,10 @@ export declare class EdvironPayController {
         installments: (import("mongoose").Document<unknown, {}, import("src/database/schemas/installments.schema").InstallmentsDocument> & Installments & Document & {
             _id: Types.ObjectId;
         })[];
-    } | undefined>;
+    }>;
+    getSchoolData(school_id: string, trustee_id: string): Promise<{
+        number_of_students: number;
+        number_of_section: number;
+        installmentReport: any[];
+    }>;
 }
