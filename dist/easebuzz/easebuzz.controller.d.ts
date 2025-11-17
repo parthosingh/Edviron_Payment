@@ -38,6 +38,19 @@ export declare class EasebuzzController {
         split_payouts: any;
         peb_refunds: any;
     }>;
+    settlementReconV3(body: {
+        submerchant_id: string;
+        start_date: string;
+        end_date: string;
+        payout_date: string;
+        page_size: number;
+        token: string;
+        utr: string;
+    }): Promise<{
+        transactions: any[];
+        split_payouts: any;
+        peb_refunds: any;
+    }>;
     updateEasebuzzDispute(body: {
         case_id: string;
         action: string;
@@ -78,6 +91,7 @@ export declare class EasebuzzController {
             easebuzz_merchant_email: string;
             easebuzz_submerchant_id: string;
         };
+        additionalDataToggle: boolean;
     }): Promise<any>;
     createOrderNonSeamless(body: {
         amount: Number;
@@ -109,6 +123,7 @@ export declare class EasebuzzController {
             easebuzz_merchant_email: string;
             easebuzz_submerchant_id: string;
         };
+        additionalDataToggle: boolean;
     }): Promise<any>;
     easebuzzWebhook(body: any, res: any): Promise<any>;
     handleEasebuzzCallback(req: any, res: any): Promise<any>;

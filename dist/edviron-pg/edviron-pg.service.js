@@ -54,6 +54,12 @@ let EdvironPgService = class EdvironPgService {
             const currentTime = new Date();
             const expiryTime = new Date(currentTime.getTime() + 20 * 60000);
             const isoExpiryTime = expiryTime.toISOString();
+            let additionalFieldsEntries = {};
+            if (request.additionalDataToggle) {
+                const additionalData = JSON.parse(request.additional_data);
+                const additional_fields = additionalData.additional_fields || {};
+                additionalFieldsEntries = additional_fields;
+            }
             let data = JSON.stringify({
                 customer_details: {
                     customer_id: '7112AAA812234',
@@ -68,7 +74,9 @@ let EdvironPgService = class EdvironPgService {
                         request._id,
                 },
                 order_expiry_time: isoExpiryTime,
+                order_tags: additionalFieldsEntries,
             });
+            console.log(data, 'datadatadata');
             if (splitPayments && cashfreeVedors && cashfreeVedors.length > 0) {
                 const vendor_data = cashfreeVedors
                     .filter(({ amount, percentage }) => {
@@ -93,6 +101,7 @@ let EdvironPgService = class EdvironPgService {
                             request._id,
                     },
                     order_splits: vendor_data,
+                    order_tags: additionalFieldsEntries,
                 });
                 collectReq.isSplitPayments = true;
                 collectReq.vendors_info = vendor;
@@ -710,6 +719,7 @@ let EdvironPgService = class EdvironPgService {
                 bank_reference: webhookData?.bank_reference,
                 payment_method: webhookData?.payment_method,
                 payment_details: webhookData?.payment_details,
+                installments: webhookData?.installments
             });
             let base64Header = '';
             if (webhook_key) {

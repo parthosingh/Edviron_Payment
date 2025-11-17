@@ -97,6 +97,13 @@ export class EdvironPgService implements GatewayService {
 
       // Format the expiry time in ISO 8601 format with the timezone offset
       const isoExpiryTime = expiryTime.toISOString();
+      let additionalFieldsEntries = {};
+
+      if (request.additionalDataToggle) {
+        const additionalData = JSON.parse(request.additional_data);
+        const additional_fields = additionalData.additional_fields || {};
+        additionalFieldsEntries = additional_fields;
+      }
 
       let data = JSON.stringify({
         customer_details: {
@@ -113,7 +120,10 @@ export class EdvironPgService implements GatewayService {
             request._id,
         },
         order_expiry_time: isoExpiryTime,
+        order_tags: additionalFieldsEntries,
       });
+
+      console.log(data, 'datadatadata');
 
       if (splitPayments && cashfreeVedors && cashfreeVedors.length > 0) {
         const vendor_data = cashfreeVedors
@@ -142,6 +152,7 @@ export class EdvironPgService implements GatewayService {
               request._id,
           },
           order_splits: vendor_data,
+          order_tags: additionalFieldsEntries,
         });
 
         collectReq.isSplitPayments = true;
@@ -907,6 +918,7 @@ export class EdvironPgService implements GatewayService {
         bank_reference: webhookData?.bank_reference,
         payment_method: webhookData?.payment_method,
         payment_details: webhookData?.payment_details,
+        installments : webhookData?.installments
       });
       let base64Header = '';
       if (webhook_key) {
@@ -1924,7 +1936,6 @@ export class EdvironPgService implements GatewayService {
     }
   }
 
-
   async getTransactionReportBatchedFilterd(
     trustee_id: string,
     start_date: string,
@@ -2736,9 +2747,9 @@ export class EdvironPgService implements GatewayService {
         capture_status: collect_req_status?.status,
         installments : renamedInstallments || null
       };
-      return transformedResponse
+      return transformedResponse;
     } catch (error) {
-      throw new BadRequestException(error.message)
+      throw new BadRequestException(error.message);
     }
   }
 }

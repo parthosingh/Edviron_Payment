@@ -45,15 +45,11 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
-], StudentDetail.prototype, "section", void 0);
+], StudentDetail.prototype, "student_section", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
-], StudentDetail.prototype, "gender", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ required: false }),
-    __metadata("design:type", String)
-], StudentDetail.prototype, "additional_info", void 0);
+], StudentDetail.prototype, "student_gender", void 0);
 exports.StudentDetail = StudentDetail = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], StudentDetail);

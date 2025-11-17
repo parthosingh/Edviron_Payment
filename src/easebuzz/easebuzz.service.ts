@@ -14,11 +14,13 @@ import axios from 'axios';
 import { TransactionStatus } from 'src/types/transactionStatus';
 import { platformChange } from 'src/collect/collect.controller';
 import e from 'express';
-const crypto = require('crypto');
+import { PaymentStatus } from 'src/database/schemas/collect_req_status.schema';
+import { CheckStatusService } from 'src/check-status/check-status.service';
+import { EdvironPayService } from 'src/edviron-pay/edviron-pay.service';
 
 @Injectable()
 export class EasebuzzService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) { }
 
   async easebuzzCheckStatus(
     collect_request_id: String,
@@ -70,7 +72,7 @@ export class EasebuzzService {
 
   async statusResponse(requestId: string, collectReq: CollectRequest) {
     let statusResponse = await this.easebuzzCheckStatus(requestId, collectReq);
-    if (statusResponse.msg.mode === 'NA') {
+    if (statusResponse.msg.mode === 'NA' || statusResponse.status === false) {
       console.log(`Status 0 for ${requestId}, retrying with 'upi_' suffix`);
       statusResponse = await this.easebuzzCheckStatus(
         `upi_${requestId}`,
@@ -125,11 +127,9 @@ export class EasebuzzService {
     }
 
     // key|merchant_refund_id|easebuzz_id|refund_amount|salt
-    const hashStringV2 = `${
-      process.env.EASEBUZZ_KEY
-    }|${refund_id}|${order_id}|${refund_amount.toFixed(1)}|${
-      process.env.EASEBUZZ_SALT
-    }`;
+    const hashStringV2 = `${process.env.EASEBUZZ_KEY
+      }|${refund_id}|${order_id}|${refund_amount.toFixed(1)}|${process.env.EASEBUZZ_SALT
+      }`;
 
     let hash2 = await calculateSHA512Hash(hashStringV2);
     const data2 = {
@@ -412,8 +412,13 @@ export class EasebuzzService {
         let student_phone_no =
           studentDetail?.student_details?.student_phone_no || '0000000000';
         const additionalData = studentDetail.additional_fields || {};
-        const topFiveData = Object.entries(additionalData).slice(0, 5);
-        const topFiveObject = Object.fromEntries(topFiveData);
+        let topFiveData: any = [];
+      if (request.additionalDataToggle) {
+        topFiveData = Object.entries(additionalData).slice(0, 5);
+      } else {
+        topFiveData = Object.entries(additionalData).slice(0, 0);
+      }
+      const topFiveObject = Object.fromEntries(topFiveData);
 
         const udfValues = [
           student_id,
@@ -633,7 +638,12 @@ export class EasebuzzService {
       let student_phone_no =
         studentDetail?.student_details?.student_phone_no || '0000000000';
       const additionalData = studentDetail.additional_fields || {};
-      const topFiveData = Object.entries(additionalData).slice(0, 5);
+      let topFiveData: any = [];
+      if (request.additionalDataToggle) {
+        topFiveData = Object.entries(additionalData).slice(0, 5);
+      } else {
+        topFiveData = Object.entries(additionalData).slice(0, 0);
+      }
       const topFiveObject = Object.fromEntries(topFiveData);
 
       const udfValues = [
@@ -758,7 +768,12 @@ export class EasebuzzService {
       //   collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
       // };
       const schoolName = school_name.replace(/ /g, '_');
-
+      setTimeout(
+        () => {
+          this.terminateNotInitiatedOrder(request._id.toString())
+        },
+        25 * 60 * 1000,
+      )
       return {
         collect_request_id: request._id,
         collect_request_url:
@@ -786,6 +801,65 @@ export class EasebuzzService {
     }
   }
 
+  async terminateNotInitiatedOrder(
+    collect_id: string
+  ) {
+    try {
+      const request =
+        await this.databaseService.CollectRequestModel.findById(collect_id);
+      if (!request || !request.createdAt) {
+        throw new Error('Collect Request not found');
+      }
+      const requestStatus =
+        await this.databaseService.CollectRequestStatusModel.findOne({
+          collect_id: request._id,
+        });
+      if (!requestStatus) {
+        throw new Error('Collect Request Status not found');
+      }
+      if (requestStatus.status !== 'PENDING') {
+        return
+      }
+      if (request.gateway !== 'PENDING') {
+        const config = {
+          method: 'get',
+          url: `${process.env.URL}/check-status?transactionId=${collect_id}`,
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+            'x-api-version': '2023-08-01',
+          }
+        }
+        const { data: status } = await axios.request(config)
+        // const status = await this.checkStatusService.checkStatus(request._id.toString())
+        if (status.status.toUpperCase() !== 'SUCCESS') {
+          requestStatus.status = PaymentStatus.USER_DROPPED
+          await requestStatus.save()
+        }
+        return true
+
+      }
+      const createdAt = request.createdAt; // Convert createdAt to a Date object
+      const currentTime = new Date();
+      const timeDifference = currentTime.getTime() - createdAt.getTime();
+      const differenceInMinutes = timeDifference / (1000 * 60);
+
+
+      if (differenceInMinutes > 25) {
+        request.gateway = Gateway.EXPIRED
+        requestStatus.status = PaymentStatus.USER_DROPPED
+        await request.save()
+        await requestStatus.save()
+        return true
+      }
+
+    } catch (e) {
+      throw new BadRequestException(e.message)
+    }
+
+    return true
+  }
+
   async getQr(
     collect_id: string,
     request: CollectRequest,
@@ -811,7 +885,12 @@ export class EasebuzzService {
       let student_phone_no =
         studentDetail?.student_details?.student_phone_no || '0000000000';
       const additionalData = studentDetail.additional_fields || {};
-      const topFiveData = Object.entries(additionalData).slice(0, 5);
+let topFiveData: any = [];
+      if (request.additionalDataToggle) {
+        topFiveData = Object.entries(additionalData).slice(0, 5);
+      } else {
+        topFiveData = Object.entries(additionalData).slice(0, 0);
+      }
       const topFiveObject = Object.fromEntries(topFiveData);
 
       const udfValues = [
@@ -950,7 +1029,12 @@ export class EasebuzzService {
       let student_phone_no =
         studentDetail?.student_details?.student_phone_no || '0000000000';
       const additionalData = studentDetail.additional_fields || {};
-      const topFiveData = Object.entries(additionalData).slice(0, 5);
+      let topFiveData: any = [];
+      if (request.additionalDataToggle) {
+        topFiveData = Object.entries(additionalData).slice(0, 5);
+      } else {
+        topFiveData = Object.entries(additionalData).slice(0, 0);
+      }
       const topFiveObject = Object.fromEntries(topFiveData);
 
       const udfValues = [
@@ -1043,6 +1127,7 @@ export class EasebuzzService {
         ezb_split_payments[request.easebuzz_split_label] = request.amount;
         encodedParams.set('split_payments', JSON.stringify(ezb_split_payments));
       }
+      console.log(options, 'Ezboptionsqrcode');
       const { data: easebuzzRes } = await axios.request(options);
       console.log(easebuzzRes, 'UPI');
 
@@ -1260,6 +1345,7 @@ export class EasebuzzService {
       }
       const { additional_data } = collectReq;
       const studentDetail = JSON.parse(additional_data);
+      console.log('heree');
       if (request.isSplitPayments) {
         if (!request.easebuzz_split_label) {
           throw new BadRequestException(
@@ -1281,15 +1367,23 @@ export class EasebuzzService {
         let student_phone_no =
           studentDetail?.student_details?.student_phone_no || 'N/A';
         const additionalData = studentDetail.additional_fields || {};
-
+ let topFiveData: any = [];
+      if (request.additionalDataToggle) {
+        topFiveData = Object.entries(additionalData).slice(0, 5);
+      } else {
+        topFiveData = Object.entries(additionalData).slice(0, 0);
+      }
+      const topFiveObject = Object.fromEntries(topFiveData);
+        
         const udfValues = [
           student_id,
           student_phone_no,
-          ...Object.values(additionalData),
+          ...Object.values(topFiveObject),
         ];
+
         const udfPadded = [
           ...udfValues,
-          ...new Array(10 - udfValues.length).fill(''),
+          ...new Array(Math.max(0, 10 - udfValues.length)).fill(''),
         ].slice(0, 10);
 
         const hashData = [
@@ -1377,7 +1471,6 @@ export class EasebuzzService {
             JSON.stringify(ezb_split_payments),
           );
         }
-        // in case of split false 100% amount goes to sub merchant
         else {
           ezb_split_payments[request.easebuzz_split_label] = request.amount;
           encodedParams.set(
@@ -1402,12 +1495,18 @@ export class EasebuzzService {
         const encodedPlatformCharges = encodeURIComponent(
           JSON.stringify(platform_charges),
         );
-
+        console.log(Ezboptions , "EzboptionsEzboptions")
         const { data: easebuzzRes } = await axios.request(Ezboptions);
         const easebuzzPaymentId = easebuzzRes.data;
         collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
         await collectReq.save();
         await this.getQr(request._id.toString(), request, ezb_split_payments); // uncomment after fixing easebuzz QR code issue
+        setTimeout(
+          () => {
+            this.terminateNotInitiatedOrder(request._id.toString())
+          },
+          25 * 60 * 1000,
+        )
         return {
           collect_request_id: request._id,
           collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
@@ -1453,26 +1552,35 @@ export class EasebuzzService {
         studentDetail?.student_details?.student_phone_no || '0000000000';
       const additionalData = studentDetail.additional_fields || {};
 
-      const udfValues = [
-        student_id,
-        student_phone_no,
-        ...Object.values(additionalData),
-      ];
-      const udfPadded = [
-        ...udfValues,
-        ...new Array(10 - udfValues.length).fill(''),
-      ].slice(0, 10);
+       let topFiveData: any = [];
+      if (request.additionalDataToggle) {
+        topFiveData = Object.entries(additionalData).slice(0, 5);
+      } else {
+        topFiveData = Object.entries(additionalData).slice(0, 0);
+      }
+      const topFiveObject = Object.fromEntries(topFiveData);
 
-      const hashData = [
-        easebuzz_key,
-        request._id.toString(),
-        parseFloat(request.amount.toFixed(2)),
-        productinfo,
-        firstname,
-        email,
-        ...udfPadded,
-        easebuzz_salt,
-      ].join('|');
+     const udfValues = [
+          student_id,
+          student_phone_no,
+          ...Object.values(topFiveObject),
+        ];
+
+        const udfPadded = [
+          ...udfValues,
+          ...new Array(Math.max(0, 10 - udfValues.length)).fill(''),
+        ].slice(0, 10);
+
+        const hashData = [
+          easebuzz_key,
+          request._id,
+          parseFloat(request.amount.toFixed(2)),
+          productinfo,
+          firstname,
+          email,
+          ...udfPadded,
+          easebuzz_salt,
+        ].join('|');
 
       const easebuzz_cb_surl =
         process.env.URL +
@@ -1504,7 +1612,7 @@ export class EasebuzzService {
       encodedParams.set('hash', hash);
       encodedParams.set('request_flow', 'SEAMLESS');
       udfPadded.forEach((val, index) => {
-        encodedParams.set(`udf${index + 1}`, val);
+          encodedParams.set(`udf${index + 1}`, val);
       });
 
       const disabled_modes_string = request.disabled_modes
@@ -1531,6 +1639,12 @@ export class EasebuzzService {
       collectReq.paymentIds.easebuzz_id = easebuzzPaymentId;
       await collectReq.save();
       await this.getQrNonSplit(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
+      setTimeout(
+        () => {
+          this.terminateNotInitiatedOrder(request._id.toString())
+        },
+        25 * 60 * 1000,
+      )
       return {
         collect_request_id: request._id,
         collect_request_url: `${process.env.URL}/easebuzz/redirect?&collect_id=${request._id}&easebuzzPaymentId=${easebuzzPaymentId}`,
@@ -1609,6 +1723,12 @@ export class EasebuzzService {
       const { data: easebuzzRes } = await axios.request(Ezboptions);
       const easebuzzPaymentId = easebuzzRes.data;
       await this.getQrNonSplit(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
+      setTimeout(
+        () => {
+          this.terminateNotInitiatedOrder(request._id.toString())
+        },
+        25 * 60 * 1000,
+      )
       return easebuzzPaymentId;
     } catch (e) {
       throw new BadRequestException(e.message);
@@ -1718,7 +1838,7 @@ export class EasebuzzService {
     card_expiry_date: string,
   ) {
     try {
-    } catch (e) {}
+    } catch (e) { }
   }
 
   async createOrderSeamlessSplit(
@@ -2010,6 +2130,12 @@ export class EasebuzzService {
         console.log({ easebuzzRes });
 
         const easebuzzPaymentId = easebuzzRes.data;
+        setTimeout(
+          () => {
+            this.terminateNotInitiatedOrder(request._id.toString())
+          },
+          25 * 60 * 1000,
+        )
         await this.getQr(request._id.toString(), request, ezb_split_payments); // uncomment after fixing easebuzz QR code issue
         return easebuzzPaymentId;
       }
@@ -2128,11 +2254,17 @@ export class EasebuzzService {
       };
 
       const { data: easebuzzRes } = await axios.request(Ezboptions);
-
+        
       const easebuzzPaymentId = easebuzzRes.data;
       await this.getQrNonSplit(request._id.toString(), request); // uncomment after fixing easebuzz QR code issue
       const schoolName = school_name.replace(/ /g, '_');
 
+      setTimeout(
+        () => {
+          this.terminateNotInitiatedOrder(request._id.toString())
+        },
+        25 * 60 * 1000,
+      )
       return easebuzzPaymentId;
     } catch (e) {
       console.log(e);
@@ -2140,4 +2272,5 @@ export class EasebuzzService {
       throw new BadRequestException(e.message);
     }
   }
+
 }

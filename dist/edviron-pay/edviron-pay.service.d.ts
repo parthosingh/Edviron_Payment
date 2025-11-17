@@ -28,12 +28,14 @@ import { CollectRequest } from 'src/database/schemas/collect_request.schema';
 import { CashfreeService } from 'src/cashfree/cashfree.service';
 import { EasebuzzService } from 'src/easebuzz/easebuzz.service';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
+import { CheckStatusService } from 'src/check-status/check-status.service';
 export declare class EdvironPayService {
     private readonly databaseService;
     private readonly cashfreeService;
     private readonly easebuzzService;
     private readonly edvironPgService;
-    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService, easebuzzService: EasebuzzService, edvironPgService: EdvironPgService);
+    private readonly checkStatusService;
+    constructor(databaseService: DatabaseService, cashfreeService: CashfreeService, easebuzzService: EasebuzzService, edvironPgService: EdvironPgService, checkStatusService: CheckStatusService);
     createOrder(request: CollectRequest, school_name: string, gatewat: {
         cashfree: boolean;
         easebuzz: boolean;
@@ -42,15 +44,15 @@ export declare class EdvironPayService {
         collect_request_id: import("mongoose").Schema.Types.ObjectId;
         url: string;
     }>;
+    checkStatus(collect_id: string): Promise<any>;
     createStudent(student_detail: {
         student_id: string;
+        student_number: string;
         student_name: string;
         student_email: string;
-        student_number: string;
-        student_class?: string;
-        section?: string;
-        gender?: string;
-        additional_info?: string;
+        student_class: string;
+        student_section: string;
+        student_gender: string;
     }, school_id: string, trustee_id: string): Promise<(import("mongoose").Document<unknown, {}, import("../database/schemas/student_detail.schema").StudentDetails> & import("../database/schemas/student_detail.schema").StudentDetail & Document & {
         _id: import("mongoose").Types.ObjectId;
     }) | null>;
@@ -62,6 +64,34 @@ export declare class EdvironPayService {
         school_id: string;
         student_email: string;
         student_number: string;
+        student_class: string;
+        student_section: string;
+        student_gender: string;
     }>;
     nonEdvironInstallments(collect_id: string): Promise<"installments update successfull" | "no installment found for this collect id">;
+    erpDynamicQrRedirect(collect_id: string): Promise<{
+        upiIntent: {
+            intentUrl: any;
+            qrCodeBase64: any;
+            collect_id: string;
+        };
+        url: string;
+        collect_id: string;
+        gateway: string;
+    } | {
+        url: string;
+        collect_id: string;
+        upiIntent?: undefined;
+        gateway?: undefined;
+    }>;
+    checkStatusDQR(collect_id: string): Promise<{
+        status: string;
+        returnUrl: null;
+    } | {
+        status: any;
+        returnUrl: string;
+    } | {
+        status: null;
+        returnUrl: null;
+    }>;
 }

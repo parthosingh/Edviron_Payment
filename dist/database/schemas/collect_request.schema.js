@@ -562,6 +562,10 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({ required: false, default: false }),
     __metadata("design:type", Boolean)
+], CollectRequest.prototype, "additionalDataToggle", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: false }),
+    __metadata("design:type", Boolean)
 ], CollectRequest.prototype, "razorpay_partner", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),

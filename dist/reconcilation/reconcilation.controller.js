@@ -17,19 +17,16 @@ const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const jwt = require("jsonwebtoken");
 const mongoose_1 = require("mongoose");
+const reconcilation_service_1 = require("./reconcilation.service");
 let ReconcilationController = class ReconcilationController {
-    constructor(databaseService) {
+    constructor(databaseService, reconService) {
         this.databaseService = databaseService;
+        this.reconService = reconService;
     }
     async easebuzzRecon(body) {
         const { sign, utr, collect_ids, school_name } = body;
         try {
             if (!sign || !utr || !collect_ids || collect_ids.length === 0) {
-                console.log({
-                    sign,
-                    utr,
-                    collect_ids
-                });
                 throw new common_1.BadRequestException(`Required Field Missing`);
             }
             const decoded = jwt.verify(sign, process.env.KEY);
@@ -99,6 +96,34 @@ let ReconcilationController = class ReconcilationController {
             throw new common_1.BadRequestException(e.message);
         }
     }
+    async createCronEvent(body) {
+        try {
+            return await this.reconService.createCronEvent(body.event);
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async getSchoolMdr(body) {
+        try {
+            console.log('here');
+            const { school_id } = body;
+            const mdr = await this.databaseService.PlatformChargeModel.findOne({ school_id });
+            if (mdr) {
+                return {
+                    status: true,
+                    mdr: mdr.platform_charges
+                };
+            }
+            return {
+                sattus: false,
+                mdr: null
+            };
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.ReconcilationController = ReconcilationController;
 __decorate([
@@ -108,8 +133,23 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], ReconcilationController.prototype, "easebuzzRecon", null);
+__decorate([
+    (0, common_1.Post)('/event'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], ReconcilationController.prototype, "createCronEvent", null);
+__decorate([
+    (0, common_1.Post)('/get-school-mdr'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], ReconcilationController.prototype, "getSchoolMdr", null);
 exports.ReconcilationController = ReconcilationController = __decorate([
     (0, common_1.Controller)('reconcilation'),
-    __metadata("design:paramtypes", [database_service_1.DatabaseService])
+    __metadata("design:paramtypes", [database_service_1.DatabaseService,
+        reconcilation_service_1.ReconcilationService])
 ], ReconcilationController);
 //# sourceMappingURL=reconcilation.controller.js.map

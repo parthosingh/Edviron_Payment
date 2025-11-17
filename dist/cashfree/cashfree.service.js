@@ -583,29 +583,34 @@ let CashfreeService = class CashfreeService {
         }
     }
     async submitDisputeEvidence(dispute_id, documents, client_id) {
-        const data = {
-            dispute_id,
-            documents,
-        };
+        const form = new FormData();
+        for (const doc of documents) {
+            form.append('doc_type', doc.document_type);
+            form.append('file', await axios_1.default
+                .get(doc.file_url, { responseType: 'stream' })
+                .then((r) => r.data), doc.name);
+        }
         const config = {
             method: 'post',
             maxBodyLength: Infinity,
             url: `${process.env.CASHFREE_ENDPOINT}/pg/disputes/${dispute_id}/documents`,
             headers: {
                 accept: 'application/json',
-                'Content-Type': 'multipart/form-data',
                 'x-api-version': '2023-08-01',
                 'x-partner-merchantid': client_id,
                 'x-partner-apikey': process.env.CASHFREE_API_KEY,
+                ...form.getHeaders(),
             },
-            data: data,
+            data: form,
         };
         try {
             const response = await axios_1.default.request(config);
+            console.log(response, "response");
             return response.data;
         }
         catch (error) {
-            throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
+            console.log(error.response.data.message, 'here errorr');
+            throw new common_1.InternalServerErrorException(error.response.data.message || 'Something went wrong');
         }
     }
     async acceptDispute(disputeId, client_id) {
@@ -626,7 +631,8 @@ let CashfreeService = class CashfreeService {
             return response.data;
         }
         catch (error) {
-            throw new common_1.InternalServerErrorException(error.message || 'Something went wrong');
+            console.log(error.response.data.message);
+            throw new common_1.InternalServerErrorException(error.response.data.message || 'Something went wrong');
         }
     }
     async createMerchant(merchant_id, merchant_email, merchant_name, poc_phone, merchant_site_url, business_details, website_details, bank_account_details, signatory_details) {
@@ -1404,6 +1410,61 @@ let CashfreeService = class CashfreeService {
             return latestPayment;
         }
         catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async getUpiIntent(cashfreeId, collect_id) {
+        try {
+            let intentData = JSON.stringify({
+                payment_method: {
+                    upi: {
+                        channel: 'link',
+                    },
+                },
+                payment_session_id: cashfreeId,
+            });
+            let qrCodeData = JSON.stringify({
+                payment_method: {
+                    upi: {
+                        channel: 'qrcode',
+                    },
+                },
+                payment_session_id: cashfreeId,
+            });
+            let upiConfig = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/sessions`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                },
+                data: intentData,
+            };
+            let qrCodeConfig = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: `${process.env.CASHFREE_ENDPOINT}/pg/orders/sessions`,
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'x-api-version': '2023-08-01',
+                },
+                data: qrCodeData,
+            };
+            const axios = require('axios');
+            const { data: upiIntent } = await axios.request(upiConfig);
+            const { data: qrCode } = await axios.request(qrCodeConfig);
+            const intent = upiIntent.data.payload.default;
+            const qrCodeUrl = qrCode.data.payload.qrcode;
+            const qrBase64 = qrCodeUrl.split(',')[1];
+            return { intentUrl: intent, qrCodeBase64: qrBase64, collect_id };
+        }
+        catch (e) {
+            if (e.response?.data) {
+                throw new common_1.BadRequestException(e.response?.data?.message || "gateway error");
+            }
             throw new common_1.BadRequestException(e.message);
         }
     }

@@ -159,6 +159,7 @@ export class CollectController {
       },
       isSelectGateway?: boolean
       razorpay_partner?: boolean
+      additionalDataToggle?: boolean
     },
   ) {
     const {
@@ -216,7 +217,8 @@ export class CollectController {
       isSelectGateway,
       isEasebuzzNonpartner,
       easebuzz_non_partner_cred,
-      razorpay_partner
+      razorpay_partner,
+      additionalDataToggle
     } = body;
     // console.log(razorpay_vendors,'razorpay_vendors');
 
@@ -288,7 +290,8 @@ export class CollectController {
           isSelectGateway,
           isEasebuzzNonpartner,
           easebuzz_non_partner_cred,
-          razorpay_partner
+          razorpay_partner,
+          additionalDataToggle
         ),
       );
     } catch (e) {
