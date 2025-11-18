@@ -536,7 +536,7 @@ export class EdvironPgService implements GatewayService {
       )
       console.log(paymentinfo);
       
-      if (formatedStatus === 'SUCCESS' && !collect_status?.bank_reference) {
+      if (formatedStatus === 'SUCCESS' && !collect_status?.bank_reference && collect_request.trustee_id=="678f533d4fbf7fa4245c2df4") {
         console.log('Status sucess but bank reff not found');
         const time=new Date(paymentinfo.payment_completion_time)
         Promise.resolve().then(() =>
