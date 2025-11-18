@@ -1260,12 +1260,27 @@ let EdvironPayController = class EdvironPayController {
                         yearMonth: {
                             $dateToString: { format: "%Y-%m", date: "$createdAt" },
                         },
+                        due_date: {
+                            $dateFromParts: {
+                                year: {
+                                    $year: {
+                                        $dateAdd: { startDate: "$createdAt", unit: "month", amount: 1 }
+                                    }
+                                },
+                                month: {
+                                    $month: {
+                                        $dateAdd: { startDate: "$createdAt", unit: "month", amount: 1 }
+                                    }
+                                },
+                                day: 7
+                            },
+                        },
                     },
                 },
                 {
                     $group: {
                         _id: { month: "$yearMonth", student: "$student_id" },
-                        createdAt: { $first: "$createdAt" },
+                        due_date: { $first: "$due_date" },
                         installments: { $push: "$$ROOT" },
                         total_amount: { $sum: "$amount" },
                         total_paid_amount: {
@@ -1283,7 +1298,7 @@ let EdvironPayController = class EdvironPayController {
                 {
                     $group: {
                         _id: "$_id.month",
-                        createdAt: { $first: "$createdAt" },
+                        due_date: { $first: "$due_date" },
                         total_amount: { $sum: "$total_amount" },
                         total_amount_paid: { $sum: "$total_paid_amount" },
                         total_students: { $addToSet: "$_id.student" },
@@ -1306,7 +1321,7 @@ let EdvironPayController = class EdvironPayController {
                 {
                     $project: {
                         month: "$_id",
-                        createdAt: 1,
+                        due_date: 1,
                         total_amount: 1,
                         total_amount_paid: 1,
                         total_students: { $size: "$total_students" },

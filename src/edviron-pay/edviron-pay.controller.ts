@@ -1859,33 +1859,47 @@ export class EdvironPayController {
 
       const number_of_section = new Set(studentsection).size;
       const number_of_students = new Set(studentIds).size;
-
-     const installmentReport =
+const installmentReport =
   await this.databaseService.InstallmentsModel.aggregate([
     { $match: { student_id: { $in: studentIds } } },
 
-    // Extract year-month
+    // Extract year-month & compute due_date
     {
       $addFields: {
         yearMonth: {
           $dateToString: { format: "%Y-%m", date: "$createdAt" },
         },
+
+        // due_date = next month's 7th
+        due_date: {
+          $dateFromParts: {
+            year: { 
+              $year: {
+                $dateAdd: { startDate: "$createdAt", unit: "month", amount: 1 }
+              }
+            },
+            month: { 
+              $month: {
+                $dateAdd: { startDate: "$createdAt", unit: "month", amount: 1 }
+              }
+            },
+            day: 7
+          },
+        },
       },
     },
+
     {
       $group: {
         _id: { month: "$yearMonth", student: "$student_id" },
-        createdAt: { $first: "$createdAt" },
+        due_date: { $first: "$due_date" },
         installments: { $push: "$$ROOT" },
-
         total_amount: { $sum: "$amount" },
-
         total_paid_amount: {
           $sum: {
             $cond: [{ $eq: ["$status", "paid"] }, "$amount", 0],
           },
         },
-
         allPaid: {
           $min: {
             $cond: [{ $eq: ["$status", "paid"] }, 1, 0],
@@ -1896,15 +1910,17 @@ export class EdvironPayController {
     {
       $group: {
         _id: "$_id.month",
-        createdAt: { $first: "$createdAt" },
+        due_date: { $first: "$due_date" },
         total_amount: { $sum: "$total_amount" },
         total_amount_paid: { $sum: "$total_paid_amount" },
         total_students: { $addToSet: "$_id.student" },
+
         paid_students_completely: {
           $sum: {
             $cond: [{ $eq: ["$allPaid", 1] }, 1, 0],
           },
         },
+
         paid_student_ids: {
           $addToSet: {
             $cond: [
@@ -1917,22 +1933,22 @@ export class EdvironPayController {
       },
     },
 
-    // Final projection
     {
       $project: {
         month: "$_id",
-        createdAt: 1,
+        due_date: 1,
         total_amount: 1,
         total_amount_paid: 1,
         total_students: { $size: "$total_students" },
         total_students_paid: "$paid_students_completely",
-        // paid_student_ids: 1,
         _id: 0,
       },
     },
 
     { $sort: { month: 1 } },
   ]);
+
+
 
       return {
         number_of_students,
