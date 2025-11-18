@@ -46,6 +46,7 @@ import { stat } from 'fs';
 import { start } from 'repl';
 import { RazorpayNonseamlessService } from 'src/razorpay-nonseamless/razorpay-nonseamless.service';
 import { RazorpayService } from 'src/razorpay/razorpay.service';
+import { GatepayService } from 'src/gatepay/gatepay.service';
 
 @Controller('edviron-pg')
 export class EdvironPgController {
@@ -59,7 +60,8 @@ export class EdvironPgController {
     private readonly worldlineService: WorldlineService,
     private readonly razorpayNonseamless: RazorpayNonseamlessService,
     private readonly razorpaySeamless: RazorpayService,
-  ) {}
+    private readonly getepayService:GatepayService
+  ) { }
   @Get('/redirect')
   async handleRedirect(@Req() req: any, @Res() res: any) {
     const wallet = req.query.wallet;
@@ -94,15 +96,12 @@ export class EdvironPgController {
       res.send(
         `<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://pg.edviron.com/payments?session_id=${
-                      req.query.session_id
-                    }&collect_request_id=${
-                      req.query.collect_request_id
-                    }&amount=${
-                      req.query.amount
-                    }${disable_modes}&platform_charges=${encodeURIComponent(
-                      req.query.platform_charges,
-                    )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&gateway=${gateway}";
+                    location.href = "https://pg.edviron.com/payments?session_id=${req.query.session_id
+        }&collect_request_id=${req.query.collect_request_id
+        }&amount=${req.query.amount
+        }${disable_modes}&platform_charges=${encodeURIComponent(
+          req.query.platform_charges,
+        )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&gateway=${gateway}";
 
                 }
             </script>`,
@@ -111,15 +110,12 @@ export class EdvironPgController {
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "https://pg.edviron.com?session_id=${
-                      req.query.session_id
-                    }&collect_request_id=${
-                      req.query.collect_request_id
-                    }&amount=${
-                      req.query.amount
-                    }${disable_modes}&platform_charges=${encodeURIComponent(
-                      req.query.platform_charges,
-                    )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&currency=${currency}";
+                    location.href = "https://pg.edviron.com?session_id=${req.query.session_id
+      }&collect_request_id=${req.query.collect_request_id
+      }&amount=${req.query.amount
+      }${disable_modes}&platform_charges=${encodeURIComponent(
+        req.query.platform_charges,
+      )}&school_name=${school_name}&easebuzz_pg=${easebuzz_pg}&razorpay_pg=${razorpay_pg}&razorpay_order_id=${razorpay_id}&payment_id=${payment_id}&school_id=${school_id}&currency=${currency}";
 
                 }
             </script>`,
@@ -145,12 +141,12 @@ export class EdvironPgController {
         `${process.env.PG_FRONTEND}/order-notfound?collect_id=${collect_id}`,
       );
     }
-    collectRequest.sdkPayment=true
-      await collectRequest.save()
+    collectRequest.sdkPayment = true
+    await collectRequest.save()
     const masterGateway = collectRequest?.isMasterGateway || false;
     if (masterGateway) {
       // change later to prod url
-      collectRequest.sdkPayment=true
+      collectRequest.sdkPayment = true
       await collectRequest.save()
       const url = `${process.env.PG_FRONTEND}/select-gateway?collect_id=${collectRequest._id}`;
       return res.redirect(url);
@@ -177,7 +173,7 @@ export class EdvironPgController {
           new: true,
         },
       );
-      res.redirect(collectRequest.payment_data);
+       res.redirect(collectRequest.payment_data);
     }
     if (collectRequest?.gateway === Gateway.EDVIRON_CCAVENUE) {
       await this.databaseService.CollectRequestModel.updateOne(
@@ -281,15 +277,12 @@ export class EdvironPgController {
     res.send(
       `<script type="text/javascript">
                 window.onload = function(){
-                    location.href = "${
-                      process.env.PG_FRONTEND
-                    }?session_id=${sessionId}&collect_request_id=${
-                      req.query.collect_id
-                    }&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(
-                      platform_charges,
-                    )}&is_blank=${isBlank}&amount=${amount}&school_name=${
-                      info.school_name
-                    }&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}";
+                    location.href = "${process.env.PG_FRONTEND
+      }?session_id=${sessionId}&collect_request_id=${req.query.collect_id
+      }&amount=${amount}${disable_modes}&platform_charges=${encodeURIComponent(
+        platform_charges,
+      )}&is_blank=${isBlank}&amount=${amount}&school_name=${info.school_name
+      }&easebuzz_pg=${easebuzz_pg}&payment_id=${payment_id}";
                 }
             </script>`,
     );
@@ -933,9 +926,8 @@ export class EdvironPgController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${
-            process.env.VANILLA_SERVICE_ENDPOINT
-          }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+          url: `${process.env.VANILLA_SERVICE_ENDPOINT
+            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
@@ -2769,7 +2761,7 @@ export class EdvironPgController {
 
   // https://payements.edviron.com/edviron-pg/easebuzz/settlement
   @Post('easebuzz/settlement')
-  async easebuzzSettlement(@Body() body: any) {}
+  async easebuzzSettlement(@Body() body: any) { }
 
   // @Get('/payments-info')
   // async getpaymentsInfo(@Query('collect_id') collect_id: string) {
@@ -3027,6 +3019,9 @@ export class EdvironPgController {
 
         return refund;
       }
+      if(gateway === Gateway.EDVIRON_GATEPAY){
+        await this.getepayService.initiateRefund(collect_id,amount,refund_id)
+      }
     } catch (e) {
       throw new BadRequestException(e.message);
     }
@@ -3246,11 +3241,11 @@ export class EdvironPgController {
         ...(gateway && { gateway: { $in: gateway } }),
         ...(start_date &&
           end_date && {
-            updatedAt: {
-              $gte: new Date(start_date),
-              $lte: new Date(new Date(end_date).setHours(23, 59, 59, 999)),
-            },
-          }),
+          updatedAt: {
+            $gte: new Date(start_date),
+            $lte: new Date(new Date(end_date).setHours(23, 59, 59, 999)),
+          },
+        }),
       };
 
       return await this.edvironPgService.getVendorTransactions(
@@ -3346,9 +3341,9 @@ export class EdvironPgController {
     const SchoolIds =
       school_id && typeof school_id === 'string'
         ? school_id
-            .split(',')
-            .map((id) => id.trim())
-            .filter(Boolean)
+          .split(',')
+          .map((id) => id.trim())
+          .filter(Boolean)
         : [];
 
     return await this.edvironPgService.getTransactionReportBatched(
@@ -3622,7 +3617,7 @@ export class EdvironPgController {
           year,
         );
       return response;
-    } catch (e) {}
+    } catch (e) { }
   }
 
   @Get('/get-merchant-batch-transactions')
@@ -3923,7 +3918,7 @@ export class EdvironPgController {
       //     note,
       //   )
       // }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   @Get('get-order-payment-link')
@@ -4130,9 +4125,9 @@ export class EdvironPgController {
       let selectedCharge = schoolMdr.platform_charges.find(
         (charge) =>
           charge.payment_mode.toLocaleLowerCase() ===
-            payment_mode.toLocaleLowerCase() &&
+          payment_mode.toLocaleLowerCase() &&
           charge.platform_type.toLocaleLowerCase() ===
-            platform_type.toLocaleLowerCase(),
+          platform_type.toLocaleLowerCase(),
       );
 
       if (!selectedCharge) {
@@ -4194,7 +4189,7 @@ export class EdvironPgController {
     platformCharges.platform_charges.forEach((platformCharge) => {
       if (
         platformCharge.platform_type.toLowerCase() ===
-          platform_type.toLowerCase() &&
+        platform_type.toLowerCase() &&
         platformCharge.payment_mode.toLowerCase() === payment_mode.toLowerCase()
       ) {
         throw new BadRequestException('MDR already present');
@@ -4392,9 +4387,8 @@ export class EdvironPgController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${
-            process.env.VANILLA_SERVICE_ENDPOINT
-          }/main-backend/get-webhook-key?token=${token}&trustee_id=${'65d43e124174f07e3e3f8966'}`,
+          url: `${process.env.VANILLA_SERVICE_ENDPOINT
+            }/main-backend/get-webhook-key?token=${token}&trustee_id=${'65d43e124174f07e3e3f8966'}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
@@ -5310,8 +5304,7 @@ export class EdvironPgController {
       if (axios.isAxiosError(error)) {
         console.error('Axios Error:', error.response?.data || error.message);
         throw new BadRequestException(
-          `External API error: ${
-            error.response?.data?.message || error.message
+          `External API error: ${error.response?.data?.message || error.message
           }`,
         );
       }
@@ -5540,7 +5533,7 @@ export class EdvironPgController {
       const { data } = await axios.request(config);
       console.log(data);
       return data;
-    } catch (error) {}
+    } catch (error) { }
   }
 
   @Post('set-mdr-zero')
@@ -5555,7 +5548,7 @@ export class EdvironPgController {
       );
 
       return reset;
-    } catch (e) {}
+    } catch (e) { }
   }
 
   @Post('sub-trustee-transactions-sum')
@@ -5964,7 +5957,7 @@ export class EdvironPgController {
                   () =>
                     this.edvironPgService
                       .sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key)
-                      .catch(() => {}),
+                      .catch(() => { }),
                   60000,
                 );
               } else {
@@ -6211,7 +6204,7 @@ export class EdvironPgController {
                   () =>
                     this.edvironPgService
                       .sendErpWebhook(webHookUrl, webHookDataInfo, webhook_key)
-                      .catch(() => {}),
+                      .catch(() => { }),
                   60000,
                 );
               } else {

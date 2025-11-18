@@ -35,20 +35,6 @@ let EdvironPayController = class EdvironPayController {
             const { student_id, student_number, student_name, student_email } = student_detail;
             await this.edvironPay.createStudent(student_detail, school_id, trustee_id);
             if (isInstallement && installments && Array.isArray(installments)) {
-                const validateSequentialTrue = (key) => {
-                    let foundFalse = false;
-                    for (let i = 0; i < installments.length; i++) {
-                        const val = installments[i][key];
-                        if (val === true && foundFalse) {
-                            throw new common_1.BadRequestException(`Invalid sequence: '${key}: true' found at index ${i} after a 'false'. '${key}' values must be sequential from start.`);
-                        }
-                        if (val === false || val === undefined) {
-                            foundFalse = true;
-                        }
-                    }
-                };
-                validateSequentialTrue('preSelected');
-                validateSequentialTrue('isPaid');
                 const studentId = student_id;
                 const allInstallments = await this.databaseService.InstallmentsModel.find({
                     student_id: studentId,
@@ -67,7 +53,9 @@ let EdvironPayController = class EdvironPayController {
                             }
                         }
                         if (installment.preSelected === true) {
-                            const preselect = previousInstallments.find((inst) => inst.preSelected === false || inst.preSelected === undefined);
+                            const preselect = previousInstallments.find((inst) => inst.status !== 'paid' &&
+                                (inst.preSelected === false ||
+                                    inst.preSelected === undefined));
                             if (preselect) {
                                 throw new common_1.BadRequestException(`Cannot mark installment for ${installment.month}/${installment.year} as preSelected because a previous installment (${preselect.month}/${preselect.year}) is not preSelected.`);
                             }

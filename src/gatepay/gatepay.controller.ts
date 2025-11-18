@@ -20,7 +20,7 @@ export class GatepayController {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly gatepayService: GatepayService,
-  ) {}
+  ) { }
 
   @Get('/redirect')
   async redirect(@Query('collect_id') collect_id: string, @Res() res: any) {
@@ -155,8 +155,8 @@ export class GatepayController {
         status === 'SUCCESS'
           ? PaymentStatus.SUCCESS
           : status === 'FAILED'
-          ? PaymentStatus.FAILED
-          : PaymentStatus.PENDING;
+            ? PaymentStatus.FAILED
+            : PaymentStatus.PENDING;
 
       collect_req_status.transaction_amount = txnAmount || '';
       collect_req_status.payment_time = dateObj || Date.now();
@@ -193,5 +193,22 @@ export class GatepayController {
       console.error('Callback Error:', error);
       throw new BadRequestException(error.message || 'Something went wrong');
     }
+  }
+
+  @Post('refund')
+  async initiateRefund(
+    @Body()
+    body: {
+      collect_id: string;
+      amount: number;
+      refund_id: string;
+    }
+  ) {
+    const { collect_id, amount, refund_id } = body;
+    const refund = await this.gatepayService.initiateRefund(collect_id,amount,refund_id);
+
+    console.log(refund)
+
+    return refund;
   }
 }

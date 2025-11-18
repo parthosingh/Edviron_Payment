@@ -67,22 +67,6 @@ export class EdvironPayController {
       );
 
       if (isInstallement && installments && Array.isArray(installments)) {
-        const validateSequentialTrue = (key: string) => {
-          let foundFalse = false;
-          for (let i = 0; i < installments.length; i++) {
-            const val = installments[i][key];
-            if (val === true && foundFalse) {
-              throw new BadRequestException(
-                `Invalid sequence: '${key}: true' found at index ${i} after a 'false'. '${key}' values must be sequential from start.`,
-              );
-            }
-            if (val === false || val === undefined) {
-              foundFalse = true;
-            }
-          }
-        };
-        validateSequentialTrue('preSelected');
-        validateSequentialTrue('isPaid');
         const studentId = student_id; // ensure this is available in scope
 
         // Fetch all installments of that student once
@@ -121,7 +105,9 @@ export class EdvironPayController {
             if (installment.preSelected === true) {
               const preselect = previousInstallments.find(
                 (inst) =>
-                  inst.preSelected === false || inst.preSelected === undefined,
+                  inst.status !== 'paid' && // ignore paid installments
+                  (inst.preSelected === false ||
+                    inst.preSelected === undefined),
               );
 
               if (preselect) {

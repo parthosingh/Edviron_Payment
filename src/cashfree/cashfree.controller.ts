@@ -15,7 +15,7 @@ import { DatabaseService } from 'src/database/database.service';
 import * as jwt from 'jsonwebtoken';
 import * as _jwt from 'jsonwebtoken';
 import { CashfreeService } from './cashfree.service';
-import { Gateway } from 'src/database/schemas/collect_request.schema';
+import { CollectRequest, Gateway } from 'src/database/schemas/collect_request.schema';
 import { generateHMACBase64Type } from 'src/utils/sign';
 import { WebhookSource } from 'src/database/schemas/webhooks.schema';
 import { EdvironPgService } from 'src/edviron-pg/edviron-pg.service';
@@ -34,7 +34,7 @@ export class CashfreeController {
     private readonly edvironPgService: EdvironPgService,
     private readonly easebuzzService: EasebuzzService,
     private readonly razorpayService: RazorpayService,
-  ) {}
+  ) { }
   @Post('/refund')
   async initiateRefund(@Body() body: any) {
     const { collect_id, amount, refund_id } = body;
@@ -556,7 +556,7 @@ export class CashfreeController {
       } catch (error) {
         console.error('Error calculating commission:', error.message);
       }
-    } catch (e) {}
+    } catch (e) { }
     const webHookUrl = request.req_webhook_urls;
     const webHookDataInfo = {
       collect_id: request._id.toString(),
@@ -593,9 +593,8 @@ export class CashfreeController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${
-            process.env.VANILLA_SERVICE_ENDPOINT
-          }/main-backend/get-webhook-key?token=${token}&trustee_id=${request.trustee_id.toString()}`,
+          url: `${process.env.VANILLA_SERVICE_ENDPOINT
+            }/main-backend/get-webhook-key?token=${token}&trustee_id=${request.trustee_id.toString()}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
@@ -1213,9 +1212,8 @@ export class CashfreeController {
         const config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: `${
-            process.env.VANILLA_SERVICE_ENDPOINT
-          }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+          url: `${process.env.VANILLA_SERVICE_ENDPOINT
+            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
@@ -1275,6 +1273,28 @@ export class CashfreeController {
   @Get('fix-canteen-transaction')
   async testFix() {
     try {
-    } catch (e) {}
+    } catch (e) { }
+  }
+
+  @Get('payment-status')
+  async paymentStatus(
+    @Req() req: any
+  ) {
+    try {
+      if (!req.query.collect_id) {
+        throw new BadRequestException("collect_id is required");
+      }
+
+      const collectReq = await this.databaseService.CollectRequestModel.findById(req.query.collect_id).exec()
+      if (!collectReq) {
+        throw new BadRequestException('Collect Req not found')
+      }
+      return await this.cashfreeService.checkPaymentStatus(
+        req.query.collect_id,
+        collectReq
+      )
+    } catch (e) {
+      throw new BadRequestException(e.message)
+    }
   }
 }

@@ -887,6 +887,21 @@ let CashfreeController = class CashfreeController {
         }
         catch (e) { }
     }
+    async paymentStatus(req) {
+        try {
+            if (!req.query.collect_id) {
+                throw new common_1.BadRequestException("collect_id is required");
+            }
+            const collectReq = await this.databaseService.CollectRequestModel.findById(req.query.collect_id).exec();
+            if (!collectReq) {
+                throw new common_1.BadRequestException('Collect Req not found');
+            }
+            return await this.cashfreeService.checkPaymentStatus(req.query.collect_id, collectReq);
+        }
+        catch (e) {
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
 };
 exports.CashfreeController = CashfreeController;
 __decorate([
@@ -1019,6 +1034,13 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], CashfreeController.prototype, "testFix", null);
+__decorate([
+    (0, common_1.Get)('payment-status'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CashfreeController.prototype, "paymentStatus", null);
 exports.CashfreeController = CashfreeController = __decorate([
     (0, common_1.Controller)('cashfree'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
