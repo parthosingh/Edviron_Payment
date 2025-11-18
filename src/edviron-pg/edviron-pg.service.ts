@@ -534,7 +534,21 @@ export class EdvironPgService implements GatewayService {
         collect_request._id.toString(),
         collect_request
       )
+      console.log(paymentinfo);
       
+      if (formatedStatus === 'SUCCESS' && !collect_status?.bank_reference) {
+        console.log('Status sucess but bank reff not found');
+        const time=new Date(paymentinfo.payment_completion_time)
+        Promise.resolve().then(() =>
+          this.sendAlert(
+            collect_request_id.toString(),
+            collect_request?.custom_order_id || 'NA',
+            formatedStatus,
+            collect_request?.school_id || 'NA',
+            time.toISOString()
+          ).catch(err => console.error('sendAlert error:', err))
+        );
+      }
 
       return {
         status: formatedStatus,
@@ -546,7 +560,7 @@ export class EdvironPgService implements GatewayService {
           bank_ref:
             paymentinfo?.bank_reference || collect_status?.bank_reference,
           payment_methods:
-           paymentinfo.payment_method|| collect_status?.details &&
+            paymentinfo.payment_method || collect_status?.details &&
             JSON.parse(collect_status.details as string),
           transaction_time,
           formattedTransactionDate: istDate,
@@ -561,6 +575,37 @@ export class EdvironPgService implements GatewayService {
       console.log(e);
 
       throw new BadRequestException(e.message);
+    }
+  }
+
+
+  async sendAlert(
+    collect_id: string,
+    custom_order_id: string,
+    status: string,
+    school_id: string,
+    time:string
+  ) {
+    try {
+      const config = {
+        url: `${process.env.VANILLA_SERVICE_ENDPOINT}/business-alarm/webhook-error`,
+        method: 'post',
+        headers: { 'Content-Type': 'application/json' },
+        data: {
+          collect_id,
+          custom_order_id,
+          status,
+          school_id,
+          time
+        }
+      }
+
+      const { data } = await axios.request(config)
+
+    } catch (e) {
+      console.log(e.response.data);
+      
+      throw new BadRequestException(e.message)
     }
   }
 

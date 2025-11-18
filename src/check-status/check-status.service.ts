@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import {
   CollectRequest,
   Gateway,
 } from 'src/database/schemas/collect_request.schema';
+import axios, { AxiosError } from 'axios';
 import { HdfcService } from 'src/hdfc/hdfc.service';
 import { PhonepeService } from 'src/phonepe/phonepe.service';
 import { EdvironPgService } from '../edviron-pg/edviron-pg.service';
@@ -42,7 +43,7 @@ export class CheckStatusService {
     private readonly razorpayServiceModel: RazorpayNonseamlessService,
     private readonly razorpay_seamless: RazorpayService,
     private readonly gatepayService: GatepayService,
-  ) {}
+  ) { }
   async checkStatus(collect_request_id: String) {
     console.log('checking status for', collect_request_id);
     const collectRequest =
@@ -208,7 +209,7 @@ export class CheckStatusService {
           }));
           edvironPgResponse = {
             ...edvironPgResponse,
-            installments : renamedInstallments
+            installments: renamedInstallments
           }
         }
         return {
@@ -819,4 +820,5 @@ export class CheckStatusService {
         };
     }
   }
+
 }

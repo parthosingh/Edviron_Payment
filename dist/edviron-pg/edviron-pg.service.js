@@ -394,6 +394,12 @@ let EdvironPgService = class EdvironPgService {
                 paymentId = null;
             }
             const paymentinfo = await this.cashfreeService.checkPaymentStatus(collect_request._id.toString(), collect_request);
+            console.log(paymentinfo);
+            if (formatedStatus === 'SUCCESS' && !collect_status?.bank_reference) {
+                console.log('Status sucess but bank reff not found');
+                const time = new Date(paymentinfo.payment_completion_time);
+                Promise.resolve().then(() => this.sendAlert(collect_request_id.toString(), collect_request?.custom_order_id || 'NA', formatedStatus, collect_request?.school_id || 'NA', time.toISOString()).catch(err => console.error('sendAlert error:', err)));
+            }
             return {
                 status: formatedStatus,
                 amount: cashfreeRes.order_amount,
@@ -416,6 +422,27 @@ let EdvironPgService = class EdvironPgService {
         }
         catch (e) {
             console.log(e);
+            throw new common_1.BadRequestException(e.message);
+        }
+    }
+    async sendAlert(collect_id, custom_order_id, status, school_id, time) {
+        try {
+            const config = {
+                url: `${process.env.VANILLA_SERVICE_ENDPOINT}/business-alarm/webhook-error`,
+                method: 'post',
+                headers: { 'Content-Type': 'application/json' },
+                data: {
+                    collect_id,
+                    custom_order_id,
+                    status,
+                    school_id,
+                    time
+                }
+            };
+            const { data } = await axios_1.default.request(config);
+        }
+        catch (e) {
+            console.log(e.response.data);
             throw new common_1.BadRequestException(e.message);
         }
     }
