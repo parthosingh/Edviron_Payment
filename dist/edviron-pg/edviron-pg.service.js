@@ -393,6 +393,7 @@ let EdvironPgService = class EdvironPgService {
             catch (e) {
                 paymentId = null;
             }
+            const paymentinfo = await this.cashfreeService.checkPaymentStatus(collect_request._id.toString(), collect_request);
             return {
                 status: formatedStatus,
                 amount: cashfreeRes.order_amount,
@@ -400,8 +401,8 @@ let EdvironPgService = class EdvironPgService {
                 status_code,
                 details: {
                     payment_mode: collect_status.payment_method,
-                    bank_ref: collect_status?.bank_reference && collect_status?.bank_reference,
-                    payment_methods: collect_status?.details &&
+                    bank_ref: paymentinfo?.bank_reference || collect_status?.bank_reference,
+                    payment_methods: paymentinfo.payment_method || collect_status?.details &&
                         JSON.parse(collect_status.details),
                     transaction_time,
                     formattedTransactionDate: istDate,

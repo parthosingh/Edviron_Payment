@@ -35,7 +35,7 @@ export class EdvironPgService implements GatewayService {
     private readonly databaseService: DatabaseService,
     private readonly cashfreeService: CashfreeService,
     private readonly razorpayService: RazorpayService,
-  ) {}
+  ) { }
   async collect(
     request: CollectRequest,
     platform_charges: platformChange[],
@@ -432,7 +432,7 @@ export class EdvironPgService implements GatewayService {
       if (err.name === 'AxiosError')
         throw new BadRequestException(
           'Invalid client id or client secret ' +
-            JSON.stringify(err.response.data),
+          JSON.stringify(err.response.data),
         );
     }
   }
@@ -480,14 +480,14 @@ export class EdvironPgService implements GatewayService {
       let transaction_time = '';
       if (
         order_status_to_transaction_status_map[
-          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ] === TransactionStatus.SUCCESS
       ) {
         transaction_time = collect_status?.updatedAt?.toISOString() as string;
       }
       const checkStatus =
         order_status_to_transaction_status_map[
-          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ];
       let status_code;
       if (checkStatus === TransactionStatus.SUCCESS) {
@@ -506,7 +506,7 @@ export class EdvironPgService implements GatewayService {
 
       let formatedStatus =
         order_status_to_transaction_status_map[
-          cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
+        cashfreeRes.order_status as keyof typeof order_status_to_transaction_status_map
         ];
       if (collect_status.status === PaymentStatus.USER_DROPPED) {
         formatedStatus = TransactionStatus.USER_DROPPED;
@@ -530,6 +530,12 @@ export class EdvironPgService implements GatewayService {
       } catch (e) {
         paymentId = null;
       }
+      const paymentinfo = await this.cashfreeService.checkPaymentStatus(
+        collect_request._id.toString(),
+        collect_request
+      )
+      
+
       return {
         status: formatedStatus,
         amount: cashfreeRes.order_amount,
@@ -538,9 +544,9 @@ export class EdvironPgService implements GatewayService {
         details: {
           payment_mode: collect_status.payment_method,
           bank_ref:
-            collect_status?.bank_reference && collect_status?.bank_reference,
+            paymentinfo?.bank_reference || collect_status?.bank_reference,
           payment_methods:
-            collect_status?.details &&
+           paymentinfo.payment_method|| collect_status?.details &&
             JSON.parse(collect_status.details as string),
           transaction_time,
           formattedTransactionDate: istDate,
@@ -918,7 +924,7 @@ export class EdvironPgService implements GatewayService {
         bank_reference: webhookData?.bank_reference,
         payment_method: webhookData?.payment_method,
         payment_details: webhookData?.payment_details,
-        installments : webhookData?.installments
+        installments: webhookData?.installments
       });
       let base64Header = '';
       if (webhook_key) {
@@ -2224,15 +2230,13 @@ export class EdvironPgService implements GatewayService {
       if (checkbatch) {
         await this.databaseService.ErrorLogsModel.create({
           type: 'BATCH TRANSACTION CORN',
-          des: `Batch transaction already exists for trustee_id ${trustee_id} of ${
-            monthsFull[new Date(endDate).getMonth()]
-          } month`,
+          des: `Batch transaction already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]
+            } month`,
           identifier: trustee_id,
           body: `${JSON.stringify({ startDate, endDate, status })}`,
         });
         throw new BadRequestException(
-          `Already exists for trustee_id ${trustee_id} of ${
-            monthsFull[new Date(endDate).getMonth()]
+          `Already exists for trustee_id ${trustee_id} of ${monthsFull[new Date(endDate).getMonth()]
           } month`,
         );
       }
@@ -2415,15 +2419,13 @@ export class EdvironPgService implements GatewayService {
       if (checkbatch) {
         await this.databaseService.ErrorLogsModel.create({
           type: 'BATCH TRANSACTION CORN',
-          des: `Batch transaction already exists for school_id ${school_id} of ${
-            monthsFull[new Date(endDate).getMonth()]
-          } month`,
+          des: `Batch transaction already exists for school_id ${school_id} of ${monthsFull[new Date(endDate).getMonth()]
+            } month`,
           identifier: school_id,
           body: `${JSON.stringify({ startDate, endDate, status })}`,
         });
         throw new BadRequestException(
-          `Already exists for school_id ${school_id} of ${
-            monthsFull[new Date(endDate).getMonth()]
+          `Already exists for school_id ${school_id} of ${monthsFull[new Date(endDate).getMonth()]
           } month`,
         );
       }
@@ -2715,12 +2717,12 @@ export class EdvironPgService implements GatewayService {
       });
 
       const installments = await this.databaseService.InstallmentsModel.find({
-        collect_id : request._id
+        collect_id: request._id
       }).select('_id student_id student_name status fee_heads').lean();
       const renamedInstallments = installments.map(i => ({
         installment_id: i._id,
-  ...i,
-}));
+        ...i,
+      }));
       const transformedResponse = {
         status: collect_req_status?.status,
         status_code: 200,
@@ -2745,7 +2747,7 @@ export class EdvironPgService implements GatewayService {
           service_charge: null,
         },
         capture_status: collect_req_status?.status,
-        installments : renamedInstallments || null
+        installments: renamedInstallments || null
       };
       return transformedResponse;
     } catch (error) {

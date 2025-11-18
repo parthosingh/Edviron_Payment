@@ -152,4 +152,5 @@ export declare class CashfreeController {
     }): Promise<any>;
     handleWebhook(body: any, res: any): Promise<void>;
     testFix(): Promise<void>;
+    paymentStatus(req: any): Promise<any>;
 }
