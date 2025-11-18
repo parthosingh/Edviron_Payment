@@ -1789,4 +1789,167 @@ export class EdvironPayController {
       throw new BadRequestException(error.message);
     }
   }
+
+  @Get('get-student-installment')
+  async getStudentInstallment(
+    @Body()
+    body: {
+      school_id: string;
+      trustee_id: string;
+      student_id: string;
+    },
+  ) {
+    try {
+      const { school_id, trustee_id, student_id } = body;
+      const installments = await this.databaseService.InstallmentsModel.find({
+        school_id,
+        trustee_id,
+        student_id,
+      });
+      if (!installments) {
+        return {
+          message: 'no installment found of this student',
+          installments: [],
+        };
+      }
+
+      return {
+        message: 'success',
+        installments,
+      };
+    } catch (e) {
+      let message =
+        e?.response?.data?.message ||
+        e?.response?.message ||
+        e?.message ||
+        'Something went wrong';
+      throw new BadRequestException(message);
+    }
+  }
+  @Get('get-school-data')
+  async getSchoolData(
+    @Query('school_id') school_id: string,
+    @Query('trustee_id') trustee_id: string,
+  ) {
+    try {
+      let query: any = {
+        trustee_id: trustee_id,
+        school_id: school_id,
+      };
+
+      const students =
+        await this.databaseService.StudentDetailModel.find(query).lean();
+
+      const studentIds = students.map((s) => s.student_id);
+      const studentsection = students.map((s) => s.student_section);
+
+      const number_of_section = new Set(studentsection).size;
+      const number_of_students = new Set(studentIds).size;
+      const installmentReport =
+        await this.databaseService.InstallmentsModel.aggregate([
+          { $match: { student_id: { $in: studentIds } } },
+
+          // Extract year-month & compute due_date
+          {
+            $addFields: {
+              yearMonth: {
+                $dateToString: { format: '%Y-%m', date: '$createdAt' },
+              },
+
+              // due_date = next month's 7th
+              due_date: {
+                $dateFromParts: {
+                  year: {
+                    $year: {
+                      $dateAdd: {
+                        startDate: '$createdAt',
+                        unit: 'month',
+                        amount: 1,
+                      },
+                    },
+                  },
+                  month: {
+                    $month: {
+                      $dateAdd: {
+                        startDate: '$createdAt',
+                        unit: 'month',
+                        amount: 1,
+                      },
+                    },
+                  },
+                  day: 7,
+                },
+              },
+            },
+          },
+
+          {
+            $group: {
+              _id: { month: '$yearMonth', student: '$student_id' },
+              due_date: { $first: '$due_date' },
+              installments: { $push: '$$ROOT' },
+              total_amount: { $sum: '$net_amount' },
+              total_paid_amount: {
+                $sum: {
+                  $cond: [{ $eq: ['$status', 'paid'] }, '$net_amount', 0],
+                },
+              },
+              allPaid: {
+                $min: {
+                  $cond: [{ $eq: ['$status', 'paid'] }, 1, 0],
+                },
+              },
+            },
+          },
+          {
+            $group: {
+              _id: '$_id.month',
+              due_date: { $first: '$due_date' },
+              total_amount: { $sum: '$total_amount' },
+              total_amount_paid: { $sum: '$total_paid_amount' },
+              total_students: { $addToSet: '$_id.student' },
+
+              paid_students_completely: {
+                $sum: {
+                  $cond: [{ $eq: ['$allPaid', 1] }, 1, 0],
+                },
+              },
+
+              paid_student_ids: {
+                $addToSet: {
+                  $cond: [{ $eq: ['$allPaid', 1] }, '$_id.student', '$$REMOVE'],
+                },
+              },
+            },
+          },
+          {
+            $project: {
+              month: '$_id',
+              due_date: 1,
+              total_amount: 1,
+              total_amount_paid: 1,
+              // paid_student_ids : 1,
+              total_students: { $size: '$total_students' },
+              total_students_paid: '$paid_students_completely',
+              _id: 0,
+            },
+          },
+
+          { $sort: { month: 1 } },
+        ]);
+
+      return {
+        number_of_students,
+        number_of_section,
+        installmentReport : installmentReport || [] ,
+      };
+    } catch (e) {
+      let message =
+        e?.response?.data?.message ||
+        e?.response?.message ||
+        e?.message ||
+        'Something went wrong';
+      throw new BadRequestException(message);
+    }
+  }
 }
