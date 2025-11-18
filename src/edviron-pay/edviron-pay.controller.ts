@@ -1936,7 +1936,6 @@ export class EdvironPayController {
               },
             },
           },
-
           {
             $project: {
               month: '$_id',
@@ -1956,7 +1955,7 @@ export class EdvironPayController {
       return {
         number_of_students,
         number_of_section,
-        installmentReport,
+        installmentReport : installmentReport || [] ,
       };
     } catch (e) {
       let message =
