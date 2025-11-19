@@ -96,23 +96,33 @@ let RazorpayNonseamlessController = class RazorpayNonseamlessController {
                 },
             };
             return res.send(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <title>Razorpay Payment</title>
-          <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-        </head>
-        <body>
-          <script>
-            window.onload = function () {
-              const options = ${JSON.stringify(options)};
-              const rzp = new Razorpay(options);
-              rzp.open();
-            };
-          </script>
-        </body>
-        </html>
-      `);
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>Razorpay Payment</title>
+      <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    </head>
+    <body>
+      <script>
+        window.onload = function () {
+          const options = {
+            ...${JSON.stringify(options)},
+            modal: {
+              ondismiss: function () {
+                // Redirect when Razorpay popup is closed
+                window.location.href = "${process.env.URL}/razorpay-nonseamless/callback?collect_id=${collect_id}";
+              }
+            }
+          };
+
+          const rzp = new Razorpay(options);
+          rzp.open();
+        };
+      </script>
+    </body>
+  </html>
+`);
         }
         catch (error) {
             console.error('Error in razorpayRedirect:', error);

@@ -28,7 +28,7 @@ export class RazorpayNonseamlessController {
     private readonly razorpayServiceModel: RazorpayNonseamlessService,
     private readonly razorpayService: RazorpayService,
     private readonly edvironPgService: EdvironPgService,
-  ) {}
+  ) { }
 
   @Get('/redirect')
   async razorpayRedirect(@Req() req: any, @Res() res: any) {
@@ -106,23 +106,33 @@ export class RazorpayNonseamlessController {
         },
       };
       return res.send(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <title>Razorpay Payment</title>
-          <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-        </head>
-        <body>
-          <script>
-            window.onload = function () {
-              const options = ${JSON.stringify(options)};
-              const rzp = new Razorpay(options);
-              rzp.open();
-            };
-          </script>
-        </body>
-        </html>
-      `);
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>Razorpay Payment</title>
+      <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    </head>
+    <body>
+      <script>
+        window.onload = function () {
+          const options = {
+            ...${JSON.stringify(options)},
+            modal: {
+              ondismiss: function () {
+                // Redirect when Razorpay popup is closed
+                window.location.href = "${process.env.URL}/razorpay-nonseamless/callback?collect_id=${collect_id}";
+              }
+            }
+          };
+
+          const rzp = new Razorpay(options);
+          rzp.open();
+        };
+      </script>
+    </body>
+  </html>
+`);
     } catch (error) {
       console.error('Error in razorpayRedirect:', error);
       throw new BadRequestException(error.message);
@@ -446,9 +456,8 @@ export class RazorpayNonseamlessController {
           const config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: `${
-              process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collect_request.trustee_id.toString()}`,
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT
+              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collect_request.trustee_id.toString()}`,
             headers: {
               accept: 'application/json',
               'content-type': 'application/json',
@@ -715,9 +724,8 @@ export class RazorpayNonseamlessController {
           const config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: `${
-              process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collect_request.trustee_id.toString()}`,
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT
+              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collect_request.trustee_id.toString()}`,
             headers: {
               accept: 'application/json',
               'content-type': 'application/json',
@@ -873,8 +881,8 @@ export class RazorpayNonseamlessController {
                   card.international === false
                     ? 'IN'
                     : card.international === true
-                    ? 'OI'
-                    : null,
+                      ? 'OI'
+                      : null,
                 card_network: card.network || null,
                 card_number: card_id || null,
                 card_sub_type: card.sub_type || null,
@@ -990,9 +998,8 @@ export class RazorpayNonseamlessController {
             const config = {
               method: 'get',
               maxBodyLength: Infinity,
-              url: `${
-                process.env.VANILLA_SERVICE_ENDPOINT
-              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+              url: `${process.env.VANILLA_SERVICE_ENDPOINT
+                }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
               headers: {
                 accept: 'application/json',
                 'content-type': 'application/json',
@@ -1069,8 +1076,8 @@ export class RazorpayNonseamlessController {
                   card.international === false
                     ? 'IN'
                     : card.international === true
-                    ? 'OI'
-                    : null,
+                      ? 'OI'
+                      : null,
                 card_network: card.network || null,
                 card_number: card_id || null,
                 card_sub_type: card.sub_type || null,
@@ -1087,8 +1094,8 @@ export class RazorpayNonseamlessController {
                   card.international === false
                     ? 'IN'
                     : card.international === true
-                    ? 'OI'
-                    : null,
+                      ? 'OI'
+                      : null,
                 card_network: card.network || null,
                 card_number: card_id || null,
                 card_sub_type: card.sub_type || null,
@@ -1214,9 +1221,8 @@ export class RazorpayNonseamlessController {
           const config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: `${
-              process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT
+              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
             headers: {
               accept: 'application/json',
               'content-type': 'application/json',
@@ -1340,8 +1346,8 @@ export class RazorpayNonseamlessController {
                   card.international === false
                     ? 'IN'
                     : card.international === true
-                    ? 'OI'
-                    : null,
+                      ? 'OI'
+                      : null,
                 card_network: card.network || null,
                 card_number: card_id || null,
                 card_sub_type: card.sub_type || null,
@@ -1358,8 +1364,8 @@ export class RazorpayNonseamlessController {
                   card.international === false
                     ? 'IN'
                     : card.international === true
-                    ? 'OI'
-                    : null,
+                      ? 'OI'
+                      : null,
                 card_network: card.network || null,
                 card_number: card_id || null,
                 card_sub_type: card.sub_type || null,
@@ -1474,9 +1480,8 @@ export class RazorpayNonseamlessController {
           const config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: `${
-              process.env.VANILLA_SERVICE_ENDPOINT
-            }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
+            url: `${process.env.VANILLA_SERVICE_ENDPOINT
+              }/main-backend/get-webhook-key?token=${token}&trustee_id=${collectReq.trustee_id.toString()}`,
             headers: {
               accept: 'application/json',
               'content-type': 'application/json',
@@ -1587,8 +1592,7 @@ export class RazorpayNonseamlessController {
     } catch (err) {
       console.error('[API ERROR]', err);
       throw new InternalServerErrorException(
-        `Razorpay API error: ${
-          err.response?.data?.error?.description || err.message
+        `Razorpay API error: ${err.response?.data?.error?.description || err.message
         }`,
       );
     }
