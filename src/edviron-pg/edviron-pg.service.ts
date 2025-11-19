@@ -560,7 +560,7 @@ export class EdvironPgService implements GatewayService {
           bank_ref:
             paymentinfo?.bank_reference || collect_status?.bank_reference,
           payment_methods:
-            paymentinfo.payment_method || collect_status?.details &&
+            paymentinfo?.payment_method || collect_status?.details &&
             JSON.parse(collect_status.details as string),
           transaction_time,
           formattedTransactionDate: istDate,

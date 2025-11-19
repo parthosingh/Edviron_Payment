@@ -408,7 +408,7 @@ let EdvironPgService = class EdvironPgService {
                 details: {
                     payment_mode: collect_status.payment_method,
                     bank_ref: paymentinfo?.bank_reference || collect_status?.bank_reference,
-                    payment_methods: paymentinfo.payment_method || collect_status?.details &&
+                    payment_methods: paymentinfo?.payment_method || collect_status?.details &&
                         JSON.parse(collect_status.details),
                     transaction_time,
                     formattedTransactionDate: istDate,
